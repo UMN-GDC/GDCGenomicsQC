@@ -1,0 +1,13 @@
+pyBigWig-0.3.22.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+pyBigWig-0.3.22.dist-info/LICENSE.txt,sha256=0FNiVZzUT6d9EWbdQnauvqstz6C2Kwq4_-87FNaE9xk,1078
+pyBigWig-0.3.22.dist-info/METADATA,sha256=nZTnuVrBhbVQnpXOav57qu5MQWnoyk_jOHFKkMjM9ZA,19746
+pyBigWig-0.3.22.dist-info/RECORD,,
+pyBigWig-0.3.22.dist-info/WHEEL,sha256=5DQRW5VdkIxH8e7ylwa-YBCXLhSZeqHiz1ZmuOscrlo,148
+pyBigWig-0.3.22.dist-info/top_level.txt,sha256=4J-aRXYcAQn1FwKy2mcKHoxXf4rTT9KG2n6sUUxrBwk,22
+pyBigWig.cpython-38-x86_64-linux-gnu.so,sha256=u1dR2o6q9g0EiJJEm1F-A2rvfWDQ7roaesqUQRa4W-Q,511936
+pyBigWigTest/__init__.py,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
+pyBigWigTest/__pycache__/__init__.cpython-38.pyc,,
+pyBigWigTest/__pycache__/test.cpython-38.pyc,,
+pyBigWigTest/test.bigBed,sha256=vCiP-d9XSrgx-05uDYKiYkH4Nl17gA4ROMSRYAzEpCQ,27148
+pyBigWigTest/test.bw,sha256=z78Vun6VWduYQbJGoSp5tRxEsiFRN7ZS3I81sQC3roY,12966
+pyBigWigTest/test.py,sha256=_BVs5IbR_7DwpArpxgIcVAeWJzqeB1T5BAD0jhWjNeQ,13185

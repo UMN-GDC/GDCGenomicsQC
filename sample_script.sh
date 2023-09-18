@@ -11,7 +11,7 @@ module load R
 module load plink
 
 # Conversion to vcf format for CrossMap
-plink_bed_to_vcf_conversion.sh
+Crossmap_step.sh
 #Running CrossMap through Python
 ### Put script here ###
 
