@@ -10,17 +10,18 @@
 module load R
 module load plink
 
-# Conversion to Browser Extensible Data(BED format) for LiftOver
-plink_vcf_to_BED_conversion.sh
+# Conversion to vcf format for CrossMap
+plink_bed_to_vcf_conversion.sh
+#Running CrossMap through Python
+### Put script here ###
 
-#### Start of QC_steps_pt1.R conversion
 #(step 1 of QC steps)
 # plink --bfile SMILES_GSA --keep non_white_ids_b.txt --make-bed --out SMILES_GSA_a
 
 #(Step 1.5 of QC steps) removing samples with missingness more than 10%
 #This step is necessary only for the non_white abcd group 
 # plink --bfile SMILES_GSA_a --mind 0.1 --make-bed --out SMILES_GSA_b
-# Brought the sample size down to 1066, and 1402787 variants
+
 
 #(step 2 of QC steps) remove markers where 10% or higher of samples have missing data 
 #  at these markers 
