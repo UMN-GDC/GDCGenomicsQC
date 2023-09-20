@@ -5,7 +5,7 @@
 #SBATCH --tmp=10g
 #SBATCH -p agsmall
 #SBATCH --mail-type=ALL  
-#SBATCH --mail-user=baron063@umn.edu 
+#SBATCH --mail-user=x500@umn.edu 
 
 module load plink
 module load python3/3.9.3_anaconda2021.11_mamba
