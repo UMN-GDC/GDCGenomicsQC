@@ -7,8 +7,11 @@
 #SBATCH --mail-type=ALL  
 #SBATCH --mail-user=baron063@umn.edu 
 
-module load R
 module load plink
+module load python3/3.9.3_anaconda2021.11_mamba
+module load R/4.2.2-openblas
+
+
 
 # Prefix for 
 FILE=SMILES
