@@ -16,6 +16,13 @@ module load R/4.2.2-openblas
 # Prefix for 
 FILE=SMILES
 
+# Adding in CrossMap 
+# Converting to VCF for process
+plink –bfile $FILE –recode vcf -out vcf_data
+./Crossmap_step.sh
+plink -vcf out.hg38.vcf --make-bed --out hg38_${FILE}
+
+
 #### Start of QC_steps_pt1.R conversion
 echo "(step 1 of QC steps)"
 # plink --bfile ${FILE}_GSA --keep non_white_ids_b.txt --make-bed --out ${FILE}_GSA_a
