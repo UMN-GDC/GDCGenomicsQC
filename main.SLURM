@@ -11,21 +11,19 @@ module load plink
 module load python3/3.9.3_anaconda2021.11_mamba
 module load R/4.2.2-openblas
 
-
-
 # Prefix for 
 FILE=SMILES
 
 # Adding in CrossMap 
 # Converting to VCF for process
-plink –bfile $FILE –recode vcf -out vcf_data
+plink --bfile $FILE  --recode vcf --out DATA.vcf
 ./Crossmap_step.sh
 plink -vcf out.hg38.vcf --make-bed --out hg38_${FILE}
 
 
 #### Start of QC_steps_pt1.R conversion
 echo "(step 1 of QC steps)"
-# plink --bfile ${FILE}_GSA --keep non_white_ids_b.txt --make-bed --out ${FILE}_GSA_a
+# plink --bfile hg38_${FILE}_GSA --keep non_white_ids_b.txt --make-bed --out ${FILE}_GSA_a
 
 echo "(Step 1.5 of QC steps) removing samples with missingness more than 10%"
 #This step is necessary only for the non_white abcd group 
