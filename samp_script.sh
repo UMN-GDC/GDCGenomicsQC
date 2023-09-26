@@ -10,6 +10,9 @@
 module load R
 module load plink
 
+# Conversion to Browser Extensible Data(BED format) for LiftOver
+plink_vcf_to_BED_conversion.sh
+
 #### Start of QC_steps_pt1.R conversion
 #(step 1 of QC steps)
 # plink --bfile SMILES_GSA --keep non_white_ids_b.txt --make-bed --out SMILES_GSA_a
