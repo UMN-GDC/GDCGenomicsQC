@@ -39,11 +39,21 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
-
 # translation temp files
 po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Exclude the necessary apps
+liftOver
+plink
+plink2
+gcta
+gcta64
+
+# jupyter notebooks
+.ipynb_checkpoints/*
+
+
+*.gz
