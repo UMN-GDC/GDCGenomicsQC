@@ -55,5 +55,5 @@ gcta64
 # jupyter notebooks
 .ipynb_checkpoints/*
 
-
+*/temp/*
 *.gz
