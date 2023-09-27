@@ -1,0 +1,27 @@
+PLINK v1.90b7 64-bit (16 Jan 2023)
+Options in effect:
+  --bfile data/toySim/toy
+  --make-bed
+  --mind 0.1
+  --out test/temp/GSA_2
+
+Hostname: christian-laptop
+Working directory: /home/christian/Research/Stat_gen/GDCGenomicsQC
+Start time: Tue Sep 26 19:20:40 2023
+
+Random number seed: 1695774040
+5859 MB RAM detected; reserving 2929 MB for main workspace.
+92 variants loaded from .bim file.
+100 people (0 males, 0 females, 100 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to test/temp/GSA_2.nosex .
+0 people removed due to missing genotype data (--mind).
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 100 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is exactly 1.
+92 variants and 100 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to test/temp/GSA_2.bed + test/temp/GSA_2.bim + test/temp/GSA_2.fam
+... done.
+
+End time: Tue Sep 26 19:20:40 2023
