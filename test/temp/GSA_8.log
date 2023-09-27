@@ -1,0 +1,27 @@
+PLINK v1.90b7 64-bit (16 Jan 2023)
+Options in effect:
+  --bfile test/temp/GSA_7
+  --make-bed
+  --out test/temp/GSA_8
+  --remove het_fail_ind.txt
+
+Hostname: christian-laptop
+Working directory: /home/christian/Research/Stat_gen/GDCGenomicsQC
+Start time: Tue Sep 26 19:20:40 2023
+
+Random number seed: 1695774040
+5859 MB RAM detected; reserving 2929 MB for main workspace.
+74 variants loaded from .bim file.
+100 people (0 males, 0 females, 100 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to test/temp/GSA_8.nosex .
+--remove: 100 people remaining.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 100 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is exactly 1.
+74 variants and 100 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to test/temp/GSA_8.bed + test/temp/GSA_8.bim + test/temp/GSA_8.fam
+... done.
+
+End time: Tue Sep 26 19:20:40 2023
