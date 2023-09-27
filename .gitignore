@@ -57,3 +57,10 @@ gcta64
 
 */temp/*
 *.gz
+*.bed
+*.bim
+*.fam
+*.vcf
+*.ped
+
+!data/toySim/toy.*
