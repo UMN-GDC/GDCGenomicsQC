@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="GDC Data Team">
+<meta name="dcterms.date" content="2023-10-10">
+
+<title>Genomics QC Report</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="QCReport_files/libs/clipboard/clipboard.min.js"></script>
+<script src="QCReport_files/libs/quarto-html/quarto.js"></script>
+<script src="QCReport_files/libs/quarto-html/popper.min.js"></script>
+<script src="QCReport_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="QCReport_files/libs/quarto-html/anchor.min.js"></script>
+<link href="QCReport_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="QCReport_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="QCReport_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="QCReport_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="QCReport_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Genomics QC Report</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>GDC Data Team </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">October 10, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>The following is an automated report describing the quality control (QC) processing of your dataset. We first provide summary of the number of SNPs and subjects kept or removed followed by a more detailed description of the QC steps taken.</p>
+<section id="general-summary" class="level1">
+<h1>General Summary</h1>
+<p>The QC process outline below first process the data in aggregate removing SNPs and subjects with large amounts of missingness. In addition, SNPs are filtered to remove those with low minor allele frequency (MAF), frequencies are two out of equlibrium based on Hardy-Weinberg equilibrium (HWE). Then, for multiethnic samples, subject ancestries are predicted using principal components analysis (PCA) and k-means clustering. Finally, the data is filtered again at the level of each ancestry before it is later rejoined into the full dataset. Table <span class="citation" data-cites="ref">@ref</span>(tab:summary) summarizes the number of SNPs and subjects at each step of the QC process.</p>
+<div class="cell">
+
+</div>
+<table class="table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Processing step</th>
+<th style="text-align: right;">Number of SNPs</th>
+<th style="text-align: right;">Number of Subjects</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Input</td>
+<td style="text-align: right;">228694</td>
+<td style="text-align: right;">90</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Output</td>
+<td style="text-align: right;">215694</td>
+<td style="text-align: right;">88</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">%Change</td>
+<td style="text-align: right;">-5.684452</td>
+<td style="text-align: right;">-12</td>
+</tr>
+</tbody>
+</table>
+<section id="data-set-description" class="level2">
+<h2 class="anchored" data-anchor-id="data-set-description">Data set description</h2>
+<p>Case/controls</p>
+<p>Ethnicities</p>
+</section>
+<section id="data-processing" class="level2">
+<h2 class="anchored" data-anchor-id="data-processing">Data Processing</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<p>
+<svg width="672" height="480" viewbox="0.00 0.00 503.71 605.08" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 601.08)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-601.08 499.71,-601.08 499.71,4 -4,4"></polygon> <!-- input --> <g id="node1" class="node">
+<title>
+input
+</title>
+<ellipse fill="none" stroke="black" cx="211.71" cy="-567.67" rx="64.82" ry="29.33"></ellipse> <text text-anchor="middle" x="211.71" y="-571.87" font-family="Times,serif" font-size="14.00">100 Subjects </text> <text text-anchor="middle" x="211.71" y="-555.07" font-family="Times,serif" font-size="14.00"> 1000 SNPs</text> </g> <!-- filter --> <g id="node2" class="node">
+<title>
+filter
+</title>
+<ellipse fill="none" stroke="black" cx="211.71" cy="-422.44" rx="59.92" ry="29.33"></ellipse> <text text-anchor="middle" x="211.71" y="-426.64" font-family="Times,serif" font-size="14.00">98 Subjects </text> <text text-anchor="middle" x="211.71" y="-409.84" font-family="Times,serif" font-size="14.00"> 987 SNPs</text> </g> <!-- input&#45;&gt;filter --> <g id="edge1" class="edge">
+<title>
+input-&gt;filter
+</title>
+<path fill="none" stroke="black" d="M211.71,-538.03C211.71,-516.27 211.71,-486.11 211.71,-462.19"></path> <polygon fill="black" stroke="black" points="215.21,-462.03 211.71,-452.03 208.21,-462.03 215.21,-462.03"></polygon> <text text-anchor="middle" x="281.59" y="-507.65" font-family="Times,serif" font-size="14.00">MAF &gt; 0.05 </text> <text text-anchor="middle" x="281.59" y="-490.85" font-family="Times,serif" font-size="14.00"> SNP Missingness &lt; 0.1 </text> <text text-anchor="middle" x="281.59" y="-474.05" font-family="Times,serif" font-size="14.00"> SNP missingness &lt; 0.05</text> </g> <!-- predict --> <g id="node3" class="node">
+<title>
+predict
+</title>
+<ellipse fill="none" stroke="black" cx="211.71" cy="-322.22" rx="91.44" ry="18"></ellipse> <text text-anchor="middle" x="211.71" y="-318.02" font-family="Times,serif" font-size="14.00">Ancestry predictions</text> </g> <!-- filter&#45;&gt;predict --> <g id="edge2" class="edge">
+<title>
+filter-&gt;predict
+</title>
+<path fill="none" stroke="black" d="M211.71,-392.76C211.71,-379.49 211.71,-363.8 211.71,-350.68"></path> <polygon fill="black" stroke="black" points="215.21,-350.38 211.71,-340.38 208.21,-350.38 215.21,-350.38"></polygon> <text text-anchor="middle" x="260.88" y="-362.42" font-family="Times,serif" font-size="14.00">Predict ancestries</text> </g> <!-- anc1 --> <g id="node4" class="node">
+<title>
+anc1
+</title>
+<ellipse fill="none" stroke="black" cx="82.71" cy="-249.22" rx="53.28" ry="18"></ellipse> <text text-anchor="middle" x="82.71" y="-245.02" font-family="Times,serif" font-size="14.00">Ancestry 1</text> </g> <!-- predict&#45;&gt;anc1 --> <g id="edge3" class="edge">
+<title>
+predict-&gt;anc1
+</title>
+<path fill="none" stroke="black" d="M182.44,-305.11C163.36,-294.61 138.34,-280.84 118.14,-269.72"></path> <polygon fill="black" stroke="black" points="119.68,-266.58 109.23,-264.82 116.31,-272.71 119.68,-266.58"></polygon> </g> <!-- anc2 --> <g id="node5" class="node">
+<title>
+anc2
+</title>
+<ellipse fill="none" stroke="black" cx="211.71" cy="-249.22" rx="53.28" ry="18"></ellipse> <text text-anchor="middle" x="211.71" y="-245.02" font-family="Times,serif" font-size="14.00">Ancestry 2</text> </g> <!-- predict&#45;&gt;anc2 --> <g id="edge4" class="edge">
+<title>
+predict-&gt;anc2
+</title>
+<path fill="none" stroke="black" d="M211.71,-304.03C211.71,-296.01 211.71,-286.27 211.71,-277.29"></path> <polygon fill="black" stroke="black" points="215.21,-277.25 211.71,-267.25 208.21,-277.25 215.21,-277.25"></polygon> </g> <!-- anc3 --> <g id="node6" class="node">
+<title>
+anc3
+</title>
+<ellipse fill="none" stroke="black" cx="341.71" cy="-249.22" rx="53.28" ry="18"></ellipse> <text text-anchor="middle" x="341.71" y="-245.02" font-family="Times,serif" font-size="14.00">Ancestry 3</text> </g> <!-- predict&#45;&gt;anc3 --> <g id="edge5" class="edge">
+<title>
+predict-&gt;anc3
+</title>
+<path fill="none" stroke="black" d="M241.21,-305.11C260.44,-294.61 285.65,-280.84 306.01,-269.72"></path> <polygon fill="black" stroke="black" points="307.88,-272.68 314.98,-264.82 304.53,-266.54 307.88,-272.68"></polygon> </g> <!-- filter1 --> <g id="node7" class="node">
+<title>
+filter1
+</title>
+<ellipse fill="none" stroke="black" cx="59.71" cy="-164.81" rx="59.92" ry="29.33"></ellipse> <text text-anchor="middle" x="59.71" y="-169.01" font-family="Times,serif" font-size="14.00">98 Subjects </text> <text text-anchor="middle" x="59.71" y="-152.21" font-family="Times,serif" font-size="14.00"> 987 SNPs</text> </g> <!-- anc1&#45;&gt;filter1 --> <g id="edge6" class="edge">
+<title>
+anc1-&gt;filter1
+</title>
+<path fill="none" stroke="black" d="M77.94,-231.14C75.74,-223.24 73.02,-213.5 70.36,-203.98"></path> <polygon fill="black" stroke="black" points="73.7,-202.91 67.64,-194.22 66.95,-204.79 73.7,-202.91"></polygon> </g> <!-- filter2 --> <g id="node8" class="node">
+<title>
+filter2
+</title>
+<ellipse fill="none" stroke="black" cx="211.71" cy="-164.81" rx="59.92" ry="29.33"></ellipse> <text text-anchor="middle" x="211.71" y="-169.01" font-family="Times,serif" font-size="14.00">98 Subjects </text> <text text-anchor="middle" x="211.71" y="-152.21" font-family="Times,serif" font-size="14.00"> 987 SNPs</text> </g> <!-- anc2&#45;&gt;filter2 --> <g id="edge7" class="edge">
+<title>
+anc2-&gt;filter2
+</title>
+<path fill="none" stroke="black" d="M211.71,-231.14C211.71,-223.47 211.71,-214.07 211.71,-204.82"></path> <polygon fill="black" stroke="black" points="215.21,-204.54 211.71,-194.54 208.21,-204.54 215.21,-204.54"></polygon> </g> <!-- filter3 --> <g id="node9" class="node">
+<title>
+filter3
+</title>
+<ellipse fill="none" stroke="black" cx="360.71" cy="-164.81" rx="59.92" ry="29.33"></ellipse> <text text-anchor="middle" x="360.71" y="-169.01" font-family="Times,serif" font-size="14.00">98 Subjects </text> <text text-anchor="middle" x="360.71" y="-152.21" font-family="Times,serif" font-size="14.00"> 987 SNPs</text> </g> <!-- anc3&#45;&gt;filter3 --> <g id="edge8" class="edge">
+<title>
+anc3-&gt;filter3
+</title>
+<path fill="none" stroke="black" d="M345.65,-231.14C347.47,-223.24 349.71,-213.5 351.91,-203.98"></path> <polygon fill="black" stroke="black" points="355.32,-204.75 354.16,-194.22 348.5,-203.18 355.32,-204.75"></polygon> </g> <!-- joinedData --> <g id="node10" class="node">
+<title>
+joinedData
+</title>
+<ellipse fill="none" stroke="black" cx="211.71" cy="-41.3" rx="62.37" ry="41.09"></ellipse> <text text-anchor="middle" x="211.71" y="-53.9" font-family="Times,serif" font-size="14.00"> </text> <text text-anchor="middle" x="211.71" y="-37.1" font-family="Times,serif" font-size="14.00"> 98 Subjects </text> <text text-anchor="middle" x="211.71" y="-20.3" font-family="Times,serif" font-size="14.00"> 678 SNPs</text> </g> <!-- filter1&#45;&gt;joinedData --> <g id="edge9" class="edge">
+<title>
+filter1-&gt;joinedData
+</title>
+<path fill="none" stroke="black" d="M58.33,-135.25C59.16,-123.43 62.06,-110.26 69.71,-100.59 87.52,-78.06 115.5,-64.17 141.93,-55.64"></path> <polygon fill="black" stroke="black" points="143.01,-58.97 151.57,-52.73 140.99,-52.26 143.01,-58.97"></polygon> <text text-anchor="middle" x="138.71" y="-104.79" font-family="Times,serif" font-size="14.00">Matched and joined data</text> </g> <!-- filter2&#45;&gt;joinedData --> <g id="edge10" class="edge">
+<title>
+filter2-&gt;joinedData
+</title>
+<path fill="none" stroke="black" d="M211.71,-135.32C211.71,-122.79 211.71,-107.68 211.71,-93.31"></path> <polygon fill="black" stroke="black" points="215.21,-93.03 211.71,-83.03 208.21,-93.03 215.21,-93.03"></polygon> <text text-anchor="middle" x="280.71" y="-104.79" font-family="Times,serif" font-size="14.00">Matched and joined data</text> </g> <!-- filter3&#45;&gt;joinedData --> <g id="edge11" class="edge">
+<title>
+filter3-&gt;joinedData
+</title>
+<path fill="none" stroke="black" d="M362.05,-135.28C361.21,-123.47 358.32,-110.29 350.71,-100.59 333.52,-78.68 306.61,-64.92 281.02,-56.31"></path> <polygon fill="black" stroke="black" points="281.89,-52.91 271.3,-53.25 279.8,-59.59 281.89,-52.91"></polygon> <text text-anchor="middle" x="426.71" y="-104.79" font-family="Times,serif" font-size="14.00">Matched and joined data</text> </g> </g>
+</svg>
+</p>
+</div>
+</div>
+</div>
+</section>
+<section id="ancestry-predictions" class="level2">
+<h2 class="anchored" data-anchor-id="ancestry-predictions">Ancestry predictions</h2>
+<p>Ancestries are predicted after the initial round of QC steps. First the standardized genetic relatedness matrix (GRM) is calcualted by standardizing the genotype matrix and then calculating the outter product of the resulting matrix. The GRM is then used to calculate the first 10 principal components (PCs). The subjects are then projected onto the PC space. The subjects are then assigned ethnicities using k-means clustering based on either a standard genomic dataset (such as though genomes) are by the reported ancestries of the subject in the study. Figure <span class="citation" data-cites="ref">@ref</span>(fig:ancestryPredictions) the projection of each subject onto the first few PCs. They are colored by their reported ancestries.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="QCReport_files/figure-html/ancestryPredictions-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="per-subject-summary" class="level2">
+<h2 class="anchored" data-anchor-id="per-subject-summary">Per Subject summary</h2>
+<p>Subjects were filtered based on missingness and heterozygosity. An LD pruning step was also performed.</p>
+</section>
+<section id="per-snp-summary" class="level2">
+<h2 class="anchored" data-anchor-id="per-snp-summary">Per SNP summary</h2>
+<p>SNPS were filtered based on missingness and MAF as well as HWE.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

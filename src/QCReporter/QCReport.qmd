@@ -1,0 +1,99 @@
+---
+title: "Genomics QC Report"
+author: "GDC Data Team"
+date: today
+output: html_document
+execute:
+  echo: false
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+source("distViz.R")
+source("logReader.R")
+```
+
+The following is an automated report describing the quality control (QC) processing of your dataset.
+We first provide summary of the number of SNPs and subjects kept or removed followed by a more 
+detailed description of the QC steps taken. 
+
+# General Summary 
+The QC process outline below first process the data in aggregate removing SNPs and subjects with large amounts
+of missingness. In addition, SNPs are filtered to remove those with low minor allele frequency (MAF), frequencies
+are two out of equlibrium based on Hardy-Weinberg equilibrium (HWE). Then, for multiethnic samples, subject 
+ancestries are predicted using principal components analysis (PCA) and k-means clustering. Finally, the data
+is filtered again at the level of each ancestry before it is later rejoined into the full dataset. Table @ref(tab:summary)
+summarizes the number of SNPs and subjects at each step of the QC process.
+```{r tab:summary, echo = FALSE}
+inputData <- extractLog("../QCtutorial/logs/wgas2.log")
+outputData <- extractLog("../QCtutorial/logs/wgas2.log")
+outputData["OutSNPs"] <- outputData["OutSNPs"] - 13000
+outputData["OutSubjects"] <- outputData["OutSubjects"] - 2
+```
+|Processing step | Number of SNPs | Number of Subjects |
+|:---------------|---------------:|-------------------:|
+|Input           | `r format(inputData["InSNPs"], scientific=FALSE)` | `r format(inputData["InSubjects"], scientific=FALSE)` |
+|Output          | `r format(outputData["OutSNPs"], scientific=FALSE)` | `r format(outputData["OutSubjects"], scientific=FALSE)` |
+|%Change         | `r format((outputData["OutSNPs"] - inputData["InSNPs"])/inputData["InSNPs"]*100, scientific=FALSE)` | `r format(outputData["OutSubjects"] -(inputData["InSubjects"] )/inputData["InSubjects"]*100, scientific=FALSE)` |
+
+## Data set description
+Case/controls
+
+
+Ethnicities
+
+
+## Data Processing
+```{dot}
+digraph G {
+  input [ label = "100 Subjects \n 1000 SNPs" ];
+  filter [ label = "98 Subjects \n 987 SNPs"];
+  predict [ label = "Ancestry predictions"];
+
+  anc1 [ label = "Ancestry 1"];
+  anc2 [ label = "Ancestry 2"];
+  anc3 [ label = "Ancestry 3"];
+
+  filter1 [label = "98 Subjects \n 987 SNPs"];
+  filter2 [label = "98 Subjects \n 987 SNPs"];
+  filter3 [label = "98 Subjects \n 987 SNPs"];
+
+  joinedData[ label = " \n 98 Subjects \n 678 SNPs"];
+
+  input -> filter [ label = "MAF > 0.05 \n SNP Missingness < 0.1 \n SNP missingness < 0.05"];
+  filter -> predict [ label = "Predict ancestries"];
+
+  predict -> anc1, anc2, anc3;
+  anc1 -> filter1;
+  anc2 -> filter2;
+  anc3 -> filter3;
+
+  filter1, filter2, filter3 -> joinedData [ label = "Matched and joined data"];
+}
+```
+
+
+## Ancestry predictions
+Ancestries are predicted after the initial round of QC steps. First the standardized genetic relatedness matrix (GRM)
+is calcualted by standardizing the genotype matrix and then calculating the outter product of the resulting matrix.
+The GRM is then used to calculate the first 10 principal components (PCs). The subjects are then projected onto the 
+PC space. The subjects are then assigned ethnicities using k-means clustering based on either a standard genomic dataset 
+(such as though genomes) are by the reported ancestries of the subject in the study. Figure @ref(fig:ancestryPredictions)
+the projection of each subject onto the first few PCs. They are colored by their reported ancestries.
+```{r ancestryPredictions}
+data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
+           PC1 = c(rnorm(50, 0, 1), rnorm(50, 9, 1)),
+           PC2 = c(rnorm(50, 0, 1), rnorm(50, 9, 1))) %>%
+  ggplot(aes(x = PC1, y = PC2, color = Ancestry)) +
+  geom_point()
+```
+
+## Per Subject summary
+Subjects were filtered based on missingness and heterozygosity. An LD pruning step was also performed.
+
+
+## Per SNP summary
+SNPS were filtered based on missingness and MAF as well as HWE.
+
+

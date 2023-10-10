@@ -1,0 +1,16 @@
+#!/bin/bash
+
+### Part 1
+
+plink --file wgas1 --make-bed --out wgas2
+plink --bfile wgas2 --out validate
+
+plink --bfile wgas2 --freq --out freq1
+plink --bfile wgas2 --hardy --out hwe1
+
+plink --bfile wgas2 --maf 0.01 --geno 0.05 --mind 0.05 --hwe 1e-3 --make-bed --out wgas3
+
+mkdir logs
+
+mv *.log logs
+rm wgas2* wgas3* logs/validate*
