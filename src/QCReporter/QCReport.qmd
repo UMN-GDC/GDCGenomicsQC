@@ -18,20 +18,20 @@ execute:
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(ggmanh)
 source("distViz.R")
 source("logReader.R")
 ```
 
 The following is an automated report describing the quality control (QC) processing of your dataset.
-We first provide summary of the number of SNPs and subjects kept or removed followed by a more 
 detailed description of the QC steps taken. 
 
 # General Summary 
 The QC process outline below first process the data in aggregate removing SNPs and subjects with large amounts
 of missingness. In addition, SNPs are filtered to remove those with low minor allele frequency (MAF), frequencies
-are two out of equlibrium based on Hardy-Weinberg equilibrium (HWE). Then, for multiethnic samples, subject 
-ancestries are predicted using principal components analysis (PCA) and k-means clustering. Finally, the data
-is filtered again at the level of each ancestry before it is later rejoined into the full dataset. Table @ref(tab:summary)
+are two out of equlibrium based on [Hardy-Weinberg equilibrium (HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/). Then, for multiethnic samples, subject 
+ancestries are predicted using [principal components analysis (PCA)](https://www.nature.com/articles/ng1847) and [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally, the original data
+is filtered again at the level of each predicted ancestry before it is later rejoined into the full dataset. Table @ref(tab:summary)
 summarizes the number of SNPs and subjects at each step of the QC process.
 ```{r tab:summary, echo = FALSE}
 inputData <- extractLog("../QCtutorial/logs/wgas2.log")
@@ -58,26 +58,28 @@ digraph G {
   input [ label = "1000 Subjects \n 10000 SNPs" ];
   filter [ label = "987 Subjects \n 9982 SNPs"];
 
-  filter1 [label = "Ancestry 1 \n 335 Subjects \n 9980 SNPs"];
-  filter2 [label = "Ancestry 2 \n 138 Subjects \n 9870 SNPs"];
-  filter3 [label = "Ancestry 3 \n 514 Subjects \n 9901 SNPs"];
+  filter1 [label = "Ancestry 1 \n 335 Subjects"];
+  filter2 [label = "Ancestry 2 \n 138 Subjects"];
+  filter3 [label = "Ancestry 3 \n 514 Subjects"];
 
   joinedData[ label = " \n 987 Subjects \n 9862 SNPs"];
 
-  input -> filter [ label = "MAF > 0.05 \n SNP Missingness < 0.1 \n SNP missingness < 0.05"];
-
+   input -> filter [ label = "MAF > 0.05, (120) \n SNP Missingness < 0.05 (200) \n Subj Missing >0.05, (3)"]; 
   filter -> filter1, filter2;
   filter -> filter3 [label = "Predict ancestry"];
 
-  filter1, filter2 -> joinedData; 
-  filter3 -> joinedData[ label = "Matched and joined data"];
+  input -> filter1 [label = "Full SNP set"];
+  input -> filter2, filter3;
+  filter1 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"];
+  filter2 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"]; 
+  filter3 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"];
 }
 ```
 
 
 # Detailed QC summary
 ## Per Subject summary
-Subjects were filtered based on missingness and heterozygosity. An LD pruning step was also performed.
+Subjects were filtered based on missingness and heterozygosity. An LD pruning step was also performed. 
 ```{r}
 data.frame("Subject" = 1:100,
           "Missingness" = rbeta(100, 1, 4)) %>%
@@ -88,12 +90,15 @@ data.frame("Subject" = 1:100,
   ggtitle("% SNPS missing per subject")
 ```
 
-The heterozygosity F statistic, often denoted as FIS, is a measure used in statistical genetics to assess the departure from Hardy-Weinberg equilibrium (HWE) in a population. Hardy-Weinberg equilibrium is a theoretical concept in population genetics that describes the expected genotype frequencies in a population when certain conditions are met, such as no mutation, migration, selection, or genetic drift.
+The [heterozygosity F statistic (FIS)](https://en.wikipedia.org/wiki/F-statistics) the departure from HWE in a population.
 The heterozygosity F statistic is given by the following equation:
 $$
 F = \frac{1}{N}\sum_{i=1}^N \frac{O_i - E_i}{E_i}
 $$
-```{r}
+
+```{r hetFilter}
+#| label: fig-hetFilter
+#| fig-cap: "Heterozygosity distributions with cutoff shown as red vertical line."
 data.frame("Subject" = 1:100,
           "Heterozygosity" = rcauchy(100, 0.1, 0.1)) %>%
   ggplot(aes(x = Heterozygosity)) +
@@ -104,32 +109,12 @@ data.frame("Subject" = 1:100,
 ```
 
 ## Per SNP summary
-SNPS were filtered based on missingness and MAF as well as HWE. 
-Hardy-Weinberg equilibrium (HWE), also known as the Hardy-Weinberg law or principle, is a fundamental concept in population genetics that describes the expected genotype frequencies in a population when certain conditions are met. These conditions include the absence of factors like mutation, migration, selection, genetic drift, and non-random mating. In essence, it serves as a null model for understanding how genetic variation is maintained in populations under specific assumptions.
+SNPS were filtered based on missingness and MAF as well as HWE @fig-firstFilter. 
 
-The Hardy-Weinberg equilibrium is based on the following principles:
-- Random Mating: Individuals in the population mate randomly with respect to their genotype.
-- No Mutation: There are no new alleles introduced into the population due to genetic mutations.
-- No Migration: There is no migration of individuals into or out of the population.
-- No Selection: There is no differential survival or reproductive advantage for individuals with particular genotypes.
-- Infinitely Large Population: The population is considered infinitely large, which means that genetic drift (random fluctuations in allele frequencies) is negligible.
 
-The formula for Hardy-Weinberg equilibrium relates genotype frequencies to allele frequencies. If we have two alleles for a particular gene, denoted as "A" and "a," and the allele frequencies are p for "A" and q for "a," then the expected genotype frequencies in the population are given by:
-
-    Genotype AA frequency, $f(AA) = p^2$ 
-    Genotype Aa frequency $f(Aa) = 2pq$
-    Genotype aa frequency $f(aa) = q^2$
-
-Where:
-
-    p is the frequency of the "A" allele.
-    q is the frequency of the "a" allele.
-    p^2 represents the expected frequency of homozygous "AA" individuals.
-    2pq represents the expected frequency of heterozygous "Aa" individuals.
-    q^2 represents the expected frequency of homozygous "aa" individuals.
-
-These genotype frequencies are expected to remain constant over generations when the conditions of Hardy-Weinberg equilibrium are met. Deviations from these expected frequencies can provide insights into evolutionary processes, such as genetic drift, natural selection, and mating patterns within a population. In practice, deviations from Hardy-Weinberg equilibrium often indicate that one or more of the assumptions are being violated, leading to evolutionary changes in the population's genetic composition.
-```{r}
+```{r firstFilter}
+#| label: fig-firstFilter
+#| fig-cap: "Missingness, MAF, and HWE filters involved in initial SNP filtering. Cutoffs are shown as red vertical lines"
 data.frame("SNP" = 1:1000,
           "Missingness" = rbeta(1000, 1, 5)) %>%
   ggplot(aes(x = Missingness)) +
@@ -160,16 +145,17 @@ data.frame("SNP" = 1:1000,
 
 
 ## Ancestry predictions
-Ancestries are predicted after the initial round of QC steps. First the standardized genetic relatedness matrix (GRM)
-is calcualted by standardizing the genotype matrix and then calculating the outter product of the resulting matrix.
-The GRM is then used to calculate the first 10 principal components (PCs). The subjects are then projected onto the 
-PC space. The subjects are then assigned ethnicities using k-means clustering based on either a standard genomic dataset 
-(such as though genomes) are by the reported ancestries of the subject in the study. Figure @ref(fig:ancestryPredictions)
+Ancestries are predicted after the initial round of QC steps. The principal components upon which the population is stratifed, are based off of the [genetic relatedness matrix (GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html).
+The subjects are then projected onto the 
+PC space and assigned ethnicities using k-means clustering based on either a standard genomic dataset 
+(such as though genomes) are by the reported ancestries of the subject in the study. Figure @fig-ancestryPredictions)
 the projection of each subject onto the first few PCs. They are colored by their reported ancestries. 
 
 The densities of ancestries based on the reference set are represent by the 10\% contour lines of the 2d density plots
-with the observed populations presented as points over top of the densities.
+with the observed populations presented as points over top of the densities shown in @fig-ancestryPredictions.
 ```{r ancestryPredictions}
+#| label: fig-ancestryPredictions
+#| fig-cap: "Ancestry predictions plotted over first decile contour for each ancestry."
 data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
            PC1 = c(rnorm(50, 0, 1), rnorm(50, 9, 1)),
            PC2 = c(rnorm(50, 0, 1), rnorm(50, 9, 1))) %>%
@@ -181,8 +167,10 @@ data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
 
 
 ## Per Ancestry summary
-We also summarize the QC metrics per ancestry. Figure @ref(fig:ancestrySummary) shows the distribution of MAF per ancestry.
+We also summarize the QC metrics per ancestry. @fig-ancestrySummary) shows the distribution of MAF per ancestry.
 ```{r ancestrySummary}
+#| label: fig-ancestrySummary
+#| fig-cap: "MAF faceted by ancestry with the cutoff vizualized as a red vertical line."
 data.frame("Ancestry" = rep(c("1", "2", "3"), each = 50),
            "MAF" = c(rbeta(50, 3, 2), rbeta(50, 3, 3), rbeta(50, 4, 1))) %>%
   ggplot(aes(x = MAF)) +
@@ -194,17 +182,27 @@ data.frame("Ancestry" = rep(c("1", "2", "3"), each = 50),
 
 ```
 
+# GWAS
+Results of Genome Wide Association Study (GWAS) are visualized in @fig-gwas.
+```{r gwas}
+#| label: fig-gwas
+#| fig-cap: "log pvalue of GWAS colored by chromosome."
+nsim <- 50000
+simdata <- data.frame(
+  "chromosome" = sample(c(1:22,"X"), size = nsim, replace = TRUE),
+  "position" = sample(1:100000000, size = nsim),
+  "P.value" = rbeta(nsim, shape1 = 5, shape2 = 1)^7
+) %>%
+  mutate(chromosome = factor(chromosome))
 
+manhattan_plot(x= simdata, pval.colname = "P.value", chr.colname = "chromosome", pos.colname = "position", plot.title = "Manhattan plot")
+
+```
 
 
 
 # Additional information
-## Referencing this pipeline
-???? GDC citation????
-
-## Licence
-???? Confirm we want MIT license ????
-
 ## Contact
-???? Who to contact for questions ????
+Saonli Basu, PhD (saonli@umn.edu)
+Director of Analytics MIDB
 
