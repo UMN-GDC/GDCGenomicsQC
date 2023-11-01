@@ -39,4 +39,4 @@ This is still under construction
 
 # License
 
-Outline is [BSL 1.1 licensed](LICENSE).
+[MIT licensed](LICENSE).
