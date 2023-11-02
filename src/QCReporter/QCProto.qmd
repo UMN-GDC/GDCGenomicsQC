@@ -1,0 +1,205 @@
+---
+title: "Genomics QC Report"
+author: "GDC Data Team"
+date: today
+format: 
+  html:
+    toc: true
+    html-math-method: katex
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+  error: false
+  message: false
+  toc: true
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(kableExtra)
+library(gt) 
+library(ggmanh)
+```
+
+# Overview
+```{dot}
+digraph so {
+  rankdir = TB;
+  input [ label = "Input: \n N= 2414\n M = 665027" ];
+  rearranged[ label = "Oriented: \n N = 2414\n M = 665608 "] ; 
+  missingness1 [ label = "Drop Missing: \n N = 2414 \n M = 652312"] ; 
+  missingness2 [ label = "Drop Missing: \n N = 2391 \n M = 604723"] ; 
+  sexcheck [ label = "Sex Checked:  \n N = 2386 \n M = 604304"] ; 
+  MAF [ label = "MAF Filtered: \n N = 2386 \n M = 467722"] ; 
+  HWE [ label = "HWE Filtered: \n N = 2386 \n M = 467722"] ;
+  Het [ label = "Het Filtered: \n N = 2386 \n M = 467722"] ;
+  Cryptic [ label = "Cryptic Relatedness: \n N = 2386 \n M = 467722"] ;
+
+  input -> rearranged [label = "Lift-over \n -0 subjects -581 SNPs"] ; 
+  rearranged -> missingness1 [label = "0 subjects -12714 SNPs"] ;
+  missingness1 -> missingness2 [label = "10% \n -23 subjects -48009 SNPs"] ;
+  missingness2 -> sexcheck [label = "2% \n 5 subjects - 419 SNPs"] ;
+  sexcheck -> MAF [label = "5% \n 0 subjects -136582 SNPs"] ;
+  MAF -> HWE [label = "1e-10 \n 0 subjects 0 SNPs"] ;
+  HWE -> Het ;
+  Het -> Cryptic ;
+}
+```
+
+
+
+
+# QC processing
+## Orienting Data
+2414 subjects sequenced at 665027 locations used as input. Synchronized data to GRCh38/hg38 reference genome. Using [Lift-over](https://www.well.ox.ac.uk/~wrhttps://www.well.ox.ac.uk/~wrayner/strand/ayner/strand/). 581 variants due to insfufficient mapping ifnormation
+7 variants removed due to non SNP mutation (such as insertion and deletion).
+
+## Sample and Variant Missingness filters
+```{r missing1}
+#\ fig-cap: "First round of missingness filters"
+data.frame("Subject" = 1:100,
+          "Missingness" = rbeta(100, 1, 4)) %>%
+  ggplot(aes(x = Missingness)) +
+  geom_histogram() + 
+  geom_vline(xintercept = 0.1, color = "red") + 
+  xlab("Missingness per subject") +
+  ggtitle("% SNPS missing per subject")
+
+data.frame("SNP" = 1:1000,
+          "Missingness" = rbeta(1000, 1, 5)) %>%
+  ggplot(aes(x = Missingness)) +
+  geom_histogram() +
+  geom_vline(xintercept = 0.1, color = "red") +
+  xlab("Missingness per SNP") +
+  ggtitle("% calls missing per SNP")
+
+```
+
+```{r missing2}
+#\ fig-cap: "Second round of missingness filters"
+data.frame("Subject" = 1:100,
+          "Missingness" = rbeta(100, 1, 4)) %>%
+  ggplot(aes(x = Missingness)) +
+  geom_histogram() + 
+  geom_vline(xintercept = 0.02, color = "red") + 
+  xlab("Missingness per subject") +
+  ggtitle("% SNPS missing per subject")
+
+data.frame("SNP" = 1:1000,
+          "Missingness" = rbeta(1000, 1, 5)) %>%
+  ggplot(aes(x = Missingness)) +
+  geom_histogram() +
+  geom_vline(xintercept = 0.02, color = "red") +
+  xlab("Missingness per SNP") +
+  ggtitle("% calls missing per SNP")
+
+```
+
+
+## Sex check
+```{r FstatGraph}
+#| fig.cap: "Distribution of F-statistic assessing sex of subjects with the corresponding thresholds for each sex label."
+df <- read_table("../QCReporter/sampleLogs/gender_check.sexcheck")
+thresholds <- data.frame("Value" = c(0.2,0.8),
+                          "Label" = c("Female Threshold", "Male Threshold"))
+df %>%
+  ggplot(aes(x = F)) +
+  geom_histogram() + 
+  xlab("Sex Check F statistic") + 
+  geom_vline(xintercept = c(0.2, 0.8), color = "red") + 
+  geom_text(data = thresholds, aes(x = Value, y = Inf, label = Label, vjust = 1), color = "red") + 
+  ylab("Count") + 
+  ggtitle("Sex Check F statistic distribution")
+```
+
+
+```{r}
+df %>%
+  mutate(PEDSEX = case_when(PEDSEX == 0 ~ "Ambiguous",
+                            PEDSEX == 1 ~ "Male",
+                            PEDSEX == 2 ~ "Female"),
+         SNPSEX = case_when(SNPSEX == 0 ~ "Ambiguous",
+                            SNPSEX == 1 ~ "Male",
+                            SNPSEX == 2 ~ "Female")) %>%
+  select(PEDSEX, SNPSEX) %>%
+  table() %>% 
+  as.data.frame() %>%
+  pivot_wider(id_cols = PEDSEX, names_from = SNPSEX, values_from = Freq, ) %>%
+  rename("Reported Sex" = PEDSEX) %>%
+  gt() %>%
+  # Label stubhead "Reported Sex"
+  tab_spanner(label = "Inferred Sex", columns = c("Ambiguous", "Female", "Male"))
+
+```
+
+## Minor Allele Frequency filter
+```{r MAF}
+#\ fig-cap: "Minor allele frequency distribution with a 5% cut-off."
+data.frame("SNP" = 1:1000,
+          "Missingness" = rbeta(1000, 1, 5)) %>%
+  ggplot(aes(x = Missingness)) +
+  geom_histogram() +
+  geom_vline(xintercept = 0.02, color = "red") +
+  xlab("Missingness per SNP") +
+  ggtitle("% calls missing per SNP")
+
+```
+
+## Hardy-Weinberg Equilibrium filter
+```{r HWE}
+#| label: fig-firstFilter
+#| fig-cap: "HWE filters involved in initial SNP filtering. Cutoffs are shown as red vertical lines"
+
+data.frame("SNP" = 1:1000,
+          "HWE" = -rgamma(1000, 3, 2)) %>%
+          ggplot(aes(x = HWE)) +
+          geom_histogram() +
+          geom_vline(xintercept = c(-6, -10), color = "red") +
+          xlab("log(HWE p-value)") +
+          ggtitle("Hardy-Weinberg Equilibrium p-value distribution")
+```
+
+## Heterozygosity filter
+```{r hetFilter}
+#| label: fig-hetFilter
+#| fig-cap: "Heterozygosity distributions with cutoff shown as red vertical line."
+data.frame("Subject" = 1:100,
+          "Heterozygosity" = rcauchy(100, 0.1, 0.1)) %>%
+  ggplot(aes(x = Heterozygosity)) +
+  geom_histogram() + 
+  geom_vline(xintercept = c(-2, 2), color = "red") + 
+  xlab("Heterozygosity F statistic") +
+  ggtitle("Heterozygous F statistic distribution")
+```
+
+```
+
+
+# Additional Analyses
+## Population stratification 
+![Projection of sample (points) on reference panel derived from reference panel.](../QCReporter/sampleLogs/SMILES_comm.png)
+
+## GWAS
+Results of Genome Wide Association Study (GWAS) are visualized in @fig-gwas.
+```{r gwas}
+#| label: fig-gwas
+#| fig-cap: "log pvalue of GWAS colored by chromosome."
+nsim <- 50000
+simdata <- data.frame(
+  "chromosome" = sample(c(1:22,"X"), size = nsim, replace = TRUE),
+  "position" = sample(1:100000000, size = nsim),
+  "P.value" = rbeta(nsim, shape1 = 5, shape2 = 1)^7
+) %>%
+  mutate(chromosome = factor(chromosome))
+
+manhattan_plot(x= simdata, pval.colname = "P.value", chr.colname = "chromosome", pos.colname = "position", plot.title = "Manhattan plot")
+
+```
+
+# Additional information
+## Contact
+Saonli Basu, PhD (saonli@umn.edu)
+Director of Analytics MIDB
+
