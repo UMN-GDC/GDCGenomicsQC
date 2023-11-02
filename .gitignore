@@ -57,3 +57,18 @@ gcta64
 
 
 *.gz
+
+
+# plink files
+*.bed
+*.bim
+*.fam
+*.ped
+*.vcf
+*.csv
+*.log
+*.sexcheck
+*.het
+
+
+
