@@ -1,0 +1,22 @@
+FRAPOSA started.
+Reference data: hgdp_comm
+Study data: SMILES_comm
+Output prefix: SMILES_comm
+Method: oadp
+Reference dimension: 4
+Study dimension: 8
+Online SVD dimension: 16
+2023-10-26 07:26:06.382020
+Attemping to load saved reference PCA result...
+Warning: If you have changed the parameter settings, please delete hgdp_comm_*.dat and rerun FRAPOSA.
+Reference PCA result successfully loaded.
+2023-10-26 07:26:08.879892
+Loading study data...
+2023-10-26 07:26:11.596610
+Predicting study PC scores (method: oadp)...
+Study PC scores saved to SMILES_comm.pcs
+Study time: 237.23276591300964 sec
+2023-10-26 07:30:08.910657
+FRAPOSA finished.
+Embedded R ended.
+Embedded R already ended.
