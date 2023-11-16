@@ -4,6 +4,8 @@ show_help() {
   echo "Usage: $0 [options]"
   echo "Options:"
   echo "  --FILE <file_name>  Specify the file to process. Must be a .bed file"
+  echo "  --OLDBLD <Y/N>      Specify if data's genome build is GRCh37 or earlier"
+  echo "  --UPDTSO <Y/N>      Specify if you would like to update the strand orientation and flip alleles as necessary"
   echo "  --help              Display this help message."
 }
 
@@ -19,12 +21,50 @@ while [[ $# -gt 0 ]]; do
 
   case $key in
     --FILE)
-      FILE="$2"
-      shift 2 # Consume both the flag and its value
+        FILE="$2"
+        echo "File chosen is $FILE"
+        shift 2 # Consume both the flag and its value
       ;;
     --help)
-      show_help
-      exit 0
+        show_help
+        exit 0
+      ;;
+    --OLDBLD)
+        OLDBLD="$2"
+        case $OLDBLD in
+          [yY]|[yY][eE][sS])
+            echo "You have chosen to use Crossmap."
+            OLDBLD="YES"
+          ;;
+          [nN]|[nN][oO])
+            echo "You have chosen to not use Crossmap."
+            OLDBLD="NO"
+          ;;
+          *) 
+          echo "Please enter a valid option (Yes/No) when choosing to include the OLDBLD flag."
+          exit 0
+          ;;
+        esac
+        shift 2
+      ;;
+    --UPDTSO)
+        UPDTSO="$2"
+#        echo "You have entered $UPDTSO"
+        case $UPDTSO in
+          [yY]|[yY][eE][sS])
+            echo "You have chosen to update the strand orientation and flip alleles as necessary."
+            UPDTSO="YES"
+          ;;
+          [nN]|[nN][oO])
+            echo "You have chosen to not update the strand orientation. "
+            UPDTSO="NO"
+          ;;
+          *) 
+            echo "Please enter a valid option (Yes/No) when choosing to include the UPDTSO flag."
+            exit 0
+          ;;
+        esac
+        shift 2
       ;;
     *)
       echo "Unrecognized option: $key"
@@ -34,28 +74,58 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+
 # Just in case they included the file extension
 FILE=${FILE%*}
 
+# For if they want to update the genome build to GRCh38
+case "$OLDBLD" in
+  [Y][E][S]) 
+    echo "Matching data to NIH's GRCh38 genome build"
+    FILE_B="cross"
+    # Lift-over (if data's genome build is GRCh37 or earlier): adding in CrossMap 
+#    plink --bfile $FILE --recode vcf --out vcf_data
+#    ./Crossmap_step.sh
+#    echo "${FILE_B}_${FILE}"
+#    plink --vcf out.hg38.vcf --make-bed --out $FILE_B_${FILE}
+#    exit 0
+  ;;
+  *) 
+    FILE_B="same"
+    plink --bfile ${FILE} --make-bed --out ${FILE_B}_${FILE}
+#    echo "${FILE_B}_${FILE}"
+#    exit 0
+  ;;
+esac
 
-echo "(step 1 of QC steps) Matching data to NIH's GRCh38 genome build"
-
-# Lift-over (if data's genome build is GRCh37 or earlier): adding in CrossMap 
-# Converting to VCF for process
-plink --bfile $FILE --recode vcf --out vcf_data
-./Crossmap_step.sh
-plink --vcf out.hg38.vcf --make-bed --out hg38_${FILE}
 
 # Update strand orientation and flip alleles as needed:
 # Note: SMILES-GSA data was genotyped using the chip array GSA-24v2-0
-wget https://www.well.ox.ac.uk/~wrayner/strand/GSA-24v2-0_A2-b38-strand.zip
-wget https://www.well.ox.ac.uk/~wrayner/strand/update_build.sh
-unzip GSA-24v2-0_A2-b38-strand.zip && rm GSA-24v2-0_A2-b38-strand.zip
-./update_build.sh hg38_${FILE} GSA-24v2-0_A2-b38.strand ${FILE}_hg38NIH
+case "$UPDTSO" in
+  [Y][E][S]) 
+    echo "Updating strand orientation and flipping alleles as necessary"
+    FILE_C="strand"
+    wget https://www.well.ox.ac.uk/~wrayner/strand/GSA-24v2-0_A2-b38-strand.zip
+    wget https://www.well.ox.ac.uk/~wrayner/strand/update_build.sh
+    unzip GSA-24v2-0_A2-b38-strand.zip && rm GSA-24v2-0_A2-b38-strand.zip
+    ./update_build.sh ${FILE_B}_${FILE} GSA-24v2-0_A2-b38.strand ${FILE_B}_${FILE_C}_${FILE} #This line gives the error "Permission denied"
+#    echo "${FILE_B}_${FILE_C}_${FILE}"
+#    exit 0
+  ;;
+  *) 
+    FILE_C="same"
+    plink --bfile ${FILE_B}_${FILE} --make-bed --out ${FILE_B}_${FILE_C}_${FILE}
+#    echo "${FILE_B}_${FILE_C}_${FILE}"
+#    exit 0
+  ;;
+esac
+
+
+# Standard QC steps
 
 echo "(step 2 of QC steps) remove markers where 10% or higher of samples have missing data"
 #  at these markers 
-#plink --bfile ${FILE}_hg38NIH --geno 0.1 --make-bed --out ${FILE}_1
+plink --bfile ${FILE_B}_${FILE_C}_${FILE} --geno 0.1 --make-bed --out ${FILE}_1
 
 echo "(Step 3 of QC) Initial sample missing filtering"
 plink --bfile ${FILE}_1 --mind 0.1 --make-bed --out ${FILE}_2
@@ -122,7 +192,7 @@ plink --bfile ${FILE}_9a --missing
 #The problem being the order of removal since 1 sample might be related to several other samples, generating several lines
 #in the file pihat_min0.2_in_founders
 
-Rscript src/lower_pihat_list_generator.R
+Rscript src/lower_pihat_list_generator_v2.R
 plink --bfile ${FILE}_9a --remove 0.2_low_call_rate_pihat.txt --make-bed --out ${FILE}_10
 
 echo "(Step 10 of QC) Principle Component Analysis"
@@ -139,3 +209,5 @@ mv ./fraposa/*.* ./ && rm -R fraposa
 Rscript --no-save src/QC_report.R 
 
 echo "QC steps are done!"
+
+
