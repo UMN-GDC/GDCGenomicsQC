@@ -85,7 +85,7 @@ case "$OLDBLD" in
     FILE_B="cross"
     # Lift-over (if data's genome build is GRCh37 or earlier): adding in CrossMap 
 #    plink --bfile $FILE --recode vcf --out vcf_data
-#    ./Crossmap_step.sh
+#    ./src/Crossmap_step.sh
 #    echo "${FILE_B}_${FILE}"
 #    plink --vcf out.hg38.vcf --make-bed --out $FILE_B_${FILE}
 #    exit 0
