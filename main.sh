@@ -195,15 +195,6 @@ plink --bfile ${FILE}_9a --missing
 Rscript src/lower_pihat_list_generator_v2.R
 plink --bfile ${FILE}_9a --remove 0.2_low_call_rate_pihat.txt --make-bed --out ${FILE}_10
 
-echo "(Step 10 of QC) Principle Component Analysis"
-#We use fraposa to perform pca on the current data and a reference data 1000G with known population
-#We superimpose the pcs of the current data onto the reference data to compare and predict the current data's population
-git clone https://github.com/daviddaiweizhang/fraposa.git
-mv ./fraposa/*.* ./ && rm -R fraposa
-./commvar.sh 1000G ${FILE}_10 1000G_comm ${FILE}_11
-./fraposa_runner.py --stu_filepref ${FILE}_11 1000G_comm
-./predstupopu.py 1000G_comm ${FILE}_11
-./plotpcs.py 1000G_comm ${FILE}_11
 
 # Generates PDF QC_report 
 Rscript --no-save src/QC_report.R 
