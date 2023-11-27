@@ -12,5 +12,5 @@ module load python3/3.9.3_anaconda2021.11_mamba
 module load R/4.2.2-openblas
 
 # Prefix for 
-./main.sh --FILE SMILES_GSA --OLDBLD N --UPDTSO N #Assumes they don't need their reference build updated and don't need alleles flipped. 
+./src/main.sh --FILE SMILES_GSA --OLDBLD N --UPDTSO N #Assumes they don't need their reference build updated and don't need alleles flipped. 
 ./src/ancestryPrediction.sh
