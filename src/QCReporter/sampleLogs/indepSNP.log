@@ -1,0 +1,53 @@
+PLINK v1.90b6.10 64-bit (17 Jun 2019)
+Options in effect:
+  --bfile ../Step5_HWE/SMILES_done_HWE
+  --exclude inversion.txt
+  --indep-pairwise 50 5 0.2
+  --out indepSNP
+  --range
+
+Hostname: ahl02
+Working directory: /panfs/jay/groups/9/gdc/tran1327/SMILES_original/Working/Step6_Heterozygosity
+Start time: Thu Oct 26 05:02:07 2023
+
+Note: --range flag deprecated.  Use e.g. "--extract range <filename>".
+Random number seed: 1698314527
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+451085 variants loaded from .bim file.
+2386 people (1333 males, 1053 females) loaded from .fam.
+2323 phenotype values loaded from .fam.
+--exclude range: 8762 variants excluded.
+--exclude range: 442323 variants remaining.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2386 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.997891.
+442323 variants and 2386 people pass filters and QC.
+Among remaining phenotypes, 756 are cases and 1567 are controls.  (63
+phenotypes are missing.)
+Pruned 19831 variants from chromosome 1, leaving 16490.
+Pruned 20488 variants from chromosome 2, leaving 16230.
+Pruned 16620 variants from chromosome 3, leaving 13661.
+Pruned 14712 variants from chromosome 4, leaving 12908.
+Pruned 14020 variants from chromosome 5, leaving 12321.
+Pruned 13991 variants from chromosome 6, leaving 11568.
+Pruned 14139 variants from chromosome 7, leaving 11374.
+Pruned 12937 variants from chromosome 8, leaving 10154.
+Pruned 10795 variants from chromosome 9, leaving 9208.
+Pruned 13057 variants from chromosome 10, leaving 10563.
+Pruned 12941 variants from chromosome 11, leaving 10122.
+Pruned 12159 variants from chromosome 12, leaving 10043.
+Pruned 8924 variants from chromosome 13, leaving 7465.
+Pruned 8264 variants from chromosome 14, leaving 6817.
+Pruned 7669 variants from chromosome 15, leaving 6498.
+Pruned 8131 variants from chromosome 16, leaving 7233.
+Pruned 6653 variants from chromosome 17, leaving 6333.
+Pruned 6844 variants from chromosome 18, leaving 6522.
+Pruned 5129 variants from chromosome 19, leaving 5096.
+Pruned 5879 variants from chromosome 20, leaving 5599.
+Pruned 3100 variants from chromosome 21, leaving 3172.
+Pruned 3356 variants from chromosome 22, leaving 3307.
+Pruning complete.  239639 of 442323 variants removed.
+Marker lists written to indepSNP.prune.in and indepSNP.prune.out .
+
+End time: Thu Oct 26 05:02:09 2023
