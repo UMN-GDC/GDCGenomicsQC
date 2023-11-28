@@ -1,0 +1,29 @@
+PLINK v1.90b6.10 64-bit (17 Jun 2019)
+Options in effect:
+  --bfile ../Step2_missingness/SMILES_done_missing
+  --check-sex
+  --out gender_check
+
+Hostname: ahl02
+Working directory: /panfs/jay/groups/9/gdc/tran1327/SMILES_original/Working/Step3_check_gender
+Start time: Thu Oct 26 02:19:16 2023
+
+Random number seed: 1698304756
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+604304 variants loaded from .bim file.
+2391 people (1290 males, 730 females, 371 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to gender_check.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2391 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Warning: 368689 het. haploid genotypes present (see gender_check.hh ); many
+commands treat these as missing.
+Warning: Nonmissing nonmale Y chromosome genotype(s) present; many commands
+treat these as missing.
+Total genotyping rate is 0.997932.
+604304 variants and 2391 people pass filters and QC.
+Note: No phenotypes present.
+--check-sex: 15650 Xchr and 0 Ychr variant(s) scanned, 374 problems detected.
+Report written to gender_check.sexcheck .
+
+End time: Thu Oct 26 02:19:17 2023

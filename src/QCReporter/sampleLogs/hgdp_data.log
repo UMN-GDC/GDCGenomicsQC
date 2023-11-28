@@ -1,0 +1,27 @@
+PLINK v2.00a2LM 64-bit Intel (10 Sep 2019)
+Options in effect:
+  --export ped
+  --make-bed
+  --max-alleles 2
+  --min-alleles 2
+  --out hgdp_data
+  --pfile hgdp
+
+Hostname: ahl02
+Working directory: /panfs/jay/groups/9/gdc/tran1327/SMILES_original/Working/Step8_PCA
+Start time: Thu Oct 26 06:35:02 2023
+
+Random number seed: 1698320102
+515514 MiB RAM detected; reserving 257757 MiB for main workspace.
+Using up to 256 threads (change this with --threads).
+929 samples (317 females, 612 males; 929 founders) loaded from hgdp.psam.
+64165858 out of 64946303 variants loaded from hgdp.pvar.
+4 phenotypes loaded (2 quantitative, 2 categorical).
+64165858 variants remaining after main filters.
+Writing hgdp_data.fam ... done.
+Writing hgdp_data.bim ... done.
+Writing hgdp_data.bed ... done.
+Error: Only VCF, oxford, bgen-1.x, haps, hapslegend, A, AD, A-transpose, and
+ind-major-bed output have been implemented so far.
+
+End time: Thu Oct 26 06:36:33 2023

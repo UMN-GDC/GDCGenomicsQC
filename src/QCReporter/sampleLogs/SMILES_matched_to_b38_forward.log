@@ -1,0 +1,121 @@
+Input stem is SMILES
+Strand file is GSA-24v2-0_A2-b38.strand
+Output stem is SMILES_matched_to_b38_forward
+PLINK v1.90b6.10 64-bit (17 Jun 2019)          www.cog-genomics.org/plink/1.9/
+(C) 2005-2019 Shaun Purcell, Christopher Chang   GNU General Public License v3
+Logging to TEMP_FILE_XX72262628_1.log.
+Options in effect:
+  --allow-no-sex
+  --bfile SMILES
+  --make-bed
+  --noweb
+  --out TEMP_FILE_XX72262628_1
+  --update-chr GSA-24v2-0_A2-b38.strand.chr
+
+Note: --noweb has no effect since no web check is implemented yet.
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+665608 variants loaded from .bim file.
+2414 people (1291 males, 731 females, 392 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to TEMP_FILE_XX72262628_1.nosex .
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2414 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Warning: 182403 het. haploid genotypes present (see TEMP_FILE_XX72262628_1.hh
+); many commands treat these as missing.
+Warning: Nonmissing nonmale Y chromosome genotype(s) present; many commands
+treat these as missing.
+Total genotyping rate is 0.986491.
+665608 variants and 2414 people pass filters and QC.
+Note: No phenotypes present.
+--update-chr: 665027 values updated.
+--make-bed to TEMP_FILE_XX72262628_1.bed + TEMP_FILE_XX72262628_1.bim +
+TEMP_FILE_XX72262628_1.fam ... done.
+PLINK v1.90b6.10 64-bit (17 Jun 2019)          www.cog-genomics.org/plink/1.9/
+(C) 2005-2019 Shaun Purcell, Christopher Chang   GNU General Public License v3
+Logging to TEMP_FILE_XX72262628_2.log.
+Options in effect:
+  --allow-no-sex
+  --bfile TEMP_FILE_XX72262628_1
+  --make-bed
+  --noweb
+  --out TEMP_FILE_XX72262628_2
+  --update-map GSA-24v2-0_A2-b38.strand.pos
+
+Note: --noweb has no effect since no web check is implemented yet.
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+665608 variants loaded from .bim file.
+2414 people (1291 males, 731 females, 392 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to TEMP_FILE_XX72262628_2.nosex .
+--update-map: 665027 values updated.
+Warning: Base-pair positions are now unsorted!
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2414 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Warning: 557618 het. haploid genotypes present (see TEMP_FILE_XX72262628_2.hh
+); many commands treat these as missing.
+Warning: Nonmissing nonmale Y chromosome genotype(s) present; many commands
+treat these as missing.
+Total genotyping rate is 0.986482.
+665608 variants and 2414 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to TEMP_FILE_XX72262628_2.bed + TEMP_FILE_XX72262628_2.bim +
+TEMP_FILE_XX72262628_2.fam ... done.
+PLINK v1.90b6.10 64-bit (17 Jun 2019)          www.cog-genomics.org/plink/1.9/
+(C) 2005-2019 Shaun Purcell, Christopher Chang   GNU General Public License v3
+Logging to TEMP_FILE_XX72262628_3.log.
+Options in effect:
+  --allow-no-sex
+  --bfile TEMP_FILE_XX72262628_2
+  --flip GSA-24v2-0_A2-b38.strand.flip
+  --make-bed
+  --noweb
+  --out TEMP_FILE_XX72262628_3
+
+Note: --noweb has no effect since no web check is implemented yet.
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+665608 variants loaded from .bim file.
+2414 people (1291 males, 731 females, 392 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to TEMP_FILE_XX72262628_3.nosex .
+--flip: 325926 SNPs flipped.
+Warning: 7 variants had at least one non-A/C/G/T allele name.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2414 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Warning: 557618 het. haploid genotypes present (see TEMP_FILE_XX72262628_3.hh
+); many commands treat these as missing.
+Warning: Nonmissing nonmale Y chromosome genotype(s) present; many commands
+treat these as missing.
+Total genotyping rate is 0.986482.
+665608 variants and 2414 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to TEMP_FILE_XX72262628_3.bed + TEMP_FILE_XX72262628_3.bim +
+TEMP_FILE_XX72262628_3.fam ... done.
+  --flip GSA-24v2-0_A2-b38.strand.flip
+PLINK v1.90b6.10 64-bit (17 Jun 2019)          www.cog-genomics.org/plink/1.9/
+(C) 2005-2019 Shaun Purcell, Christopher Chang   GNU General Public License v3
+Logging to SMILES_matched_to_b38_forward.log.
+Options in effect:
+  --allow-no-sex
+  --bfile TEMP_FILE_XX72262628_3
+  --extract GSA-24v2-0_A2-b38.strand.pos
+  --make-bed
+  --noweb
+  --out SMILES_matched_to_b38_forward
+Note: --noweb has no effect since no web check is implemented yet.
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+665608 variants loaded from .bim file.
+2414 people (1291 males, 731 females, 392 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to SMILES_matched_to_b38_forward.nosex .
+--extract: 665027 variants remaining.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2414 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Warning: 557608 het. haploid genotypes present (see
+SMILES_matched_to_b38_forward.hh ); many commands treat these as missing.
+Warning: Nonmissing nonmale Y chromosome genotype(s) present; many commands
+treat these as missing.
+Total genotyping rate is 0.986669.
+665027 variants and 2414 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to SMILES_matched_to_b38_forward.bed +
+SMILES_matched_to_b38_forward.bim + SMILES_matched_to_b38_forward.fam ... done.

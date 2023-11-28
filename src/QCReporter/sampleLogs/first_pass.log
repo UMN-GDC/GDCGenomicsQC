@@ -1,0 +1,30 @@
+PLINK v1.90b6.10 64-bit (17 Jun 2019)
+Options in effect:
+  --bfile step2_temp
+  --make-bed
+  --mind 0.1
+  --out first_pass
+
+Hostname: ahl02
+Working directory: /panfs/jay/groups/9/gdc/tran1327/SMILES_original/Working/Step2_missingness
+Start time: Thu Oct 26 01:57:55 2023
+
+Random number seed: 1698303475
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+652313 variants loaded from .bim file.
+2414 people (1291 males, 731 females, 392 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to first_pass.nosex .
+0 people removed due to missing genotype data (--mind).
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2414 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Warning: 418859 het. haploid genotypes present (see first_pass.hh ); many
+commands treat these as missing.
+Warning: Nonmissing nonmale Y chromosome genotype(s) present; many commands
+treat these as missing.
+Total genotyping rate is 0.994677.
+652313 variants and 2414 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to first_pass.bed + first_pass.bim + first_pass.fam ... done.
+
+End time: Thu Oct 26 01:57:58 2023

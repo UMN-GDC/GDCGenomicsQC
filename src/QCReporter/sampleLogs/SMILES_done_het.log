@@ -1,0 +1,28 @@
+PLINK v1.90b6.10 64-bit (17 Jun 2019)
+Options in effect:
+  --bfile ../Step5_HWE/SMILES_done_HWE
+  --make-bed
+  --out SMILES_done_het
+  --remove het_fail_ind.txt
+
+Hostname: ahl02
+Working directory: /panfs/jay/groups/9/gdc/tran1327/SMILES_original/Working/Step6_Heterozygosity
+Start time: Thu Oct 26 05:13:28 2023
+
+Random number seed: 1698315208
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+451085 variants loaded from .bim file.
+2386 people (1333 males, 1053 females) loaded from .fam.
+2323 phenotype values loaded from .fam.
+--remove: 2324 people remaining.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2324 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate in remaining samples is 0.997879.
+451085 variants and 2324 people pass filters and QC.
+Among remaining phenotypes, 737 are cases and 1524 are controls.  (63
+phenotypes are missing.)
+--make-bed to SMILES_done_het.bed + SMILES_done_het.bim + SMILES_done_het.fam
+... done.
+
+End time: Thu Oct 26 05:13:30 2023

@@ -1,0 +1,26 @@
+PLINK v1.90b6.10 64-bit (17 Jun 2019)
+Options in effect:
+  --bfile hgdp_v1
+  --extract tmp.rs
+  --make-bed
+  --out hgdp_comm
+
+Hostname: ahl02
+Working directory: /panfs/jay/groups/9/gdc/tran1327/SMILES_original/Working/Step8_PCA
+Start time: Thu Oct 26 07:25:26 2023
+
+Random number seed: 1698323126
+515514 MB RAM detected; reserving 257757 MB for main workspace.
+64165858 variants loaded from .bim file.
+740 people (521 males, 219 females) loaded from .fam.
+740 phenotype values loaded from .fam.
+--extract: 222011 variants remaining.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 740 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.991134.
+222011 variants and 740 people pass filters and QC.
+Phenotype data is quantitative.
+--make-bed to hgdp_comm.bed + hgdp_comm.bim + hgdp_comm.fam ... done.
+
+End time: Thu Oct 26 07:25:44 2023

@@ -1,0 +1,19 @@
+PLINK v2.00a2LM 64-bit Intel (10 Sep 2019)
+Options in effect:
+  --export ped
+  --make-bed
+  --out hgdp
+  --pgen hgdp
+
+Hostname: ahl02
+Working directory: /panfs/jay/groups/9/gdc/tran1327/SMILES_original/Working/Step8_PCA
+Start time: Thu Oct 26 06:30:22 2023
+
+Random number seed: 1698319822
+515514 MiB RAM detected; reserving 257757 MiB for main workspace.
+Using up to 256 threads (change this with --threads).
+Error: A full fileset (.pgen/.bed + .pvar/.bim + .psam/.fam) is required for
+this.
+For more info, try "plink2 --help <flag name>" or "plink2 --help | more".
+
+End time: Thu Oct 26 06:30:22 2023
