@@ -33,7 +33,11 @@ extractLog<- function(filepath, plinkoption){
   nSNPs <- as.numeric(test[[1]][1])
   nSubjects <- as.numeric(test[[1]][2])
   
- # switch()
+  #### Section for implementing switch to look for different things ####
+ # switch(plinkoption,
+ #        "mind"=)
+  
+  
   # case controls
   test2<- str_extract_all(log[grep('.* cases and .* are controls', log)], "[0-9]+")
   if(length(test2) == 0) {test2=NULL} #Extra patch... 
@@ -69,8 +73,11 @@ print(plink_option)
 print(output_name)
 final_name=paste0(wd, "/", output_name)
 print(final_name)
-table1=extractLog(filename, plink_option)
-write.table(table1, file = paste0(final_name))
+switch(plink_option,
+       "mind"=print("You have chosen to look for people missing genotype data"),
+       "geno"=print("You have chosen to look for variants missing genotype data"))
+# table1=extractLog(filename, plink_option)
+# write.table(table1, file = paste0(final_name))
 #After extractLog need to save it as a table to be called within quarto
 
 
