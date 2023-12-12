@@ -11,32 +11,51 @@ extractLog<- function(filepath, plinkoption){
   file <- file(paste0(wd,filepath), "r")
   log <- readLines(file)
   close(file)
-  
+
 
   test <- log[grep("people .* from .fam", log)]
   test1 <- str_extract_all(test, "[0-9]+")
   nSubjects <- as.numeric(test1[[1]][1])
   nMale <- as.numeric(test1[[1]][2])
   nFemale <- as.numeric(test1[[1]][3])
-  
+
   # SNPsNSubjects()
   test <- log[grep("loaded from .bim", log)]
   nSNPs <- as.numeric(gsub("[^0-9]", "", test))
-  
-  initData <-c(nSubjects, nMale, nFemale, nSNPs) 
+
+  initData <-c(nSubjects, nMale, nFemale, nSNPs)
   names(initData) <- c("InSubjects", "InMale", "InFemale", "InSNPs")
 
 
-  # Passing QC 
-  # SNPs and subejcts 
+  # Passing QC
+  # SNPs and subejcts
   test <- str_extract_all(log[grep("pass filters and QC", log)], "[0-9]+")
   nSNPs <- as.numeric(test[[1]][1])
   nSubjects <- as.numeric(test[[1]][2])
   
   #### Section for implementing switch to look for different things ####
- # switch(plinkoption,
- #        "mind"=)
+  # All if string_to_find_a/string_to_find_b untested... 
+  if(length(plinkoption) == 0) {plinkoption=5} 
+  if (plinkoption == 1) { #--mind logs
+    string_to_find_a="[0-9]+ people removed due to missing genotype data"
+  }
+  if (plinkoption ==2){ #--geno logs
+    string_to_find_a="[0-9]+ variants removed due to missing genotype data"
+  }
+
+  if (plinkoption ==3) { #--check-sex logs
+    string_to_find_a="[0-9]+ Xchr and [0-9]+ Ychr variant(s) scanned, [0-9]+ problems detected." 
+  }
   
+  if (plinkoption ==4) { #--maf logs
+    string_to_find_a="[0-9]+ variants removed due to minor allele threshold(s)"
+  } 
+  if (plinkoption==5) {
+    error_message= "Invalid plink option selected"
+    stop(print(error_message))
+  }
+  
+  string_to_find_b="[0-9]+ variants and [0-9]+ people pass filters and QC." #All logs have this in common!
   
   # case controls
   test2<- str_extract_all(log[grep('.* cases and .* are controls', log)], "[0-9]+")
@@ -73,10 +92,15 @@ print(plink_option)
 print(output_name)
 final_name=paste0(wd, "/", output_name)
 print(final_name)
-switch(plink_option,
-       "mind"=print("You have chosen to look for people missing genotype data"),
-       "geno"=print("You have chosen to look for variants missing genotype data"))
-# table1=extractLog(filename, plink_option)
+plink_selected <- switch(plink_option,
+       "mind"=1,       #=print("You have chosen to look for people missing genotype data logs."),
+       "geno"=2,       #=print("You have chosen to look for variants missing genotype data logs."),
+       "check-sex"=3,       #=print("You have chosen to look for comparisons between sex assingments logs."),
+       "maf"=4)       #=print("You have chosen to look for SNPS with minor allele frequency logs."))
+
+print(plink_selected)
+table1=extractLog(filename, plink_selected)
+table1
 # write.table(table1, file = paste0(final_name))
 #After extractLog need to save it as a table to be called within quarto
 
