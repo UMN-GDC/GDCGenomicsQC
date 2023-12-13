@@ -34,7 +34,7 @@ extractLog<- function(filepath, plinkoption){
   nSubjects <- as.numeric(test[[1]][2])
   
   #### Section for implementing switch to look for different things ####
-  # All if string_to_find_a/string_to_find_b untested... 
+  # Testing if this works for plinkoption ==1 
   if(length(plinkoption) == 0) {plinkoption=5} 
   if (plinkoption == 1) { #--mind logs
     string_to_find_a="[0-9]+ people removed due to missing genotype data"
@@ -47,7 +47,7 @@ extractLog<- function(filepath, plinkoption){
     string_to_find_a="[0-9]+ Xchr and [0-9]+ Ychr variant(s) scanned, [0-9]+ problems detected." 
   }
   
-  if (plinkoption ==4) { #--maf logs
+  if (plinkoption ==4) { #--maf logs #Doesn't like this search criteria
     string_to_find_a="[0-9]+ variants removed due to minor allele threshold(s)"
   } 
   if (plinkoption==5) {
@@ -57,18 +57,28 @@ extractLog<- function(filepath, plinkoption){
   
   string_to_find_b="[0-9]+ variants and [0-9]+ people pass filters and QC." #All logs have this in common!
   
-  # case controls
-  test2<- str_extract_all(log[grep('.* cases and .* are controls', log)], "[0-9]+")
-  if(length(test2) == 0) {test2=NULL} #Extra patch... 
-  if(is.null(test2) == FALSE) {
-    nCases <- as.numeric(test2[[1]][1])
-    nControls <- as.numeric(test2[[1]][2])
-  } else {
-    nCases = 000
-    nControls = 000
+  # Extracting what was changed
+  ## Works for option ==1
+  ## Now for option ==2
+  test2<- str_extract_all(log[grep(string_to_find_a, log)], "[0-9]+")
+  if(length(test2) == 0) {
+    error_message= "Invalid log file provided for this plink option selected"
+    stop(print(error_message))
+    } else{
+      nRemoved <- as.numeric(test2[[1]][1])
+    }
+
+ 
+  test3<- str_extract_all(log[grep(string_to_find_b, log)], "[0-9]+")
+  if(length(test3)==0){
+    error_message_2="Bad string_to_find_b"
+    stop(print(error_message_2))
   }
-  outputData <- c(nSubjects, nCases, nControls, nSNPs)
-  names(outputData) <- c("OutSubjects", "OutCases", "OutControls", "OutSNPs")
+  nSNPS2 <- as.numeric(test3[[1]][1])
+  nSubjs2 <- as.numeric(test3[[1]][2])
+  outputData <- c(nSubjs2, nRemoved, nSNPS2)
+  ## Would be a good idea to have the column names for outputData be different for each plink option (1,2,4)
+  names(outputData) <- c("OutSubjects", "NumSubjsRemoved", "OutSNPs")
   # return nSubjects, nMale, nFemale, nSNPs
   return(c(initData, outputData))
 }

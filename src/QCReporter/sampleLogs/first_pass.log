@@ -14,7 +14,7 @@ Random number seed: 1698303475
 652313 variants loaded from .bim file.
 2414 people (1291 males, 731 females, 392 ambiguous) loaded from .fam.
 Ambiguous sex IDs written to first_pass.nosex .
-0 people removed due to missing genotype data (--mind).
+10 people removed due to missing genotype data (--mind).
 Using 1 thread (no multithreaded calculations invoked).
 Before main variant filters, 2414 founders and 0 nonfounders present.
 Calculating allele frequencies... done.
@@ -23,7 +23,7 @@ commands treat these as missing.
 Warning: Nonmissing nonmale Y chromosome genotype(s) present; many commands
 treat these as missing.
 Total genotyping rate is 0.994677.
-652313 variants and 2414 people pass filters and QC.
+652313 variants and 2404 people pass filters and QC.
 Note: No phenotypes present.
 --make-bed to first_pass.bed + first_pass.bim + first_pass.fam ... done.
 
