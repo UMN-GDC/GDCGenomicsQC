@@ -33,24 +33,27 @@ extractLog<- function(filepath, plinkoption){
   nSNPs <- as.numeric(test[[1]][1])
   nSubjects <- as.numeric(test[[1]][2])
   
+  #Initializing indicators
+  out_label="NotUsed"
   num_args=1
-  #### Section for implementing switch to look for different things ####
-  # Testing if this works for plinkoption ==1 
+  
+  # Section for implementing switch to look for different things  
   if(length(plinkoption) == 0) {plinkoption=7} 
   if (plinkoption == 1) { #--mind logs
     string_to_find_a="[0-9]+ people removed due to missing genotype data"
+    out_label="NumPeopleRemoved"
   }
   if (plinkoption ==2){ #--geno logs
     string_to_find_a="[0-9]+ variants removed due to missing genotype data"
+    out_label="NumVariantsRemoved"
   }
-
   if (plinkoption ==3) { #--check-sex logs
     string_to_find_a=".* Xchr and .* Ychr variant.* scanned, .* problems detected." 
     num_args=3
   }
-  
   if (plinkoption ==4) { #--maf logs 
     string_to_find_a=".*variants removed due to minor allele threshold.*"
+    out_label="NumVariantsRemoved"
   } 
   if (plinkoption ==5) { #--filter-founders logs 
     string_to_find_a=".* people removed due to founder status .*"
@@ -58,6 +61,7 @@ extractLog<- function(filepath, plinkoption){
   }
   if (plinkoption ==6) { #--hwe logs 
     string_to_find_a=".*variants removed due to Hardy-Weinberg exact test."
+    out_label="NumVariantsRemoved"
   }
   if (plinkoption==7) { #Default
     error_message= "Invalid plink option selected"
@@ -65,12 +69,10 @@ extractLog<- function(filepath, plinkoption){
   }
   
   string_to_find_b="[0-9]+ variants and [0-9]+ people pass filters and QC." #All logs have this in common!
+  # for use in plinkoption 5
   string_to_find_c="Before main variant filters, .* founders and .* nonfounders present."
   
   # Extracting what was changed
-  ## Works for option ==1, 2, 4
-  ## Now for option == 3
-
   test2<- str_extract_all(log[grep(string_to_find_a, log)], "[0-9]+")
   if(length(test2) == 0) {
     error_message= "Invalid log file provided for this plink option selected"
@@ -93,7 +95,7 @@ extractLog<- function(filepath, plinkoption){
   }
         
 
- 
+  # Retreiving surviving #SNPs and participants
   test3<- str_extract_all(log[grep(string_to_find_b, log)], "[0-9]+")
   if(length(test3)==0){
     error_message_2="Bad string_to_find_b"
@@ -102,8 +104,9 @@ extractLog<- function(filepath, plinkoption){
   nSNPS2 <- as.numeric(test3[[1]][1])
   nSubjs2 <- as.numeric(test3[[1]][2])
   outputData <- c(nSubjs2, nRemoved, nSNPS2)
-  ## Would be a good idea to have the column names for outputData be different for each plink option (1,2,4)
-  names(outputData) <- c("OutSubjects", "NumRemoved", "OutSNPs")
+  
+  # Allows for different column names between plink options
+  names(outputData) <- c("OutSubjects", out_label, "OutSNPs")
   
   if(num_args ==3) { #Output for plink option 3
   outputData <- c(nSubjs2, nRemoved, nY, nProblems, nSNPS2)
@@ -119,18 +122,24 @@ extractLog<- function(filepath, plinkoption){
   return(c(initData, outputData))
 }
 
+
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
-# test if there is at least one argument: if not, return an error
-if (length(args)==0) {
-  stop("A log to extract information from needs to be provided.", call.=FALSE)
-} else if (length(args)>=1) {
+# test if there is at least two arguments: if not, return an error
+if (length(args)<=1) {
+  stop("A log to extract information from and which plink option need to be provided.", call.=FALSE)
+} else if (length(args)>=2) {
   args[1] -> filename
   # default output file
   args[2] -> plink_option #mind, geno
+  if(length(args)==2){
+    output_name <- "extractLog_output.txt"
+  } else {
   args[3] -> output_name
+  }
 }
+
 wd=getwd()
 print(wd)
 print(filename)
