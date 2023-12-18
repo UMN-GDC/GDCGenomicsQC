@@ -1,4 +1,4 @@
-library(tidyverse)
+suppressMessages(library(tidyverse)) 
 
 #' @title Read the initial data from the log file'
 #' @description Read the initial data from the log file'
@@ -7,6 +7,7 @@ library(tidyverse)
 #' @export
 #' @examples
 #' extractLog("../QCtutorial/logs/wgas2.log")
+
 extractLog<- function(filepath, plinkoption){
   file <- file(paste0(wd,filepath), "r")
   log <- readLines(file)
@@ -158,7 +159,8 @@ plink_selected <- switch(plink_option,
 print(plink_selected)
 table1=extractLog(filename, plink_selected)
 table1
-# write.table(table1, file = paste0(final_name))
+print(" ")
+write.table(table1, file = paste0(final_name), quote = F, row.names = T, col.names = F)
 #After extractLog need to save it as a table to be called within quarto
 
 
