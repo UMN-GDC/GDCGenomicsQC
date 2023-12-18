@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Rscript logReader.R /sampleLogs/first_pass.log #Updated error detecting works
+Rscript logReader.R /sampleLogs/first_pass.log #Updated error detecting works
 Rscript logReader.R /sampleLogs/first_pass.log mind #Default output file name works
 Rscript logReader.R /sampleLogs/first_pass.log mind test1.txt #Works
 Rscript logReader.R /sampleLogs/step2_temp.log geno test2.txt #Works
