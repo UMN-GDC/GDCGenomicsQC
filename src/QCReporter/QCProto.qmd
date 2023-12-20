@@ -20,8 +20,10 @@ execute:
 library(tidyverse)
 library(kableExtra)
 library(gt) 
+# BiocManager::install("ggmanh")
 library(ggmanh)
 ```
+
 
 # Overview
 ```{dot}
@@ -48,8 +50,11 @@ digraph so {
 }
 ```
 
+Loading data from tables
+```{r, include=FALSE, echo=FALSE}
 
 
+```
 
 # QC processing
 ## Orienting Data
