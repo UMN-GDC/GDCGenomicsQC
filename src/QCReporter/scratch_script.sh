@@ -11,6 +11,7 @@ Rscript logReader.R /sampleLogs/Step5_temp.log hwe test6.txt #Works
 Rscript logReader.R /sampleLogs/gender_check.log mind test5.txt #For testing error messages.. This error message makes sense 
 Rscript logReader.R /sampleLogs/bad_log.log mind test6.txt #For testing error messages.. This error message makes sense
 
+
 #Plink options I am unsure of... Probably not used in the pipeline...
 # --mpheno 4 [SMILES_pheno_updated.log
 # same with [SMILES_matched_to_b38_forward.log]
