@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #' @title Read the initial data from the log file'
 #' @description Read the initial data from the log file'
 #' @param filepath The path to the log file'
