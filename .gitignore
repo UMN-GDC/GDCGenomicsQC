@@ -62,5 +62,7 @@ gcta64
 *.fam
 *.vcf
 *.ped
+*.log
+*.sexcheck
 
 !data/toySim/toy.*
