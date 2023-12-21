@@ -2,7 +2,7 @@
 
 #These two files are created and overwrote whenever there is a --missing call
 # For Longs QC this is at the end of QC steps
-indmiss<-read.table(file="plink.imiss", header=TRUE)
+indmiss<-read.table(file="../data/reportData/plink.imiss", header=TRUE)
 snpmiss<-read.table(file="plink.lmiss", header=TRUE)
 # read data into R 
 
