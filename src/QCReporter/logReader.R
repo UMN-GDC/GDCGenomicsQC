@@ -1,5 +1,3 @@
-suppressMessages(library(tidyverse)) 
-
 #' @title Read the initial data from the log file'
 #' @description Read the initial data from the log file'
 #' @param filepath The path to the log file'
@@ -7,6 +5,8 @@ suppressMessages(library(tidyverse))
 #' @export
 #' @examples
 #' extractLog("../QCtutorial/logs/wgas2.log")
+
+suppressMessages(library(tidyverse)) 
 
 extractLog<- function(filepath, plinkoption){
   file <- file(paste0(wd,filepath), "r")
