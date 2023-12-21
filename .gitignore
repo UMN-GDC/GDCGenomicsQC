@@ -57,6 +57,7 @@ gcta64
 
 */temp/*
 *.gz
+<<<<<<< HEAD
 *.bed
 *.bim
 *.fam
@@ -66,3 +67,20 @@ gcta64
 *.sexcheck
 
 !data/toySim/toy.*
+=======
+
+
+# plink files
+*.bed
+*.bim
+*.fam
+*.ped
+*.vcf
+*.csv
+*.log
+*.sexcheck
+*.het
+data/toyData/toy_GSA*
+
+
+>>>>>>> reportWriter
