@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
           ;;
           *) 
           echo "Please enter a valid option (Yes/No) when choosing to include the OLDBLD flag."
-          exit 0
+          exit 1
           ;;
         esac
         shift 2
@@ -61,7 +61,7 @@ while [[ $# -gt 0 ]]; do
           ;;
           *) 
             echo "Please enter a valid option (Yes/No) when choosing to include the UPDTSO flag."
-            exit 0
+            exit 1
           ;;
         esac
         shift 2
