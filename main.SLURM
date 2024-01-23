@@ -11,8 +11,12 @@ module load plink
 module load python3/3.9.3_anaconda2021.11_mamba
 module load R/4.2.2-openblas
 
+filepreffix=SMILES_GSA
+
 # Prefix for 
-./src/main.sh --FILE SMILES_GSA --OLDBLD N --UPDTSO N #Assumes they don't need their reference build updated and don't need alleles flipped. 
+./src/main.sh --FILE ${filepreffix} --OLDBLD N --UPDTSO N #Assumes they don't need their reference build updated and don't need alleles flipped. 
 ./src/ancestryPrediction.sh
 
-./src/make_tables.sh --FILE SMILES_GSA 
+./src/make_tables.sh --FILE ${filepreffix} # Need to relocate the files made here into a data folder as part of this script?
+
+./src/generate_report.sh # calls quarto render QCReport.qmd #For rendering the report

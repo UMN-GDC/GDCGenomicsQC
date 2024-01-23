@@ -13,46 +13,126 @@ execute:
   error: false
   message: false
   toc: true
+editor: 
+  markdown: 
+    wrap: 72
 ---
-
 
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(ggmanh)
 source("distViz.R")
-source("logReader.R")
+#source("logReader.R")
 ```
 
-The following is an automated report describing the quality control (QC) processing of your dataset.
-detailed description of the QC steps taken. 
+The following is an automated report describing the quality control (QC)
+processing of your dataset. detailed description of the QC steps taken.
 
-# General Summary 
-The QC process outline below first process the data in aggregate removing SNPs and subjects with large amounts
-of missingness. In addition, SNPs are filtered to remove those with low minor allele frequency (MAF), frequencies
-are two out of equlibrium based on [Hardy-Weinberg equilibrium (HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/). Then, for multiethnic samples, subject 
-ancestries are predicted using [principal components analysis (PCA)](https://www.nature.com/articles/ng1847) and [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally, the original data
-is filtered again at the level of each predicted ancestry before it is later rejoined into the full dataset. Table @ref(tab:summary)
-summarizes the number of SNPs and subjects at each step of the QC process.
+# General Summary
+
+The QC process outline below first process the data in aggregate
+removing SNPs and subjects with large amounts of missingness. In
+addition, SNPs are filtered to remove those with low minor allele
+frequency (MAF), frequencies are two out of equlibrium based on
+[Hardy-Weinberg equilibrium
+(HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/).
+Then, for multiethnic samples, subject ancestries are predicted using
+[principal components analysis
+(PCA)](https://www.nature.com/articles/ng1847) and [k-means
+clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally,
+the original data is filtered again at the level of each predicted
+ancestry before it is later rejoined into the full dataset. Table
+@ref(tab:summary) summarizes the number of SNPs and subjects at each
+step of the QC process.
+
+# Loading in data from logs
+```{r, echo=FALSE} 
+#Reading in the tables for later use
+QC2_geno_table <- read.table(QC2_geno.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC3_mind_table <- read.table(QC3_mind.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC4_geno_table <- read.table(QC4_geno.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC5_mind_table <- read.table(QC5_mind.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC6_sex_check_table <- read.table(QC6_sex_check.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC7_maf_table <- read.table(QC7_maf.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC8_hwe_table <- read.table(QC8_hwe.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC8b_hwe_table <- read.table(QC8b_hwe.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC9_filter_founders_table <- read.table(QC9_filter-founders.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+
+QC_indep_pairwise_table <- read.table(QC_indep_pairwise.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+QC_indep_pairwise_bychr <- read.table(each_SNP_QC_indep_pairwise.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+
+#Key 
+# common            InSubjects InMale InFemale InSNPs 
+# common            OutSubjects *unique* OutSNPs
+#
+# Start of unique element based on plink option chosen
+# --mind            NumPeopleRemoved
+# --geno            NumVariantsRemoved
+# --check-sex       Numx NumY NumProblems
+# --maf             NumVariantsRemoved
+# --filter-founders NumRemoved NumFounder NumNonFounder
+# --hwe             NumVariantsRemoved
+#
+# Below is from the logReader_extended function
+# --indep-pairwise  NumSNPStoPrune <-- table1
+#                   PrunedSNPS Chr RemainingSNPS <-- table2
+```
+
+## Summary table from the first 4 QC steps
+```{r, echo=FALSE}
+geno_table_summary = rbind(QC2_geno_table, QC4_geno_table)
+# Probably will turn it into a gt?
+# Would be good to rearrange the columns? 
+# These all have 7 columns
+mind_table_summary = rbind(QC3_mind_table, QC5_mind_table)
+
+```
+
+## Summary table for sex check
+```{r, echo=FALSE}
+QC6_sex_check_table
+# Turn it into a gt?
+```
+
+## Summary table for minor allele frequency check
+```{r, echo=FALSE}
+QC7_maf_table
+# gt?
+```
+
+## Summary table for hwe checks
+```{r, echo=FALSE}
+hwe_check_table = rbind(QC8_hwe_table, QC8b_hwe_table)
+# gt?
+```
+
+## Summary table for filtering founders
+```{r, echo=FALSE}
+QC9_filter_founders_table
+# gt?
+```
+
 ```{r tab:summary, echo = FALSE}
 inputData <- extractLog("../QCtutorial/logs/wgas2.log")
 outputData <- extractLog("../QCtutorial/logs/wgas2.log")
 outputData["OutSNPs"] <- outputData["OutSNPs"] - 13000
 outputData["OutSubjects"] <- outputData["OutSubjects"] - 2
 ```
-|Processing step | Number of SNPs | Number of Subjects |
-|:---------------|---------------:|-------------------:|
-|Input           | `r format(inputData["InSNPs"], scientific=FALSE)` | `r format(inputData["InSubjects"], scientific=FALSE)` |
-|Output          | `r format(outputData["OutSNPs"], scientific=FALSE)` | `r format(outputData["OutSubjects"], scientific=FALSE)` |
-|%Change         | `r format((outputData["OutSNPs"] - inputData["InSNPs"])/inputData["InSNPs"]*100, scientific=FALSE)` | `r format(outputData["OutSubjects"] -(inputData["InSubjects"] )/inputData["InSubjects"]*100, scientific=FALSE)` |
+
+| Processing step |                                                                                      Number of SNPs |                                                                                              Number of Subjects |
+|:---------------------|---------------------:|---------------------------:|
+| Input           |                                                   `r format(inputData["InSNPs"], scientific=FALSE)` |                                                           `r format(inputData["InSubjects"], scientific=FALSE)` |
+| Output          |                                                 `r format(outputData["OutSNPs"], scientific=FALSE)` |                                                         `r format(outputData["OutSubjects"], scientific=FALSE)` |
+| %Change         | `r format((outputData["OutSNPs"] - inputData["InSNPs"])/inputData["InSNPs"]*100, scientific=FALSE)` | `r format(outputData["OutSubjects"] -(inputData["InSubjects"] )/inputData["InSubjects"]*100, scientific=FALSE)` |
 
 ## Data set description
-Case/controls
 
+Case/controls
 
 Ethnicities
 
-
 ## Data Processing
+
 ```{dot}
 digraph G {
   input [ label = "1000 Subjects \n 10000 SNPs" ];
@@ -76,13 +156,18 @@ digraph G {
 }
 ```
 
-
 # Detailed QC summary
+
+
 ## Per Subject summary
-Subjects were filtered based on missingness and heterozygosity. An LD pruning step was also performed. 
+
+Subjects were filtered based on missingness and heterozygosity. An LD
+pruning step was also performed.
+
 ```{r}
-data.frame("Subject" = 1:100,
-          "Missingness" = rbeta(100, 1, 4)) %>%
+indmiss<-read.table(file="plink.imiss", header=TRUE)
+data.frame("Subject" = 1:length(indmiss),
+          "Missingness" = indmiss[,6]) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() + 
   geom_vline(xintercept = 0.15, color = "red") + 
@@ -90,17 +175,22 @@ data.frame("Subject" = 1:100,
   ggtitle("% SNPS missing per subject")
 ```
 
-The [heterozygosity F statistic (FIS)](https://en.wikipedia.org/wiki/F-statistics) the departure from HWE in a population.
-The heterozygosity F statistic is given by the following equation:
-$$
+The [heterozygosity F statistic
+(FIS)](https://en.wikipedia.org/wiki/F-statistics) the departure from
+HWE in a population. The heterozygosity F statistic is given by the
+following equation: $$
 F = \frac{1}{N}\sum_{i=1}^N \frac{O_i - E_i}{E_i}
 $$
 
 ```{r hetFilter}
 #| label: fig-hetFilter
 #| fig-cap: "Heterozygosity distributions with cutoff shown as red vertical line."
-data.frame("Subject" = 1:100,
-          "Heterozygosity" = rcauchy(100, 0.1, 0.1)) %>%
+
+het <- read.table("R_check.het", head=TRUE)
+het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
+
+data.frame("Subject" = 1:length(het),
+          "Heterozygosity" = het$HET_RATE) %>%
   ggplot(aes(x = Heterozygosity)) +
   geom_histogram() + 
   geom_vline(xintercept = c(-2, 2), color = "red") + 
@@ -109,14 +199,16 @@ data.frame("Subject" = 1:100,
 ```
 
 ## Per SNP summary
-SNPS were filtered based on missingness and MAF as well as HWE @fig-firstFilter. 
 
+SNPS were filtered based on missingness and MAF as well as HWE
+@fig-firstFilter.
 
 ```{r firstFilter}
 #| label: fig-firstFilter
 #| fig-cap: "Missingness, MAF, and HWE filters involved in initial SNP filtering. Cutoffs are shown as red vertical lines"
-data.frame("SNP" = 1:1000,
-          "Missingness" = rbeta(1000, 1, 5)) %>%
+snpmiss<-read.table(file="plink.lmiss", header=TRUE)
+data.frame("SNP" = 1:length(snpmiss),
+          "Missingness" = snpmiss[,5]) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() +
   geom_vline(xintercept = 0.15, color = "red") +
@@ -124,16 +216,19 @@ data.frame("SNP" = 1:1000,
   ggtitle("% calls missing per SNP")
 
 
-data.frame("SNP" = 1:1000,
-           "MAF" = rbeta(1000, 1, 3)) %>%
+maf_freq <- read.table("MAF_check.frq", header =TRUE, as.is=T)
+data.frame("SNP" = 1:length(maf_freq),
+           "MAF" = maf_freq[,5]) %>%
   ggplot(aes(x = MAF)) +
   geom_histogram() +
   geom_vline(xintercept = 0.05, color = "red") +
   xlab("Minor allele frequency") +
   ggtitle("MAF distribution")
 
-data.frame("SNP" = 1:1000,
-          "HWE" = -rgamma(1000, 3, 2)) %>%
+hwe<-read.table (file="plink.hwe", header=TRUE)
+
+data.frame("SNP" = 1:length(hwe),
+          "HWE" = hwe[,9]) %>%
           ggplot(aes(x = HWE)) +
           geom_histogram() +
           geom_vline(xintercept = -0.05, color = "red") +
@@ -145,14 +240,22 @@ data.frame("SNP" = 1:1000,
 
 
 ## Ancestry predictions
-Ancestries are predicted after the initial round of QC steps. The principal components upon which the population is stratifed, are based off of the [genetic relatedness matrix (GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html).
-The subjects are then projected onto the 
-PC space and assigned ethnicities using k-means clustering based on either a standard genomic dataset 
-(such as though genomes) are by the reported ancestries of the subject in the study. Figure @fig-ancestryPredictions)
-the projection of each subject onto the first few PCs. They are colored by their reported ancestries. 
 
-The densities of ancestries based on the reference set are represent by the 10\% contour lines of the 2d density plots
-with the observed populations presented as points over top of the densities shown in @fig-ancestryPredictions.
+Ancestries are predicted after the initial round of QC steps. The
+principal components upon which the population is stratifed, are based
+off of the [genetic relatedness matrix
+(GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html). The subjects are
+then projected onto the PC space and assigned ethnicities using k-means
+clustering based on either a standard genomic dataset (such as though
+genomes) are by the reported ancestries of the subject in the study.
+Figure @fig-ancestryPredictions) the projection of each subject onto the
+first few PCs. They are colored by their reported ancestries.
+
+The densities of ancestries based on the reference set are represent by
+the 10% contour lines of the 2d density plots with the observed
+populations presented as points over top of the densities shown in
+@fig-ancestryPredictions.
+
 ```{r ancestryPredictions}
 #| label: fig-ancestryPredictions
 #| fig-cap: "Ancestry predictions plotted over first decile contour for each ancestry."
@@ -164,10 +267,11 @@ data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
   geom_point()
 ```
 
-
-
 ## Per Ancestry summary
-We also summarize the QC metrics per ancestry. @fig-ancestrySummary) shows the distribution of MAF per ancestry.
+
+We also summarize the QC metrics per ancestry. @fig-ancestrySummary)
+shows the distribution of MAF per ancestry.
+
 ```{r ancestrySummary}
 #| label: fig-ancestrySummary
 #| fig-cap: "MAF faceted by ancestry with the cutoff vizualized as a red vertical line."
@@ -183,7 +287,10 @@ data.frame("Ancestry" = rep(c("1", "2", "3"), each = 50),
 ```
 
 # GWAS
-Results of Genome Wide Association Study (GWAS) are visualized in @fig-gwas.
+
+Results of Genome Wide Association Study (GWAS) are visualized in
+@fig-gwas.
+
 ```{r gwas}
 #| label: fig-gwas
 #| fig-cap: "log pvalue of GWAS colored by chromosome."
@@ -199,10 +306,8 @@ manhattan_plot(x= simdata, pval.colname = "P.value", chr.colname = "chromosome",
 
 ```
 
-
-
 # Additional information
-## Contact
-Saonli Basu, PhD (saonli@umn.edu)
-Director of Analytics MIDB
 
+## Contact
+
+Saonli Basu, PhD (saonli\@umn.edu) Director of Analytics MIDB
