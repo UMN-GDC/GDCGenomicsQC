@@ -1,0 +1,12 @@
+
+```{r}
+#| echo: false
+#| include: false
+# this runs the script to make the mermaid file
+source("makeMermaid.R")
+```
+
+```{mermaid}
+%%| file: filtSteps.mmd
+```
+
