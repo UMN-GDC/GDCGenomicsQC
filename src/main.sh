@@ -197,7 +197,7 @@ plink --bfile ${FILE}_9a --remove 0.2_low_call_rate_pihat.txt --make-bed --out $
 
 
 # Generates PDF QC_report 
-Rscript --no-save src/QC_report.R 
+Rscript --no-save ./QC_report.R 
 
 echo "QC steps are done!"
 

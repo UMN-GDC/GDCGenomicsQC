@@ -1,3 +1,8 @@
+---
+title: "test"
+format: html
+editor: visual
+---
 
 ```{r}
 #| echo: false
@@ -9,4 +14,3 @@ source("makeMermaid.R")
 ```{mermaid}
 %%| file: filtSteps.mmd
 ```
-
