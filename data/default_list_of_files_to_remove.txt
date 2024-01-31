@@ -15,7 +15,6 @@ pihat_min0.2_in_founders.genome
 plink.nosex
 plink.lmiss
 plink.imiss
-README.md
 commvar.sh
 fraposa.py
 fraposa_runner.py
