@@ -1,6 +1,9 @@
 #!/bin/bash
 
-cd ./src/QCReporter/
+work_dir=$(pwd)
+echo ${work_dir}
+
+cd ./QCReporter/
 
 quarto render simple.qmd
 # quarto render QCReport.qmd #Currently not working

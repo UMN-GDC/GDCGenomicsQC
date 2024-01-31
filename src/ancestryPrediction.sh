@@ -65,3 +65,6 @@ mv ./fraposa/*.* ./ && rm -R fraposa
 ./fraposa_runner.py --stu_filepref ${FILE_USING}_11 1000G_comm
 ./predstupopu.py 1000G_comm ${FILE_USING}_11
 ./plotpcs.py 1000G_comm ${FILE_USING}_11
+
+# Removing junk files
+rm -R __pycache__/

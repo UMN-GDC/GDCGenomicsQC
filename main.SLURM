@@ -4,8 +4,8 @@
 #SBATCH --mem=10g
 #SBATCH --tmp=10g
 #SBATCH -p agsmall
-#SBATCH --mail-type=ALL  
-#SBATCH --mail-user=x500@umn.edu 
+## SBATCH --mail-type=ALL  
+## SBATCH --mail-user=x500@umn.edu 
 
 module load plink
 module load python3/3.9.3_anaconda2021.11_mamba
@@ -19,14 +19,18 @@ path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 # Prefix for 
 ./src/main.sh --FILE ${filepreffix} --OLDBLD N --UPDTSO N --PATHTODATA ${path_to_data} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} #Assumes they don't need their reference build updated and don't need alleles flipped. 
 
-./src/ancestryPrediction.sh
+./src/ancestryPrediction.sh #Output is ${filepreffix}_11 ?
+
 
 ./src/make_tables.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} # Need to relocate the files made here into a data folder as part of this script?
 
 # Generates PDF QC_report 
 mkdir -p ${path_to_store_outputs}/results
-Rscript --no-save ./src/QC_report.R ${path_to_store_outputs} ${filepreffix} 
+Rscript ./src/QC_report.R ${path_to_store_outputs} ${filepreffix} 
 
 
 ## Currently not working so continuing with QC_report.R for testing purposes
 # ./src/generate_report.sh # calls quarto render QCReport.qmd #For rendering the report
+
+# Cleaning up repository
+./src/repo_cleaner.sh --FILE default_list_of_files_to_remove.txt

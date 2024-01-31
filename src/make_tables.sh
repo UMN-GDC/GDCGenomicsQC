@@ -47,20 +47,20 @@ FILE=${FILE%*}
 
 
 #Gathers all the information from logs and puts them into tables for later use
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_1.log geno QC2_geno.txt
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_2.log mind QC3_mind.txt
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_3.log geno QC4_geno.txt
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_4.log mind QC5_mind.txt
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/gender_check.log check-sex QC6_sex_check.txt
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_6_MAF.log maf QC_7_maf.txt
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_7a.log hwe QC_8_hwe.txt
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_7.log hwe QC_8b_hwe.txt
-Rscript ./QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_9a.log filter-founders QC_9_filter-founders.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_1.log geno QC2_geno.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_2.log mind QC3_mind.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_3.log geno QC4_geno.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_4.log mind QC5_mind.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/gender_check.log check-sex QC6_sex_check.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_6_MAF.log maf QC_7_maf.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_7a.log hwe QC_8_hwe.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_7.log hwe QC_8b_hwe.txt
+Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_9a.log filter-founders QC_9_filter-founders.txt
 
-Rscript ./QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt
+Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt
 
 #Putting these tables into their final location
-mv *.txt ${path_to_store_outputs}/data/
+mv QC*.txt ${path_to_store_outputs}/data/
 
 #for troubleshooting and reference
 #Rscript ./QCReporter/log_Reader.R /sampleLogs/first_pass.log mind #Default output file name works
