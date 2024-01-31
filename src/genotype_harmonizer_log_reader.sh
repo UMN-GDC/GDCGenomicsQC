@@ -69,5 +69,11 @@ for trimmed_file in $trimmed_files; do
 done
 
 cat genome_harmonizer_full_log.txt
+# Moving desired output into prior folder
+mv genome_harmonizer_full_log.txt ..
+
+# Removing the temporary files from this step
+cd ..
+rm -R temp/
 
 
