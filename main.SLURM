@@ -9,7 +9,8 @@
 
 module load plink
 module load python3/3.9.3_anaconda2021.11_mamba
-module load R/4.2.2-openblas
+module load R/4.0.4
+# module load R/4.2.2-openblas
 
 path_to_data=/home/gdc/shared/GDC_pipeline/K_branch/data/toySim/
 filepreffix=toy
@@ -20,10 +21,11 @@ path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 
 ./src/ancestryPrediction.sh
 
-./src/make_tables.sh --FILE ${filepreffix} # Need to relocate the files made here into a data folder as part of this script?
+./src/make_tables.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} # Need to relocate the files made here into a data folder as part of this script?
 
 # Generates PDF QC_report 
-Rscript --no-save ./src/QC_report.R #Location of logs argument #filepreffix argument #Location to store pdfs?
+mkdir -p ${path_to_store_outputs}/results
+Rscript --no-save ./src/QC_report.R ${path_to_store_outputs} ${filepreffix} 
 
 
 ## Currently not working so continuing with QC_report.R for testing purposes
