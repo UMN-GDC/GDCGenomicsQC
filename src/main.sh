@@ -3,10 +3,12 @@
 show_help() {
   echo "Usage: $0 [options]"
   echo "Options:"
-  echo "  --FILE <file_name>  Specify the file to process. Must be a .bed file"
-  echo "  --OLDBLD <Y/N>      Specify if data's genome build is GRCh37 or earlier"
-  echo "  --UPDTSO <Y/N>      Specify if you would like to update the strand orientation and flip alleles as necessary"
-  echo "  --help              Display this help message."
+  echo "  --FILE <file_name>    Specify the file to process. Must be a .bed file"
+  echo "  --PATHTODATA          Specify the full path to where this file is stored"
+  echo "  --PATHTOSTOREOUTPUTS  Specify the full path to where you would like the outputs of this pipeline to go"
+  echo "  --OLDBLD <Y/N>        Specify if data's genome build is GRCh37 or earlier"
+  echo "  --UPDTSO <Y/N>        Specify if you would like to update the strand orientation and flip alleles as necessary"
+  echo "  --help                Display this help message."
 }
 
 # Check for command line arguments
@@ -25,6 +27,16 @@ while [[ $# -gt 0 ]]; do
         echo "File chosen is $FILE"
         shift 2 # Consume both the flag and its value
       ;;
+    --PATHTODATA)
+        path_to_data="$2"
+        echo "Path provided is $path_to_data"
+        shift 2
+      ;;
+    --PATHTOSTOREOUTPUTS)
+        path_to_store_outputs="$2"
+        echo "Path provided is $path_to_data"
+        shift 2
+      ;;   
     --help)
         show_help
         exit 0
@@ -77,6 +89,15 @@ done
 
 # Just in case they included the file extension
 FILE=${FILE%*}
+
+# Temporarily copying over the desired files into current directory
+cp ${path_to_data}/${FILE}.fam .
+cp ${path_to_data}/${FILE}.bim .
+cp ${path_to_data}/${FILE}.bed .
+
+# Making a directory for the log files, & this temporary step
+mkdir -p ./tmp
+mkdir -p ./logs
 
 # For if they want to update the genome build to GRCh38
 case "$OLDBLD" in
@@ -195,9 +216,16 @@ plink --bfile ${FILE}_9a --missing
 Rscript src/lower_pihat_list_generator_v2.R
 plink --bfile ${FILE}_9a --remove 0.2_low_call_rate_pihat.txt --make-bed --out ${FILE}_10
 
+# Moving files that will be used by next steps
+mv *.log ./logs/
+mv ${FILE}_10* ./tmp/
 
-# Generates PDF QC_report 
-Rscript --no-save ./QC_report.R 
+# Removing all intermediary steps
+rm ${FILE}* 
+
+# Putting main output back in this location
+mv ./tmp/${FILE}_10* .
+
 
 echo "QC steps are done!"
 
