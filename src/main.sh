@@ -97,7 +97,8 @@ cp ${path_to_data}/${FILE}.bed .
 
 # Making a directory for the log files, & this temporary step
 mkdir -p ./tmp
-mkdir -p ./logs
+mkdir -p ${path_to_store_outputs}/logs
+mkdir -p ${path_to_store_outputs}/data
 
 # For if they want to update the genome build to GRCh38
 case "$OLDBLD" in
@@ -217,7 +218,7 @@ Rscript src/lower_pihat_list_generator_v2.R
 plink --bfile ${FILE}_9a --remove 0.2_low_call_rate_pihat.txt --make-bed --out ${FILE}_10
 
 # Moving files that will be used by next steps
-mv *.log ./logs/
+mv *.log ${path_to_store_outputs}/logs/
 mv ${FILE}_10* ./tmp/
 
 # Removing all intermediary steps
@@ -226,6 +227,10 @@ rm ${FILE}*
 # Putting main output back in this location
 mv ./tmp/${FILE}_10* .
 
+work_dir=$(pwd)
+echo ${work_dir}
+
+cp ${FILE}_10* ${path_to_store_outputs}/data/
 
 echo "QC steps are done!"
 

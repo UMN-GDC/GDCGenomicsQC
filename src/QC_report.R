@@ -12,29 +12,44 @@ args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least two arguments: if not, return an error
 if (length(args)<=1) {
-  stop("A path to the data and the file name for your target population need to be provided.", call.=FALSE)
+  stop("A path to the output location and the file need to be provided.", call.=FALSE)
 } else if (length(args)>=2) {
-  args[1] -> base_location #Place where the logs are located
+  args[1] -> base_path #Place where the logs are located
+  path_to_logs=paste0(base_path, "/logs/")
   # default output file
-  args[2] -> filename #What Output_TLPRS_best.PRS is called
+  args[2] -> file_preffix 
   if(length(args)==2){
-    output_name <- "default_name"
+    output_location <- "results"
+    path_to_save_report=paste0(base_path, "/results/")
   }
-  args[3] -> output_name
+  if(length(args)>2) {
+    args[3] -> output_location
+    path_to_save_report=paste0(base_path, output_location)
+  }
+
 }
 
-wd=base_location
+wd=path_to_logs
 print(wd)
-print(filename)
-print(output_name)
+print(file_preffix)
+print(output_location)
 
-#Back to where the data is
-setwd(wd)
 
+# read data into R from temporary space
 indmiss<-read.table(file="plink.imiss", header=TRUE)
 snpmiss<-read.table(file="plink.lmiss", header=TRUE)
-# read data into R 
+gender <- read.table("plink.sexcheck", header=T,as.is=T)
+maf_freq <- read.table("MAF_check.frq", header =TRUE, as.is=T)
+hwe<-read.table (file="plink.hwe", header=TRUE)
+hwe_zoom<-read.table (file="plinkzoomhwe.hwe", header=TRUE)
+het <- read.table("R_check.het", head=TRUE)
+relatedness = read.table("pihat_min0.2.genome", header=T)
+relatedness_zoom = read.table("zoom_pihat.genome", header=T)
+relatedness = read.table("pihat_min0.2.genome", header=T)
 
+
+#Back to where the log data is
+setwd(wd)
 #Reading in the tables for later use
 QC2_geno_table <- read.table(QC2_geno.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
 QC3_mind_table <- read.table(QC3_mind.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
@@ -65,6 +80,10 @@ QC_indep_pairwise_bychr <- read.table(each_SNP_QC_indep_pairwise.txt, header = T
 # --indep-pairwise  NumSNPStoPrune <-- table1
 #                   PrunedSNPS Chr RemainingSNPS <-- table2
 
+#Going to where the report should be saved
+setwd(path_to_save_report)
+
+#### Start of QCreport_2.pdf ####
 pdf("QCreport_2.pdf")
 geno_table_summary = rbind(QC2_geno_table, QC4_geno_table)
 # Probably will turn it into a gt?
@@ -82,9 +101,15 @@ hwe_check_table = rbind(QC8_hwe_table, QC8b_hwe_table)
 # gt?
 
 QC9_filter_founders_table
+
+QC_indep_pairwise_table
+
+QC_indep_pairwise_bychr
 # gt?
 
 dev.off() # Ends pdf creation. 
+
+#### Start of QCreport.pdf ####
 
 pdf("QCreport.pdf") #indicates pdf format and gives title to file
 
@@ -110,7 +135,6 @@ hist(snpmiss[,5],main="Histogram SNP missingness", xlab = "Proportion of sample 
 # print("hist_miss.R Script Success!")
 
 # chromosome homozygosity estimate (F statistic) is < 0.2 for Females and as males if the estimate is > 0.8
-gender <- read.table("plink.sexcheck", header=T,as.is=T)
 
 hist(gender[,6],main="Gender", xlab="F Value")
 
@@ -125,8 +149,6 @@ temptab= table(gender$STATUS)
 barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
 
 # print("gender_check.R Script Success!")
-
-maf_freq <- read.table("MAF_check.frq", header =TRUE, as.is=T)
 hist(maf_freq[,5],main = "MAF distribution", xlab = "MAF")
 data.frame("SNP" = 1:length(maf_freq),
            "MAF" = maf_freq[,5]) %>%
@@ -138,8 +160,6 @@ data.frame("SNP" = 1:length(maf_freq),
 
 # print("MAF_check.R Script Success!")
 
-
-hwe<-read.table (file="plink.hwe", header=TRUE)
 hist(hwe[,9],main="Histogram HWE", xlab = "P-value")
 data.frame("SNP" = 1:length(hwe),
           "HWE" = hwe[,9]) %>%
@@ -149,12 +169,10 @@ data.frame("SNP" = 1:length(hwe),
           xlab("log(HWE p-value)") +
           ggtitle("Hardy-Weinberg Equilibrium p-value distribution")
 
-hwe_zoom<-read.table (file="plinkzoomhwe.hwe", header=TRUE)
 hist(hwe_zoom[,9],main="Histogram HWE: strongly deviating SNPs only", xlab = "P-value")
 
 # print("hwe.R Script Success!")
 
-het <- read.table("R_check.het", head=TRUE)
 het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
 data.frame("Subject" = 1:length(het),
           "Heterozygosity" = het$HET_RATE) %>%
@@ -185,7 +203,6 @@ barplot(temp_table, main = "Heterozygosity Analysis", xlab = "Status")
 # print("check_heterozygosity_rate.R Script Success!")
 
 
-relatedness = read.table("pihat_min0.2.genome", header=T)
 par(pch=16, cex=1)
 plot(relatedness$Z0, relatedness$Z1, xlim=c(0,1), ylim=c(0,1), xlab = "P(IBD=0)", 
      ylab = "P(IBD=1)", main = "Relatedness")
@@ -200,14 +217,12 @@ with(subset(relatedness,RT=="UN") , points(Z0,Z1,col=3))
 table(relatedness$Z0)
 table(relatedness$Z1)
 
-relatedness_zoom = read.table("zoom_pihat.genome", header=T)
 par(pch=16, cex=1)
 plot(relatedness_zoom$Z0, relatedness_zoom$Z1, xlim=c(0,0.02), ylim=c(0.98,1),
      xlab = "P(IBD=0)", ylab = "P(IBD=1)", main = "Relatedness Zoom")
 with(subset(relatedness_zoom,RT=="PO") , points(Z0,Z1,col=4))
 with(subset(relatedness_zoom,RT=="UN") , points(Z0,Z1,col=3))
 
-relatedness = read.table("pihat_min0.2.genome", header=T)
 hist(relatedness[,10],main="Histogram relatedness", xlab= "Proportion IBD")  
 
 # print("Relatedness.R Script Success!")
