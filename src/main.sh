@@ -214,7 +214,7 @@ plink --bfile ${FILE}_9a --missing
 #The problem being the order of removal since 1 sample might be related to several other samples, generating several lines
 #in the file pihat_min0.2_in_founders
 
-Rscript src/lower_pihat_list_generator_v2.R
+Rscript src/lower_pihat_list_generator.R
 plink --bfile ${FILE}_9a --remove 0.2_low_call_rate_pihat.txt --make-bed --out ${FILE}_10
 
 # Moving files that will be used by next steps
@@ -222,13 +222,15 @@ mv *.log ${path_to_store_outputs}/logs/
 mv ${FILE}_10* ./tmp/
 
 # Removing all intermediary steps
-rm ${FILE}* 
+rm ${FILE}*
+rm *${FILE}* 
 
 # Putting main output back in this location
 mv ./tmp/${FILE}_10* .
+rm -R ./tmp/
 
 work_dir=$(pwd)
-echo ${work_dir}
+echo "Place the main.sh script is running from == ${work_dir}"
 
 cp ${FILE}_10* ${path_to_store_outputs}/data/
 
