@@ -1,7 +1,0 @@
-InSubjects 100
-InMale 0
-InFemale 0
-InSNPs 74
-OutSubjects 100
-NumVariantsRemoved 0
-OutSNPs 74
