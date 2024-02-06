@@ -48,7 +48,7 @@ FILE=${FILE%*}
 current_dir=$(pwd)
 echo "You are currently in: $current_dir"
 
-place_to_store_data=${path_to_store_outputs}/logs
+place_to_store_data=${path_to_store_outputs}/data
 
 #Gathers all the information from logs and puts them into tables for later use
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_1.log geno QC2_geno.txt ${place_to_store_data}
@@ -61,10 +61,11 @@ Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7a.lo
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7.log hwe QC_8b_hwe.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_9a.log filter-founders QC_9_filter-founders.txt ${place_to_store_data}
 
-Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt ${place_to_store_data} #Issues in this function as well
+# length of 'dimnames' [2] not equal to array extent # It's an internal error from within the function
 
-#Putting these tables into their final location
-mv QC*.txt ${path_to_store_outputs}/data/
+## Putting these tables into their final location
+# mv QC*.txt ${path_to_store_outputs}/data/
 
 #for troubleshooting and reference
 #Rscript ./QCReporter/log_Reader.R /sampleLogs/first_pass.log mind #Default output file name works
