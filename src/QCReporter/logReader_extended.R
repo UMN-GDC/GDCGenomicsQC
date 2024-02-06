@@ -9,7 +9,7 @@
 suppressMessages(library(tidyverse)) 
 
 extractLog_v2<- function(filepath, plinkoption){
-  file <- file(paste0(wd,filepath), "r")
+  file <- file(paste0(filepath), "r")
   log <- readLines(file)
   close(file)
   
@@ -143,7 +143,7 @@ args = commandArgs(trailingOnly=TRUE)
 if (length(args)<=1) {
   stop("A log to extract information from and which plink option need to be provided.", call.=FALSE)
 } else if (length(args)>=2) {
-  args[1] -> filename
+  args[1] -> filename #Filepath 
   # default output file
   args[2] -> plink_option #mind, geno
   if(length(args)==2){
@@ -158,8 +158,8 @@ print(wd)
 print(filename)
 print(plink_option)
 print(output_name)
-final_name=paste0(wd, "/", output_name)
-final_name_2 =paste0(wd, "/each_SNP_", output_name)
+final_name=paste0(filename, "/", output_name)
+final_name_2 =paste0(filename, "/each_SNP_", output_name)
 print(final_name)
 
 plink_selected <- switch(plink_option,

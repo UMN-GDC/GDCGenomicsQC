@@ -1,0 +1,9 @@
+InSubjects 100
+InMale 0
+InFemale 0
+InSNPs 74
+OutSubjects 100
+NumRemoved 0
+NumFounder 100
+NumNonFounder 0
+OutSNPs 74

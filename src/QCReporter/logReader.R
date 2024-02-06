@@ -9,7 +9,7 @@
 suppressMessages(library(tidyverse)) 
 
 extractLog<- function(filepath, plinkoption){
-  file <- file(paste0(wd,filepath), "r")
+  file <- file(paste0(filepath), "r")
   log <- readLines(file)
   close(file)
 
@@ -146,7 +146,7 @@ print(wd)
 print(filename)
 print(plink_option)
 print(output_name)
-final_name=paste0(wd, "/", output_name)
+final_name=paste0(filename, "/", output_name)
 print(final_name)
 plink_selected <- switch(plink_option,
        "mind"=1,       #=print("You have chosen to look for people missing genotype data logs."),
