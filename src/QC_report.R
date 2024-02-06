@@ -2,9 +2,6 @@
 
 #These two files are created and overwrote whenever there is a --missing call
 # For Longs QC this is at the end of QC steps
-setwd("/panfs/jay/groups/16/saonli/baron063/R")
-
-suppressMessages(library(tidyverse))
 
 #Adding in ability for script to accept command line arguments
 #!/usr/bin/env Rscript
@@ -47,6 +44,9 @@ relatedness = read.table("pihat_min0.2.genome", header=T)
 relatedness_zoom = read.table("zoom_pihat.genome", header=T)
 relatedness = read.table("pihat_min0.2.genome", header=T)
 
+setwd("/panfs/jay/groups/16/saonli/baron063/R")
+
+suppressMessages(library(tidyverse))
 
 #Back to where the log data is
 setwd(wd)

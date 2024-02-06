@@ -19,7 +19,7 @@ path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 # Prefix for 
 ./src/main.sh --FILE ${filepreffix} --OLDBLD N --UPDTSO N --PATHTODATA ${path_to_data} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} #Assumes they don't need their reference build updated and don't need alleles flipped. 
 
-./src/ancestryPrediction.sh #Output is ${filepreffix}_11 ?
+#./src/ancestryPrediction.sh #Output is ${filepreffix}_11 ? <-- doesn't work appropriately
 
 
 ./src/make_tables.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} # Need to relocate the files made here into a data folder as part of this script?
@@ -33,4 +33,4 @@ Rscript ./src/QC_report.R ${path_to_store_outputs} ${filepreffix}
 # ./src/generate_report.sh # calls quarto render QCReport.qmd #For rendering the report
 
 # Cleaning up repository
-./src/repo_cleaner.sh --FILE default_list_of_files_to_remove.txt
+./src/repo_cleaner.sh --FILE ./data/default_list_of_files_to_remove.txt
