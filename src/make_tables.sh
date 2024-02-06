@@ -47,20 +47,21 @@ FILE=${FILE%*}
 
 current_dir=$(pwd)
 echo "You are currently in: $current_dir"
-echo "Looking for ${path_to_store_outputs}/logs/${FILE}_1.log"
+
+place_to_store_data=${path_to_store_outputs}/logs
 
 #Gathers all the information from logs and puts them into tables for later use
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_1.log geno QC2_geno.txt
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_2.log mind QC3_mind.txt
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_3.log geno QC4_geno.txt
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_4.log mind QC5_mind.txt
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/gender_check.log check-sex QC6_sex_check.txt #Issues finding this log, could be named wrong
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/MAF_check.log maf QC_7_maf.txt
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7a.log hwe QC_8_hwe.txt
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7.log hwe QC_8b_hwe.txt
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_9a.log filter-founders QC_9_filter-founders.txt
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_1.log geno QC2_geno.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_2.log mind QC3_mind.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_3.log geno QC4_geno.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_4.log mind QC5_mind.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/gender_check.log check-sex QC6_sex_check.txt ${place_to_store_data}#Issues finding this log, could be named wrong
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/MAF_check.log maf QC_7_maf.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7a.log hwe QC_8_hwe.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7.log hwe QC_8b_hwe.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_9a.log filter-founders QC_9_filter-founders.txt ${place_to_store_data}
 
-Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt
+Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt ${place_to_store_data}
 
 #Putting these tables into their final location
 mv QC*.txt ${path_to_store_outputs}/data/
