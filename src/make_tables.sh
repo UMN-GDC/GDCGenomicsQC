@@ -26,7 +26,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --PATHTOSTOREOUTPUTS)
         path_to_store_outputs="$2"
-        echo "Path provided is $path_to_data"
+        echo "Path provided is $path_to_store_outputs"
         shift 2
       ;;   
     --help)
@@ -45,6 +45,9 @@ done
 # Just in case the file extension is included
 FILE=${FILE%*}
 
+current_dir=$(pwd)
+echo "You are currently in: $current_dir"
+echo "Looking for ${path_to_store_outputs}/logs/${FILE}_1.log"
 
 #Gathers all the information from logs and puts them into tables for later use
 Rscript ./src/QCReporter/log_Reader.R ${path_to_store_outputs}/logs/${FILE}_1.log geno QC2_geno.txt

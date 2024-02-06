@@ -22,4 +22,14 @@ plotpcs.py
 predstupopu.py
 run_example.sh
 splitindiv.sh
-splitindiv.sh
+sex_discrepancy.txt
+fail-het-qc.txt
+het_fail_ind.txt
+0.2_low_call_rate_pihat.txt
+toy_10.nosex
+toy_10.bed
+toy_10.fam
+toy_10.bim
+tmp.rs
+1000G_comm.log
+end
