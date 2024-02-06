@@ -138,6 +138,7 @@ if (length(args)<=1) {
     output_name <- "extractLog_output.txt"
   } else {
   args[3] -> output_name
+  args[4] -> place_to_store_data
   }
 }
 
@@ -146,7 +147,7 @@ print(wd)
 print(filename)
 print(plink_option)
 print(output_name)
-final_name=paste0(filename, "/", output_name)
+final_name=paste0(place_to_store_data, "/", output_name)
 print(final_name)
 plink_selected <- switch(plink_option,
        "mind"=1,       #=print("You have chosen to look for people missing genotype data logs."),
