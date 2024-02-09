@@ -56,12 +56,13 @@ Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_2.log
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_3.log geno QC4_geno.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_4.log mind QC5_mind.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/gender_check.log check-sex QC6_sex_check.txt ${place_to_store_data}#Issues finding this log, could be named wrong
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/MAF_check.log maf QC_7_maf.txt ${place_to_store_data}
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_6.log maf QC_7_maf.txt ${place_to_store_data} 
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7a.log hwe QC_8_hwe.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7.log hwe QC_8b_hwe.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_9a.log filter-founders QC_9_filter-founders.txt ${place_to_store_data}
 
-Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt ${place_to_store_data} #Issues in this function as well
+Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt ${place_to_store_data} 
+#Issues in this function as well
 # length of 'dimnames' [2] not equal to array extent # It's an internal error from within the function
 
 ## Putting these tables into their final location
