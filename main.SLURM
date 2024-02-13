@@ -29,6 +29,7 @@ path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 # Generates PDF QC_report 
 mkdir -p ${path_to_store_outputs}/results
 Rscript ./src/QC_report.R ${path_to_store_outputs} ${filepreffix} 
+# Errors here when switching working locations. Might be better to just point to the data rather than moving the working directory... 
 
 
 ## Currently not working so continuing with QC_report.R for testing purposes

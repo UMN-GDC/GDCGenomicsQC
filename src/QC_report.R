@@ -11,8 +11,8 @@ args = commandArgs(trailingOnly=TRUE)
 if (length(args)<=1) {
   stop("A path to the output location and the file need to be provided.", call.=FALSE)
 } else if (length(args)>=2) {
-  args[1] -> base_path #Place where the logs are located
-  path_to_logs=paste0(base_path, "/logs/")
+  args[1] -> base_path #Place where the tables are located
+  path_to_logs=paste0(base_path, "/data/")
   # default output file
   args[2] -> file_preffix 
   if(length(args)==2){
@@ -35,14 +35,25 @@ print(output_location)
 # read data into R from temporary space
 indmiss<-read.table(file="plink.imiss", header=TRUE)
 snpmiss<-read.table(file="plink.lmiss", header=TRUE)
-gender <- read.table("plink.sexcheck", header=T,as.is=T)
+gender <- read.table("gender_check.sexcheck", header=T,as.is=T)
 maf_freq <- read.table("MAF_check.frq", header =TRUE, as.is=T)
 hwe<-read.table (file="plink.hwe", header=TRUE)
 hwe_zoom<-read.table (file="plinkzoomhwe.hwe", header=TRUE)
 het <- read.table("R_check.het", head=TRUE)
 relatedness = read.table("pihat_min0.2.genome", header=T)
 relatedness_zoom = read.table("zoom_pihat.genome", header=T)
-relatedness = read.table("pihat_min0.2.genome", header=T)
+
+# print("Checking tables are read properly")
+# head(indmiss)
+# head(snpmiss)
+# head(gender)
+# head(maf_freq)
+# head(hwe)
+# head(hwe_zoom)
+# head(het)
+# head(relatedness)
+# head(relatedness_zoom)
+
 
 setwd("/panfs/jay/groups/16/saonli/baron063/R")
 
@@ -50,19 +61,23 @@ suppressMessages(library(tidyverse))
 
 #Back to where the log data is
 setwd(wd)
-#Reading in the tables for later use
-QC2_geno_table <- read.table(QC2_geno.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC3_mind_table <- read.table(QC3_mind.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC4_geno_table <- read.table(QC4_geno.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC5_mind_table <- read.table(QC5_mind.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC6_sex_check_table <- read.table(QC6_sex_check.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC7_maf_table <- read.table(QC7_maf.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC8_hwe_table <- read.table(QC8_hwe.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC8b_hwe_table <- read.table(QC8b_hwe.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC9_filter_founders_table <- read.table(QC9_filter-founders.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+print("Files available to be selected in data directory")
+list.files()
 
-QC_indep_pairwise_table <- read.table(QC_indep_pairwise.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC_indep_pairwise_bychr <- read.table(each_SNP_QC_indep_pairwise.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+#Reading in the tables for later use
+QC2_geno_table <- read.table(file = "QC2_geno.txt",  quote="\"", comment.char="")
+
+QC3_mind_table <- read.table("QC3_mind.txt",  quote="\"", comment.char="")
+QC4_geno_table <- read.table("QC4_geno.txt",  quote="\"", comment.char="")
+QC5_mind_table <- read.table("QC5_mind.txt",  quote="\"", comment.char="")
+QC6_sex_check_table <- read.table("QC6_sex_check.txt", quote="\"", comment.char="")
+QC7_maf_table <- read.table("QC_7_maf.txt", quote="\"", comment.char="")
+QC8_hwe_table <- read.table("QC_8_hwe.txt", quote="\"", comment.char="")
+QC8b_hwe_table <- read.table("QC_8b_hwe.txt", quote="\"", comment.char="")
+QC9_filter_founders_table <- read.table("QC_9_filter-founders.txt", quote="\"", comment.char="")
+
+QC_indep_pairwise_table <- read.csv("QC_indep_pairwise.txt", sep = "")
+QC_indep_pairwise_bychr <- read.csv("each_SNP_QC_indep_pairwise.txt", sep = "")
 
 #Key 
 # common            InSubjects InMale InFemale InSNPs 
@@ -113,8 +128,12 @@ dev.off() # Ends pdf creation.
 
 pdf("QCreport.pdf") #indicates pdf format and gives title to file
 
-data.frame("Subject" = 1:length(indmiss),
-          "Missingness" = indmiss[,6]) %>%
+print(length(indmiss))
+
+print(nrow(indmiss))
+
+data.frame("Subject" = 1:nrow(indmiss),
+          "Missingness" = indmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() + 
   geom_vline(xintercept = 0.15, color = "red") + 
@@ -123,8 +142,8 @@ data.frame("Subject" = 1:length(indmiss),
 hist(indmiss[,6],main="Histogram individual missingness", xlab = "Proportion of missing SNPs") #selects column 6, names header of file
 
 
-data.frame("SNP" = 1:length(snpmiss),
-          "Missingness" = snpmiss[,5]) %>%
+data.frame("SNP" = 1:nrow(snpmiss),
+          "Missingness" = snpmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() +
   geom_vline(xintercept = 0.15, color = "red") +
@@ -150,7 +169,7 @@ barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
 
 # print("gender_check.R Script Success!")
 hist(maf_freq[,5],main = "MAF distribution", xlab = "MAF")
-data.frame("SNP" = 1:length(maf_freq),
+data.frame("SNP" = 1:nrow(maf_freq),
            "MAF" = maf_freq[,5]) %>%
   ggplot(aes(x = MAF)) +
   geom_histogram() +
@@ -161,7 +180,7 @@ data.frame("SNP" = 1:length(maf_freq),
 # print("MAF_check.R Script Success!")
 
 hist(hwe[,9],main="Histogram HWE", xlab = "P-value")
-data.frame("SNP" = 1:length(hwe),
+data.frame("SNP" = 1:nrow(hwe),
           "HWE" = hwe[,9]) %>%
           ggplot(aes(x = HWE)) +
           geom_histogram() +
@@ -174,7 +193,7 @@ hist(hwe_zoom[,9],main="Histogram HWE: strongly deviating SNPs only", xlab = "P-
 # print("hwe.R Script Success!")
 
 het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
-data.frame("Subject" = 1:length(het),
+data.frame("Subject" = 1:nrow(het),
           "Heterozygosity" = het$HET_RATE) %>%
   ggplot(aes(x = Heterozygosity)) +
   geom_histogram() + 
