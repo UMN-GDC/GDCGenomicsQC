@@ -159,7 +159,7 @@ echo "(Step 5 of QC) Ultimate sample missing filtering"
 plink --bfile ${FILE}_3 --mind 0.02 --make-bed --out ${FILE}_4
 
 echo "(Step 6 of QC) Check for sex discrepancies"
-plink --bfile ${FILE}_4 --check-sex
+plink --bfile ${FILE}_4 --check-sex --out gender_check
 #To be added: we should modify the below grep code to include only non-ambiguous reported gender or ambiguous genotype-gender
 #For missing reported gender, prompt if user want to impute using genotype-gender
 grep 'PROBLEM' plink.sexcheck| awk '{print$1,$2}'>sex_discrepancy.txt

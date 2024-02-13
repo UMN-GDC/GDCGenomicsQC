@@ -55,7 +55,7 @@ Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_1.log
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_2.log mind QC3_mind.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_3.log geno QC4_geno.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_4.log mind QC5_mind.txt ${place_to_store_data}
-Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/gender_check.log check-sex QC6_sex_check.txt ${place_to_store_data}#Issues finding this log, could be named wrong
+Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/gender_check.log check-sex QC6_sex_check.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_6.log maf QC_7_maf.txt ${place_to_store_data} 
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7a.log hwe QC_8_hwe.txt ${place_to_store_data}
 Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_7.log hwe QC_8b_hwe.txt ${place_to_store_data}
@@ -64,9 +64,8 @@ Rscript ./src/QCReporter/logReader.R ${path_to_store_outputs}/logs/${FILE}_9a.lo
 Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/indepSNP.log indep-pairwise QC_indep_pairwise.txt ${place_to_store_data} 
 #Issues in this function as well
 # length of 'dimnames' [2] not equal to array extent # It's an internal error from within the function
+#### This has to do with the function currently requiring there to be 22 chromosomes in the dataset
 
-## Putting these tables into their final location
-# mv QC*.txt ${path_to_store_outputs}/data/
 
 #for troubleshooting and reference
 #Rscript ./QCReporter/log_Reader.R /sampleLogs/first_pass.log mind #Default output file name works
@@ -76,3 +75,4 @@ Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/inde
 #Rscript ./QCReporter/log_Reader.R /sampleLogs/SMILES_done_MAF.log maf test4.txt #Works
 #Rscript ./QCReporter/log_Reader.R /sampleLogs/Step7_temp1.log filter-founders test5.txt #Works 
 #Rscript ./QCReporter/log_Reader.R /sampleLogs/Step5_temp.log hwe test6.txt #Works
+# Rscript ./src/QCReporter/logReader_extended.R ./src/QCReporter/sampleLogs/indepSNP.log indep-pairwise QC_indep_pairwise.txt ${place_to_store_data} 
