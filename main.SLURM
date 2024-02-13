@@ -12,8 +12,10 @@ module load python3/3.9.3_anaconda2021.11_mamba
 module load R/4.0.4
 # module load R/4.2.2-openblas
 
-path_to_data=/home/gdc/shared/GDC_pipeline/K_branch/data/toySim/
-filepreffix=toy
+# path_to_data=/home/gdc/shared/GDC_pipeline/K_branch/data/toySim/
+# filepreffix=toy
+path_to_data=/home/gdc/shared/SMILES/GSA/
+filepreffix=SMILES_GSA
 path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 
 # Prefix for 
