@@ -106,6 +106,9 @@ geno_table_summary = rbind(QC2_geno_table, QC4_geno_table)
 # These all have 7 columns
 mind_table_summary = rbind(QC3_mind_table, QC5_mind_table)
 
+## Testing
+grid.table(mind_table_summary, show.rownames = FALSE)
+
 QC6_sex_check_table
 # Turn it into a gt?
 
@@ -132,6 +135,7 @@ print(length(indmiss))
 
 print(nrow(indmiss))
 
+#Option 1
 data.frame("Subject" = 1:nrow(indmiss),
           "Missingness" = indmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
@@ -139,9 +143,10 @@ data.frame("Subject" = 1:nrow(indmiss),
   geom_vline(xintercept = 0.15, color = "red") + 
   xlab("Missingness per subject") +
   ggtitle("% SNPS missing per subject")
+#Option 2
 hist(indmiss[,6],main="Histogram individual missingness", xlab = "Proportion of missing SNPs") #selects column 6, names header of file
 
-
+#Option 1
 data.frame("SNP" = 1:nrow(snpmiss),
           "Missingness" = snpmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
@@ -149,12 +154,15 @@ data.frame("SNP" = 1:nrow(snpmiss),
   geom_vline(xintercept = 0.15, color = "red") +
   xlab("Missingness per SNP") +
   ggtitle("% calls missing per SNP")
+#Option 2
 hist(snpmiss[,5],main="Histogram SNP missingness", xlab = "Proportion of sample missing for each SNP")  
 
 # print("hist_miss.R Script Success!")
 
 # chromosome homozygosity estimate (F statistic) is < 0.2 for Females and as males if the estimate is > 0.8
 
+#### Base R versions 
+## Not yet implemented into the Quarto document...
 hist(gender[,6],main="Gender", xlab="F Value")
 
 male=subset(gender, gender$PEDSEX==1)
@@ -168,7 +176,11 @@ temptab= table(gender$STATUS)
 barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
 
 # print("gender_check.R Script Success!")
+#Option 2 MAF
 hist(maf_freq[,5],main = "MAF distribution", xlab = "MAF")
+#####
+
+#Option 1 MAF
 data.frame("SNP" = 1:nrow(maf_freq),
            "MAF" = maf_freq[,5]) %>%
   ggplot(aes(x = MAF)) +
@@ -179,7 +191,9 @@ data.frame("SNP" = 1:nrow(maf_freq),
 
 # print("MAF_check.R Script Success!")
 
+#Option 2 HWE
 hist(hwe[,9],main="Histogram HWE", xlab = "P-value")
+#Option 1 HWE 
 data.frame("SNP" = 1:nrow(hwe),
           "HWE" = hwe[,9]) %>%
           ggplot(aes(x = HWE)) +
@@ -188,10 +202,12 @@ data.frame("SNP" = 1:nrow(hwe),
           xlab("log(HWE p-value)") +
           ggtitle("Hardy-Weinberg Equilibrium p-value distribution")
 
+#Option 2 b HWE
 hist(hwe_zoom[,9],main="Histogram HWE: strongly deviating SNPs only", xlab = "P-value")
 
 # print("hwe.R Script Success!")
 
+#Option 1 Heterozygosity
 het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
 data.frame("Subject" = 1:nrow(het),
           "Heterozygosity" = het$HET_RATE) %>%
@@ -200,9 +216,11 @@ data.frame("Subject" = 1:nrow(het),
   geom_vline(xintercept = c(-2, 2), color = "red") + 
   xlab("Heterozygosity F statistic") +
   ggtitle("Heterozygous F statistic distribution")
+#Option 2 Heterozygosity
 hist(het$HET_RATE, xlab="Heterozygosity Rate", ylab="Frequency", main= "Heterozygosity Rate")
 
-
+#Option 2 Heterozygosity further analysis 
+# Should make a quarto / ggplot version 
 # ## Adding a barplot to show the number that are problems 
 het_fail = subset(het, (het$HET_RATE < mean(het$HET_RATE)-3*sd(het$HET_RATE)) | (het$HET_RATE > mean(het$HET_RATE)+3*sd(het$HET_RATE)));
 
@@ -221,7 +239,9 @@ barplot(temp_table, main = "Heterozygosity Analysis", xlab = "Status")
 
 # print("check_heterozygosity_rate.R Script Success!")
 
-
+#Option 2 Relatedness plots
+## Should I include these?
+### If so I'd need to make them ggplots
 par(pch=16, cex=1)
 plot(relatedness$Z0, relatedness$Z1, xlim=c(0,1), ylim=c(0,1), xlab = "P(IBD=0)", 
      ylab = "P(IBD=1)", main = "Relatedness")
