@@ -58,6 +58,8 @@ relatedness_zoom = read.table("zoom_pihat.genome", header=T)
 setwd("/panfs/jay/groups/16/saonli/baron063/R")
 
 suppressMessages(library(tidyverse))
+suppressMessages(library(gridExtra))
+library(gt)
 
 #Back to where the log data is
 setwd(wd)
@@ -100,27 +102,102 @@ setwd(path_to_save_report)
 
 #### Start of QCreport_2.pdf ####
 pdf("QCreport_2.pdf")
-geno_table_summary = rbind(QC2_geno_table, QC4_geno_table)
-# Probably will turn it into a gt?
-# Would be good to rearrange the columns? 
-# These all have 7 columns
-mind_table_summary = rbind(QC3_mind_table, QC5_mind_table)
+# Data cleaning for geno steps
+geno_tab_1 = t(QC2_geno_table)
+colnames(geno_tab_1)=geno_tab_1[1, ]
+QC_step=c("2", "2")
+geno_tab_1b=cbind(geno_tab_1, QC_step)
+geno_tab_1_clean=geno_tab_1b[2,]
+
+geno_tab_2 = t(QC4_geno_table)
+colnames(geno_tab_2)=geno_tab_2[1, ]
+QC_step=c("4", "4")
+geno_tab_2b=cbind(geno_tab_2, QC_step)
+geno_tab_2_clean=geno_tab_2b[2,]
+
+geno_table_summary = rbind(geno_tab_1_clean, geno_tab_2_clean)
+(geno_tibble=as_tibble(geno_table_summary))
+# gt(geno_tibble)
+
+# Data cleaning for mind steps
+mind_tab_1 = t(QC3_mind_table)
+colnames(mind_tab_1)=mind_tab_1[1, ]
+QC_step=c("3", "3")
+mind_tab_1b=cbind(mind_tab_1, QC_step)
+mind_tab_1_clean=mind_tab_1b[2,]
+
+mind_tab_2 = t(QC5_mind_table)
+colnames(mind_tab_2)=mind_tab_2[1, ]
+QC_step=c("5", "5")
+mind_tab_2b=cbind(mind_tab_2, QC_step)
+mind_tab_2_clean=mind_tab_2b[2,]
+
+mind_table_summary = rbind(mind_tab_1_clean, mind_tab_2_clean)
+(mind_tibble=as_tibble(mind_table_summary))
+# gt(mind_tibble)
 
 ## Testing
-grid.table(mind_table_summary, show.rownames = FALSE)
+# QC2_geno->QC2_geno_table
+# QC3_mind->QC3_mind_table
+# QC4_geno->QC4_geno_table
+# QC5_mind->QC5_mind_table
+grid.table(geno_table_summary)
 
-QC6_sex_check_table
+grid.table(geno_tibble)
+
+grid.table(mind_table_summary)
+
+grid.table(mind_tibble)
+
+# QC6_sex_check_table
 # Turn it into a gt?
+sex_check_tab = t(QC6_sex_check_table)
+colnames(sex_check_tab)=sex_check_tab[1, ]
+QC_step=c("6", "6")
+sex_check_tab_2b=cbind(sex_check_tab, QC_step)
+(sex_check_tab_2_clean=sex_check_tab_2b[2,])
+#(sex_check_tibble=as_tibble(sex_check_tab_2_clean))
+# gt(sex_check_tibble)
 
-QC7_maf_table
+QC7_maf_tab=t(QC7_maf_table)
+colnames(QC7_maf_tab)=QC7_maf_tab[1, ]
+QC_step=c("7", "7")
+maf_tab_2b=cbind(QC7_maf_tab, QC_step)
+(maf_tab_2_clean=maf_tab_2b[2,])
+#(maf_tibble=as_tibble(maf_tab_2_clean))
+# gt(maf_tibble)
+
+#hwe check table
+hwe_tab_1 = t(QC8_hwe_table)
+colnames(hwe_tab_1)=hwe_tab_1[1, ]
+QC_step=c("QC_step", "8")
+hwe_tab_1b=cbind(hwe_tab_1, QC_step)
+hwe_tab_1_clean=hwe_tab_1b[2,]
+
+hwe_tab_2 = t(QC8b_hwe_table)
+colnames(hwe_tab_2)=hwe_tab_2[1, ]
+QC_step=c("QC_step", "8b")
+hwe_tab_2b=cbind(hwe_tab_2, QC_step)
+hwe_tab_2_clean=hwe_tab_2b[2,]
+
+hwe_table_summary = rbind(hwe_tab_1_clean, hwe_tab_2_clean)
+(hwe_tibble=as_tibble(hwe_table_summary))
+# gt(hwe_tibble)
+
+#hwe_check_table = rbind(QC8_hwe_table, QC8b_hwe_table)
 # gt?
 
-hwe_check_table = rbind(QC8_hwe_table, QC8b_hwe_table)
-# gt?
-
-QC9_filter_founders_table
+f_f_tab=t(QC9_filter_founders_table)
+colnames(f_f_tab)=f_f_tab[1, ]
+QC_step=c("QC_step", "9")
+f_f_tab_2b=cbind(f_f_tab, QC_step)
+(f_f_tab_2_clean=f_f_tab_2b[2,])
+# (f_f_tibble=as_tibble(f_f_tab_2_clean))
+# gt(f_f_tibble)
 
 QC_indep_pairwise_table
+
+
 
 QC_indep_pairwise_bychr
 # gt?
