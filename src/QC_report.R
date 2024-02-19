@@ -212,27 +212,39 @@ print(length(indmiss))
 
 print(nrow(indmiss))
 
+#### alterations to be done ####
+# Change the verticle red lines to be based on what we 
+# Actually used as the thresholds or based on user inputs
+# Turn the gender check into a ggplot and add in verticle lines
+# where the thresholds would be
+# as well as only keeping the broader gender graph (no subplots)
+# Change the title to be Sex instead of "Gender"
+# Only keeping the ggplot for MAF
+# Same for HWE
+# same for heterozygosity
+##################
+
 #Option 1
 data.frame("Subject" = 1:nrow(indmiss),
           "Missingness" = indmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() + 
-  geom_vline(xintercept = 0.15, color = "red") + 
+  geom_vline(xintercept = 0.10, color = "red") + 
   xlab("Missingness per subject") +
   ggtitle("% SNPS missing per subject")
 #Option 2
-hist(indmiss[,6],main="Histogram individual missingness", xlab = "Proportion of missing SNPs") #selects column 6, names header of file
+# hist(indmiss[,6],main="Histogram individual missingness", xlab = "Proportion of missing SNPs") #selects column 6, names header of file
 
 #Option 1
 data.frame("SNP" = 1:nrow(snpmiss),
           "Missingness" = snpmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() +
-  geom_vline(xintercept = 0.15, color = "red") +
+  geom_vline(xintercept = 0.10, color = "red") +
   xlab("Missingness per SNP") +
   ggtitle("% calls missing per SNP")
 #Option 2
-hist(snpmiss[,5],main="Histogram SNP missingness", xlab = "Proportion of sample missing for each SNP")  
+# hist(snpmiss[,5],main="Histogram SNP missingness", xlab = "Proportion of sample missing for each SNP")  
 
 # print("hist_miss.R Script Success!")
 
@@ -241,20 +253,24 @@ hist(snpmiss[,5],main="Histogram SNP missingness", xlab = "Proportion of sample 
 #### Base R versions 
 ## Not yet implemented into the Quarto document...
 hist(gender[,6],main="Gender", xlab="F Value")
+# Wants the above plot to be a ggplot with verticle lines designating cutoff points
 
-male=subset(gender, gender$PEDSEX==1)
-hist(male[,6],main="Men",xlab="F Value")
 
-female=subset(gender, gender$PEDSEX==2)
-hist(female[,6],main="Women",xlab="F Value")
+### Sub plots were undesired
+# male=subset(gender, gender$PEDSEX==1)
+# hist(male[,6],main="Men",xlab="F Value")
+# 
+# female=subset(gender, gender$PEDSEX==2)
+# hist(female[,6],main="Women",xlab="F Value")
 
 ## Adding a barplot to show the number that are problems 
+#### Make a ggplot instead ####
 temptab= table(gender$STATUS)
 barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
 
 # print("gender_check.R Script Success!")
-#Option 2 MAF
-hist(maf_freq[,5],main = "MAF distribution", xlab = "MAF")
+# #Option 2 MAF
+# hist(maf_freq[,5],main = "MAF distribution", xlab = "MAF")
 #####
 
 #Option 1 MAF
@@ -262,15 +278,16 @@ data.frame("SNP" = 1:nrow(maf_freq),
            "MAF" = maf_freq[,5]) %>%
   ggplot(aes(x = MAF)) +
   geom_histogram() +
-  geom_vline(xintercept = 0.05, color = "red") +
+  geom_vline(xintercept = 0.01, color = "red") +
   xlab("Minor allele frequency") +
   ggtitle("MAF distribution")
 
 # print("MAF_check.R Script Success!")
 
-#Option 2 HWE
-hist(hwe[,9],main="Histogram HWE", xlab = "P-value")
+# #Option 2 HWE
+# hist(hwe[,9],main="Histogram HWE", xlab = "P-value")
 #Option 1 HWE 
+#### Need to adjust the vline to be what we are actually using ####
 data.frame("SNP" = 1:nrow(hwe),
           "HWE" = hwe[,9]) %>%
           ggplot(aes(x = HWE)) +
@@ -293,8 +310,8 @@ data.frame("Subject" = 1:nrow(het),
   geom_vline(xintercept = c(-2, 2), color = "red") + 
   xlab("Heterozygosity F statistic") +
   ggtitle("Heterozygous F statistic distribution")
-#Option 2 Heterozygosity
-hist(het$HET_RATE, xlab="Heterozygosity Rate", ylab="Frequency", main= "Heterozygosity Rate")
+# #Option 2 Heterozygosity
+# hist(het$HET_RATE, xlab="Heterozygosity Rate", ylab="Frequency", main= "Heterozygosity Rate")
 
 #Option 2 Heterozygosity further analysis 
 # Should make a quarto / ggplot version 
@@ -319,6 +336,8 @@ barplot(temp_table, main = "Heterozygosity Analysis", xlab = "Status")
 #Option 2 Relatedness plots
 ## Should I include these?
 ### If so I'd need to make them ggplots
+#### Unsure what these plots are doing 
+##### Definitely wants the last plot
 par(pch=16, cex=1)
 plot(relatedness$Z0, relatedness$Z1, xlim=c(0,1), ylim=c(0,1), xlab = "P(IBD=0)", 
      ylab = "P(IBD=1)", main = "Relatedness")
@@ -339,6 +358,8 @@ plot(relatedness_zoom$Z0, relatedness_zoom$Z1, xlim=c(0,0.02), ylim=c(0.98,1),
 with(subset(relatedness_zoom,RT=="PO") , points(Z0,Z1,col=4))
 with(subset(relatedness_zoom,RT=="UN") , points(Z0,Z1,col=3))
 
+
+#### Turn this plot into a ggplot ####
 hist(relatedness[,10],main="Histogram relatedness", xlab= "Proportion IBD")  
 
 # print("Relatedness.R Script Success!")
