@@ -24,7 +24,12 @@ path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 #./src/ancestryPrediction.sh #Output is ${filepreffix}_11 ? <-- doesn't work appropriately
 
 
-./src/make_tables.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} # Need to relocate the files made here into a data folder as part of this script?
+./src/make_tables.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} 
+
+### Would be a good idea to also move the files in necessary_files.txt into the same data folder
+## ./src/move_necessary_files.sh -- ............
+
+
 
 # Generates PDF QC_report 
 mkdir -p ${path_to_store_outputs}/results
