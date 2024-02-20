@@ -18,17 +18,17 @@ path_to_data=/home/gdc/shared/SMILES/GSA/
 filepreffix=SMILES_GSA
 path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 
+
 # Prefix for 
 ./src/main.sh --FILE ${filepreffix} --OLDBLD N --UPDTSO N --PATHTODATA ${path_to_data} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} #Assumes they don't need their reference build updated and don't need alleles flipped. 
 
 #./src/ancestryPrediction.sh #Output is ${filepreffix}_11 ? <-- doesn't work appropriately
 
-
+# Makes txt files to be used in the report based on log files
 ./src/make_tables.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} 
 
-### Would be a good idea to also move the files in necessary_files.txt into the same data folder
-## ./src/move_necessary_files.sh -- ............
-
+# Moving specific log files that are used in the report into the proper final location
+./src/move_necessary_files.sh --FILE ./data/default_list_of_files_to_move.txt --END_LOCATION ${path_to_store_outputs}/logs/
 
 
 # Generates PDF QC_report 
@@ -38,7 +38,7 @@ Rscript ./src/QC_report.R ${path_to_store_outputs} ${filepreffix}
 
 
 ## Currently not working so continuing with QC_report.R for testing purposes
-# ./src/generate_report.sh # calls quarto render QCReport.qmd #For rendering the report
+./src/generate_report.sh # calls quarto render QCReport.qmd #For rendering the report
 
-# Cleaning up repository
+# Cleaning up repository /working directory
 ./src/repo_cleaner.sh --FILE ./data/default_list_of_files_to_remove.txt
