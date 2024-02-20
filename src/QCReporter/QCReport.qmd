@@ -16,11 +16,16 @@ execute:
 editor: 
   markdown: 
     wrap: 72
+params: 
+  path_to_data: "/home/gdc/shared/GDC_pipeline/logs/"
+  path_to_save_pdf: "/home/gdc/shared/GDC_pipeline/results/"
+project:
+  output-dir: /home/gdc/shared/GDC_pipeline/results/
 ---
 
 ```{r setup, include=FALSE}
 library(tidyverse)
-library(ggmanh)
+#library(ggmanh)
 source("distViz.R")
 #source("logReader.R")
 ```
@@ -47,19 +52,39 @@ step of the QC process.
 
 # Loading in data from logs
 ```{r, echo=FALSE} 
-#Reading in the tables for later use
-QC2_geno_table <- read.table(QC2_geno.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC3_mind_table <- read.table(QC3_mind.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC4_geno_table <- read.table(QC4_geno.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC5_mind_table <- read.table(QC5_mind.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC6_sex_check_table <- read.table(QC6_sex_check.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC7_maf_table <- read.table(QC7_maf.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC8_hwe_table <- read.table(QC8_hwe.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC8b_hwe_table <- read.table(QC8b_hwe.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC9_filter_founders_table <- read.table(QC9_filter-founders.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+print(params$path_to_data)
+path_to_data=params$path_to_data
+setwd(params$path_to_data)
+```
 
-QC_indep_pairwise_table <- read.table(QC_indep_pairwise.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
-QC_indep_pairwise_bychr <- read.table(each_SNP_QC_indep_pairwise.txt, header = T, sep = " ", col.names = T, row.names = F, quote = F)
+```{r importdata}
+# read data into R from oddly named logs
+path_to_indmiss=paste0(path_to_data, "plink.imiss")
+indmiss<-read.table(file=path_to_indmiss, header=TRUE) #Testing if this one works
+snpmiss<-read.table(file="plink.lmiss", header=TRUE) #Testing if this works instead
+gender <- read.table("gender_check.sexcheck", header=T,as.is=T)
+maf_freq <- read.table("MAF_check.frq", header =TRUE, as.is=T)
+hwe<-read.table (file="plink.hwe", header=TRUE)
+hwe_zoom<-read.table (file="plinkzoomhwe.hwe", header=TRUE)
+het <- read.table("R_check.het", head=TRUE)
+relatedness = read.table("pihat_min0.2.genome", header=T)
+relatedness_zoom = read.table("zoom_pihat.genome", header=T)
+
+
+#Reading in the tables for later use
+QC2_geno_table <- read.table(file = "QC2_geno.txt",  quote="\"", comment.char="")
+
+QC3_mind_table <- read.table("QC3_mind.txt",  quote="\"", comment.char="")
+QC4_geno_table <- read.table("QC4_geno.txt",  quote="\"", comment.char="")
+QC5_mind_table <- read.table("QC5_mind.txt",  quote="\"", comment.char="")
+QC6_sex_check_table <- read.table("QC6_sex_check.txt", quote="\"", comment.char="")
+QC7_maf_table <- read.table("QC_7_maf.txt", quote="\"", comment.char="")
+QC8_hwe_table <- read.table("QC_8_hwe.txt", quote="\"", comment.char="")
+QC8b_hwe_table <- read.table("QC_8b_hwe.txt", quote="\"", comment.char="")
+QC9_filter_founders_table <- read.table("QC_9_filter-founders.txt", quote="\"", comment.char="")
+
+QC_indep_pairwise_table <- read.csv("QC_indep_pairwise.txt", sep = "")
+QC_indep_pairwise_bychr <- read.csv("each_SNP_QC_indep_pairwise.txt", sep = "")
 
 #Key 
 # common            InSubjects InMale InFemale InSNPs 
@@ -78,52 +103,140 @@ QC_indep_pairwise_bychr <- read.table(each_SNP_QC_indep_pairwise.txt, header = T
 #                   PrunedSNPS Chr RemainingSNPS <-- table2
 ```
 
-## Summary table from the first 4 QC steps
-```{r, echo=FALSE}
-geno_table_summary = rbind(QC2_geno_table, QC4_geno_table)
-# Probably will turn it into a gt?
-# Would be good to rearrange the columns? 
-# These all have 7 columns
-mind_table_summary = rbind(QC3_mind_table, QC5_mind_table)
+```{r}
+# Data cleaning for geno steps
+geno_tab_1 = t(QC2_geno_table)
+colnames(geno_tab_1)=geno_tab_1[1, ]
+QC_step=c("2", "2")
+geno_tab_1b=cbind(geno_tab_1, QC_step)
+geno_tab_1_clean=geno_tab_1b[2,]
 
-```
+geno_tab_2 = t(QC4_geno_table)
+colnames(geno_tab_2)=geno_tab_2[1, ]
+QC_step=c("4", "4")
+geno_tab_2b=cbind(geno_tab_2, QC_step)
+geno_tab_2_clean=geno_tab_2b[2,]
 
-## Summary table for sex check
-```{r, echo=FALSE}
-QC6_sex_check_table
-# Turn it into a gt?
-```
+geno_table_summary = rbind(geno_tab_1_clean, geno_tab_2_clean)
+(geno_tibble=as_tibble(geno_table_summary))
+# gt(geno_tibble)
 
-## Summary table for minor allele frequency check
-```{r, echo=FALSE}
-QC7_maf_table
+# Data cleaning for mind steps
+mind_tab_1 = t(QC3_mind_table)
+colnames(mind_tab_1)=mind_tab_1[1, ]
+QC_step=c("3", "3")
+mind_tab_1b=cbind(mind_tab_1, QC_step)
+mind_tab_1_clean=mind_tab_1b[2,]
+
+mind_tab_2 = t(QC5_mind_table)
+colnames(mind_tab_2)=mind_tab_2[1, ]
+QC_step=c("5", "5")
+mind_tab_2b=cbind(mind_tab_2, QC_step)
+mind_tab_2_clean=mind_tab_2b[2,]
+
+mind_table_summary = rbind(mind_tab_1_clean, mind_tab_2_clean)
+(mind_tibble=as_tibble(mind_table_summary))
+# gt(mind_tibble)
+
+sex_check_tab = t(QC6_sex_check_table)
+colnames(sex_check_tab)=sex_check_tab[1, ]
+QC_step=c("6", "6")
+sex_check_tab_2b=cbind(sex_check_tab, QC_step)
+(sex_check_tab_2_clean=sex_check_tab_2b[2,])
+#(sex_check_tibble=as_tibble(sex_check_tab_2_clean))
+# gt(sex_check_tibble)
+
+
+QC7_maf_tab=t(QC7_maf_table)
+colnames(QC7_maf_tab)=QC7_maf_tab[1, ]
+QC_step=c("7", "7")
+maf_tab_2b=cbind(QC7_maf_tab, QC_step)
+(maf_tab_2_clean=maf_tab_2b[2,])
+#(maf_tibble=as_tibble(maf_tab_2_clean))
+# gt(maf_tibble)
+
+#hwe check table
+hwe_tab_1 = t(QC8_hwe_table)
+colnames(hwe_tab_1)=hwe_tab_1[1, ]
+QC_step=c("QC_step", "8")
+hwe_tab_1b=cbind(hwe_tab_1, QC_step)
+hwe_tab_1_clean=hwe_tab_1b[2,]
+
+hwe_tab_2 = t(QC8b_hwe_table)
+colnames(hwe_tab_2)=hwe_tab_2[1, ]
+QC_step=c("QC_step", "8b")
+hwe_tab_2b=cbind(hwe_tab_2, QC_step)
+hwe_tab_2_clean=hwe_tab_2b[2,]
+
+hwe_table_summary = rbind(hwe_tab_1_clean, hwe_tab_2_clean)
+(hwe_tibble=as_tibble(hwe_table_summary))
+# gt(hwe_tibble)
+
+#hwe_check_table = rbind(QC8_hwe_table, QC8b_hwe_table)
+# gt?
+
+f_f_tab=t(QC9_filter_founders_table)
+colnames(f_f_tab)=f_f_tab[1, ]
+QC_step=c("QC_step", "9")
+f_f_tab_2b=cbind(f_f_tab, QC_step)
+(f_f_tab_2_clean=f_f_tab_2b[2,])
+# (f_f_tibble=as_tibble(f_f_tab_2_clean))
+# gt(f_f_tibble)
+
+QC_indep_pairwise_table
+
+
+
+QC_indep_pairwise_bychr
 # gt?
 ```
 
-## Summary table for hwe checks
-```{r, echo=FALSE}
-hwe_check_table = rbind(QC8_hwe_table, QC8b_hwe_table)
-# gt?
-```
+<!-- ## Summary table from the first 4 QC steps -->
+<!-- ```{r, echo=FALSE} -->
+<!-- geno_table_summary = rbind(QC2_geno_table, QC4_geno_table) -->
+<!-- # Probably will turn it into a gt? -->
+<!-- # Would be good to rearrange the columns?  -->
+<!-- # These all have 7 columns -->
+<!-- mind_table_summary = rbind(QC3_mind_table, QC5_mind_table) -->
 
-## Summary table for filtering founders
-```{r, echo=FALSE}
-QC9_filter_founders_table
-# gt?
-```
+<!-- ``` -->
 
-```{r tab:summary, echo = FALSE}
-inputData <- extractLog("../QCtutorial/logs/wgas2.log")
-outputData <- extractLog("../QCtutorial/logs/wgas2.log")
-outputData["OutSNPs"] <- outputData["OutSNPs"] - 13000
-outputData["OutSubjects"] <- outputData["OutSubjects"] - 2
-```
+<!-- ## Summary table for sex check -->
+<!-- ```{r, echo=FALSE} -->
+<!-- QC6_sex_check_table -->
+<!-- # Turn it into a gt? -->
+<!-- ``` -->
 
-| Processing step |                                                                                      Number of SNPs |                                                                                              Number of Subjects |
-|:---------------------|---------------------:|---------------------------:|
-| Input           |                                                   `r format(inputData["InSNPs"], scientific=FALSE)` |                                                           `r format(inputData["InSubjects"], scientific=FALSE)` |
-| Output          |                                                 `r format(outputData["OutSNPs"], scientific=FALSE)` |                                                         `r format(outputData["OutSubjects"], scientific=FALSE)` |
-| %Change         | `r format((outputData["OutSNPs"] - inputData["InSNPs"])/inputData["InSNPs"]*100, scientific=FALSE)` | `r format(outputData["OutSubjects"] -(inputData["InSubjects"] )/inputData["InSubjects"]*100, scientific=FALSE)` |
+<!-- ## Summary table for minor allele frequency check -->
+<!-- ```{r, echo=FALSE} -->
+<!-- QC7_maf_table -->
+<!-- # gt? -->
+<!-- ``` -->
+
+<!-- ## Summary table for hwe checks -->
+<!-- ```{r, echo=FALSE} -->
+<!-- hwe_check_table = rbind(QC8_hwe_table, QC8b_hwe_table) -->
+<!-- # gt? -->
+<!-- ``` -->
+
+<!-- ## Summary table for filtering founders -->
+<!-- ```{r, echo=FALSE} -->
+<!-- QC9_filter_founders_table -->
+<!-- # gt? -->
+<!-- ``` -->
+
+<!-- ```{r tab:summary, echo = FALSE} -->
+<!-- inputData <- extractLog("../QCtutorial/logs/wgas2.log") -->
+<!-- outputData <- extractLog("../QCtutorial/logs/wgas2.log") -->
+<!-- outputData["OutSNPs"] <- outputData["OutSNPs"] - 13000 -->
+<!-- outputData["OutSubjects"] <- outputData["OutSubjects"] - 2 -->
+<!-- ``` -->
+
+<!-- | Processing step |                                                                                      Number of SNPs |                                                                                              Number of Subjects | -->
+<!-- |:---------------------|---------------------:|---------------------------:| -->
+<!-- | Input           |                                                   `r format(inputData["InSNPs"], scientific=FALSE)` |                                                           `r format(inputData["InSubjects"], scientific=FALSE)` | -->
+<!-- | Output          |                                                 `r format(outputData["OutSNPs"], scientific=FALSE)` |                                                         `r format(outputData["OutSubjects"], scientific=FALSE)` | -->
+<!-- | %Change         | `r format((outputData["OutSNPs"] - inputData["InSNPs"])/inputData["InSNPs"]*100, scientific=FALSE)` | `r format(outputData["OutSubjects"] -(inputData["InSubjects"] )/inputData["InSubjects"]*100, scientific=FALSE)` | -->
 
 ## Data set description
 
@@ -133,28 +246,28 @@ Ethnicities
 
 ## Data Processing
 
-```{dot}
-digraph G {
-  input [ label = "1000 Subjects \n 10000 SNPs" ];
-  filter [ label = "987 Subjects \n 9982 SNPs"];
+<!-- ```{dot} -->
+<!-- digraph G { -->
+<!--   input [ label = "1000 Subjects \n 10000 SNPs" ]; -->
+<!--   filter [ label = "987 Subjects \n 9982 SNPs"]; -->
 
-  filter1 [label = "Ancestry 1 \n 335 Subjects"];
-  filter2 [label = "Ancestry 2 \n 138 Subjects"];
-  filter3 [label = "Ancestry 3 \n 514 Subjects"];
+<!--   filter1 [label = "Ancestry 1 \n 335 Subjects"]; -->
+<!--   filter2 [label = "Ancestry 2 \n 138 Subjects"]; -->
+<!--   filter3 [label = "Ancestry 3 \n 514 Subjects"]; -->
 
-  joinedData[ label = " \n 987 Subjects \n 9862 SNPs"];
+<!--   joinedData[ label = " \n 987 Subjects \n 9862 SNPs"]; -->
 
-   input -> filter [ label = "MAF > 0.05, (120) \n SNP Missingness < 0.05 (200) \n Subj Missing >0.05, (3)"]; 
-  filter -> filter1, filter2;
-  filter -> filter3 [label = "Predict ancestry"];
+<!--    input -> filter [ label = "MAF > 0.05, (120) \n SNP Missingness < 0.05 (200) \n Subj Missing >0.05, (3)"];  -->
+<!--   filter -> filter1, filter2; -->
+<!--   filter -> filter3 [label = "Predict ancestry"]; -->
 
-  input -> filter1 [label = "Full SNP set"];
-  input -> filter2, filter3;
-  filter1 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"];
-  filter2 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"]; 
-  filter3 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"];
-}
-```
+<!--   input -> filter1 [label = "Full SNP set"]; -->
+<!--   input -> filter2, filter3; -->
+<!--   filter1 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"]; -->
+<!--   filter2 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"];  -->
+<!--   filter3 -> joinedData[ label = "MAF > 0.05, (15) \n SNP Missingness <0.05 (30)"]; -->
+<!-- } -->
+<!-- ``` -->
 
 # Detailed QC summary
 
@@ -165,12 +278,11 @@ Subjects were filtered based on missingness and heterozygosity. An LD
 pruning step was also performed.
 
 ```{r}
-indmiss<-read.table(file="plink.imiss", header=TRUE)
-data.frame("Subject" = 1:length(indmiss),
-          "Missingness" = indmiss[,6]) %>%
+data.frame("Subject" = 1:nrow(indmiss),
+          "Missingness" = indmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() + 
-  geom_vline(xintercept = 0.15, color = "red") + 
+  geom_vline(xintercept = 0.10, color = "red") + 
   xlab("Missingness per subject") +
   ggtitle("% SNPS missing per subject")
 ```
@@ -186,16 +298,33 @@ $$
 #| label: fig-hetFilter
 #| fig-cap: "Heterozygosity distributions with cutoff shown as red vertical line."
 
-het <- read.table("R_check.het", head=TRUE)
 het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
-
-data.frame("Subject" = 1:length(het),
+data.frame("Subject" = 1:nrow(het),
           "Heterozygosity" = het$HET_RATE) %>%
   ggplot(aes(x = Heterozygosity)) +
   geom_histogram() + 
   geom_vline(xintercept = c(-2, 2), color = "red") + 
   xlab("Heterozygosity F statistic") +
   ggtitle("Heterozygous F statistic distribution")
+```
+
+Unrefined plot to include
+```{r}
+het_fail = subset(het, (het$HET_RATE < mean(het$HET_RATE)-3*sd(het$HET_RATE)) | (het$HET_RATE > mean(het$HET_RATE)+3*sd(het$HET_RATE)));
+
+placeholder = c()
+for(i in 1:nrow(het)) {
+  if(het[i, 2] %in% het_fail[[2]]) {
+    placeholder[i]="PROBLEM"
+  }
+  if(!het[i,2] %in% het_fail[[2]]) {
+    placeholder[i] = "OK"
+  }
+}
+
+temp_table = table(placeholder)
+barplot(temp_table, main = "Heterozygosity Analysis", xlab = "Status")
+
 ```
 
 ## Per SNP summary
@@ -206,28 +335,25 @@ SNPS were filtered based on missingness and MAF as well as HWE
 ```{r firstFilter}
 #| label: fig-firstFilter
 #| fig-cap: "Missingness, MAF, and HWE filters involved in initial SNP filtering. Cutoffs are shown as red vertical lines"
-snpmiss<-read.table(file="plink.lmiss", header=TRUE)
-data.frame("SNP" = 1:length(snpmiss),
-          "Missingness" = snpmiss[,5]) %>%
+data.frame("SNP" = 1:nrow(snpmiss),
+          "Missingness" = snpmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() +
-  geom_vline(xintercept = 0.15, color = "red") +
+  geom_vline(xintercept = 0.10, color = "red") +
   xlab("Missingness per SNP") +
   ggtitle("% calls missing per SNP")
 
 
-maf_freq <- read.table("MAF_check.frq", header =TRUE, as.is=T)
-data.frame("SNP" = 1:length(maf_freq),
+data.frame("SNP" = 1:nrow(maf_freq),
            "MAF" = maf_freq[,5]) %>%
   ggplot(aes(x = MAF)) +
   geom_histogram() +
-  geom_vline(xintercept = 0.05, color = "red") +
+  geom_vline(xintercept = 0.01, color = "red") +
   xlab("Minor allele frequency") +
   ggtitle("MAF distribution")
 
-hwe<-read.table (file="plink.hwe", header=TRUE)
 
-data.frame("SNP" = 1:length(hwe),
+data.frame("SNP" = 1:nrow(hwe),
           "HWE" = hwe[,9]) %>%
           ggplot(aes(x = HWE)) +
           geom_histogram() +
@@ -237,6 +363,18 @@ data.frame("SNP" = 1:length(hwe),
 
 
 ```
+
+## Extra plots that need to be beautified and rearranged
+```{r extraplots}
+hist(gender[,6],main="Gender", xlab="F Value")
+# Wants the above plot to be a ggplot with verticle lines designating cutoff points
+temptab= table(gender$STATUS)
+barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
+hist(hwe_zoom[,9],main="Histogram HWE: strongly deviating SNPs only", xlab = "P-value")
+hist(relatedness[,10],main="Histogram relatedness", xlab= "Proportion IBD")  
+
+```
+
 
 
 ## Ancestry predictions

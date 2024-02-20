@@ -224,7 +224,7 @@ print(nrow(indmiss))
 # same for heterozygosity
 ##################
 
-#Option 1
+#Option 1 ## Included
 data.frame("Subject" = 1:nrow(indmiss),
           "Missingness" = indmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
@@ -235,7 +235,7 @@ data.frame("Subject" = 1:nrow(indmiss),
 #Option 2
 # hist(indmiss[,6],main="Histogram individual missingness", xlab = "Proportion of missing SNPs") #selects column 6, names header of file
 
-#Option 1
+#Option 1 ## Included
 data.frame("SNP" = 1:nrow(snpmiss),
           "Missingness" = snpmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
@@ -273,7 +273,7 @@ barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
 # hist(maf_freq[,5],main = "MAF distribution", xlab = "MAF")
 #####
 
-#Option 1 MAF
+#Option 1 MAF ## Included
 data.frame("SNP" = 1:nrow(maf_freq),
            "MAF" = maf_freq[,5]) %>%
   ggplot(aes(x = MAF)) +
@@ -286,7 +286,7 @@ data.frame("SNP" = 1:nrow(maf_freq),
 
 # #Option 2 HWE
 # hist(hwe[,9],main="Histogram HWE", xlab = "P-value")
-#Option 1 HWE 
+#Option 1 HWE ## Included
 #### Need to adjust the vline to be what we are actually using ####
 data.frame("SNP" = 1:nrow(hwe),
           "HWE" = hwe[,9]) %>%
@@ -301,7 +301,7 @@ hist(hwe_zoom[,9],main="Histogram HWE: strongly deviating SNPs only", xlab = "P-
 
 # print("hwe.R Script Success!")
 
-#Option 1 Heterozygosity
+#Option 1 Heterozygosity ## Included
 het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
 data.frame("Subject" = 1:nrow(het),
           "Heterozygosity" = het$HET_RATE) %>%
@@ -313,7 +313,7 @@ data.frame("Subject" = 1:nrow(het),
 # #Option 2 Heterozygosity
 # hist(het$HET_RATE, xlab="Heterozygosity Rate", ylab="Frequency", main= "Heterozygosity Rate")
 
-#Option 2 Heterozygosity further analysis 
+#Option 2 Heterozygosity further analysis ## Included
 # Should make a quarto / ggplot version 
 # ## Adding a barplot to show the number that are problems 
 het_fail = subset(het, (het$HET_RATE < mean(het$HET_RATE)-3*sd(het$HET_RATE)) | (het$HET_RATE > mean(het$HET_RATE)+3*sd(het$HET_RATE)));

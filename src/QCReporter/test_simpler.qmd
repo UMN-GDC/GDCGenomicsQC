@@ -2,6 +2,8 @@
 title: "test1"
 format: pdf
 editor: visual
+project:
+  output-dir: /home/gdc/shared/GDC_pipeline/results/
 ---
 
 ## Quarto
