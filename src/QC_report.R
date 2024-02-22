@@ -32,6 +32,17 @@ print(file_preffix)
 print(output_location)
 
 
+setwd("/panfs/jay/groups/16/saonli/baron063/R")
+
+suppressMessages(library(tidyverse))
+suppressMessages(library(gridExtra))
+library(gt)
+
+#Back to where the log data is
+setwd(wd)
+#print("Files available to be selected in data directory")
+#list.files()
+
 # read data into R from temporary space
 indmiss<-read.table(file="plink.imiss", header=TRUE)
 snpmiss<-read.table(file="plink.lmiss", header=TRUE)
@@ -43,32 +54,8 @@ het <- read.table("R_check.het", head=TRUE)
 relatedness = read.table("pihat_min0.2.genome", header=T)
 relatedness_zoom = read.table("zoom_pihat.genome", header=T)
 
-# print("Checking tables are read properly")
-# head(indmiss)
-# head(snpmiss)
-# head(gender)
-# head(maf_freq)
-# head(hwe)
-# head(hwe_zoom)
-# head(het)
-# head(relatedness)
-# head(relatedness_zoom)
-
-
-setwd("/panfs/jay/groups/16/saonli/baron063/R")
-
-suppressMessages(library(tidyverse))
-suppressMessages(library(gridExtra))
-library(gt)
-
-#Back to where the log data is
-setwd(wd)
-print("Files available to be selected in data directory")
-list.files()
-
 #Reading in the tables for later use
 QC2_geno_table <- read.table(file = "QC2_geno.txt",  quote="\"", comment.char="")
-
 QC3_mind_table <- read.table("QC3_mind.txt",  quote="\"", comment.char="")
 QC4_geno_table <- read.table("QC4_geno.txt",  quote="\"", comment.char="")
 QC5_mind_table <- read.table("QC5_mind.txt",  quote="\"", comment.char="")
@@ -176,7 +163,7 @@ hwe_tab_1_clean=hwe_tab_1b[2,]
 
 hwe_tab_2 = t(QC8b_hwe_table)
 colnames(hwe_tab_2)=hwe_tab_2[1, ]
-QC_step=c("QC_step", "8b")
+QC_step=c("QC_step", "8.1")
 hwe_tab_2b=cbind(hwe_tab_2, QC_step)
 hwe_tab_2_clean=hwe_tab_2b[2,]
 
@@ -194,6 +181,14 @@ f_f_tab_2b=cbind(f_f_tab, QC_step)
 (f_f_tab_2_clean=f_f_tab_2b[2,])
 # (f_f_tibble=as_tibble(f_f_tab_2_clean))
 # gt(f_f_tibble)
+
+#Putting it all together if possible
+full_table=rbind(geno_tab_1_clean, mind_tab_1_clean, geno_tab_2_clean, mind_tab_2_clean, maf_tab_2_clean, hwe_table_summary)
+colnames(full_table)=c("InSubjects", "InMale", "InFemale", "InSNPs",
+                       "OutSubjects", "NumRemoved", "OutSNPs", "Qc_step")
+full_table 
+full_tibb=as_tibble(full_table)
+# full_tibb %>% arrange(QC_step)
 
 QC_indep_pairwise_table
 
