@@ -137,7 +137,6 @@ grid.table(mind_table_summary)
 grid.table(mind_tibble)
 
 # QC6_sex_check_table
-# Turn it into a gt?
 sex_check_tab = t(QC6_sex_check_table)
 colnames(sex_check_tab)=sex_check_tab[1, ]
 QC_step=c("6", "6")
@@ -219,7 +218,7 @@ print(nrow(indmiss))
 # same for heterozygosity
 ##################
 
-#Option 1 ## Included
+#Option 1 ## Included #Again
 num_indmiss=nrow(indmiss)
 data.frame("Subject" = 1:nrow(indmiss),
            "Missingness" = indmiss$F_MISS) %>%
@@ -231,7 +230,7 @@ data.frame("Subject" = 1:nrow(indmiss),
 #Option 2
 # hist(indmiss[,6],main="Histogram individual missingness", xlab = "Proportion of missing SNPs") #selects column 6, names header of file
 
-#Option 1 ## Included
+#Option 1 ## Included #Again
 num_snpmiss=nrow(snpmiss)
 data.frame("SNP" = 1:nrow(snpmiss),
            "Missingness" = snpmiss$F_MISS) %>%
@@ -247,7 +246,7 @@ data.frame("SNP" = 1:nrow(snpmiss),
 
 # chromosome homozygosity estimate (F statistic) is < 0.2 for Females and as males if the estimate is > 0.8
 
-#### Base R versions 
+#### Base R versions  #Again
 ## Not yet implemented into the Quarto document...
 ggplot(data=gender, aes(x=F))+
   geom_histogram(bins = 100)+
@@ -266,7 +265,7 @@ ggplot(data=gender, aes(x=F))+
 # hist(female[,6],main="Women",xlab="F Value")
 
 ## Adding a barplot to show the number that are problems 
-#### Make a ggplot instead ####
+#### Make a ggplot instead #### #Again
 temptab= table(gender$STATUS)
 ggplot(data = gender, aes(x=STATUS))+
   geom_histogram(stat = "count") +
@@ -280,7 +279,7 @@ ggplot(data = gender, aes(x=STATUS))+
 # hist(maf_freq[,5],main = "MAF distribution", xlab = "MAF")
 #####
 
-#Option 1 MAF ## Included
+#Option 1 MAF ## Included #Again
 data.frame("SNP" = 1:nrow(maf_freq),
            "MAF" = maf_freq[,5]) %>%
   ggplot(aes(x = MAF)) +
@@ -293,7 +292,7 @@ data.frame("SNP" = 1:nrow(maf_freq),
 
 # #Option 2 HWE
 # hist(hwe[,9],main="Histogram HWE", xlab = "P-value")
-#Option 1 HWE ## Included
+#Option 1 HWE ## Included #Again
 #### Need to adjust the vline to be what we are actually using ####
 data.frame("SNP" = 1:nrow(hwe),
            "HWE" = hwe[,9]) %>%
@@ -315,7 +314,7 @@ data.frame("SNP" = 1:nrow(hwe_zoom),
 
 # print("hwe.R Script Success!")
 
-#Option 1 Heterozygosity ## Included
+#Option 1 Heterozygosity ## Included #Again
 het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
 lower_cutoff_het=mean(het$HET_RATE)-3*sd(het$HET_RATE)
 upper_cutoff_het=mean(het$HET_RATE)+3*sd(het$HET_RATE)
@@ -330,7 +329,7 @@ data.frame("Subject" = 1:nrow(het),
 # #Option 2 Heterozygosity
 # hist(het$HET_RATE, xlab="Heterozygosity Rate", ylab="Frequency", main= "Heterozygosity Rate")
 
-#Option 2 Heterozygosity further analysis ## Included
+#Option 2 Heterozygosity further analysis ## Included #Again
 # Should make a quarto / ggplot version 
 # ## Adding a barplot to show the number that are problems 
 het_fail = subset(het, (het$HET_RATE < mean(het$HET_RATE)-3*sd(het$HET_RATE)) | (het$HET_RATE > mean(het$HET_RATE)+3*sd(het$HET_RATE)));
@@ -345,7 +344,7 @@ for(i in 1:nrow(het)) {
   }
 }
 
-(temp_table = table(placeholder))
+temp_table = table(placeholder)
 het_refined=cbind(het, placeholder)
 
 data.frame("Count" = 1:nrow(het_refined),
