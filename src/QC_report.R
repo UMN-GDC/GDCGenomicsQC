@@ -23,7 +23,7 @@ if (length(args)<=1) {
     args[3] -> output_location
     path_to_save_report=paste0(base_path, output_location)
   }
-
+  
 }
 
 wd=path_to_logs
@@ -220,10 +220,11 @@ print(nrow(indmiss))
 ##################
 
 #Option 1 ## Included
+num_indmiss=nrow(indmiss)
 data.frame("Subject" = 1:nrow(indmiss),
-          "Missingness" = indmiss$F_MISS) %>%
+           "Missingness" = indmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
-  geom_histogram() + 
+  geom_histogram(bins = round(num_indmiss/25, digits = 0)) + 
   geom_vline(xintercept = 0.01, color = "red") + 
   xlab("Missingness per subject") +
   ggtitle("% SNPS missing per subject")
@@ -231,10 +232,11 @@ data.frame("Subject" = 1:nrow(indmiss),
 # hist(indmiss[,6],main="Histogram individual missingness", xlab = "Proportion of missing SNPs") #selects column 6, names header of file
 
 #Option 1 ## Included
+num_snpmiss=nrow(snpmiss)
 data.frame("SNP" = 1:nrow(snpmiss),
-          "Missingness" = snpmiss$F_MISS) %>%
+           "Missingness" = snpmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
-  geom_histogram() +
+  geom_histogram(bins = round(num_snpmiss/3000, digits = 0)) +
   geom_vline(xintercept = 0.01, color = "red") +
   xlab("Missingness per SNP") +
   ggtitle("% calls missing per SNP")
@@ -248,7 +250,7 @@ data.frame("SNP" = 1:nrow(snpmiss),
 #### Base R versions 
 ## Not yet implemented into the Quarto document...
 ggplot(data=gender, aes(x=F))+
-  geom_histogram()+
+  geom_histogram(bins = 100)+
   xlab("F Value") +
   ggtitle("Gender Analysis")
 
@@ -269,8 +271,8 @@ temptab= table(gender$STATUS)
 ggplot(data = gender, aes(x=STATUS))+
   geom_histogram(stat = "count") +
   xlab("Status") +
-  ggtitle("Homozygosity Analysis")
-  
+  ggtitle("Homozygosity Gender Analysis")
+
 # barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
 
 # print("gender_check.R Script Success!")
@@ -282,8 +284,8 @@ ggplot(data = gender, aes(x=STATUS))+
 data.frame("SNP" = 1:nrow(maf_freq),
            "MAF" = maf_freq[,5]) %>%
   ggplot(aes(x = MAF)) +
-  geom_histogram() +
-  geom_vline(xintercept = 0.01, color = "red") +
+  geom_histogram(bins = 100) +
+  geom_vline(xintercept = 0.1, color = "red") +
   xlab("Minor allele frequency") +
   ggtitle("MAF distribution")
 
@@ -294,19 +296,19 @@ data.frame("SNP" = 1:nrow(maf_freq),
 #Option 1 HWE ## Included
 #### Need to adjust the vline to be what we are actually using ####
 data.frame("SNP" = 1:nrow(hwe),
-          "HWE" = hwe[,9]) %>%
-          ggplot(aes(x = HWE)) +
-          geom_histogram() +
-          geom_vline(xintercept = -0.05, color = "red") +
-          xlab("log(HWE p-value)") +
-          ggtitle("Hardy-Weinberg Equilibrium p-value distribution")
+           "HWE" = hwe[,9]) %>%
+  ggplot(aes(x = HWE)) +
+  geom_histogram(bins = 100) +
+  geom_vline(xintercept = 0.10, color = "red") +
+  xlab("log(HWE p-value)") +
+  ggtitle("Hardy-Weinberg Equilibrium p-value distribution")
 
 #Option 2 b HWE
 data.frame("SNP" = 1:nrow(hwe_zoom),
            "HWE" = hwe_zoom[,9]) %>%
   ggplot(aes(x = HWE)) +
-  geom_histogram() +
-  geom_vline(xintercept = -0.05, color = "red") +
+  geom_histogram(bins = 50) +
+  geom_vline(xintercept = -0.005, color = "red") +
   xlab("P-value") +
   ggtitle("Histogram HWE: strongly deviating SNPs only")
 # hist(hwe_zoom[,9],main="Histogram HWE: strongly deviating SNPs only", xlab = "P-value")
@@ -315,11 +317,14 @@ data.frame("SNP" = 1:nrow(hwe_zoom),
 
 #Option 1 Heterozygosity ## Included
 het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
+lower_cutoff_het=mean(het$HET_RATE)-3*sd(het$HET_RATE)
+upper_cutoff_het=mean(het$HET_RATE)+3*sd(het$HET_RATE)
+
 data.frame("Subject" = 1:nrow(het),
-          "Heterozygosity" = het$HET_RATE) %>%
+           "Heterozygosity" = het$HET_RATE) %>%
   ggplot(aes(x = Heterozygosity)) +
-  geom_histogram() + 
-  geom_vline(xintercept = c(-2, 2), color = "red") + 
+  geom_histogram(bins = 100) + 
+  geom_vline(xintercept = c(lower_cutoff_het, upper_cutoff_het), color = "red") + 
   xlab("Heterozygosity F statistic") +
   ggtitle("Heterozygous F statistic distribution")
 # #Option 2 Heterozygosity
@@ -340,8 +345,17 @@ for(i in 1:nrow(het)) {
   }
 }
 
-temp_table = table(placeholder)
-barplot(temp_table, main = "Heterozygosity Analysis", xlab = "Status")
+(temp_table = table(placeholder))
+het_refined=cbind(het, placeholder)
+
+data.frame("Count" = 1:nrow(het_refined),
+           "Status" = het_refined$placeholder) %>%
+  ggplot(aes(x=Status)) +
+  geom_histogram(stat = "count")+ 
+  xlab("Status") +
+  ggtitle("Heterozygosity Analysis")
+
+# barplot(temp_table, main = "Heterozygosity Analysis", xlab = "Status")
 
 # print("check_heterozygosity_rate.R Script Success!")
 
@@ -373,7 +387,12 @@ barplot(temp_table, main = "Heterozygosity Analysis", xlab = "Status")
 
 
 #### Turn this plot into a ggplot ####
-hist(relatedness[,10],main="Histogram relatedness", xlab= "Proportion IBD")  
+ggplot(data= relatedness, aes(x=PI_HAT))+
+  geom_histogram(bins = round(num_indmiss/50, digits = 0))+
+  xlab("Proportion IBD") +
+  ggtitle("Histogram Relatedness")
+
+# hist(relatedness[,10],main="Histogram relatedness", xlab= "Proportion IBD")  
 
 # print("Relatedness.R Script Success!")
 
