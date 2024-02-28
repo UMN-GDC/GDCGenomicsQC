@@ -224,7 +224,7 @@ data.frame("Subject" = 1:nrow(indmiss),
           "Missingness" = indmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() + 
-  geom_vline(xintercept = 0.10, color = "red") + 
+  geom_vline(xintercept = 0.01, color = "red") + 
   xlab("Missingness per subject") +
   ggtitle("% SNPS missing per subject")
 #Option 2
@@ -235,7 +235,7 @@ data.frame("SNP" = 1:nrow(snpmiss),
           "Missingness" = snpmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
   geom_histogram() +
-  geom_vline(xintercept = 0.10, color = "red") +
+  geom_vline(xintercept = 0.01, color = "red") +
   xlab("Missingness per SNP") +
   ggtitle("% calls missing per SNP")
 #Option 2
@@ -247,7 +247,12 @@ data.frame("SNP" = 1:nrow(snpmiss),
 
 #### Base R versions 
 ## Not yet implemented into the Quarto document...
-hist(gender[,6],main="Gender", xlab="F Value")
+ggplot(data=gender, aes(x=F))+
+  geom_histogram()+
+  xlab("F Value") +
+  ggtitle("Gender Analysis")
+
+# hist(gender[,6],main="Gender", xlab="F Value")
 # Wants the above plot to be a ggplot with verticle lines designating cutoff points
 
 
@@ -261,7 +266,12 @@ hist(gender[,6],main="Gender", xlab="F Value")
 ## Adding a barplot to show the number that are problems 
 #### Make a ggplot instead ####
 temptab= table(gender$STATUS)
-barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
+ggplot(data = gender, aes(x=STATUS))+
+  geom_histogram(stat = "count") +
+  xlab("Status") +
+  ggtitle("Homozygosity Analysis")
+  
+# barplot(temptab, main = "Homozygosity Analysis", xlab = "Status")
 
 # print("gender_check.R Script Success!")
 # #Option 2 MAF
@@ -292,7 +302,14 @@ data.frame("SNP" = 1:nrow(hwe),
           ggtitle("Hardy-Weinberg Equilibrium p-value distribution")
 
 #Option 2 b HWE
-hist(hwe_zoom[,9],main="Histogram HWE: strongly deviating SNPs only", xlab = "P-value")
+data.frame("SNP" = 1:nrow(hwe_zoom),
+           "HWE" = hwe_zoom[,9]) %>%
+  ggplot(aes(x = HWE)) +
+  geom_histogram() +
+  geom_vline(xintercept = -0.05, color = "red") +
+  xlab("P-value") +
+  ggtitle("Histogram HWE: strongly deviating SNPs only")
+# hist(hwe_zoom[,9],main="Histogram HWE: strongly deviating SNPs only", xlab = "P-value")
 
 # print("hwe.R Script Success!")
 
@@ -333,25 +350,26 @@ barplot(temp_table, main = "Heterozygosity Analysis", xlab = "Status")
 ### If so I'd need to make them ggplots
 #### Unsure what these plots are doing 
 ##### Definitely wants the last plot
-par(pch=16, cex=1)
-plot(relatedness$Z0, relatedness$Z1, xlim=c(0,1), ylim=c(0,1), xlab = "P(IBD=0)", 
-     ylab = "P(IBD=1)", main = "Relatedness")
 
-plot(density(relatedness$Z0), xlab ="P(IBD=0)", main = "Relatedness Density Plot P(IBD=0)")
-
-plot(density(relatedness$Z1), xlab ="P(IBD=1)", main = "Relatedness Density Plot P(IBD=1)")
-
-with(subset(relatedness,RT=="PO") , points(Z0,Z1,col=4))
-with(subset(relatedness,RT=="UN") , points(Z0,Z1,col=3))
-
-table(relatedness$Z0)
-table(relatedness$Z1)
-
-par(pch=16, cex=1)
-plot(relatedness_zoom$Z0, relatedness_zoom$Z1, xlim=c(0,0.02), ylim=c(0.98,1),
-     xlab = "P(IBD=0)", ylab = "P(IBD=1)", main = "Relatedness Zoom")
-with(subset(relatedness_zoom,RT=="PO") , points(Z0,Z1,col=4))
-with(subset(relatedness_zoom,RT=="UN") , points(Z0,Z1,col=3))
+# par(pch=16, cex=1)
+# plot(relatedness$Z0, relatedness$Z1, xlim=c(0,1), ylim=c(0,1), xlab = "P(IBD=0)", 
+#      ylab = "P(IBD=1)", main = "Relatedness")
+# 
+# plot(density(relatedness$Z0), xlab ="P(IBD=0)", main = "Relatedness Density Plot P(IBD=0)")
+# 
+# plot(density(relatedness$Z1), xlab ="P(IBD=1)", main = "Relatedness Density Plot P(IBD=1)")
+# 
+# with(subset(relatedness,RT=="PO") , points(Z0,Z1,col=4))
+# with(subset(relatedness,RT=="UN") , points(Z0,Z1,col=3))
+# 
+# table(relatedness$Z0)
+# table(relatedness$Z1)
+# 
+# par(pch=16, cex=1)
+# plot(relatedness_zoom$Z0, relatedness_zoom$Z1, xlim=c(0,0.02), ylim=c(0.98,1),
+#      xlab = "P(IBD=0)", ylab = "P(IBD=1)", main = "Relatedness Zoom")
+# with(subset(relatedness_zoom,RT=="PO") , points(Z0,Z1,col=4))
+# with(subset(relatedness_zoom,RT=="UN") , points(Z0,Z1,col=3))
 
 
 #### Turn this plot into a ggplot ####
