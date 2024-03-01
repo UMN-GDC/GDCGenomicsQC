@@ -9,62 +9,52 @@ project:
   output-dir: /home/gdc/shared/GDC_pipeline/results/
 ---
 
-The following is an automated report describing the quality control (QC)
-processing of your dataset. detailed description of the QC steps taken.
+The following is an automated report describing the quality control (QC) processing of your dataset. detailed description of the QC steps taken.
 
 ```{r loadPackages}
 #| message: false
 #| echo: false
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
 ```
 
 # General Summary
 
-The QC process outline below first process the data in aggregate
-removing SNPs and subjects with large amounts of missingness. In
-addition, SNPs are filtered to remove those with low minor allele
-frequency (MAF), frequencies are two out of equlibrium based on
-[Hardy-Weinberg equilibrium
-(HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/).
-Then, for multiethnic samples, subject ancestries are predicted using
-[principal components analysis
-(PCA)](https://www.nature.com/articles/ng1847) and [k-means
-clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally,
-the original data is filtered again at the level of each predicted
-ancestry before it is later rejoined into the full dataset. Table
-@ref(tab:summary) summarizes the number of SNPs and subjects at each
-step of the QC process.
+The QC process outline below first process the data in aggregate removing SNPs and subjects with large amounts of missingness. In addition, SNPs are filtered to remove those with low minor allele frequency (MAF), frequencies are two out of equlibrium based on [Hardy-Weinberg equilibrium (HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/). Then, for multiethnic samples, subject ancestries are predicted using [principal components analysis (PCA)](https://www.nature.com/articles/ng1847) and [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally, the original data is filtered again at the level of each predicted ancestry before it is later rejoined into the full dataset. Table @ref(tab:summary) summarizes the number of SNPs and subjects at each step of the QC process.
 
 ## Loading in data from logs
-```{r importdata, echo=FALSE} 
+
+```{r importdata, echo=FALSE}
+# params$path_to_data="/home/gdc/shared/GDC_pipeline/data/"
 print(params$path_to_data)
 path_to_data=params$path_to_data
-setwd(params$path_to_data)
+path_to_data="/home/gdc/shared/GDC_pipeline/data/"
+#setwd(paste0(path_to_data))
 
 # Data
-indmiss<-read.table(file="plink.imiss", header=TRUE)
-snpmiss<-read.table(file="plink.lmiss", header=TRUE)
-gender <- read.table("gender_check.sexcheck", header=T,as.is=T)
-maf_freq <- read.table("MAF_check.frq", header =TRUE, as.is=T)
-hwe<-read.table (file="plink.hwe", header=TRUE)
-hwe_zoom<-read.table (file="plinkzoomhwe.hwe", header=TRUE)
-het <- read.table("R_check.het", head=TRUE)
-relatedness = read.table("pihat_min0.2.genome", header=T)
-relatedness_zoom = read.table("zoom_pihat.genome", header=T)
+indmiss<-read.table(file=paste0(path_to_data,"plink.imiss"), header=TRUE)
+snpmiss<-read.table(file=paste0(path_to_data, "plink.lmiss"), header=TRUE)
+gender <- read.table(paste0(path_to_data, "gender_check.sexcheck"), header=T,as.is=T)
+maf_freq <- read.table(paste0(path_to_data, "MAF_check.frq"), header =TRUE, as.is=T)
+hwe<-read.table (file=paste0(path_to_data, "plink.hwe"), header=TRUE)
+hwe_zoom<-read.table (file=paste0(path_to_data, "plinkzoomhwe.hwe"), header=TRUE)
+het <- read.table(paste0(path_to_data,"R_check.het"), head=TRUE)
+relatedness = read.table(paste0(path_to_data,"pihat_min0.2.genome"), header=T)
+relatedness_zoom = read.table(paste0(path_to_data, "zoom_pihat.genome"), header=T)
 
 #Reading in the tables for later use
-QC2_geno_table <- read.table(file = "QC2_geno.txt",  quote="\"", comment.char="")
-QC3_mind_table <- read.table("QC3_mind.txt",  quote="\"", comment.char="")
-QC4_geno_table <- read.table("QC4_geno.txt",  quote="\"", comment.char="")
-QC5_mind_table <- read.table("QC5_mind.txt",  quote="\"", comment.char="")
-QC6_sex_check_table <- read.table("QC6_sex_check.txt", quote="\"", comment.char="")
-QC7_maf_table <- read.table("QC_7_maf.txt", quote="\"", comment.char="")
-QC8_hwe_table <- read.table("QC_8_hwe.txt", quote="\"", comment.char="")
-QC8b_hwe_table <- read.table("QC_8b_hwe.txt", quote="\"", comment.char="")
-QC9_filter_founders_table <- read.table("QC_9_filter-founders.txt", quote="\"", comment.char="")
+QC2_geno_table <- read.table(file = paste0(path_to_data, "QC2_geno.txt"),  quote="\"", comment.char="")
+QC3_mind_table <- read.table(paste0(path_to_data,"QC3_mind.txt"),  quote="\"", comment.char="")
+QC4_geno_table <- read.table(paste0(path_to_data, "QC4_geno.txt"),  quote="\"", comment.char="")
+QC5_mind_table <- read.table(paste0(path_to_data, "QC5_mind.txt"),  quote="\"", comment.char="")
+QC6_sex_check_table <- read.table(paste0(path_to_data, "QC6_sex_check.txt"), quote="\"", comment.char="")
+QC7_maf_table <- read.table(paste0(path_to_data,"QC_7_maf.txt"), quote="\"", comment.char="")
+QC8_hwe_table <- read.table(paste0(path_to_data, "QC_8_hwe.txt"), quote="\"", comment.char="")
+QC8b_hwe_table <- read.table(paste0(path_to_data,"QC_8b_hwe.txt"), quote="\"", comment.char="")
+QC9_filter_founders_table <- read.table(paste0(path_to_data, "QC_9_filter-founders.txt"), quote="\"", comment.char="")
 
-QC_indep_pairwise_table <- read.csv("QC_indep_pairwise.txt", sep = "")
-QC_indep_pairwise_bychr <- read.csv("each_SNP_QC_indep_pairwise.txt", sep = "")
+QC_indep_pairwise_table <- read.csv(paste0(path_to_data,"QC_indep_pairwise.txt"), sep = "")
+QC_indep_pairwise_bychr <- read.csv(paste0(path_to_data, "each_SNP_QC_indep_pairwise.txt"), sep = "")
 
 ```
 
@@ -126,7 +116,6 @@ f_f_tab_2_clean=f_f_tab_2b[2,]
 
 ```
 
-
 ```{r Geno_tab}
 geno_table_summary = rbind(geno_tab_1_clean, geno_tab_2_clean)
 geno_tibble=as_tibble(geno_table_summary)
@@ -163,14 +152,11 @@ QC_indep_pairwise_table
 QC_indep_pairwise_bychr
 ```
 
-
 # Detailed QC summary
-
 
 ## Per Subject summary
 
-Subjects were filtered based on missingness and heterozygosity. An LD
-pruning step was also performed.
+Subjects were filtered based on missingness and heterozygosity. An LD pruning step was also performed.
 
 ```{r}
 num_indmiss=nrow(indmiss)
@@ -183,10 +169,7 @@ data.frame("Subject" = 1:nrow(indmiss),
   ggtitle("% SNPS missing per subject")
 ```
 
-The [heterozygosity F statistic
-(FIS)](https://en.wikipedia.org/wiki/F-statistics) the departure from
-HWE in a population. The heterozygosity F statistic is given by the
-following equation: $$
+The [heterozygosity F statistic (FIS)](https://en.wikipedia.org/wiki/F-statistics) the departure from HWE in a population. The heterozygosity F statistic is given by the following equation: $$
 F = \frac{1}{N}\sum_{i=1}^N \frac{O_i - E_i}{E_i}
 $$
 
@@ -208,6 +191,7 @@ data.frame("Subject" = 1:nrow(het),
 ```
 
 Extra plot
+
 ```{r}
 het_fail = subset(het, (het$HET_RATE < mean(het$HET_RATE)-3*sd(het$HET_RATE)) | (het$HET_RATE > mean(het$HET_RATE)+3*sd(het$HET_RATE)));
 
@@ -235,8 +219,7 @@ data.frame("Count" = 1:nrow(het_refined),
 
 ## Per SNP summary
 
-SNPS were filtered based on missingness and MAF as well as HWE
-@fig-firstFilter.
+SNPS were filtered based on missingness and MAF as well as HWE @fig-firstFilter.
 
 ```{r firstFilter}
 #| label: fig-firstFilter
@@ -272,7 +255,9 @@ data.frame("SNP" = 1:nrow(hwe),
 ```
 
 ## Gender checks
+
 Needs verticle lines designating cuttoff points
+
 ```{r gender_plots}
 ggplot(data=gender, aes(x=F))+
   geom_histogram(bins = 100)+
@@ -282,14 +267,14 @@ ggplot(data=gender, aes(x=F))+
 
 ```{r gender_plot2}
 temptab= table(gender$STATUS)
-ggplot(data = gender, aes(x=STATUS))'+
+ggplot(data = gender, aes(x=STATUS))+
   geom_histogram(stat = "count") +
   xlab("Status") +
   ggtitle("Homozygosity Gender Analysis")
 ```
 
-
 ## Extra plots that need to be beautified and rearranged
+
 ```{r extraplots}
 data.frame("SNP" = 1:nrow(hwe_zoom),
            "HWE" = hwe_zoom[,9]) %>%
@@ -308,24 +293,11 @@ ggplot(data= relatedness, aes(x=PI_HAT))+
 
 ```
 
-
-
 ## Ancestry predictions
 
-Ancestries are predicted after the initial round of QC steps. The
-principal components upon which the population is stratifed, are based
-off of the [genetic relatedness matrix
-(GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html). The subjects are
-then projected onto the PC space and assigned ethnicities using k-means
-clustering based on either a standard genomic dataset (such as though
-genomes) are by the reported ancestries of the subject in the study.
-Figure @fig-ancestryPredictions) the projection of each subject onto the
-first few PCs. They are colored by their reported ancestries.
+Ancestries are predicted after the initial round of QC steps. The principal components upon which the population is stratifed, are based off of the [genetic relatedness matrix (GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html). The subjects are then projected onto the PC space and assigned ethnicities using k-means clustering based on either a standard genomic dataset (such as though genomes) are by the reported ancestries of the subject in the study. Figure @fig-ancestryPredictions) the projection of each subject onto the first few PCs. They are colored by their reported ancestries.
 
-The densities of ancestries based on the reference set are represent by
-the 10% contour lines of the 2d density plots with the observed
-populations presented as points over top of the densities shown in
-@fig-ancestryPredictions.
+The densities of ancestries based on the reference set are represent by the 10% contour lines of the 2d density plots with the observed populations presented as points over top of the densities shown in @fig-ancestryPredictions.
 
 ```{r ancestryPredictions}
 #| label: fig-ancestryPredictions
@@ -340,8 +312,7 @@ data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
 
 ## Per Ancestry summary
 
-We also summarize the QC metrics per ancestry. @fig-ancestrySummary)
-shows the distribution of MAF per ancestry.
+We also summarize the QC metrics per ancestry. @fig-ancestrySummary) shows the distribution of MAF per ancestry.
 
 ```{r ancestrySummary}
 #| label: fig-ancestrySummary
@@ -356,8 +327,6 @@ data.frame("Ancestry" = rep(c("1", "2", "3"), each = 50),
   facet_wrap(~Ancestry, ncol = 2)
 
 ```
-
-
 
 ## Running Code
 
