@@ -9,6 +9,47 @@
 
 A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing Plink, Liftover, R-language, Python, and Bashed, and can be housed in a Docker image.
 
+![GDC_pipeline_overview](https://github.com/coffm049/GDCGenomicsQC/assets/140092486/cdaba802-bb0e-4999-97a1-2b0d55b852c9)
+
+## Standard Procedure *(Done in order)*
+
+-   Exclude SNPs with greater than 10% missingness **(Plink)**
+
+-   Exclude individuals with greater than 10% missingness **(Plink)**
+
+-   Exclude SNPs with greater than 2% missingness **(Plink)**
+
+-   Exclude individuals with greater than 2% missingness **(Plink)**
+
+-   Compare sex assignments in input data set with imputed X chromosome coefficients **(Plink)**
+
+    -   F-values \< 0.2 are assigned as female and F-values \> 0.8 are assigned as male others are flagged as problems and excluded from the dataset
+
+-   Exclude SNPs with Minor Allele Frequency \< 0.1 **(Plink)**
+
+-   Exclude SNPs where Hardy-Weinberg Equilibrium p-values \< 1e-6 for controls **(Plink)**
+
+-   Exclude SNPs where Hardy-Weinberg Equilibrium p-values \< 1e-6 for cases **(Plink)**
+
+-   Exclude SNPs that are highly coordinated using multiple correlation coefficients for a SNP regressed on all other SNPs simultaneously **(Plink)**
+
+-   Exclude individuals with a parent-offspring relationship **(Plink)**
+
+-   Exclude individuals with a pi_hat threshold \> 0.2 **(Primus)**
+
+-   Principal Component Analysis (**FRAPOSA**)
+
+## Optional QC Features
+
+-   Synchronize data to GRCh38/hg38 (**Crossmap)**
+
+-   Align strand orientation through (**Genotype Harmonizer)**
+
+## Optional Pipeline Output
+
+-   Gather information from log files created by standardized steps and create an automated report with tables and figures regarding each step.
+
+
 # Installation
 ## Git clone
 ```shell

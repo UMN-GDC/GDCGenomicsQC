@@ -19,7 +19,7 @@ filepreffix=SMILES_GSA
 path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 
 
-# Prefix for 
+# Start QC steps
 ./src/main.sh --FILE ${filepreffix} --OLDBLD N --UPDTSO N --PATHTODATA ${path_to_data} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} #Assumes they don't need their reference build updated and don't need alleles flipped. 
 
 #./src/ancestryPrediction.sh #Output is ${filepreffix}_11 ? <-- doesn't work appropriately
@@ -31,14 +31,15 @@ path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
 ./src/move_necessary_files.sh --FILE ./data/default_list_of_files_to_move.txt --END_LOCATION ${path_to_store_outputs}/logs/
 
 
-# Generates PDF QC_report 
+
 mkdir -p ${path_to_store_outputs}/results
-Rscript ./src/QC_report.R ${path_to_store_outputs} ${filepreffix} 
-# Errors here when switching working locations. Might be better to just point to the data rather than moving the working directory... 
+#Rscript ./src/QC_report.R ${path_to_store_outputs} ${filepreffix}  
+module load R #Need a newer version of R than 4.0.4 for quarto
 
+## Makes automated pdf report
+./src/generate_report.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} # calls quarto render QCReport.qmd #For rendering the report
 
-## Currently not working so continuing with QC_report.R for testing purposes
-./src/generate_report.sh # calls quarto render QCReport.qmd #For rendering the report
+./src/move_necessary_files.sh --FILE ./data/default_list_of_files_to_move.txt --END_LOCATION ${path_to_store_outputs}/logs/
 
 # Cleaning up repository /working directory
 ./src/repo_cleaner.sh --FILE ./data/default_list_of_files_to_remove.txt
