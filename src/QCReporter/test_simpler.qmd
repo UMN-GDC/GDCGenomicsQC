@@ -1,10 +1,15 @@
 ---
-title: "test1"
+title: "Genomics QC Report"
+author: "GDC Data Team"
+date: today
 format: pdf
 editor: visual
-params: 
-  path_to_data: "/home/gdc/shared/GDC_pipeline/data/"
-  output-dir: "/home/gdc/shared/GDC_pipeline/results/"
+execute:
+  echo: false
+  warning: false
+  error: false
+  message: false
+  toc: true
 project:
   output-dir: /home/gdc/shared/GDC_pipeline/results/
 ---
@@ -15,29 +20,28 @@ The following is an automated report describing the quality control (QC) process
 #| message: false
 #| echo: false
 library(dplyr)
+library(DiagrammeR)
 library(ggplot2)
+library(gt)
+library(forcats)
 ```
 
 # General Summary
 
 The QC process outline below first process the data in aggregate removing SNPs and subjects with large amounts of missingness. In addition, SNPs are filtered to remove those with low minor allele frequency (MAF), frequencies are two out of equlibrium based on [Hardy-Weinberg equilibrium (HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/). Then, for multiethnic samples, subject ancestries are predicted using [principal components analysis (PCA)](https://www.nature.com/articles/ng1847) and [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally, the original data is filtered again at the level of each predicted ancestry before it is later rejoined into the full dataset. Table @ref(tab:summary) summarizes the number of SNPs and subjects at each step of the QC process.
 
-## Loading in data from logs
-
 ```{r importdata, echo=FALSE}
-# params$path_to_data="/home/gdc/shared/GDC_pipeline/data/"
-print(params$path_to_data)
-path_to_data=params$path_to_data
+#path_to_data="/home/gdc/shared/GDC_pipeline/data/"
+path_to_data="C:/Users/baron063/Desktop/GDC_ppln_development/sample_data/" # Temp for modifications
 path_to_data="/home/gdc/shared/GDC_pipeline/data/"
-#setwd(paste0(path_to_data))
-
+path_to_data="/home/gdc/shared/GDC_pipeline/data/"
 # Data
 indmiss<-read.table(file=paste0(path_to_data,"plink.imiss"), header=TRUE)
 snpmiss<-read.table(file=paste0(path_to_data, "plink.lmiss"), header=TRUE)
 gender <- read.table(paste0(path_to_data, "gender_check.sexcheck"), header=T,as.is=T)
 maf_freq <- read.table(paste0(path_to_data, "MAF_check.frq"), header =TRUE, as.is=T)
 hwe<-read.table (file=paste0(path_to_data, "plink.hwe"), header=TRUE)
-hwe_zoom<-read.table (file=paste0(path_to_data, "plinkzoomhwe.hwe"), header=TRUE)
+hwe_zoom<-read.table (file=paste0(path_to_data, "plinkzoomhwe.hwe"), header=FALSE)
 het <- read.table(paste0(path_to_data,"R_check.het"), head=TRUE)
 relatedness = read.table(paste0(path_to_data,"pihat_min0.2.genome"), header=T)
 relatedness_zoom = read.table(paste0(path_to_data, "zoom_pihat.genome"), header=T)
@@ -79,21 +83,21 @@ mind_tab_1b=cbind(mind_tab_1, QC_step)
 mind_tab_1_clean=mind_tab_1b[2,]
 mind_tab_2 = t(QC5_mind_table)
 colnames(mind_tab_2)=mind_tab_2[1, ]
-QC_step=c("5", "5")
+QC_step=c("QC_step", "5")
 mind_tab_2b=cbind(mind_tab_2, QC_step)
 mind_tab_2_clean=mind_tab_2b[2,]
 
 #Sex check
 sex_check_tab = t(QC6_sex_check_table)
 colnames(sex_check_tab)=sex_check_tab[1, ]
-QC_step=c("6", "6")
+QC_step=c("QC_step", "6")
 sex_check_tab_2b=cbind(sex_check_tab, QC_step)
-(sex_check_tab_2_clean=sex_check_tab_2b[2,])
+sex_check_tab_2_clean=sex_check_tab_2b[2,]
 
 #MAF check 
 QC7_maf_tab=t(QC7_maf_table)
 colnames(QC7_maf_tab)=QC7_maf_tab[1, ]
-QC_step=c("7", "7")
+QC_step=c("QC_step", "7")
 maf_tab_2b=cbind(QC7_maf_tab, QC_step)
 
 #hwe check table
@@ -128,6 +132,8 @@ mind_tibble=as_tibble(mind_table_summary)
 
 ```{r maf_tab}
 maf_tab_2_clean=maf_tab_2b[2,]
+# maf_df=as.data.frame(maf_tab_2b)
+# gt(maf_df)
 ```
 
 ```{r hwe_tab}
@@ -135,21 +141,218 @@ hwe_table_summary = rbind(hwe_tab_1_clean, hwe_tab_2_clean)
 hwe_tibble=as_tibble(hwe_table_summary)
 ```
 
+```{r sexcheck_table}
+sex_check_df =as.data.frame(sex_check_tab_2b)
+# sex_check_df[2,5]=as.numeric(trimws(sex_check_df[2,5]))-as.numeric(trimws(sex_check_df[2,8]))
+gt(sex_check_df[2,]) %>%
+  tab_header(title="Gender Check Table") %>%
+  tab_spanner(
+    label = "Inputs",
+    columns = c(InSubjects, InMale, InFemale)
+  ) %>%
+  tab_spanner(
+    label = "Outputs",
+    columns = c(OutSubjects, NumX, NumY, NumProblems)
+  ) %>%
+  cols_hide(columns = c(InSNPs, OutSNPs)) %>%
+  cols_move_to_start(columns = QC_step)
+```
+
 ```{r full_table}
 #Putting it all together if possible
 full_table=rbind(geno_tab_1_clean, mind_tab_1_clean, geno_tab_2_clean, mind_tab_2_clean, maf_tab_2_clean, hwe_table_summary)
 colnames(full_table)=c("InSubjects", "InMale", "InFemale", "InSNPs",
                        "OutSubjects", "NumRemoved", "OutSNPs", "Qc_step")
-full_table 
-full_tibb=as_tibble(full_table)
+full_table=as.data.frame(full_table) 
+gt(full_table) %>%
+  tab_header(title="QC Steps Summary Table") %>%
+  tab_spanner(
+    label = "Inputs",
+    columns = c(InSubjects, InMale, InFemale, InSNPs)
+  ) %>%
+  tab_spanner(
+    label = "Outputs",
+    columns = c(OutSubjects, OutSNPs)
+  ) %>%
+  cols_move_to_start(columns = Qc_step) %>%
+  rows_add(
+    Qc_step="6",
+    InSubjects=sex_check_df[2,1],
+    InMale=sex_check_df[2,2],
+    InFemale=sex_check_df[2,3],
+    InSNPs=sex_check_df[2,4],
+    OutSubjects=sex_check_df[2,5],
+    OutSNPs=sex_check_df[2,9],
+    NumRemoved=sex_check_df[2,8],
+    .after = 4
+  ) %>%
+  tab_footnote(
+    footnote = "Subjects flagged as potential issues",
+    locations = cells_body(columns=NumRemoved, rows = 5)
+  ) %>%
+  cols_add(
+    InputAltered=c("SNPs", "Subjects", "SNPs", "Subjects", "Subjects", "SNPs", "SNPs", "SNPs"),
+    .after = InSNPs
+  ) %>%
+  cols_label(
+    Qc_step="QC Step",
+    InSubjects = "Subjects",
+    InMale = "Male",
+    InFemale= "Female",
+    InSNPs="SNPs",
+    InputAltered= "Input Altered",
+    OutSubjects = "Subjects", 
+    OutSNPs = "SNPs", 
+    NumRemoved = "Alteration"
+  ) %>%
+  cols_move(
+    columns = NumRemoved,
+    after = InputAltered
+  )
+
+
+
 ```
 
+The table below is odd and might not be essential to include as a separate table
+
 ```{r indep_pairwise_table}
-QC_indep_pairwise_table
+QC_indep_pairwise_table=as.data.frame(QC_indep_pairwise_table)
+gt(QC_indep_pairwise_table) %>%
+  tab_header(title="QC Independent Pairwise Summary Table")
 ```
 
 ```{r indep_bychr_pairwise}
-QC_indep_pairwise_bychr
+QC_indep_pairwise_bychr=as.data.frame(QC_indep_pairwise_bychr)
+summary_row=QC_indep_pairwise_bychr %>% 
+  mutate(group = 1) %>%
+  group_by(group) %>%
+  summarise(PrunedSNPs=sum(PrunedSNPS), RemainingSNPs = sum(RemainingSNPS))
+gt(QC_indep_pairwise_bychr) %>%
+  tab_header(title="SNPs Pruned by Chromosome") %>%
+  rows_add(
+    PrunedSNPS=summary_row$PrunedSNPs,
+    Chr=00,
+    RemainingSNPS=summary_row$RemainingSNPs,
+    .after = nrow(QC_indep_pairwise_bychr)
+  )%>%
+  tab_footnote(
+    footnote = "Temporary total row",
+    locations = cells_body(columns=PrunedSNPS, rows = 23)
+  )
+   
+```
+
+# Summary Visual
+
+### Subjects
+
+```{r subjectsummplot, echo=FALSE, eval=FALSE}
+example_node_list=node_list_1
+example_edge_list=edge_list_1
+
+example_node_list$label=c(full_table$InSubjects, 2000, 1900, 1800)
+
+example_edge_list$from=c(1:19)
+example_edge_list$to=c(2:19, 19)
+
+id=1:8
+label=c(full_table$InSubjects[1], full_table$OutSubjects)
+altered=c("Input","SNPs", "Subjects", "SNPs", "Subjects", "SNPs", "SNPs", "SNPs")
+deretla=c("SNPs", "Subjects", "SNPs", "Subjects", "SNPs", "SNPs", "SNPs")
+example_node_list=cbind(id, label)
+ex_nod_lst = data_frame(id, label, altered)
+
+from=1:15
+to=c(2:15,15)
+ex_edge_lst=data_frame(from, to)
+
+example_edge_list$from=c(1:19)
+example_edge_list$to=c(2:19, 19)
+
+i_graph_1 <- create_graph()
+
+i_graph_2 <- i_graph_1 %>%
+  add_nodes_from_table(
+    table=ex_nod_lst,
+    label_col=label
+  )
+
+i_graph_3 <- 
+  i_graph_2 %>% 
+  add_edges_from_table(
+    table = ex_edge_lst,
+    from_col = from,
+    to_col = to,
+    from_to_map = id_external
+  ) %>% 
+  drop_node_attrs(node_attr = id_external)
+ # render_graph(i_graph_3, layout = "kk") # Remove the pipe operator and should work as before
+
+k_graph <-
+  i_graph_3 %>%
+  select_nodes(conditions = (altered == "Subjects")) %>%
+  set_node_attrs_ws(node_attr = fillcolor, value = "forestgreen") %>%
+  invert_selection() %>%
+  set_node_attrs_ws(node_attr = fillcolor, value = "red") %>%
+  select_edges(conditions = (deretla == "Subjects")) %>%
+  set_edge_attrs_ws(edge_attr = color, value = "forestgreen") %>%
+  invert_selection() %>%
+  set_edge_attrs_ws(edge_attr = color, value = "red") # %>%
+  # clear_selection() %>%
+  # set_node_attr_to_display(attr = id)
+render_graph(k_graph)
+```
+
+### SNPs
+
+```{r SNPssummplot, echo=FALSE, eval=FALSE}
+id=1:8
+label=c(full_table$InSNPs[1], full_table$OutSNPs)
+altered=c("Input","SNPs", "Subjects", "SNPs", "Subjects", "SNPs", "SNPs", "SNPs")
+deretla=c("SNPs", "Subjects", "SNPs", "Subjects", "SNPs", "SNPs", "SNPs")
+example_node_list=cbind(id, label)
+ex_nod_lst = data_frame(id, label, altered)
+
+from=1:15
+to=c(2:15,15)
+ex_edge_lst=data_frame(from, to)
+
+example_edge_list$from=c(1:19)
+example_edge_list$to=c(2:19, 19)
+
+i_graph_1 <- create_graph()
+
+i_graph_2 <- i_graph_1 %>%
+  add_nodes_from_table(
+    table=ex_nod_lst,
+    label_col=label
+  )
+
+i_graph_3 <- 
+  i_graph_2 %>% 
+  add_edges_from_table(
+    table = ex_edge_lst,
+    from_col = from,
+    to_col = to,
+    from_to_map = id_external
+  ) %>% 
+  drop_node_attrs(node_attr = id_external)
+ # render_graph(i_graph_3, layout = "kk") # Remove the pipe operator and should work as before
+
+k_graph_2 <-
+  i_graph_3 %>%
+  select_nodes(conditions = (altered == "SNPs")) %>%
+  set_node_attrs_ws(node_attr = fillcolor, value = "forestgreen") %>%
+  invert_selection() %>%
+  set_node_attrs_ws(node_attr = fillcolor, value = "red") %>%
+  select_edges(conditions = (deretla == "SNPs")) %>%
+  set_edge_attrs_ws(edge_attr = color, value = "forestgreen") %>%
+  invert_selection() %>%
+  set_edge_attrs_ws(edge_attr = color, value = "red") # %>%
+  # clear_selection() %>%
+  # set_node_attr_to_display(attr = id)
+render_graph(k_graph_2)
 ```
 
 # Detailed QC summary
@@ -158,15 +361,25 @@ QC_indep_pairwise_bychr
 
 Subjects were filtered based on missingness and heterozygosity. An LD pruning step was also performed.
 
-```{r}
+```{r ind_missingness_hist}
 num_indmiss=nrow(indmiss)
 data.frame("Subject" = 1:nrow(indmiss),
            "Missingness" = indmiss$F_MISS) %>%
-  ggplot(aes(x = Missingness)) +
-  geom_histogram(bins = round(num_indmiss/25, digits = 0)) + 
+  ggplot(aes(x = Missingness, color ="blue")) +
+  geom_histogram(bins = round(num_indmiss/25, digits = 0), show.legend = FALSE) + 
   geom_vline(xintercept = 0.01, color = "red") + 
-  xlab("Missingness per subject") +
-  ggtitle("% SNPS missing per subject")
+  xlab("Percent Missing SNPs") +
+  ggtitle("SNPS missingness per subject") +
+  theme_classic()
+
+#data.frame("Subject" = 1:nrow(indmiss),
+#           "Missingness" = indmiss$F_MISS) %>%
+#  ggplot(aes(x = Missingness)) +
+#  geom_density() + 
+#  geom_vline(xintercept = 0.01, color = "red") + 
+#  xlab("Missingness per subject") +
+#  ggtitle("SNPS missingness per subject") +
+#  theme_classic()
 ```
 
 The [heterozygosity F statistic (FIS)](https://en.wikipedia.org/wiki/F-statistics) the departure from HWE in a population. The heterozygosity F statistic is given by the following equation: $$
@@ -183,16 +396,18 @@ upper_cutoff_het=mean(het$HET_RATE)+3*sd(het$HET_RATE)
 
 data.frame("Subject" = 1:nrow(het),
            "Heterozygosity" = het$HET_RATE) %>%
-  ggplot(aes(x = Heterozygosity)) +
-  geom_histogram(bins = 100) + 
+  ggplot(aes(x = Heterozygosity, color ="blue")) +
+  geom_histogram(bins = 100, show.legend = FALSE) + 
   geom_vline(xintercept = c(lower_cutoff_het, upper_cutoff_het), color = "red") + 
   xlab("Heterozygosity F statistic") +
-  ggtitle("Heterozygous F statistic distribution")
+  ggtitle("Heterozygous F Statistic Distribution") +
+  theme_classic()
 ```
 
 Extra plot
 
-```{r}
+```{r hetSimpleVisual, warning=FALSE}
+
 het_fail = subset(het, (het$HET_RATE < mean(het$HET_RATE)-3*sd(het$HET_RATE)) | (het$HET_RATE > mean(het$HET_RATE)+3*sd(het$HET_RATE)));
 
 placeholder = c()
@@ -208,12 +423,21 @@ for(i in 1:nrow(het)) {
 temp_table = table(placeholder)
 het_refined=cbind(het, placeholder)
 
-data.frame("Count" = 1:nrow(het_refined),
-           "Status" = het_refined$placeholder) %>%
-  ggplot(aes(x=Status)) +
-  geom_histogram(stat = "count")+ 
+het_refined$placeholder=as.factor(het_refined$placeholder)
+het_refined %>% 
+  mutate(
+    outcome= fct_relevel(
+      placeholder, 
+      c(
+        "PROBLEM", "OK"
+      )
+    )
+  ) %>%
+  ggplot(aes(x=outcome, fill = outcome)) +
+  geom_histogram(stat = "count", show.legend = FALSE)+ 
   xlab("Status") +
-  ggtitle("Heterozygosity Analysis")
+  ggtitle("Heterozygosity Analysis") + 
+  theme_classic()
 
 ```
 
@@ -225,71 +449,106 @@ SNPS were filtered based on missingness and MAF as well as HWE @fig-firstFilter.
 #| label: fig-firstFilter
 #| fig-cap: "Missingness, MAF, and HWE filters involved in initial SNP filtering. Cutoffs are shown as red vertical lines"
 num_snpmiss=nrow(snpmiss)
+# data.frame("SNP" = 1:nrow(snpmiss),
+#            "Missingness" = snpmiss$F_MISS) %>%
+#   ggplot(aes(x = Missingness)) +
+#   geom_histogram(bins = round(num_snpmiss/3000, digits = 0)) +
+#   geom_vline(xintercept = 0.01, color = "red") +
+#   xlab("Missingness") +
+#   ggtitle("Percent missing calls per SNP") +
+#   theme_classic()
+# 
+# data.frame("SNP" = 1:nrow(snpmiss),
+#            "Missingness" = snpmiss$F_MISS) %>%
+#   ggplot(aes(x = Missingness)) +
+#   geom_boxplot() +
+#   geom_vline(xintercept = 0.01, color = "red") +
+#   xlab("Missingness") +
+#   ggtitle("Percent missing calls per SNP") +
+#   theme_classic()
+
 data.frame("SNP" = 1:nrow(snpmiss),
            "Missingness" = snpmiss$F_MISS) %>%
   ggplot(aes(x = Missingness)) +
-  geom_histogram(bins = round(num_snpmiss/3000, digits = 0)) +
+  geom_density(aes(fill="blue", color ="blue"), show.legend = FALSE) +
   geom_vline(xintercept = 0.01, color = "red") +
   xlab("Missingness per SNP") +
-  ggtitle("% calls missing per SNP")
+  ggtitle("Percent calls missing per SNP") +
+  theme_classic()
+```
 
-
+```{r Maf_freq_hist}
 data.frame("SNP" = 1:nrow(maf_freq),
            "MAF" = maf_freq[,5]) %>%
-  ggplot(aes(x = MAF)) +
-  geom_histogram(bins = 100) +
+  ggplot(aes(x = MAF, color ="blue")) +
+  geom_histogram(bins = 100, show.legend = FALSE) +
   geom_vline(xintercept = 0.1, color = "red") +
   xlab("Minor allele frequency") +
-  ggtitle("MAF distribution")
+  ggtitle("MAF distribution") + 
+  theme_classic()
+```
 
-
+```{r HWE_hist}
 data.frame("SNP" = 1:nrow(hwe),
            "HWE" = hwe[,9]) %>%
-  ggplot(aes(x = HWE)) +
-  geom_histogram(bins = 100) +
+  ggplot(aes(x = HWE, color="blue")) +
+  geom_histogram(bins = 100, show.legend = F) +
   geom_vline(xintercept = 0.10, color = "red") +
   xlab("log(HWE p-value)") +
-  ggtitle("Hardy-Weinberg Equilibrium p-value distribution")
+  ggtitle("Hardy-Weinberg Equilibrium p-value distribution") +
+  theme_classic()
 
 
 ```
 
 ## Gender checks
 
-Needs verticle lines designating cuttoff points
-
 ```{r gender_plots}
-ggplot(data=gender, aes(x=F))+
-  geom_histogram(bins = 100)+
+ggplot(data=gender, aes(x=F, color="blue"))+
+  geom_histogram(bins = 100, show.legend = F)+
+  geom_vline(xintercept = 0.20, color = "red") +
+  geom_vline(xintercept = 0.80, color = "red") +
   xlab("F Value") +
-  ggtitle("Gender Analysis")
+  ggtitle("Gender Analysis") +
+  theme_classic()
 ```
 
-```{r gender_plot2}
-temptab= table(gender$STATUS)
-ggplot(data = gender, aes(x=STATUS))+
-  geom_histogram(stat = "count") +
+```{r gender_plot2, warning=FALSE}
+gender$STATUS=as.factor(gender$STATUS)
+gender %>% 
+  mutate(
+    outcome= fct_relevel(
+      STATUS, 
+      c(
+        "PROBLEM", "OK"
+      )
+    )
+  ) %>%
+  ggplot(aes(x=outcome, fill =outcome))+
+  geom_bar(stat = "count", show.legend = F) +
   xlab("Status") +
-  ggtitle("Homozygosity Gender Analysis")
+  ggtitle("Homozygosity Gender Analysis") +
+  theme_classic()
 ```
 
-## Extra plots that need to be beautified and rearranged
+## Extra plots that need to be altered and rearranged
 
-```{r extraplots}
+```{r HWE_strong}
 data.frame("SNP" = 1:nrow(hwe_zoom),
            "HWE" = hwe_zoom[,9]) %>%
-  ggplot(aes(x = HWE)) +
-  geom_histogram(bins = 50) +
-  geom_vline(xintercept = -0.005, color = "red") +
+  ggplot(aes(x = HWE, color="blue")) +
+  geom_histogram(bins = round(nrow(hwe_zoom)/600, digits = 0), show.legend = F)  +
   xlab("P-value") +
-  ggtitle("Histogram HWE: strongly deviating SNPs only")
+  ggtitle("Histogram HWE: strongly deviating SNPs only") +
+  theme_classic()
 ```
 
-```{r extraPlot2}
-ggplot(data= relatedness, aes(x=PI_HAT))+
-  geom_histogram(bins = round(num_indmiss/50, digits = 0))+
+```{r subj_relatedness_hist}
+ggplot(data= relatedness, aes(x=PI_HAT, color="blue"))+
+  geom_dotplot(stackratio = 0.1, binwidth = 0.02, show.legend = F)+
   xlab("Proportion IBD") +
-  ggtitle("Histogram Relatedness")
+  ggtitle("Histogram Relatedness") +
+  theme_classic()
 
 ```
 
@@ -307,7 +566,9 @@ data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
            PC2 = c(rnorm(50, 0, 1), rnorm(50, 9, 1))) %>%
   ggplot(aes(x = PC1, y = PC2, color = Ancestry)) +
   geom_density_2d(breaks = c(0.05)) + 
-  geom_point()
+  geom_point() +
+  ggtitle("Ancestry Predictions")+
+  theme_classic()
 ```
 
 ## Per Ancestry summary
@@ -317,30 +578,14 @@ We also summarize the QC metrics per ancestry. @fig-ancestrySummary) shows the d
 ```{r ancestrySummary}
 #| label: fig-ancestrySummary
 #| fig-cap: "MAF faceted by ancestry with the cutoff vizualized as a red vertical line."
-data.frame("Ancestry" = rep(c("1", "2", "3"), each = 50),
+data.frame("Ancestry" = rep(c("Anc1", "Anc2", "Anc3"), each = 50),
            "MAF" = c(rbeta(50, 3, 2), rbeta(50, 3, 3), rbeta(50, 4, 1))) %>%
-  ggplot(aes(x = MAF)) +
-  geom_histogram() + 
+  ggplot(aes(x = MAF, fill=Ancestry, color="blue")) +
+  geom_histogram(bins=20, show.legend = FALSE) + 
   geom_vline(xintercept = 0.05, color = "red") + 
   xlab("Minor allele frequency") +
-  ggtitle("Minor allele frequency per ancestry") + 
-  facet_wrap(~Ancestry, ncol = 2)
+  ggtitle("Minor allele frequency by Ancestry") + 
+  facet_wrap(~Ancestry, ncol = 2) + 
+  theme_classic()
 
 ```
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).

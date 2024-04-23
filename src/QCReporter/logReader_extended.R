@@ -6,7 +6,10 @@
 #' @examples
 #' extractLog("../QCtutorial/logs/wgas2.log")
 
-suppressMessages(library(tidyverse)) 
+suppressMessages(library(dplyr)) 
+suppressMessages(library(forcats))
+suppressMessages(library(stringr))
+# suppressMessages(library(tidyverse)) 
 
 extractLog_v2<- function(filepath, plinkoption){
   file <- file(paste0(filepath), "r")

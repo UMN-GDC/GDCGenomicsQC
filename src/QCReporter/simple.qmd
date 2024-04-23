@@ -1,7 +1,9 @@
 ---
 title: "test"
-format: html
+format: pdf
 editor: visual
+project:
+  output-dir: /home/gdc/shared/GDC_pipeline/results/
 ---
 
 ```{r}
