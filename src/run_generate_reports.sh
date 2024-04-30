@@ -8,12 +8,16 @@ working_directory=/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/
 
 array_location_base=($(ls -d ${working_directory}/*/))
 num_elements=${#array_location_base[@]}
+
+
+
 for ((i=0;i<${num_elements}; i++)); do
-    array_location[i]=${array_location_base[$i]%/} #This gets the full paths to each directory
+    (array_location[i]=${array_location_base[$i]%/} #This gets the full paths to each directory
     filepreffix_test[i]=${array_location[$i]##*/}
     filepreffix[i]=${filepreffix_test[i]}.QC
-    echo ${filepreffix[i]}
+    echo ${filepreffix[i]}) &
 done
+wait
 
 # array_location=(Full EUR AMR AFR SAS)
 # filepreffix=(mixed.ethnic.QC EUR.QC AMR.QC AFR.QC SAS.QC)
@@ -23,7 +27,7 @@ path_to_qmd=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/QCReporter
 path_to_gen_all_reports=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/QCReporter
 file1=${path_to_qmd}/updated_report.qmd #Full path to report
 
-for ((i=0; i<4; i++)); do
+for ((i=0; i<${num_elements}; i++)); do
     path_to_store_outputs=${array_location[i]}
     ${path_to_gen_all_reports}/generate_all_reports.sh --FILE ${filepreffix[i]} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} 
 
