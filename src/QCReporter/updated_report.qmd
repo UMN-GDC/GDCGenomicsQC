@@ -36,7 +36,7 @@ The QC process outline below first process the data in aggregate removing SNPs a
 
 ```{r importdata, echo=FALSE}
 #path_to_data="/home/gdc/shared/GDC_pipeline/data/"
-path_to_data="/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA/AFR/"
+path_to_data="/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GSA/EAS/"
 gender_file_name="plink.sexcheck"
 
 # Data
@@ -444,23 +444,4 @@ data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
   geom_point() +
   ggtitle("Ancestry Predictions")+
   theme_classic()
-```
-
-## Per Ancestry summary
-
-We also summarize the QC metrics per ancestry. @fig-ancestrySummary shows the distribution of MAF per ancestry.
-
-```{r ancestrySummary}
-#| label: fig-ancestrySummary
-#| fig-cap: "MAF faceted by ancestry with the cutoff vizualized as a red vertical line."
-data.frame("Ancestry" = rep(c("Anc1", "Anc2", "Anc3"), each = 50),
-           "MAF" = c(rbeta(50, 3, 2), rbeta(50, 3, 3), rbeta(50, 4, 1))) %>%
-  ggplot(aes(x = MAF, fill=Ancestry, color="blue")) +
-  geom_histogram(bins=20, show.legend = FALSE) + 
-  geom_vline(xintercept = 0.05, color = "red") + 
-  xlab("Minor allele frequency") +
-  ggtitle("Minor allele frequency by Ancestry") + 
-  facet_wrap(~Ancestry, ncol = 2) + 
-  theme_classic()
-
 ```
