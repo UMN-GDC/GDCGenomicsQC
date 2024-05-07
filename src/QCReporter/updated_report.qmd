@@ -410,38 +410,3 @@ ggplot(data= relatedness, aes(x=PI_HAT, color="blue"))+
 
 ```
 
-<!-- ## Ancestry distribution -->
-
-```{r datacleaning ancestryprediction}
-#| eval: false
-#| include: false
-# colnames(ancestry_prediction) = c("FID", "IID", "Ancestry", "Primary", "Statistic", "A1", "A2", "A3", "A4", "A5", "AFR", "AMR",
-#                                   "EAS", "EUR", "SAS")
-```
-
-```{r Ancestry Distribution}
-#| eval: false
-#| include: false
-ggplot(data=ancestry_prediction, aes(x=Primary, y=Statistic, fill = Ancestry))+
-  geom_area()
-```
-
-## Ancestry predictions
-
-Ancestries are predicted after the initial round of QC steps. The principal components upon which the population is stratifed, are based off of the [genetic relatedness matrix (GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html). The subjects are then projected onto the PC space and assigned ethnicities using k-means clustering based on either a standard genomic dataset (such as though genomes) are by the reported ancestries of the subject in the study. Figure @fig-ancestryPredictions the projection of each subject onto the first few PCs. They are colored by their reported ancestries.
-
-The densities of ancestries based on the reference set are represent by the 10% contour lines of the 2d density plots with the observed populations presented as points over top of the densities shown in @fig-ancestryPredictions.
-
-```{r ancestryPredictions}
-#| label: fig-ancestryPredictions
-#| fig-cap: "Ancestry predictions plotted over first decile contour for each ancestry."
-
-data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
-           PC1 = c(rnorm(50, 0, 1), rnorm(50, 9, 1)),
-           PC2 = c(rnorm(50, 0, 1), rnorm(50, 9, 1))) %>%
-  ggplot(aes(x = PC1, y = PC2, color = Ancestry)) +
-  geom_density_2d(breaks = c(0.05)) + 
-  geom_point() +
-  ggtitle("Ancestry Predictions")+
-  theme_classic()
-```
