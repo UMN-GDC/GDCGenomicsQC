@@ -1,0 +1,72 @@
+---
+title: "Genomics QC Ancestry Report"
+author: "GDC Data Team"
+editor: visual
+date: today
+format:
+  pdf:
+    self-contained: true
+editor: visual
+execute:
+  echo: false
+  warning: false
+  error: false
+  message: false
+  toc: true
+project:
+  output-dir: /home/gdc/shared/GDC_pipeline/results/
+---
+
+The following is an automated report describing the quality control (QC) processing of your dataset. detailed description of the QC steps taken.
+
+```{r loadPackages}
+#| message: false
+#| echo: false
+library(dplyr)
+library(ggplot2)
+library(gt)
+library(forcats)
+```
+
+# Ancestry predictions
+
+Ancestries are predicted after the initial round of QC steps. The principal components upon which the population is stratifed, are based off of the [genetic relatedness matrix (GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html). The subjects are then projected onto the PC space and assigned ethnicities using k-means clustering based on either a standard genomic dataset (such as though genomes) are by the reported ancestries of the subject in the study. Figure @fig-ancestryPredictions the projection of each subject onto the first few PCs. They are colored by their reported ancestries.
+
+The densities of ancestries based on the reference set are represent by the 10% contour lines of the 2d density plots with the observed populations presented as points over top of the densities shown in @fig-ancestryPredictions.
+
+
+```{r importdata, echo=FALSE}
+path_to_data="/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GSA/EAS/"
+file_name="study.SMILES_GDA.unrelated.comm.popu"
+#Data 
+ancestry_prediction <- read.delim(paste0(path_to_data, file_name), header=FALSE)
+
+```
+
+<!-- ## Ancestry distribution -->
+
+```{r datacleaning ancestryprediction}
+# colnames(ancestry_prediction) = c("FID", "IID", "Ancestry", "Primary", "Statistic", "A1", "A2", "A3", "A4", "A5", "AFR", "AMR",
+#                                   "EAS", "EUR", "SAS")
+```
+
+
+```{r Ancestry Distribution}
+ggplot(data=ancestry_prediction, aes(x=Primary, y=Statistic, fill = Ancestry))+
+  geom_area()
+```
+
+This is going to be a linked in png file
+```{r ancestryPredictions}
+#| label: fig-ancestryPredictions
+#| fig-cap: "Ancestry predictions plotted over first decile contour for each ancestry."
+
+data.frame(Ancestry = rep(c("Ancestry 1", "Ancestry 2"), each = 50),
+           PC1 = c(rnorm(50, 0, 1), rnorm(50, 9, 1)),
+           PC2 = c(rnorm(50, 0, 1), rnorm(50, 9, 1))) %>%
+  ggplot(aes(x = PC1, y = PC2, color = Ancestry)) +
+  geom_density_2d(breaks = c(0.05)) + 
+  geom_point() +
+  ggtitle("Ancestry Predictions")+
+  theme_classic()
+```
