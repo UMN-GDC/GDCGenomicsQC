@@ -53,15 +53,18 @@ for ((i=0; i<${num_elements}; i++)); do
 
     echo "Report has been successfully generated for ${array_location[i]}"
     
-    if [ ${filepreffix_test[i]} -eq "full" ]; then
+    if [ "${filepreffix_test[i]}" == "full" ]; then
       ## For full ancestry directory
       pushd ${path_to_store_outputs}
       fraposa_log_file=$(ls *.unrelated.comm.popu)
       popd
+      frapose_png=$(ls ${path_to_store_outputs}/*.unrelated.comm*.png)
+      sed -i 's#SED#'${frapose_png}'#' ${file2} #This could cause issues because there isn't a template file getting copied then saved as a new name
     
-      str3='gender_file_name='\""${fraposa_log_file}"'"'
-      ${path_to_replace_line_function} ${file2} 39 "${str1}"
-      ${path_to_replace_line_function} ${file2} 40 "${str3}"
+      str3='file_name='\""${fraposa_log_file}"'"'
+      str4='path_to_png='\""${frapose_png}"'"'
+      ${path_to_replace_line_function} ${file2} 40 "${str1}"
+      ${path_to_replace_line_function} ${file2} 41 "${str3}"
       quarto render ${file2} 
       final_location_2=${path_to_store_outputs}/results/ancestry_report.pdf
       mv -v ${path_to_qmd}/ancestry_report.pdf ${final_location_2}
