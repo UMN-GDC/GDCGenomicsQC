@@ -36,7 +36,7 @@ The QC process outline below first process the data in aggregate removing SNPs a
 
 ```{r importdata, echo=FALSE}
 #path_to_data="/home/gdc/shared/GDC_pipeline/data/"
-path_to_data="/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GSA/EAS/"
+path_to_data="/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA/full/"
 gender_file_name="plink.sexcheck"
 
 # Data
