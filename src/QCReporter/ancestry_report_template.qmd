@@ -37,8 +37,8 @@ Ancestries are predicted after the initial round of QC steps. The principal comp
 The densities of ancestries based on the reference set are represent by the 10% contour lines of the 2d density plots with the observed populations presented as points over top of the densities shown in @fig-ancestryPredictions.
 
 ```{r importdata, echo=FALSE}
-path_to_data="/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA/full/"
-file_name="study.SMILES_GDA.unrelated.comm.popu"
+path_to_data="PATH"
+file_name="NAME"
 #Data 
 ancestry_prediction <- read.delim(paste0(path_to_data, file_name), header=FALSE)
 
@@ -68,5 +68,3 @@ ggplot(data=ancestry_prediction, aes(x=Ancestry, fill = as_factor(Estimate_perce
 ```
 
 ![Ancestry Prediction PC Plot](SED)
-
-
