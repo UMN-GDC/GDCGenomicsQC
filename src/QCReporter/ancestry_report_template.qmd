@@ -56,8 +56,8 @@ ancestry_prediction_core=ancestry_prediction %>%
 
 ```{r Ancestry Distribution}
 ggplot(data=ancestry_prediction, aes(x=Ancestry, fill = Ancestry))+
-  geom_histogram(stat = "count") + 
-  ggtitle("Histogram of predicted ancestries by estimation percentage")
+  geom_histogram(stat = "count", show.legend = FALSE) + 
+  ggtitle("Histogram of Predicted Ancestries")
 ```
 
 ```{r Ancestry Distribution Split}
@@ -65,6 +65,28 @@ ggplot(data=ancestry_prediction, aes(x=Ancestry, fill = as_factor(Estimate_perce
   geom_histogram(stat = "count") + 
   facet_wrap(vars(as_factor(Estimate_percent)), scales = "free")+
   ggtitle("Histogram of predicted ancestries by estimation percentage")
+```
+
+## Table displaying Predictions
+
+```{r Ancestry Distribution Split Table}
+#| warning: false
+#| message: false
+ancestry_prediction %>% 
+  group_by(Ancestry, Estimate_percent) %>%
+  summarise(Count = n()) %>%
+  gt(rowname_col = "Estimation", groupname_col = "Ancestry") %>%
+  cols_label(
+    Estimate_percent="Estimated %"
+  ) %>%
+  summary_rows(
+    groups = everything(),
+    columns = Count,
+    fns = list(
+      total = "sum" 
+    )
+  )
+
 ```
 
 ![Ancestry Prediction PC Plot](SED)
