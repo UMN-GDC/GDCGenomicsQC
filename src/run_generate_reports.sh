@@ -4,19 +4,14 @@ module load plink
 module load python3/3.9.3_anaconda2021.11_mamba
 module load R
 
-# Could add in a path_to_repo argument so that the paths to functions won't be hardcoded anymore
 working_directory=$1 #Only argument needed for this process to run
-# working_directory=/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA
-
+path_to_repo=$2
 
 array_location_base=($(ls -d ${working_directory}/*/))
 num_elements=${#array_location_base[@]}
 
-# array_location=(Full EUR AMR AFR SAS)
-# filepreffix=(mixed.ethnic.QC EUR.QC AMR.QC AFR.QC SAS.QC)
-
-path_to_qmd=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/QCReporter
-path_to_gen_all_reports=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/QCReporter
+path_to_qmd=${path_to_repo}/src/QCReporter
+path_to_gen_all_reports=${path_to_repo}/src/QCReporter
 file1=${path_to_qmd}/updated_report_template.qmd #Full path to report
 file2=${path_to_qmd}/ancestry_report_template.qmd
 
