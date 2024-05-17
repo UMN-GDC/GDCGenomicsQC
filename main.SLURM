@@ -17,18 +17,19 @@ module load R/4.0.4
 path_to_data=/home/gdc/shared/SMILES/GSA/
 filepreffix=SMILES_GSA
 path_to_store_outputs=/home/gdc/shared/GDC_pipeline/
+path_to_repo=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC
 
 
 # Start QC steps
-./src/main.sh --FILE ${filepreffix} --OLDBLD N --UPDTSO N --PATHTODATA ${path_to_data} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} #Assumes they don't need their reference build updated and don't need alleles flipped. 
+${path_to_repo}/src/main.sh --FILE ${filepreffix} --OLDBLD N --UPDTSO N --PATHTODATA ${path_to_data} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} #Assumes they don't need their reference build updated and don't need alleles flipped. 
 
 #./src/ancestryPrediction.sh #Output is ${filepreffix}_11 ? <-- doesn't work appropriately
 
 # Makes txt files to be used in the report based on log files
-./src/make_tables.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} 
+${path_to_repo}/src/make_tables.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} 
 
 # Moving specific log files that are used in the report into the proper final location
-./src/move_necessary_files.sh --FILE ./data/default_list_of_files_to_move.txt --END_LOCATION ${path_to_store_outputs}/logs/
+${path_to_repo}/src/move_necessary_files.sh --FILE ${path_to_repo}/data/default_list_of_files_to_move.txt --END_LOCATION ${path_to_store_outputs}/logs/
 
 
 
@@ -37,9 +38,10 @@ mkdir -p ${path_to_store_outputs}/results
 module load R #Need a newer version of R than 4.0.4 for quarto
 
 ## Makes automated pdf report
-./src/generate_report.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} # calls quarto render QCReport.qmd #For rendering the report
+${path_to_repo}/src/run_generate_reports.sh ${path_to_data} ${path_to_repo}
+# ${path_to_repo}/src/generate_report.sh --FILE ${filepreffix} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} # calls quarto render QCReport.qmd #For rendering the report
 
-./src/move_necessary_files.sh --FILE ./data/default_list_of_files_to_move.txt --END_LOCATION ${path_to_store_outputs}/logs/
+${path_to_repo}/src/move_necessary_files.sh --FILE ${path_to_repo}/data/default_list_of_files_to_move.txt --END_LOCATION ${path_to_store_outputs}/logs/
 
 # Cleaning up repository /working directory
-./src/repo_cleaner.sh --FILE ./data/default_list_of_files_to_remove.txt
+${path_to_repo}/src/repo_cleaner.sh --FILE ${path_to_repo}/data/default_list_of_files_to_remove.txt
