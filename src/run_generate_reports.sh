@@ -14,7 +14,6 @@ num_elements=${#array_location_base[@]}
 
 # array_location=(Full EUR AMR AFR SAS)
 # filepreffix=(mixed.ethnic.QC EUR.QC AMR.QC AFR.QC SAS.QC)
-path_to_replace_line_function=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/replace_line.sh
 
 path_to_qmd=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/QCReporter
 path_to_gen_all_reports=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/QCReporter
