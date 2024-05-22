@@ -1,20 +1,24 @@
 #!/bin/bash
 
-# mkdir out
-work_location=$1 #/home/miran045/shared/projects/Efield_modeling/experiments/msc
-ids=$2 #sub-MSC04
-full_path_to_simnibs_cifti_tools=$3
-path_to_save_outputs=/scratch.global/miran045/shared/projects/Efield_modeling/gy_outputs/ #MSC
+
+initial_marker_filtering=$1 
+initial_sample_filtering=$2
+ultimate_marker_filtering=$3
+ultimate_sample_filtering=$4
+maf_filtering=$5
+hwe_controls=$6
+hwe_cases=$7
+work_location=$8
+full_path_to_repo=$9
 
 
-
-
-output=${work_location}/${i}_wrapper.sh
-cp -v ${full_path_to_simnibs_cifti_tools}/wrapper_wip.sh ${output}
-sed -i 's@G1@'${i}'@' ${output} #Default is 0.1
-sed -i 's@M1@'${path_to_save_outputs}'@' ${output} #Default is 0.1
-sed -i 's@G2@'${work_location}'/'${i}'/ses-01/list_subjs@' ${output} #Default is 0.1
-sed -i 's@M2@'${work_location}'/'${i}'/ses-01/dlabel_tables/'${i}'_LRdlabel_table_native_no_mdwall.csv@' ${output} #Default is 0.1
-sed -i 's@MAF1@'${full_path_to_simnibs_cifti_tools}'@' ${output} #Default is 0.1
-sed -i 's@HWE1@'${var_hwe1}'@' ${output} #Default is 0.1
-sed -i 's@HWE2@'${var_hwe2}'@' ${output} #Default is 0.1
+output=${work_location}/custom_qc.SLURM
+mkdir -p ${work_location}
+cp -v ${full_path_to_repo}/src/QC_template.SLURM ${output}
+sed -i 's@G1@'${initial_marker_filtering}'@' ${output} #Default is 0.1
+sed -i 's@M1@'${initial_sample_filtering}'@' ${output} #Default is 0.1
+sed -i 's@G2@'${ultimate_marker_filtering}'@' ${output} #Default is 0.02
+sed -i 's@M2@'${ultimate_sample_filtering}'@' ${output} #Default is 0.02
+sed -i 's@MAF1@'${maf_filtering}'@' ${output} #Default is 0.01
+sed -i 's@HWE1@'${hwe_controls}'@' ${output} #Default is 1e-6
+sed -i 's@HWE2@'${hwe_cases}'@' ${output} #Default is 1e-10
