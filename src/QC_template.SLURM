@@ -12,7 +12,7 @@
 module load plink
 module load R
 
-REF=/panfs/jay/groups/9/gdc/shared/GDC_pipeline/Ref
+REF=/home/gdc/shared/GDC_pipeline/Ref
 FILE=$1
 OUTDIR=$2
 
