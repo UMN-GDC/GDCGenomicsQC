@@ -1,20 +1,23 @@
 #!/bin/bash
+workdir=$1
+
 mkdir temp
 
 # 1. Find all _aligned.log files
 # 	* copy them to a temp folder
-cp *_aligned.log temp/
+cd ${workdir}
+cp *aligned.log temp/
 cd ./temp/
 
 
 # 2. Trim all _aligned.log files to be the last 16 rows
 # Find all _aligned.log files in the current directory
-aligned_files=$(find . -type f -name '*_aligned.log')
+aligned_files=$(find . -type f -name '*aligned.log')
 
 # Iterate over each _aligned.log file
 for file in ${aligned_files}; do
     # Get the filename without extension
-    filename=$(basename "$file" "_aligned.log")
+    filename=$(basename "$file" "aligned.log")
 
     # Use the 'tail' command to get the last 16 rows of the file
     tail -n 16 "$file" > "${filename}_trimmed.log"
@@ -23,7 +26,7 @@ for file in ${aligned_files}; do
 done
 
 # Remove old _aligned.log files
-rm *_aligned.log
+rm *aligned.log
 
 
 # 3. For each _trimmed.log Read the starting number of SNPs and which chromosome it is
@@ -32,7 +35,7 @@ rm *_aligned.log
 # 5. Find the number of variants excluded during alignment phase
 
 # Find all _trimmed.log files in the current directory
-trimmed_files=$(find . -type f -name '*_trimmed.log')
+trimmed_files=$(find . -type f -name '*chr[0-9]*_trimmed.log')
 
 # Initializing summary .txt file
 echo Filename Chr Start_snps Swapped_snps Excluded_snps End_snps >genome_harmonizer_full_log.txt
@@ -54,6 +57,7 @@ for trimmed_file in $trimmed_files; do
     excluded_variants=$(cat ${trimmed_file} | grep -oP 'total \K\d+,\d+')
     excluded_variantsb=$(echo "${excluded_variants}" | tr -d ',')
     end_snps=$(cat ${trimmed_file} | grep -oP 'Number of SNPs: \K\d+')
+    excluded_variantsb=$((start_snps-end_snps))
     
     # Print the extracted information
     echo "File: ${filename}"
