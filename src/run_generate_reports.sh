@@ -21,7 +21,9 @@ for ((i=0; i<${num_elements}; i++)); do
     filepreffix[i]=${filepreffix_test[i]}.QC
     echo ${filepreffix[i]}
     echo ${filepreffix_test[i]}
-    
+    if [ "${filepreffix_test[i]}" == "temp" ]; then
+        continue #Skipping the temp location
+    fi
     path_to_store_outputs=${array_location[i]}
     ${path_to_gen_all_reports}/generate_all_reports.sh --FILE ${filepreffix[i]} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} 
 
