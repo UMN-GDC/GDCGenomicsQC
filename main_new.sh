@@ -11,24 +11,25 @@
 #SBATCH -e x.err
 #SBATCH --job-name x
 
+source /home/faird/shared/code/external/envs/miniconda3/load_miniconda3.sh
+conda activate GDC_pipeline
 module load plink
-module load python3/3.9.3_anaconda2021.11_mamba
 module load perl
-module load R/4.2.2-openblas
+module load R
 
 # This pipeline assumes the input is in plink binary format.
 
 #################################### Specifying paths #########################################
 
 # Hard-code the path to the Reference folder (containing reference dataset, other bash scripts, and programs' executables like CrossMap, GenomeHarmonizer, PRIMUS, and fraposa)
-REF=/panfs/jay/groups/9/gdc/shared/GDC_pipeline/Ref
+REF=/home/gdc/shared/GDC_pipeline/Ref
 
 # Hard-code an example dataset (SMILES). This should be obtained from user's input in the future
-FILE=/panfs/jay/groups/9/gdc/shared/GDC_pipeline/Study
+FILE=/home/gdc/shared/GDC_pipeline/Study
 NAME="SMILES_GDA"
 
 # Hard-code the working directory (where outputs should be located in)
-WORK=/panfs/jay/groups/9/gdc/shared/GDC_pipeline/QC_example
+WORK=/home/gdc/shared/GDC_pipeline/test
 cd $WORK
 #################################################################################################
 
@@ -43,12 +44,23 @@ echo "(Step 1) Matching data to NIH's GRCh38 genome build"
 # We also reformat the numeric chromsome {1-26} to {1-22, X, Y, MT} for LiftOver/CrossMap
 plink --bfile $FILE/$NAME --merge-x --make-bed --out prep1
 plink --bfile prep1 --recode --output-chr 'MT' --out prep2
-$REF/CrossMap/liftOverPlink.py -m prep2.map -p prep2.ped -o study.$NAME.lifted -c $REF/CrossMap/GRCh37_to_GRCh38.chain.gz -e $REF/CrossMap/liftOver
 
+rm prep.bed updated.snp updated.position updated.chr
+awk '{print $1, $4-1, $4, $2}' prep2.map > prep.bed
+## Stuck at this spot ... 
+python $REF/CrossMap/CrossMap.py bed $REF/CrossMap/GRCh37_to_GRCh38.chain.gz prep.bed study.$NAME.lifted.bed3
+
+awk '{print $4}' study.$NAME.lifted.bed3 > updated.snp
+awk '{print $4, $3}' study.$NAME.lifted.bed3 > updated.position
+awk '{print $4, $1}' study.$NAME.lifted.bed3 > updated.chr
+plink --file prep2 --extract updated.snp --make-bed --out result1
+plink --bfile result1 --update-map updated.position --make-bed --out result2
+plink --bfile result2 --update-chr updated.chr --make-bed --out result3
+plink --bfile result3 --recode --out study.$NAME.lifted
 # Break the dataset by chromosomes for faster processing in the next step (genome harmonizer)
 mkdir $WORK/lifted
 for chr in {1..22} X Y; do plink --file study.$NAME.lifted --chr $chr --make-bed --out $WORK/lifted/study.$NAME.lifted.chr${chr};  done
-rm prep1.* prep2.*
+rm prep1.* prep2.* result1.* result2.* result3.* prep.bed updated.snp updated.position updated.chr
 
 # Using genome harmonizer, update strand orientation and flip alleles according to the reference dataset.
 srun $REF/harmonizer.job
@@ -74,7 +86,7 @@ plink --bfile study.$NAME.lifted.chr1.aligned --merge-list mergelist.txt --allow
 plink --bfile study.$NAME.lifted.aligned1 --split-x 'hg38' --make-bed --out study.$NAME.lifted.aligned
 # Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
 cd $WORK
-DATATYPE="mixed.ethnic"
+DATATYPE=full
 srun $REF/standard_QC.job $WORK/aligned/study.$NAME.lifted.aligned $DATATYPE
 ########################################################################################################
 
@@ -83,7 +95,7 @@ srun $REF/standard_QC.job $WORK/aligned/study.$NAME.lifted.aligned $DATATYPE
 
 echo "(Step 3) Relatedness check"
 mkdir $WORK/relatedness
-perl $REF/PRIMUS/bin/run_PRIMUS.pl --file $WORK/mixed.ethnic/$DATATYPE.QC8 --genome -t 0.2 -o $WORK/relatedness
+perl $REF/PRIMUS/bin/run_PRIMUS.pl --file $WORK/${DATATYPE}/$DATATYPE.QC8 --genome -t 0.2 -o $WORK/relatedness
 OUT=$WORK/relatedness/$DATATYPE.QC8_cleaned.genome_unrelated_samples.txt
 # Reformat the unrelated set text file in a suitable format for plink --keep
 tail -n +2 "$OUT" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
@@ -133,18 +145,18 @@ srun $REF/standard_QC.job $WORK/aligned/study.$NAME.$DATATYPE.lifted.aligned $DA
 
 ###########################################################################################################
 
-file_to_read=/home/miran045/shared/projects/SCAN_PD/experiments/make_dconns/subj_ids_trio.txt
-
-num_lines=$(cat ${file_to_read} | wc -l)
-
-for (( i=1; i<=$num_lines; i++)); do
-    #Subject
-    line_content=$(sed "${i}q;d" "$file_to_read")
-    participant_name=$(echo "$line_content" | tr -d '[:space:]')  # Remove spaces if needed
-    participant_name_1=sub-${participant_name}
-    
-    #Session
-    line2_content=$(sed "${i}q;d" "$sessions_to_follow")
-    session_using=$(echo "$line2_content" | tr -d '[:space:]')
-    session_using_1=ses-${session_using}
-done
+#file_to_read=/home/miran045/shared/projects/SCAN_PD/experiments/make_dconns/subj_ids_trio.txt
+#
+#num_lines=$(cat ${file_to_read} | wc -l)
+#
+#for (( i=1; i<=$num_lines; i++)); do
+#    #Subject
+#    line_content=$(sed "${i}q;d" "$file_to_read")
+#    participant_name=$(echo "$line_content" | tr -d '[:space:]')  # Remove spaces if needed
+#    participant_name_1=sub-${participant_name}
+#    
+#    #Session
+#    line2_content=$(sed "${i}q;d" "$sessions_to_follow")
+#    session_using=$(echo "$line2_content" | tr -d '[:space:]')
+#    session_using_1=ses-${session_using}
+#done
