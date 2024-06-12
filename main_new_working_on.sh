@@ -7,15 +7,9 @@
 #SBATCH -p msismall
 #SBATCH --mail-type=ALL  
 #SBATCH --mail-user=x500@umn.edu 
-#SBATCH -o x.out
-#SBATCH -e x.err
-#SBATCH --job-name x
-
-source /home/faird/shared/code/external/envs/miniconda3/load_miniconda3.sh
-conda activate GDC_pipeline
-module load plink
-module load perl
-module load R
+#SBATCH -o FLE.out
+#SBATCH -e FLE.err
+#SBATCH --job-name FLE
 
 # This pipeline assumes the input is in plink binary format.
 
@@ -23,20 +17,21 @@ module load R
 
 # Hard-code the path to the Reference folder (containing reference dataset, other bash scripts, and programs' executables like CrossMap, GenomeHarmonizer, PRIMUS, and fraposa)
 REF=/home/gdc/shared/GDC_pipeline/Ref
-path_to_repo=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC
-# Hard-code an example dataset (SMILES). This should be obtained from user's input in the future
-FILE=/home/gdc/shared/GDC_pipeline/Study
-NAME="SMILES_GSA"
+path_to_repo=PRPO
+FILE=PND
+NAME=FLE
+WORK=WK
+cd ${WORK}
 
-# Hard-code the working directory (where outputs should be located in)
-WORK=/home/gdc/shared/GDC_pipeline/test_SMILES_GSA
-cd $WORK
 #################################################################################################
 
-
+source /home/faird/shared/code/external/envs/miniconda3/load_miniconda3.sh
+conda activate GDC_pipeline
+module load plink
+module load perl
 
 ############## Updating genome build and conducting strand alignment/allele flipping #############
-#### Skipping everything until resume place ####
+#### Skipping everything until resume place when choosing to skip Crossmap ####
 echo "(Step 1) Matching data to NIH's GRCh38 genome build"
 # LiftOver/CrossMap: results are so far identical for both programs. 
 # Using LiftOver tool for now as it requires less steps given plink format.
@@ -58,6 +53,7 @@ plink --bfile result1 --update-map updated.position --make-bed --out result2
 plink --bfile result2 --update-chr updated.chr --make-bed --out result3
 plink --bfile result3 --recode --out study.$NAME.lifted
 
+
 #### Actual resume place for skipping updating genome build ####
 # Break the dataset by chromosomes for faster processing in the next step (genome harmonizer)
 mkdir $WORK/lifted
@@ -65,7 +61,7 @@ for chr in {1..22} X Y; do plink --bfile $FILE/$NAME --chr $chr --make-bed --out
 rm prep1.* prep2.* result1.* result2.* result3.* prep.bed updated.snp updated.position updated.chr
 
 # Using genome harmonizer, update strand orientation and flip alleles according to the reference dataset.
-sbatch --wait $REF/harmonizer.job ${WORK} ${NAME}
+sbatch --wait ${path_to_repo}/src/harmonizer.job ${WORK} ${NAME}
 # Currently reference dataset does not have chrY for alignment, and ChrX has no match with study data
 # Hence, we bring the unaligned ChrX and ChrY to the result folder, i.e. skipping alignment
 cp $WORK/lifted/study.${NAME}.lifted.chrX.bed $WORK/aligned/study.${NAME}.lifted.chrX.aligned.bed
@@ -74,13 +70,14 @@ cp $WORK/lifted/study.${NAME}.lifted.chrX.fam $WORK/aligned/study.${NAME}.lifted
 cp $WORK/lifted/study.${NAME}.lifted.chrY.bed $WORK/aligned/study.${NAME}.lifted.chrY.aligned.bed
 cp $WORK/lifted/study.${NAME}.lifted.chrY.bim $WORK/aligned/study.${NAME}.lifted.chrY.aligned.bim
 cp $WORK/lifted/study.${NAME}.lifted.chrY.fam $WORK/aligned/study.${NAME}.lifted.chrY.aligned.fam
-#######################################################################################################
 
-#### Insert genotype_harmonizer_log_reader.sh script here... ####
+
 ${path_to_repo}/src/genotype_harmonizer_log_reader.sh $WORK/aligned 
 ## Creates genome_harmonizer_full_log.txt inside of the aligned directory
-###################################### QC #############################################################
+#######################################################################################################
 
+
+###################################### QC #############################################################
 echo "(Step 2) Standard variants and samples filtering"
 # Merge chromosomes for this step
 cd $WORK/aligned
@@ -91,12 +88,11 @@ plink --bfile study.$NAME.lifted.aligned1 --split-x 'hg38' no-fail --make-bed --
 # Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
 cd $WORK
 DATATYPE=full
-sbatch --wait $REF/standard_QC.job $WORK/aligned/study.$NAME.lifted.aligned $DATATYPE
+sbatch --wait ${path_to_repo}/src/standard_QC.job $WORK/aligned/study.$NAME.lifted.aligned $DATATYPE ${path_to_repo}
 ########################################################################################################
 
 
 ######################################## Pedigree ######################################################
-
 echo "(Step 3) Relatedness check"
 mkdir $WORK/relatedness
 perl $REF/PRIMUS/bin/run_PRIMUS.pl --file ${WORK}/${DATATYPE}/${DATATYPE}.QC8 --genome -t 0.2 -o ${WORK}/relatedness
@@ -114,8 +110,6 @@ echo "(Step 4) PCA"
 mkdir $WORK/PCA
 cd $WORK/PCA
 
-# Load the required packages for fraposa
-# pip install numpy pandas scikit-learn pyplink matplotlib rpy2 #Only needs to be ran once
 Rscript $REF/fraposaRpackage.R
 
 # fraposa operations
@@ -126,15 +120,15 @@ $REF/Fraposa/plotpcs.py 1000G.comm study.$NAME.unrelated.comm
 
 awk -F '\t' '{print $3}' study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
 awk '{print $1 "\t" $2 "\t" $3}' study.$NAME.unrelated.comm.popu > data.txt
-Rscript $REF/subpop.R
+Rscript ${path_to_repo}/src/subpop.R
 rm *.dat
 #########################################################################################################
 
 
 ################### Subset data based on Ethnicity and Rerun QC (Step 2) on the subsets #################
+cd ${WORK}
 ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
 for DATATYPE in ${ETHNICS}; do
-  #echo ${DATATYPE} ${WORK} ${REF} ${NAME}
   plink --bfile $WORK/aligned/study.$NAME.lifted.aligned --keep $WORK/PCA/$DATATYPE --make-bed --out $WORK/aligned/study.$NAME.$DATATYPE.lifted.aligned
   sbatch $REF/standard_QC.job $WORK/aligned/study.$NAME.$DATATYPE.lifted.aligned $DATATYPE
 done
@@ -170,5 +164,5 @@ mv -f ${WORK}/PCA ${WORK}/temp/
 mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
 
-#4. execute run_generate_reports.sh 
+#4. execute run_generate_reports.sh ## Need to make this optional ##
 ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
