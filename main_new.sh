@@ -47,7 +47,6 @@ plink --bfile prep1 --recode --output-chr 'MT' --out prep2
 
 rm prep.bed updated.snp updated.position updated.chr
 awk '{print $1, $4-1, $4, $2}' prep2.map > prep.bed
-## Stuck at this spot ... 
 python $REF/CrossMap/CrossMap.py bed $REF/CrossMap/GRCh37_to_GRCh38.chain.gz prep.bed study.$NAME.lifted.bed3
 
 awk '{print $4}' study.$NAME.lifted.bed3 > updated.snp
@@ -63,7 +62,7 @@ for chr in {1..22} X Y; do plink --file study.$NAME.lifted --chr $chr --make-bed
 rm prep1.* prep2.* result1.* result2.* result3.* prep.bed updated.snp updated.position updated.chr
 
 # Using genome harmonizer, update strand orientation and flip alleles according to the reference dataset.
-srun $REF/harmonizer.job
+sbatch --wait $REF/harmonizer.job ${WORK} ${NAME}
 # Currently reference dataset does not have chrY for alignment, and ChrX has no match with study data
 # Hence, we bring the unaligned ChrX and ChrY to the result folder, i.e. skipping alignment
 cp $WORK/lifted/study.SMILES_GDA.lifted.chrX.bed $WORK/aligned/study.SMILES_GDA.lifted.chrX.aligned.bed
