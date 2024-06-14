@@ -21,6 +21,8 @@ path_to_repo=PRPO
 FILE=PND
 NAME=FLE
 WORK=WK
+crossmap=CRSMP
+genome_harmonizer=GNHRM
 cd ${WORK}
 
 #################################################################################################
@@ -32,96 +34,46 @@ module load perl
 
 ############## Updating genome build and conducting strand alignment/allele flipping #############
 #### Skipping everything until resume place when choosing to skip Crossmap ####
-echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-# LiftOver/CrossMap: results are so far identical for both programs. 
-# Using LiftOver tool for now as it requires less steps given plink format.
-# Since plink denote X chromosome's pseudo-autosomal region as a separate 'XY' chromosome, we want to merge to pass ontto LiftOver/CrossMap. 
-# We also reformat the numeric chromsome {1-26} to {1-22, X, Y, MT} for LiftOver/CrossMap
-plink --bfile $FILE/$NAME --merge-x --make-bed --out prep1
-plink --bfile prep1 --recode --output-chr 'MT' --out prep2
-
-rm prep.bed updated.snp updated.position updated.chr
-awk '{print $1, $4-1, $4, $2}' prep2.map > prep.bed
-## Stuck at this spot ... 
-python $REF/CrossMap/CrossMap.py bed $REF/CrossMap/GRCh37_to_GRCh38.chain.gz prep.bed study.$NAME.lifted.bed3
-
-awk '{print $4}' study.$NAME.lifted.bed3 > updated.snp
-awk '{print $4, $3}' study.$NAME.lifted.bed3 > updated.position
-awk '{print $4, $1}' study.$NAME.lifted.bed3 > updated.chr
-plink --file prep2 --extract updated.snp --make-bed --out result1
-plink --bfile result1 --update-map updated.position --make-bed --out result2
-plink --bfile result2 --update-chr updated.chr --make-bed --out result3
-plink --bfile result3 --recode --out study.$NAME.lifted
-
+if [ ${crossmap} -eq 1 ]; then
+  echo "(Step 1) Matching data to NIH's GRCh38 genome build"
+  ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  file_to_use=study.${NAME}.lifted
+else  # Default behavior
+  file_to_use=${FILE}/${NAME} #Original file
+fi
 
 #### Actual resume place for skipping updating genome build ####
 # Break the dataset by chromosomes for faster processing in the next step (genome harmonizer)
-mkdir $WORK/lifted
-for chr in {1..22} X Y; do plink --bfile $FILE/$NAME --chr $chr --make-bed --out $WORK/lifted/study.$NAME.lifted.chr${chr};  done
-rm prep1.* prep2.* result1.* result2.* result3.* prep.bed updated.snp updated.position updated.chr
-
-# Using genome harmonizer, update strand orientation and flip alleles according to the reference dataset.
-sbatch --wait ${path_to_repo}/src/harmonizer.job ${WORK} ${NAME}
-# Currently reference dataset does not have chrY for alignment, and ChrX has no match with study data
-# Hence, we bring the unaligned ChrX and ChrY to the result folder, i.e. skipping alignment
-cp $WORK/lifted/study.${NAME}.lifted.chrX.bed $WORK/aligned/study.${NAME}.lifted.chrX.aligned.bed
-cp $WORK/lifted/study.${NAME}.lifted.chrX.bim $WORK/aligned/study.${NAME}.lifted.chrX.aligned.bim
-cp $WORK/lifted/study.${NAME}.lifted.chrX.fam $WORK/aligned/study.${NAME}.lifted.chrX.aligned.fam
-cp $WORK/lifted/study.${NAME}.lifted.chrY.bed $WORK/aligned/study.${NAME}.lifted.chrY.aligned.bed
-cp $WORK/lifted/study.${NAME}.lifted.chrY.bim $WORK/aligned/study.${NAME}.lifted.chrY.aligned.bim
-cp $WORK/lifted/study.${NAME}.lifted.chrY.fam $WORK/aligned/study.${NAME}.lifted.chrY.aligned.fam
-
-
-${path_to_repo}/src/genotype_harmonizer_log_reader.sh $WORK/aligned 
-## Creates genome_harmonizer_full_log.txt inside of the aligned directory
+if [ ${genome_harmonizer} -eq 1 ]; then
+  ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
+  file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
+else # Default behavior
+  if [ ${crossmap} -eq 1 ]; then
+    file_to_submit=study.$NAME.lifted #For using crossmap but not genome harmonizer
+  else # Not using crossmap or genome harmonizer
+    file_to_submit=${FILE}/${NAME} #Original file
+fi
 #######################################################################################################
 
 
 ###################################### QC #############################################################
 echo "(Step 2) Standard variants and samples filtering"
-# Merge chromosomes for this step
-cd $WORK/aligned
-rm mergelist.txt
-for chr in {2..22} X Y; do echo study.$NAME.lifted.chr${chr}.aligned >> mergelist.txt; done
-plink --bfile study.$NAME.lifted.chr1.aligned --merge-list mergelist.txt --allow-no-sex --make-bed --out study.$NAME.lifted.aligned1
-plink --bfile study.$NAME.lifted.aligned1 --split-x 'hg38' no-fail --make-bed --out study.$NAME.lifted.aligned
 # Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
 cd $WORK
 DATATYPE=full
-sbatch --wait ${path_to_repo}/src/standard_QC.job $WORK/aligned/study.$NAME.lifted.aligned $DATATYPE ${path_to_repo}
+sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
 ########################################################################################################
 
 
 ######################################## Pedigree ######################################################
 echo "(Step 3) Relatedness check"
-mkdir $WORK/relatedness
-perl $REF/PRIMUS/bin/run_PRIMUS.pl --file ${WORK}/${DATATYPE}/${DATATYPE}.QC8 --genome -t 0.2 -o ${WORK}/relatedness
-OUT=$WORK/relatedness/$DATATYPE.QC8_cleaned.genome_maximum_independent_set
-# Reformat the unrelated set text file in a suitable format for plink --keep
-tail -n +2 "$OUT" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
-awk '{print "0", $1}' $OUT > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
-# Keep only the unrelated set of individuals determined by PRIMUS
-plink --bfile $WORK/$DATATYPE/$DATATYPE.QC8 --keep ${OUT} --make-bed --out $WORK/relatedness/study.$NAME.unrelated
+${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
 #########################################################################################################
 
 
 ######################################## Ethnicity ######################################################
 echo "(Step 4) PCA"
-mkdir $WORK/PCA
-cd $WORK/PCA
-
-Rscript $REF/fraposaRpackage.R
-
-# fraposa operations
-$REF/Fraposa/commvar.sh $REF/PCA_ref/1000G.aligned $WORK/relatedness/study.$NAME.unrelated 1000G.comm study.$NAME.unrelated.comm
-$REF/Fraposa/fraposa_runner.py --stu_filepref study.$NAME.unrelated.comm 1000G.comm #Main program for Fraposa 
-$REF/Fraposa/predstupopu.py 1000G.comm study.$NAME.unrelated.comm 
-$REF/Fraposa/plotpcs.py 1000G.comm study.$NAME.unrelated.comm
-
-awk -F '\t' '{print $3}' study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
-awk '{print $1 "\t" $2 "\t" $3}' study.$NAME.unrelated.comm.popu > data.txt
-Rscript ${path_to_repo}/src/subpop.R
-rm *.dat
+${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 #########################################################################################################
 
 
