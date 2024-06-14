@@ -1,8 +1,6 @@
 #!/bin/bash
 
-module load plink
-module load python3/3.9.3_anaconda2021.11_mamba
-module load R
+# module load R
 
 working_directory=$1 #Only argument needed for this process to run
 path_to_repo=$2
