@@ -66,6 +66,7 @@ cd $WORK
 DATATYPE=full
 if [ ${custom_qc} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
+  sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
   sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
 fi
@@ -88,12 +89,12 @@ ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 cd ${WORK}
 ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
 for DATATYPE in ${ETHNICS}; do
-  plink --bfile $WORK/aligned/study.$NAME.lifted.aligned --keep $WORK/PCA/$DATATYPE --make-bed --out $WORK/aligned/study.$NAME.$DATATYPE.lifted.aligned
+  plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
   if [ ${custom_qc} -eq 1 ]; then
-  ## requires a text file that has all of the flags and specifications
-  ## Will follow a pre-determined naming such as ${WORK}/${NAME}_custom_qc.sh
+  ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
+    sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
   else # Default behavior
-    sbatch ${path_to_repo}/src/standard_QC.job $WORK/aligned/study.$NAME.$DATATYPE.lifted.aligned $DATATYPE ${path_to_repo}
+    sbatch ${path_to_repo}/src/standard_QC.job ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
   fi
 done
 ###########################################################################################################
