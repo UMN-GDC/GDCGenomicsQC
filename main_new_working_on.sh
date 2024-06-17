@@ -23,6 +23,9 @@ NAME=FLE
 WORK=WK
 crossmap=CRSMP
 genome_harmonizer=GNHRM
+report_writer=RPT
+custom_qc=CSTQC
+
 cd ${WORK}
 
 #################################################################################################
@@ -61,7 +64,11 @@ echo "(Step 2) Standard variants and samples filtering"
 # Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
 cd $WORK
 DATATYPE=full
-sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
+if [ ${custom_qc} -eq 1 ]; then
+  ## requires a text file that has all of the flags and specifications
+else # Default behavior
+  sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
+fi
 ########################################################################################################
 
 
@@ -82,7 +89,12 @@ cd ${WORK}
 ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
 for DATATYPE in ${ETHNICS}; do
   plink --bfile $WORK/aligned/study.$NAME.lifted.aligned --keep $WORK/PCA/$DATATYPE --make-bed --out $WORK/aligned/study.$NAME.$DATATYPE.lifted.aligned
-  sbatch $REF/standard_QC.job $WORK/aligned/study.$NAME.$DATATYPE.lifted.aligned $DATATYPE
+  if [ ${custom_qc} -eq 1 ]; then
+  ## requires a text file that has all of the flags and specifications
+  ## Will follow a pre-determined naming such as ${WORK}/${NAME}_custom_qc.sh
+  else # Default behavior
+    sbatch ${path_to_repo}/src/standard_QC.job $WORK/aligned/study.$NAME.$DATATYPE.lifted.aligned $DATATYPE ${path_to_repo}
+  fi
 done
 ###########################################################################################################
 
@@ -117,4 +129,6 @@ mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
 
 #4. execute run_generate_reports.sh ## Need to make this optional ##
-${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
+if [ ${report_writer} -eq 1 ]; then
+  ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
+fi
