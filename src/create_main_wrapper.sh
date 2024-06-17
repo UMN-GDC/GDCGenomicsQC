@@ -13,7 +13,7 @@ custom_qc=$9
 
 output=${desired_working_directory}/${input_file_name}_wrapper.sh
 mkdir -p ${desired_working_directory}
-cp -v ${path_github_repo}/main_new_working_on.sh ${output}
+cp -v ${path_github_repo}/src/main_template.sh ${output}
 sed -i 's@PND@'${path_to_input_directory}'@' ${output} 
 sed -i 's@FLE@'${input_file_name}'@' ${output} 
 sed -i 's@PRPO@'${path_github_repo}'@' ${output} 
