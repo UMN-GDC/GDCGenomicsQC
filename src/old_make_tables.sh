@@ -66,13 +66,3 @@ Rscript ./src/QCReporter/logReader_extended.R ${path_to_store_outputs}/logs/inde
 # length of 'dimnames' [2] not equal to array extent # It's an internal error from within the function
 #### This has to do with the function currently requiring there to be 22 chromosomes in the dataset
 
-
-#for troubleshooting and reference
-#Rscript ./QCReporter/log_Reader.R /sampleLogs/first_pass.log mind #Default output file name works
-#Rscript ./QCReporter/log_Reader.R /sampleLogs/first_pass.log mind test1.txt #Works
-#Rscript ./QCReporter/log_Reader.R /sampleLogs/step2_temp.log geno test2.txt #Works
-#Rscript ./QCReporter/log_Reader.R /sampleLogs/gender_check.log check-sex test3.txt #Works
-#Rscript ./QCReporter/log_Reader.R /sampleLogs/SMILES_done_MAF.log maf test4.txt #Works
-#Rscript ./QCReporter/log_Reader.R /sampleLogs/Step7_temp1.log filter-founders test5.txt #Works 
-#Rscript ./QCReporter/log_Reader.R /sampleLogs/Step5_temp.log hwe test6.txt #Works
-# Rscript ./src/QCReporter/logReader_extended.R ./src/QCReporter/sampleLogs/indepSNP.log indep-pairwise QC_indep_pairwise.txt ${place_to_store_data} 

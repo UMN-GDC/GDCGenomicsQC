@@ -12,9 +12,9 @@
 module load plink
 module load R
 
-REF=/home/gdc/shared/GDC_pipeline/Ref
 FILE=$1
 OUTDIR=$2
+REF=PLACE
 
 mkdir -p $OUTDIR
 cd $OUTDIR
@@ -47,8 +47,8 @@ plink --bfile $OUTDIR.QC6 --hwe HWE1 --make-bed --out $OUTDIR.QC7a
 plink --bfile $OUTDIR.QC7a --hwe HWE2 --hwe-all --make-bed --out $OUTDIR.QC7
 
 # Heterozygosity check:
-plink --bfile $OUTDIR.QC7 --exclude $REF/inversion.txt --range --indep-pairwise 50 5 0.2 --out indepSNP
+plink --bfile $OUTDIR.QC7 --exclude $REF/data/inversion.txt --range --indep-pairwise 50 5 0.2 --out indepSNP
 plink --bfile $OUTDIR.QC7 --extract indepSNP.prune.in --het --out R_check
-Rscript --no-save $REF/heterozygosity_outliers_list.R 
+Rscript --no-save $REF/src/heterozygosity_outliers_list.R 
 sed 's/"// g' fail-het-qc.txt | awk '{print$1, $2}'> het_fail_ind.txt 
 plink --bfile $OUTDIR.QC7 --remove het_fail_ind.txt --make-bed --out $OUTDIR.QC8

@@ -1,5 +1,6 @@
 #!/bin/bash
-read -p "Please provide the path to the GDCGenomicsQC repository: " full_path_to_repo
+full_path_to_repo=$1
+work_location=$2
 
 echo "The default value for initial marker filtering is 0.1"
 read -p "Enter your desired initial marker filtering threshold: " initial_marker_filtering
@@ -22,8 +23,6 @@ read -p "Enter your desired lower limit for hwe p-values for cases: " hwe_contro
 echo "For controls markers are removed with hwe p-values with less than 1e-6"
 read -p "Enter your desired lower limit for hwe p-values for controls " hwe_cases
 
-read -p "Please provide where you would like your custom_qc.SLURM script to be stored: " work_location
-
 
 output=${work_location}/custom_qc.SLURM
 mkdir -p ${work_location}
@@ -35,3 +34,4 @@ sed -i 's@M2@'${ultimate_sample_filtering}'@' ${output} #Default is 0.02
 sed -i 's@MAF1@'${maf_filtering}'@' ${output} #Default is 0.01
 sed -i 's@HWE1@'${hwe_controls}'@' ${output} #Default is 1e-6
 sed -i 's@HWE2@'${hwe_cases}'@' ${output} #Default is 1e-10
+sed -i 's@PLACE@'${full_path_to_repo}'@' ${output}

@@ -2,11 +2,11 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=10
-#SBATCH --mem=20GB
-#SBATCH --time=24:00:00
-#SBATCH -p msismall
+#SBATCH --mem=100GB
+#SBATCH --time=10:00:00
+#SBATCH -p agsmall
 #SBATCH --mail-type=ALL
-#SBATCH --mail-user=tran1327@umn.edu
+#SBATCH --mail-user=baron063@umn.edu
 #SBATCH -o genome_harmonizer.%j.out
 #SBATCH -e genome_harmonizer.%j.err
 #SBATCH --job-name genome_harmonizer
@@ -15,9 +15,11 @@
 module load java/openjdk-17.0.2
 module load plink
 
-REF=/panfs/jay/groups/9/gdc/shared/GDC_pipeline/Ref
-WORK=/panfs/jay/groups/9/gdc/shared/GDC_pipeline/QC_example
-NAME="SMILES_GDA"
+REF=/home/gdc/shared/GDC_pipeline/Ref
+# WORK=/home/gdc/shared/GDC_pipeline/QC_example
+WORK=$1
+# NAME="SMILES_GSA"
+NAME=$2
 OUTDIR="aligned"
 
 mkdir -p $WORK/$OUTDIR
@@ -27,3 +29,10 @@ LIST=${DATA[$SLURM_ARRAY_TASK_ID]}
 SAMPLE=$(basename $LIST | sed "s/.bed//g")
 
 java -Xmx1g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/$SAMPLE --inputType PLINK_BED --ref $REF/1000G_GRCh38/ALL.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased --refType VCF --keep --output $WORK/$OUTDIR/${SAMPLE}.aligned
+
+mkdir -p ${WORK}/logs
+mkdir -p ${WORK}/logs/errors
+mkdir -p ${WORK}/logs/out
+
+mv ${WORK}/*.out ${WORK}/logs/out/
+mv ${WORK}/*.err ${WORK}/logs/errors/
