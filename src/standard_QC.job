@@ -2,21 +2,19 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=10
-#SBATCH --mem=20GB
-#SBATCH --time=24:00:00
-#SBATCH -p msismall
-#SBATCH --mail-type=ALL  
-#SBATCH --mail-user=tran1327@umn.edu 
+#SBATCH --mem=30GB
+#SBATCH --time=1:00:00
+#SBATCH -p agsmall
 #SBATCH -o QC.out
 #SBATCH -e QC.err
 #SBATCH --job-name QC
 
 module load plink
-module load R/4.2.2-openblas
+module load R
 
-REF=/panfs/jay/groups/9/gdc/shared/GDC_pipeline/Ref
 FILE=$1
 OUTDIR=$2
+REF=$3
 
 mkdir -p $OUTDIR
 cd $OUTDIR
@@ -32,6 +30,7 @@ plink --bfile $OUTDIR.QC2 --geno 0.02 --make-bed --out $OUTDIR.QC3
 
 # Sample missingness final filter
 plink --bfile $OUTDIR.QC3 --mind 0.02 --make-bed --out $OUTDIR.QC4
+plink --bfile $OUTDIR.QC4 --missing
 
 # Gender check:
 plink --bfile $OUTDIR.QC4 --check-sex
@@ -49,8 +48,12 @@ plink --bfile $OUTDIR.QC6 --hwe 1e-6 --make-bed --out $OUTDIR.QC7a
 plink --bfile $OUTDIR.QC7a --hwe 1e-10 --hwe-all --make-bed --out $OUTDIR.QC7
 
 # Heterozygosity check:
-plink --bfile $OUTDIR.QC7 --exclude $REF/inversion.txt --range --indep-pairwise 50 5 0.2 --out indepSNP
+plink --bfile $OUTDIR.QC7 --exclude $REF/data/inversion.txt --range --indep-pairwise 50 5 0.2 --out indepSNP
 plink --bfile $OUTDIR.QC7 --extract indepSNP.prune.in --het --out R_check
-Rscript --no-save $REF/heterozygosity_outliers_list.R 
+Rscript --no-save $REF/src/heterozygosity_outliers_list.R 
 sed 's/"// g' fail-het-qc.txt | awk '{print$1, $2}'> het_fail_ind.txt 
 plink --bfile $OUTDIR.QC7 --remove het_fail_ind.txt --make-bed --out $OUTDIR.QC8
+
+
+
+

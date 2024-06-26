@@ -1,8 +1,6 @@
 #!/bin/bash
 
-module load plink
-module load python3/3.9.3_anaconda2021.11_mamba
-module load R
+# module load R
 
 working_directory=$1 #Only argument needed for this process to run
 path_to_repo=$2
@@ -21,7 +19,9 @@ for ((i=0; i<${num_elements}; i++)); do
     filepreffix[i]=${filepreffix_test[i]}.QC
     echo ${filepreffix[i]}
     echo ${filepreffix_test[i]}
-    
+    if [ "${filepreffix_test[i]}" == "temp" ]; then
+        continue #Skipping the temp location
+    fi
     path_to_store_outputs=${array_location[i]}
     ${path_to_gen_all_reports}/generate_all_reports.sh --FILE ${filepreffix[i]} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} 
 
