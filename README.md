@@ -64,15 +64,25 @@ git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
 After cloning this repository the steps to run this pipeline are as follows:
 1.	Copy the settings_file_template.sh into your desired working directory. This file is inside the src directory.
 2.	In your copy of the settings_file_template.sh alter lines 3-12 to meet your desired needs.
+		
 		Line 3: Should be the path to where you cloned this github repository with the addition of 'src/settings_file_reader.sh'.
+		
 		Line 4: After '--path_to_input_directory' replace what is there with the full path to where the genomics data is stored.
+		
 		Line 5: After '--input_file_name' replace what is there with what your plink bed formatted genomics file is called (everything before .bed/.bim/.fam).
+		
 		Line 6: After '--path_github_repo' replace what is there with the full path to where you cloned this github repository.
+		
 		Line 7: After '--user_x500' replace what is there with your x500 (i.e. samp300@umn.edu would be samp300).
+		
 		Line 8: After '--desired_working_directory' replace what is there with a full path to where you would like the outputs to be stored.
+		
 		Line 9: After '--using_crossmap' replace what is there with a '1' if you would like to update your reference genome build to GRCh38 from GRCh37.
+		
 		Line 10: After '--using_genome_harmonizer' replace what is there with a 1 if you would like to ensure genotypes are aligned.
+		
 		Line 11: After '--making_report' replace what is there with a '1' if you would like to have the GDCGenomicsQC pipeline make reports detailing QC steps and outputs.
+		
 		Line 12: After '--custom_qc' replace what is there with a '1' if you would like to customize the QC standard procedure either partially or entirely changing parameters for filtering subjects and SNPs.
 3.	Execute or source the copy of the settings_file_template.sh to create a file ending with _wrapper.sh.
 4.	Run the wrapper file created as an sbatch submission. Below is an example of how to do so. 
