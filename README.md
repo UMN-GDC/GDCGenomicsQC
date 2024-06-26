@@ -79,7 +79,7 @@ After cloning this repository the steps to run this pipeline are as follows:
 		
 		Line 9: After '--using_crossmap' replace what is there with a '1' if you would like to update your reference genome build to GRCh38 from GRCh37.
 		
-		Line 10: After '--using_genome_harmonizer' replace what is there with a 1 if you would like to ensure genotypes are aligned.
+		Line 10: After '--using_genome_harmonizer' replace what is there with a '1' if you would like to ensure genotypes are aligned.
 		
 		Line 11: After '--making_report' replace what is there with a '1' if you would like to have the GDCGenomicsQC pipeline make reports detailing QC steps and outputs.
 		
