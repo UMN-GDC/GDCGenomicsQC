@@ -5,8 +5,6 @@
 #SBATCH --mem=100GB
 #SBATCH --time=10:00:00
 #SBATCH -p agsmall
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=baron063@umn.edu
 #SBATCH -o genome_harmonizer.%j.out
 #SBATCH -e genome_harmonizer.%j.err
 #SBATCH --job-name genome_harmonizer
@@ -28,7 +26,7 @@ DATA=($(find "$WORK/lifted" -name "study.$NAME.lifted.chr*.bed" | sort -V))
 LIST=${DATA[$SLURM_ARRAY_TASK_ID]}
 SAMPLE=$(basename $LIST | sed "s/.bed//g")
 
-java -Xmx1g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/$SAMPLE --inputType PLINK_BED --ref $REF/1000G_GRCh38/ALL.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased --refType VCF --keep --output $WORK/$OUTDIR/${SAMPLE}.aligned
+java -Xmx1g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/$SAMPLE --inputType PLINK_BED --ref $REF/1000G_highcoverage/1kGP_high_coverage_Illumina.ALL.filtered.SNV_INDEL_SV_phased_panel --refType VCF --keep --output $WORK/$OUTDIR/${SAMPLE}.aligned
 
 mkdir -p ${WORK}/logs
 mkdir -p ${WORK}/logs/errors
