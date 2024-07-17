@@ -1,9 +1,10 @@
-!/bin/bash
+#!/bin/bash
 
 WORK=$1
 REF=$2
-NAME=$3
-path_to_repo=$4
+FILE=$3
+NAME=$4
+path_to_repo=$5
 
 # Since plink denote X chromosome's pseudo-autosomal region as a separate 'XY' chromosome, we want to merge to pass ontto LiftOver/CrossMap. 
 # We also reformat the numeric chromsome {1-26} to {1-22, X, Y, MT} for LiftOver/CrossMap
