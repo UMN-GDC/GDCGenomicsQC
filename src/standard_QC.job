@@ -52,8 +52,8 @@ plink --bfile $OUTDIR.QC7 --exclude $REF/data/inversion.txt --range --indep-pair
 plink --bfile $OUTDIR.QC7 --extract indepSNP.prune.in --het --out R_check
 Rscript --no-save $REF/src/heterozygosity_outliers_list.R 
 sed 's/"// g' fail-het-qc.txt | awk '{print$1, $2}'> het_fail_ind.txt 
-plink --bfile $OUTDIR.QC7 --remove het_fail_ind.txt --make-bed --out $OUTDIR.QC8
-
+# plink --bfile $OUTDIR.QC7 --remove het_fail_ind.txt --make-bed --out $OUTDIR.QC8
+plink --bfile $OUTDIR.QC7 --make-bed --out $OUTDIR.QC8
 
 
 
