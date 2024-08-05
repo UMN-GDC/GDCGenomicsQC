@@ -120,6 +120,7 @@ cp ${WORK}/PCA/study.${NAME}*png ${WORK}/full/
 
 #2. move the genome_harmonizer_full_log.txt into the 'full' directory
 cp ${WORK}/aligned/*harmonizer*.txt ${WORK}/full/
+cp ${WORK}/relatedness/full.QC8_cleaned.genome_network1/*.genome ${WORK}/full/primus_file.genome
 
 #3. move other directories into a temporary location called 'temp'
 ## aligned, lifted, logs, PCA, relatedness, relatedness_OLD
