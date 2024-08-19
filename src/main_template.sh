@@ -1,4 +1,4 @@
-!/bin/bash -l
+#!/bin/bash -l
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=10
@@ -39,7 +39,7 @@ module load perl
 #### Skipping everything until resume place when choosing to skip Crossmap ####
 if [ ${crossmap} -eq 1 ]; then
   echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-  ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
   file_to_use=study.${NAME}.lifted
 else  # Default behavior
   file_to_use=${FILE}/${NAME} #Original file
@@ -48,6 +48,7 @@ fi
 #### Actual resume place for skipping updating genome build ####
 # Break the dataset by chromosomes for faster processing in the next step (genome harmonizer)
 if [ ${genome_harmonizer} -eq 1 ]; then
+  echo "Begin genome harmonization"
   ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
   file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
 else # Default behavior
@@ -55,6 +56,7 @@ else # Default behavior
     file_to_submit=study.$NAME.lifted #For using crossmap but not genome harmonizer
   else # Not using crossmap or genome harmonizer
     file_to_submit=${FILE}/${NAME} #Original file
+  fi
 fi
 #######################################################################################################
 

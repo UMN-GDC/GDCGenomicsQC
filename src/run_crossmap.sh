@@ -6,6 +6,13 @@ FILE=$3
 NAME=$4
 path_to_repo=$5
 
+
+echo "WORK: $WORK"
+echo "REF: $REF"
+echo "FILE: $FILE"
+echo "NAME: $NAME"
+echo "path_to_repo: $path_to_repo"
+
 # Since plink denote X chromosome's pseudo-autosomal region as a separate 'XY' chromosome, we want to merge to pass ontto LiftOver/CrossMap. 
 # We also reformat the numeric chromsome {1-26} to {1-22, X, Y, MT} for LiftOver/CrossMap
 plink --bfile $FILE/$NAME --merge-x --make-bed --out prep1
@@ -22,4 +29,4 @@ awk '{print $4, $1}' study.$NAME.lifted.bed3 > updated.chr
 plink --file prep2 --extract updated.snp --make-bed --out result1
 plink --bfile result1 --update-map updated.position --make-bed --out result2
 plink --bfile result2 --update-chr updated.chr --make-bed --out result3
-plink --bfile result3 --recode --out study.$NAME.lifted
+plink --bfile result3 --recode --make-bed --out study.$NAME.lifted
