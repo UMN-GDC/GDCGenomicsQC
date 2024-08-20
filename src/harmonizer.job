@@ -14,9 +14,7 @@ module load java/openjdk-17.0.2
 module load plink
 
 REF=/home/gdc/shared/GDC_pipeline/Ref
-# WORK=/home/gdc/shared/GDC_pipeline/QC_example
 WORK=$1
-# NAME="SMILES_GSA"
 NAME=$2
 OUTDIR="aligned"
 
@@ -26,7 +24,7 @@ DATA=($(find "$WORK/lifted" -name "study.$NAME.lifted.chr*.bed" | sort -V))
 LIST=${DATA[$SLURM_ARRAY_TASK_ID]}
 SAMPLE=$(basename $LIST | sed "s/.bed//g")
 
-java -Xmx1g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/$SAMPLE --inputType PLINK_BED --ref $REF/1000G_highcoverage/1kGP_high_coverage_Illumina.ALL.filtered.SNV_INDEL_SV_phased_panel --refType VCF --keep --output $WORK/$OUTDIR/${SAMPLE}.aligned
+java -Xmx8g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/$SAMPLE --inputType PLINK_BED --ref $REF/1000G_highcoverage/1kGP_high_coverage_Illumina.ALL.filtered.SNV_INDEL_SV_phased_panel --refType VCF --keep --output $WORK/$OUTDIR/${SAMPLE}.aligned
 
 mkdir -p ${WORK}/logs
 mkdir -p ${WORK}/logs/errors
