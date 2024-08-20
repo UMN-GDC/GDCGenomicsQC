@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 WORK=$1
 REF=$2
