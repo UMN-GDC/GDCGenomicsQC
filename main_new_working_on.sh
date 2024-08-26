@@ -120,6 +120,8 @@ cp ${WORK}/PCA/study.${NAME}*png ${WORK}/full/
 
 #2. move the genome_harmonizer_full_log.txt into the 'full' directory
 cp ${WORK}/aligned/*harmonizer*.txt ${WORK}/full/
+primus_file=$(find ${WORK} -type f -name "full.QC8_cleaned.genome")
+cp -v ${primus_file} ${WORK}/full/primus_file.genome
 
 #3. move other directories into a temporary location called 'temp'
 ## aligned, lifted, logs, PCA, relatedness, relatedness_OLD
@@ -131,7 +133,10 @@ mv -f ${WORK}/PCA ${WORK}/temp/
 mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
 
+rm ${WORK}/*.lifted* #To clean up the working directory of unnecessary files 
+
 #4. execute run_generate_reports.sh ## Need to make this optional ##
+module load R/4.4.0-openblas-rocky8
 if [ ${report_writer} -eq 1 ]; then
   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
 fi
