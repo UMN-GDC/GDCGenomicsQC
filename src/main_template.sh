@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=10
 #SBATCH --mem=20GB
 #SBATCH --time=10:00:00
 #SBATCH -p msismall
@@ -41,6 +41,7 @@ if [ ${crossmap} -eq 1 ]; then
   echo "(Step 1) Matching data to NIH's GRCh38 genome build"
   ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
   file_to_use=study.${NAME}.lifted
+  #plink --file ${file_to_use} --make-bed --out ${file_to_use} #Unsure if this is necessary
 else  # Default behavior
   file_to_use=${FILE}/${NAME} #Original file
 fi
@@ -119,6 +120,8 @@ cp ${WORK}/PCA/study.${NAME}*png ${WORK}/full/
 
 #2. move the genome_harmonizer_full_log.txt into the 'full' directory
 cp ${WORK}/aligned/*harmonizer*.txt ${WORK}/full/
+primus_file=$(find ${WORK} -type f -name "full.QC8_cleaned.genome")
+cp -v ${primus_file} ${WORK}/full/primus_file.genome
 
 #3. move other directories into a temporary location called 'temp'
 ## aligned, lifted, logs, PCA, relatedness, relatedness_OLD
@@ -130,7 +133,10 @@ mv -f ${WORK}/PCA ${WORK}/temp/
 mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
 
+rm ${WORK}/*.lifted* #To clean up the working directory of unnecessary files 
+
 #4. execute run_generate_reports.sh ## Need to make this optional ##
+module load R/4.4.0-openblas-rocky8
 if [ ${report_writer} -eq 1 ]; then
   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
 fi
