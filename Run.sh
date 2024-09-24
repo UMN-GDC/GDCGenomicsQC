@@ -21,11 +21,12 @@ show_help() {
   echo "--user_x500			Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions"
   echo "--use_crossmap			Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38"
   echo "--use_genome_harmonizer 	Enter '1' if you would like to update strand allignment by using genome harmonizer"
+  echo "--use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry"
   echo "--make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed"
   echo "--custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering"
-  echo "				When providing this flag you will need to answer all of the questions prompted by the terminal"
-  echo "Default settings: The pipeline by default if flags are not provided will use crossmap, genome harmonizer and will generate the automated reports"
-  echo "  --help              Display this help message."
+  echo "					When providing this flag you will need to answer all of the questions prompted by the terminal"
+  echo "Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports"
+  echo "--help				Display this help message."
 }
 
 
@@ -44,6 +45,7 @@ path_to_github_repo=$(pwd)
 user_x500=99
 use_crossmap=1
 use_genome_harmonizer=1
+use_rfmix=0
 make_report=1
 custom_qc=0
 flag=0
@@ -53,8 +55,8 @@ flag=0
 getopt -T &>/dev/null
 if [[ $? -ne 4 ]]; then echo "Getopt is too old!" >&2 ; exit 1 ; fi
 
-declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,make_report,custom_qc,help}
-OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,make_report:,custom_qc:,help' -n "$0" -- "$@")
+declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,use_rfmix,make_report,custom_qc,help}
+OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,help' -n "$0" -- "$@")
     # *** Added -o '' ; surrounted the longoptions by ''
 if [[ $? -ne 0 ]] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     # *** This has to be right after the OPTS= assignment or $? will be overwritten
@@ -91,6 +93,10 @@ while [[ $# -gt 0 ]]; do
         	;;
 	--use_genome_harmonizer )
         	use_genome_harmonizer=$2
+        	shift 2
+        	;;
+	--use_rfmix )
+        	use_rfmix=$2
         	shift 2
         	;;
 	--make_report )
@@ -142,6 +148,7 @@ echo "github repository path: $path_to_github_repo"
 echo "user: $user_x500"
 echo "crossmap: $use_crossmap"
 echo "genome harmonizer: $use_genome_harmonizer"
+echo "genome rfmix: $use_rfmix"
 echo "make report: $make_report"
 echo "custom qc: $custom_qc"
 
@@ -159,6 +166,7 @@ ${user_x500} \
 ${set_working_directory} \
 ${use_crossmap} \
 ${use_genome_harmonizer} \
+${use_rfmix} \
 ${make_report} \
 ${custom_qc}
 
