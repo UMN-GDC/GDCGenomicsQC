@@ -23,6 +23,7 @@ NAME=FLE
 WORK=WK
 crossmap=CRSMP
 genome_harmonizer=GNHRM
+rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
 
@@ -83,21 +84,31 @@ ${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATAT
 
 ######################################## Ethnicity ######################################################
 echo "(Step 4) PCA"
-${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+if [ ${rfmix_option} -eq 1 ]; then
+  ## requires a text file that has all of the flags and specifications
+  sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+else # Default behavior
+  ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+fi
 #########################################################################################################
 
 
 ################### Subset data based on Ethnicity and Rerun QC (Step 2) on the subsets #################
 cd ${WORK}
-ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+if [ ${rfmix_option} -eq 1 ]; then
+  ETHNICS=$(awk '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+else # Default behavior
+  ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+fi
+
 for DATATYPE in ${ETHNICS}; do
-  plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
-  if [ ${custom_qc} -eq 1 ]; then
-  ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
-    sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-  else # Default behavior
-    sbatch ${path_to_repo}/src/standard_QC.job ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-  fi
+    plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
+    if [ ${custom_qc} -eq 1 ]; then
+    ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
+      sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+    else # Default behavior
+      sbatch ${path_to_repo}/src/standard_QC.job ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+    fi
 done
 ###########################################################################################################
 
@@ -122,14 +133,19 @@ cp ${WORK}/PCA/study.${NAME}*png ${WORK}/full/
 cp ${WORK}/aligned/*harmonizer*.txt ${WORK}/full/
 
 #3. move other directories into a temporary location called 'temp'
-## aligned, lifted, logs, PCA, relatedness, relatedness_OLD
+# aligned, lifted, logs, PCA, relatedness, relatedness_OLD
 mkdir ${WORK}/temp
 mv -f ${WORK}/aligned ${WORK}/temp/
 mv -f ${WORK}/lifted ${WORK}/temp/
 mv -f ${WORK}/logs ${WORK}/temp/
+mv -f ${WORK}/phased ${WORK}/temp/
+mv -f ${WORK}/rfmix ${WORK}/temp/
 mv -f ${WORK}/PCA ${WORK}/temp/
 mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
+
+mv -f ${WORK}/*.out ${WORK}/logs/out/
+mv -f ${WORK}/*.err ${WORK}/logs/errors/
 
 #4. execute run_generate_reports.sh ## Need to make this optional ##
 if [ ${report_writer} -eq 1 ]; then
