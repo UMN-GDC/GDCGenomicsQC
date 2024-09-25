@@ -23,6 +23,7 @@ NAME=FLE
 WORK=WK
 crossmap=CRSMP
 genome_harmonizer=GNHRM
+rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
 
@@ -49,6 +50,7 @@ fi
 #### Actual resume place for skipping updating genome build ####
 # Break the dataset by chromosomes for faster processing in the next step (genome harmonizer)
 if [ ${genome_harmonizer} -eq 1 ]; then
+  echo "Begin genome harmonization"
   ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
   file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
 else # Default behavior
@@ -83,21 +85,31 @@ ${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATAT
 
 ######################################## Ethnicity ######################################################
 echo "(Step 4) PCA"
-${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+if [ ${rfmix_option} -eq 1 ]; then
+  ## requires a text file that has all of the flags and specifications
+  sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+else # Default behavior
+  ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+fi
 #########################################################################################################
 
 
 ################### Subset data based on Ethnicity and Rerun QC (Step 2) on the subsets #################
 cd ${WORK}
-ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+if [ ${rfmix_option} -eq 1 ]; then
+  ETHNICS=$(awk '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+else # Default behavior
+  ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+fi
+
 for DATATYPE in ${ETHNICS}; do
-  plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
-  if [ ${custom_qc} -eq 1 ]; then
-  ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
-    sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-  else # Default behavior
-    sbatch ${path_to_repo}/src/standard_QC.job ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-  fi
+    plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
+    if [ ${custom_qc} -eq 1 ]; then
+    ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
+      sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+    else # Default behavior
+      sbatch ${path_to_repo}/src/standard_QC.job ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+    fi
 done
 ###########################################################################################################
 
@@ -124,14 +136,18 @@ primus_file=$(find ${WORK} -type f -name "full.QC8_cleaned.genome")
 cp -v ${primus_file} ${WORK}/full/primus_file.genome
 
 #3. move other directories into a temporary location called 'temp'
-## aligned, lifted, logs, PCA, relatedness, relatedness_OLD
+# aligned, lifted, logs, PCA, relatedness, relatedness_OLD
 mkdir ${WORK}/temp
 mv -f ${WORK}/aligned ${WORK}/temp/
 mv -f ${WORK}/lifted ${WORK}/temp/
 mv -f ${WORK}/logs ${WORK}/temp/
+mv -f ${WORK}/phased ${WORK}/temp/
+mv -f ${WORK}/rfmix ${WORK}/temp/
 mv -f ${WORK}/PCA ${WORK}/temp/
 mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
+mv -f ${WORK}/*.out ${WORK}/logs/out/
+mv -f ${WORK}/*.err ${WORK}/logs/errors/
 
 rm ${WORK}/*.lifted* #To clean up the working directory of unnecessary files 
 
