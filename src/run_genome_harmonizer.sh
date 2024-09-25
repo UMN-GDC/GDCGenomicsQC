@@ -6,12 +6,30 @@ NAME=$3
 path_to_repo=$4
 file_to_use=$5
 
+
+echo "WORK: $WORK"
+echo "REF: $REF"
+echo "NAME: $NAME"
+echo "path_to_repo: $path_to_repo"
+echo "file_to_use: $file_to_use"
+
 mkdir $WORK/lifted
 for chr in {1..22} X Y; do plink --bfile ${file_to_use} --chr $chr --output-chr chrMT --make-bed --out $WORK/lifted/study.$NAME.lifted.chr${chr};  done
+echo "Deleting extra files"
 rm prep1.* prep2.* result1.* result2.* result3.* prep.bed updated.snp updated.position updated.chr
 
 # Using genome harmonizer, update strand orientation and flip alleles according to the reference dataset.
-sbatch --wait ${path_to_repo}/src/harmonizer.job ${WORK} ${NAME}
+# sbatch --wait ${path_to_repo}/src/harmonizer.job ${WORK} ${NAME}
+echo "Begin autosomal harmonization"
+mkdir -p $WORK/aligned
+sbatch --time 8:00:00 --mem 8GB --array 1-22 --wait -N1 ${path_to_repo}/src/harmonizer_individual.job ${WORK} ${NAME}
+
+mkdir -p ${WORK}/logs
+mkdir -p ${WORK}/logs/errors
+mkdir -p ${WORK}/logs/out
+mv ${WORK}/*.out ${WORK}/logs/out/
+mv ${WORK}/*.err ${WORK}/logs/errors/ 
+
 # Currently reference dataset does not have chrY for alignment, and ChrX has no match with study data
 # Hence, we bring the unaligned ChrX and ChrY to the result folder, i.e. skipping alignment
 cp $WORK/lifted/study.${NAME}.lifted.chrX.bed $WORK/aligned/study.${NAME}.lifted.chrX.aligned.bed
