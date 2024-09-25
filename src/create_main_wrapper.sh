@@ -10,7 +10,7 @@ using_crossmap=$6
 using_genome_harmonizer=$7
 using_rfmix=$8
 making_report=$9
-custom_qc=$10
+custom_qc=${10}
 
 output=${desired_working_directory}/${input_file_name}_wrapper.sh
 mkdir -p ${desired_working_directory}
