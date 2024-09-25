@@ -90,3 +90,18 @@ ancestry_prediction %>%
 ```
 
 ![Ancestry Prediction PC Plot](SED)
+
+
+```{r subj_relatedness_hist}
+#| label: fig-SubjRelatedness
+#| fig-cap: "Subject relatedness."
+#| include: true
+#| eval: true
+relatedness = read.table(paste0(path_to_data,"primus_file.genome"), header=T)
+ggplot(data= relatedness, aes(x=PI_HAT, color="blue"))+
+  geom_histogram(show.legend = F, bins = round(nrow(relatedness)/50))+
+  xlab("Proportion IBD") +
+  ggtitle("Histogram Relatedness") +
+  theme_classic()
+
+```
