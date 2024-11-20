@@ -18,5 +18,6 @@ $REF/Fraposa/plotpcs.py 1000G.comm study.$NAME.unrelated.comm
 
 awk -F '\t' '{print $3}' study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
 awk '{print $1 "\t" $2 "\t" $3}' study.$NAME.unrelated.comm.popu > data.txt
-Rscript ${path_to_repo}/src/subpop.R
+echo "Running subpop.R script"
+Rscript ${path_to_repo}/src/subpop.R ${WORK} ${NAME}
 rm *.dat
