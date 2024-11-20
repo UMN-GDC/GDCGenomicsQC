@@ -9,5 +9,6 @@
 --using_crossmap 1 \
 --using_genome_harmonizer 1 \
 --making_report 1 \
---custom_qc 0
+--custom_qc 0 \
+--using_rfmix 1
 
