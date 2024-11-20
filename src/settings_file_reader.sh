@@ -13,6 +13,7 @@ show_help() {
   echo "--making_report					Enter '1' if you would like an automated report to be generated of the qc steps and what was changed"
   echo "--custom_qc						Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering"
   echo "								When providing this flag you will need to answer all of the questions prompted by the terminal"
+  echo "--using_rfmix					Enter '1' if you would like to use rfmix to do PCA analysis instead of fraposa"
   echo "Default settings: The pipeline by default if flags are not provided will use crossmap, genome harmonizer and will generate the automated reports"
   echo "  --help              Display this help message."
 }
@@ -25,13 +26,13 @@ if [ $# -eq 0 ]; then
 fi
 
 #Default settings
-NYS=1
 output_folder=$(pwd)
 path_github_repo=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC
 using_crossmap=1
 using_genome_harmonizer=1
 making_report=1
 custom_qc=0
+using_rfmix=0
 desired_working_directory=/scratch.global/gdc
 
 # Loop through the command line arguments
@@ -96,6 +97,13 @@ while [[ $# -gt 0 ]]; do
         fi
         shift 2
       ;;
+    --using_rfmix)
+        using_rfmix="$2"
+        if [ ${using_rfmix} -eq 1 ]; then
+          echo "You have chosen to use rfmix to do PCA analysis instead of fraposa"
+        fi
+        shift 2 
+      ;;
     *)
       echo "Unrecognized option: $key"
       show_help
@@ -115,6 +123,7 @@ ${desired_working_directory} \
 ${using_crossmap} \
 ${using_genome_harmonizer} \
 ${making_report} \
-${custom_qc}
+${custom_qc} \
+${using_rfmix}
 
 
