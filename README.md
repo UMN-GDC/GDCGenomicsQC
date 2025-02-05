@@ -25,11 +25,11 @@ A quality control pipeline for genomics data developed by the Masonic Institute 
 
     -   F-values \< 0.2 are assigned as female and F-values \> 0.8 are assigned as male others are flagged as problems and excluded from the dataset
 
--   Exclude SNPs with Minor Allele Frequency \< 0.1 **(Plink)**
+-   Exclude SNPs with Minor Allele Frequency \< 0.01 **(Plink)**
 
 -   Exclude SNPs where Hardy-Weinberg Equilibrium p-values \< 1e-6 for controls **(Plink)**
 
--   Exclude SNPs where Hardy-Weinberg Equilibrium p-values \< 1e-6 for cases **(Plink)**
+-   Exclude SNPs where Hardy-Weinberg Equilibrium p-values \< 1e-10 for cases **(Plink)**
 
 -   Exclude SNPs that are highly coordinated using multiple correlation coefficients for a SNP regressed on all other SNPs simultaneously **(Plink)**
 
