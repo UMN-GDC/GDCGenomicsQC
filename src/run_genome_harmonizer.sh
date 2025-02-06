@@ -22,8 +22,7 @@ rm prep1.* prep2.* result1.* result2.* result3.* prep.bed updated.snp updated.po
 # sbatch --wait ${path_to_repo}/src/harmonizer.job ${WORK} ${NAME}
 echo "Begin autosomal harmonization"
 mkdir -p $WORK/aligned
-sbatch --time 8:00:00 --mem 8GB --array 1-22 --wait -N1 ${path_to_repo}/src/harmonizer_individual.job ${WORK} ${NAME}
-
+sbatch --time 12:00:00 --mem 15GB --array 1-22 --wait -N1 ${path_to_repo}/src/harmonizer_individual.job ${WORK} ${NAME} ${REF}
 mkdir -p ${WORK}/logs
 mkdir -p ${WORK}/logs/errors
 mkdir -p ${WORK}/logs/out
