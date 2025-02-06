@@ -57,14 +57,17 @@ ancestry_prediction_core=ancestry_prediction %>%
 ```{r Ancestry Distribution}
 ggplot(data=ancestry_prediction, aes(x=Ancestry, fill = Ancestry))+
   geom_histogram(stat = "count", show.legend = FALSE) + 
-  ggtitle("Histogram of Predicted Ancestries")
+  ggtitle("Histogram of Predicted Ancestries") +
+  theme_classic()
 ```
 
 ```{r Ancestry Distribution Split}
-ggplot(data=ancestry_prediction, aes(x=Ancestry, fill = as_factor(Estimate_percent)))+
+ggplot(data=ancestry_prediction, aes(x=Estimate_percent, fill = as_factor(Ancestry)))+
   geom_histogram(stat = "count") + 
-  facet_wrap(vars(as_factor(Estimate_percent)), scales = "free")+
-  ggtitle("Histogram of predicted ancestries by estimation percentage")
+  facet_wrap(vars(as_factor(Ancestry)), scales = "free_y")+
+  ggtitle("Histogram of predicted ancestries by estimation percentage") +
+  labs(fill = "Ancestry") +
+  theme_classic()
 ```
 
 ## Table displaying Predictions
@@ -90,7 +93,6 @@ ancestry_prediction %>%
 ```
 
 ![Ancestry Prediction PC Plot](SED)
-
 
 ```{r subj_relatedness_hist}
 #| label: fig-SubjRelatedness
