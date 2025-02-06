@@ -88,7 +88,7 @@ echo "(Step 4) PCA"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
   sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-else # Default behavior
+else # Alternative behavior
   ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 fi
 #########################################################################################################
@@ -98,7 +98,7 @@ fi
 cd ${WORK}
 if [ ${rfmix_option} -eq 1 ]; then
   ETHNICS=$(awk '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
-else # Default behavior
+else # Alternative behavior
   ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
 fi
 
