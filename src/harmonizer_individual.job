@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=10
-#SBATCH --mem=8GB
+#SBATCH --mem=20GB
 #SBATCH --time=10:00:00
 #SBATCH -p agsmall
 #SBATCH -o genome_harmonizer_%a.out
@@ -12,10 +12,11 @@
 module load java/openjdk-17.0.2
 module load plink
 
-REF=/home/gdc/shared/GDC_pipeline/Ref
+# REF=/home/gdc/shared/GDC_pipeline/Ref
 WORK=$1
 NAME=$2
+REF=$3
 CHR=$SLURM_ARRAY_TASK_ID
 
-java -Xmx8g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/study.$NAME.lifted.chr${CHR} --inputType PLINK_BED --ref $REF/1000G_highcoverage/1kGP_high_coverage_Illumina.ALL.filtered.SNV_INDEL_SV_phased_panel --refType VCF --keep --output $WORK/aligned/study.$NAME.lifted.chr${CHR}.aligned
+java -Xmx8g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/study.$NAME.lifted.chr${CHR} --inputType PLINK_BED --ref $REF/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5/ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 --refType VCF --keep --output $WORK/aligned/study.$NAME.lifted.chr${CHR}.aligned
 
