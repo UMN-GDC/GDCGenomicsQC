@@ -14,7 +14,9 @@ echo "path_to_repo: $path_to_repo"
 echo "file_to_use: $file_to_use"
 
 mkdir $WORK/lifted
-for chr in {1..22} X Y; do plink --bfile ${file_to_use} --chr $chr --output-chr chrMT --make-bed --out $WORK/lifted/study.$NAME.lifted.chr${chr};  done
+for chr in {1..22} X Y; do 
+plink --bfile ${file_to_use} --chr $chr --make-bed --out $WORK/lifted/study.$NAME.lifted.chr${chr};  done
+## Removed this from the above plink command to align with reference genome # --output-chr chrMT  
 echo "Deleting extra files"
 rm prep1.* prep2.* result1.* result2.* result3.* prep.bed updated.snp updated.position updated.chr
 
