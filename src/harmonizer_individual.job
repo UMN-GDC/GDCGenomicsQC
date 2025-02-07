@@ -18,5 +18,6 @@ NAME=$2
 REF=$3
 CHR=$SLURM_ARRAY_TASK_ID
 
-java -Xmx8g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/study.$NAME.lifted.chr${CHR} --inputType PLINK_BED --ref $REF/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5/ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 --refType VCF --keep --output $WORK/aligned/study.$NAME.lifted.chr${CHR}.aligned
+java -Xmx8g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/study.$NAME.lifted.chr${CHR} --inputType PLINK_BED --ref $REF/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5/ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 --refType VCF --keep --output $WORK/aligned/study.$NAME.lifted.chr${CHR}.aligned 
 
+# Option that works for non plink bed/bim/fam formats '--forceChr SHAPEIT2'
