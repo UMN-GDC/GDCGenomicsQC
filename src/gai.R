@@ -117,11 +117,11 @@ index <- apply(ancestry_mat, 1, function(x) which(x==max(x)))
 #ancestry_vec <- unlist(lapply(index, function(x) return(names(x))))
 ancestry_vec <- unname(index)
 id_vec <- names(index)
-ancestry_decision <- data.frame(id_vec, ancestry_vec)
-colnames(ancestry_decision) <- c("ID", "code_number")
+ancestry_decision <- data.frame(ID = id_vec, code_number = ancestry_vec)
 ancestry_decision$ancestry <- ancestry_decision$code_number
 for(i in 1:length(code)){
   ancestry_decision$ancestry[which(ancestry_decision$ancestry==i)] <- code[i]
+  ancestry_decision$prediction_percentage[which(ancestry_decision$ancestry==code[i])] <- round(ancestry_mat[, i] * 100, 2)
 }
 
 fam_name <- paste0("study.",name,".unrelated.fam")
@@ -135,6 +135,6 @@ joined_file <- dplyr::inner_join(fam_file, ancestry_decision, by="ID") %>% dplyr
 
 output_name <- paste0("study.",name,".unrelated.comm.popu")
 output_path <- paste0(dir, "/", output_name)
-write.table(joined_file, file=output_path, row.names = F, col.names = F, quote=F)
+write.table(joined_file, file=output_path, sep="\t", row.names = F, col.names = F, quote=F)
 
 
