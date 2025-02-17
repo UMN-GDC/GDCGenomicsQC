@@ -123,18 +123,21 @@ ancestry_decision$ancestry <- ancestry_decision$code_number
 for(i in 1:length(code)){
   ancestry_decision$ancestry[which(ancestry_decision$ancestry==i)] <- code[i]
 }
+# Add prediction percentage
+ancestry_decision$prediction_percentage <- apply(ancestry_mat, 1, max) * 100
 
-fam_name <- paste0("study.",name,".unrelated.fam")
+fam_name <- paste0("study.", name, ".unrelated.fam")
 fam_path <- paste0(dir, "/relatedness/", fam_name)
-fam_file <- read.table(fam_path, header=F)
+fam_file <- read.table(fam_path, header=FALSE)
 colnames(fam_file) <- c("FID", "IID", "MID", "PID", "gender", "phenotype")
 fam_file$ID <- paste0(fam_file$FID, "_", fam_file$IID)
 
-joined_file <- dplyr::inner_join(fam_file, ancestry_decision, by="ID") %>% dplyr::select(all_of(c("FID", "IID", "ancestry", "gender", "phenotype")))
+joined_file <- dplyr::inner_join(fam_file, ancestry_decision, by="ID") %>% 
+  dplyr::select(all_of(c("FID", "IID", "ancestry", "prediction_percentage", "gender", "phenotype")))
 
 
 output_name <- paste0("study.",name,".unrelated.comm.popu")
 output_path <- paste0(dir, "/", output_name)
-write.table(joined_file, file=output_path, row.names = F, col.names = F, quote=F)
+write.table(joined_file, file=output_path, row.names = F, col.names = F, quote=F, sep="\t")
 
 
