@@ -28,8 +28,18 @@ mkdir $WORK/PCA
 cp $WORK/study.$NAME.unrelated.comm.popu $WORK/PCA/study.$NAME.unrelated.comm.popu
 cd $WORK/PCA
 
-$REF/Fraposa/predstupopu.py 1000G.comm study.$NAME.unrelated.comm
+# Added in below to make the 1000G.comm file
+# Reference panel has no rsid nums...
+# $REF/Fraposa/commvar.sh $REF/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5/ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 $WORK/relatedness/study.$NAME.unrelated hgdp1kg.comm study.$NAME.unrelated.comm 
+# $REF/Fraposa/predstupopu.py hgdp1kg.comm study.$NAME.unrelated.comm
+# $REF/Fraposa/plotpcs.py hgdp1kg.comm study.$NAME.unrelated.comm
+
+$REF/Fraposa/commvar.sh $REF/PCA_ref/1000G.aligned $WORK/relatedness/study.$NAME.unrelated 1000G.comm study.$NAME.unrelated.comm
+$REF/Fraposa/fraposa_runner.py --stu_filepref study.$NAME.unrelated.comm 1000G.comm #Main program for Fraposa 
+$REF/Fraposa/predstupopu.py 1000G.comm study.$NAME.unrelated.comm # To get this to work will need to run all of the standard fraposa steps... 
 $REF/Fraposa/plotpcs.py 1000G.comm study.$NAME.unrelated.comm
+mv $WORK/PCA/study.$NAME.unrelated.comm.popu $WORK/PCA/fraposa_study.$NAME.unrelated.comm.popu
+cp $WORK/study.$NAME.unrelated.comm.popu $WORK/PCA/study.$NAME.unrelated.comm.popu
 
 # awk -F '\t' '{print $3}' $WORK/study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
 awk '{print $3}' study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
