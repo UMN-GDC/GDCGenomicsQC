@@ -12,7 +12,7 @@ cd $WORK/PCA
 
 # fraposa operations
 # $REF/Fraposa/commvar.sh $REF/PCA_ref/1000G.aligned $WORK/relatedness/study.$NAME.unrelated 1000G.comm study.$NAME.unrelated.comm
-$REF/Fraposa/commvar.sh $REF/PCA_ref/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5/ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 $WORK/relatedness/study.$NAME.unrelated 1000G.comm study.$NAME.unrelated.comm
+$REF/Fraposa/commvar.sh $REF/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5/ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 $WORK/relatedness/study.$NAME.unrelated 1000G.comm study.$NAME.unrelated.comm
 $REF/Fraposa/fraposa_runner.py --stu_filepref study.$NAME.unrelated.comm 1000G.comm #Main program for Fraposa 
 $REF/Fraposa/predstupopu.py 1000G.comm study.$NAME.unrelated.comm 
 $REF/Fraposa/plotpcs.py 1000G.comm study.$NAME.unrelated.comm
