@@ -42,7 +42,9 @@ if [ ${crossmap} -eq 1 ]; then
   echo "(Step 1) Matching data to NIH's GRCh38 genome build"
   ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
   file_to_use=study.${NAME}.lifted
-  if [ ! -f "${file_to_use}.bim" ]; then
+  
+  crossmap_check=${WORK}/${file_to_use}.bim
+  if [ ! -f "${crossmap_check}" ]; then
     echo "Crossmap has failed please check the error logs."
     exit 1
   fi
@@ -57,6 +59,11 @@ if [ ${genome_harmonizer} -eq 1 ]; then
   echo "Begin genome harmonization"
   ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
   file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
+  
+  if [ ! -f "${file_to_submit}.bim" ]; then
+    echo "Genome Harmonizer has failed please check the error logs."
+    exit 1
+  fi
 else # Default behavior
   if [ ${crossmap} -eq 1 ]; then
     file_to_submit=study.$NAME.lifted #For using crossmap but not genome harmonizer
@@ -77,6 +84,12 @@ if [ ${custom_qc} -eq 1 ]; then
   sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
   sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
+  
+  file_to_check_qc=${WORK}/${DATATYPE}/${DATATYPE}.QC8.bim
+  if [ ! -f "${file_to_check_qc}" ]; then
+    echo "Standard QC steps have failed please check the error logs."
+    exit 1
+  fi
 fi
 ########################################################################################################
 
@@ -84,6 +97,12 @@ fi
 ######################################## Pedigree ######################################################
 echo "(Step 3) Relatedness check"
 ${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+
+primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
+if [ ! -f "${primus_check}" ]; then
+  echo "Primus relatedness check has failed please check the error logs."
+  exit 1
+fi
 #########################################################################################################
 
 
@@ -94,6 +113,12 @@ if [ ${rfmix_option} -eq 1 ]; then
   sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 else # Alternative behavior
   ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+fi
+
+pca_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
+if [ ! -f "${pca_check}" ]; then
+  echo "PCA software has failed please check the error logs."
+  exit 1
 fi
 #########################################################################################################
 
@@ -153,7 +178,7 @@ mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
 mv -f ${WORK}/*.out ${WORK}/logs/out/
 mv -f ${WORK}/*.err ${WORK}/logs/errors/
 
-rm ${WORK}/*.lifted* #To clean up the working directory of unnecessary files 
+mv ${WORK}/*.lifted* ${WORK}/temp #To clean up the working directory of unnecessary files 
 
 #4. execute run_generate_reports.sh ## Need to make this optional ##
 module load R/4.4.0-openblas-rocky8
