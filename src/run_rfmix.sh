@@ -22,7 +22,7 @@ sbatch --time 18:00:00 --mem 64GB --array 1-22 --wait -N1 ${path_to_repo}/src/rf
 
 module load R/4.4.0-openblas-rocky8
 
-Rscript ${path_to_repo}/src/gai.R ${WORK} ${NAME}
+Rscript ${path_to_repo}/src/chromosome_average.R ${WORK} ${NAME}
 
 mkdir $WORK/PCA
 cp $WORK/study.$NAME.unrelated.comm.popu $WORK/PCA/study.$NAME.unrelated.comm.popu
