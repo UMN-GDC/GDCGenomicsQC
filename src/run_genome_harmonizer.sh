@@ -24,7 +24,7 @@ rm prep1.* prep2.* result1.* result2.* result3.* prep.bed updated.snp updated.po
 # sbatch --wait ${path_to_repo}/src/harmonizer.job ${WORK} ${NAME}
 echo "Begin autosomal harmonization"
 mkdir -p $WORK/aligned
-sbatch --time 12:00:00 --mem 15GB --array 1-22 --wait -N1 ${path_to_repo}/src/harmonizer_individual.job ${WORK} ${NAME} ${REF}
+sbatch --time 24:00:00 --mem 15GB --array 1-22 --wait -N1 ${path_to_repo}/src/harmonizer_individual.job ${WORK} ${NAME} ${REF}
 mkdir -p ${WORK}/logs
 mkdir -p ${WORK}/logs/errors
 mkdir -p ${WORK}/logs/out
@@ -46,7 +46,10 @@ ${path_to_repo}/src/genotype_harmonizer_log_reader.sh ${WORK}/aligned
 
 # Merge chromosomes for this step
 cd $WORK/aligned
-rm mergelist.txt
-for chr in {2..22} X Y; do echo study.$NAME.lifted.chr${chr}.aligned >> mergelist.txt; done
-plink --bfile study.$NAME.lifted.chr1.aligned --merge-list mergelist.txt --allow-no-sex --make-bed --out study.$NAME.lifted.aligned1
+temp_1=$(ls study.${NAME}.lifted.chr*.aligned.bim)
+array=(${temp_1//.bim/})
+
+# Exclude the first element and write to a file
+printf "%s\n" "${array[@]:1}" > mergelist.txt
+plink --bfile "${array[0]}" --merge-list mergelist.txt --allow-no-sex --make-bed --out study.$NAME.lifted.aligned1
 plink --bfile study.$NAME.lifted.aligned1 --split-x 'hg38' no-fail --make-bed --out study.$NAME.lifted.aligned
