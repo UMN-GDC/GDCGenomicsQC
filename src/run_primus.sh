@@ -22,7 +22,7 @@ if diff <(cut -d' ' -f1 $WORK/$DATATYPE/$DATATYPE.QC8.fam) <(cut -d' ' -f2 $WORK
     echo "FID and IID are the same in ${WORK}/${DATATYPE}/${DATATYPE}.QC8.fam"
     if ! diff <(cut -d' ' -f1 ${OUT}) <(cut -d' ' -f2 ${OUT}) >/dev/null; then
       echo "PRIMUS maximum independent sample has FID and IID does not have the same values so fixing it so that it matches our data using"
-      awk '{$1=$2}1' OFS=' ' "${OUT}" > temp_file && mv temp_file "${OUT}"
+      awk '{$1=$2}1' OFS=' ' "${OUT}" > temp_file && cp temp_file "${OUT}"
     fi
 else
     echo "FID and IID are different in ${WORK}/${DATATYPE}/${DATATYPE}.QC8.fam"
