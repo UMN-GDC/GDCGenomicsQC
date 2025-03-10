@@ -39,11 +39,13 @@ module load perl
 ############## Updating genome build and conducting strand alignment/allele flipping #############
 #### Skipping everything until resume place when choosing to skip Crossmap ####
 if [ ${crossmap} -eq 1 ]; then
-  echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-  ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
   file_to_use=study.${NAME}.lifted
-  
   crossmap_check=${WORK}/${file_to_use}.bim
+  if [ ! -f "${crossmap_check}" ]; then
+    echo "(Step 1) Matching data to NIH's GRCh38 genome build"
+    ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
+  fi
+  
   if [ ! -f "${crossmap_check}" ]; then
     echo "Crossmap has failed please check the error logs."
     exit 1
@@ -56,10 +58,13 @@ fi
 #### Actual resume place for skipping updating genome build ####
 # Break the dataset by chromosomes for faster processing in the next step (genome harmonizer)
 if [ ${genome_harmonizer} -eq 1 ]; then
-  echo "Begin genome harmonization"
-  ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
   file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
-  
+
+  if [ ! -f "${file_to_submit}.bim" ]; then
+    echo "Begin genome harmonization"
+    ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
+  fi
+
   if [ ! -f "${file_to_submit}.bim" ]; then
     echo "Genome Harmonizer has failed please check the error logs."
     exit 1
@@ -83,9 +88,11 @@ if [ ${custom_qc} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
   sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
-  sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
-  
   file_to_check_qc=${WORK}/${DATATYPE}/${DATATYPE}.QC8.bim
+  if [ ! -f "${file_to_check_qc}" ]; then
+    sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
+  fi
+  
   if [ ! -f "${file_to_check_qc}" ]; then
     echo "Standard QC steps have failed please check the error logs."
     exit 1
@@ -95,10 +102,12 @@ fi
 
 
 ######################################## Pedigree ######################################################
-echo "(Step 3) Relatedness check"
-${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
-
 primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
+if [ ! -f "${primus_check}" ]; then
+  echo "(Step 3) Relatedness check"
+  ${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+fi
+
 if [ ! -f "${primus_check}" ]; then
   echo "Primus relatedness check has failed please check the error logs."
   exit 1
@@ -110,12 +119,14 @@ fi
 echo "(Step 4) PCA"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  pca_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
+  if [ ! -f "${pca_check}" ]; then
+    sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  fi
 else # Alternative behavior
   ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 fi
 
-pca_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
 if [ ! -f "${pca_check}" ]; then
   echo "PCA software has failed please check the error logs."
   exit 1
@@ -175,10 +186,10 @@ mv -f ${WORK}/rfmix ${WORK}/temp/
 mv -f ${WORK}/PCA ${WORK}/temp/
 mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
-mv -f ${WORK}/*.out ${WORK}/logs/out/
-mv -f ${WORK}/*.err ${WORK}/logs/errors/
+mv -f ${WORK}/*.out ${WORK}/temp/logs/out/
+mv -f ${WORK}/*.err ${WORK}/temp/logs/errors/
 
-mv ${WORK}/*.lifted* ${WORK}/temp #To clean up the working directory of unnecessary files 
+mv ${WORK}/*.lifted* ${WORK}/temp/lifted #To clean up the working directory of unnecessary files 
 
 #4. execute run_generate_reports.sh ## Need to make this optional ##
 module load R/4.4.0-openblas-rocky8
