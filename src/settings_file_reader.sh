@@ -122,8 +122,8 @@ ${user_x500} \
 ${desired_working_directory} \
 ${using_crossmap} \
 ${using_genome_harmonizer} \
+${using_rfmix} \
 ${making_report} \
-${custom_qc} \
-${using_rfmix}
+${custom_qc} 
 
 
