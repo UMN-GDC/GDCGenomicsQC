@@ -7,7 +7,7 @@
 #SBATCH -p agsmall
 #SBATCH -o phase_%a.out
 #SBATCH -e phase_%a.err
-#SBATCH --job-name phase_%a
+#SBATCH --job-name phase
 
 WORK=$1
 NAME=$2
