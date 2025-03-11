@@ -6,9 +6,8 @@ NAME=$3
 path_to_repo=$4
 DATATYPE=$5
 
-mkdir -p $WORK/relatedness
-plink --bfile ${WORK}/${DATATYPE}/${DATATYPE}.QC8 --genome --out ${WORK}/relatedness/${DATATYPE}.QC8
-perl ${REF}/PRIMUS/bin/run_PRIMUS.pl --plink_ibd ${WORK}/relatedness/${DATATYPE}.QC8.genome -t 0.2 -o ${WORK}/relatedness
+plink --bfile ${WORK}/${DATATYPE}/${DATATYPE}.QC8 --genome --out ${WORK}/${DATATYPE}/${DATATYPE}.QC8
+perl ${REF}/PRIMUS/bin/run_PRIMUS.pl --plink_ibd ${WORK}/${DATATYPE}/${DATATYPE}.QC8.genome -t 0.2 -o ${WORK}/relatedness
 # perl $REF/PRIMUS/bin/run_PRIMUS.pl --file ${WORK}/${DATATYPE}/${DATATYPE}.QC8 --genome -t 0.2 -o ${WORK}/relatedness # Old technique
 # OUT=$WORK/relatedness/$DATATYPE.QC8_cleaned.genome_maximum_independent_set # No longer using their prePRIMUS IBD pipeline!
 OUT=$WORK/relatedness/$DATATYPE.QC8.genome_maximum_independent_set

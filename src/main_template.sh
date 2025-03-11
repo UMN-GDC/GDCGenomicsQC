@@ -39,9 +39,17 @@ module load perl
 ############## Updating genome build and conducting strand alignment/allele flipping #############
 #### Skipping everything until resume place when choosing to skip Crossmap ####
 if [ ${crossmap} -eq 1 ]; then
-  echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-  ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
   file_to_use=study.${NAME}.lifted
+  crossmap_check=${WORK}/${file_to_use}.bim
+  if [ ! -f "${crossmap_check}" ]; then
+    echo "(Step 1) Matching data to NIH's GRCh38 genome build"
+    ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
+  fi
+  
+  if [ ! -f "${crossmap_check}" ]; then
+    echo "Crossmap has failed please check the error logs."
+    exit 1
+  fi
   #plink --file ${file_to_use} --make-bed --out ${file_to_use} #Unsure if this is necessary
 else  # Default behavior
   file_to_use=${FILE}/${NAME} #Original file
@@ -50,9 +58,17 @@ fi
 #### Actual resume place for skipping updating genome build ####
 # Break the dataset by chromosomes for faster processing in the next step (genome harmonizer)
 if [ ${genome_harmonizer} -eq 1 ]; then
-  echo "Begin genome harmonization"
-  ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
   file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
+
+  if [ ! -f "${file_to_submit}.bim" ]; then
+    echo "Begin genome harmonization"
+    ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
+  fi
+
+  if [ ! -f "${file_to_submit}.bim" ]; then
+    echo "Genome Harmonizer has failed please check the error logs."
+    exit 1
+  fi
 else # Default behavior
   if [ ${crossmap} -eq 1 ]; then
     file_to_submit=study.$NAME.lifted #For using crossmap but not genome harmonizer
@@ -72,24 +88,90 @@ if [ ${custom_qc} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
   sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
-  sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
+  file_to_check_qc=${WORK}/${DATATYPE}/${DATATYPE}.QC8.bim
+  if [ ! -f "${file_to_check_qc}" ]; then
+    sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
+  fi
+  
+  if [ ! -f "${file_to_check_qc}" ]; then
+    echo "Standard QC steps have failed please check the error logs."
+    exit 1
+  fi
 fi
 ########################################################################################################
 
 
 ######################################## Pedigree ######################################################
-echo "(Step 3) Relatedness check"
-${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
+if [ ! -f "${primus_check}" ]; then
+  echo "(Step 3) Relatedness check"
+  ${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+fi
+
+if [ ! -f "${primus_check}" ]; then
+  echo "Primus relatedness check has failed please check the error logs."
+  exit 1
+fi
+#########################################################################################################
+
+
+######################################## Phasing ########################################################
+echo "(Step 4) Phasing"
+if [ ${rfmix_option} -eq 1 ]; then
+  ## requires a text file that has all of the flags and specifications
+  phase_files=()
+  for CHR in {1..22}; do
+      phase_files+=("${WORK}/phased/${NAME}.chr${CHR}.phased.vcf.gz")
+  done
+
+  # Check if all phase files exist
+  all_exist=true
+  for phase_check in "${phase_files[@]}"; do
+      if [ ! -f "$phase_check" ]; then
+          all_exist=false
+          break
+      fi
+  done
+
+  # If any file is missing, run the phasing script
+  if ! $all_exist; then
+      sbatch --wait ${path_to_repo}/src/run_phase.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  fi
+else
+  echo "Skip phasing and move to Fraposa"
+fi
+
+# Check again if all phase files exist after running the script
+if [ ${rfmix_option} -eq 1 ]; then
+  for phase_check in "${phase_files[@]}"; do
+      if [ ! -f "$phase_check" ]; then
+          echo "PCA software has failed, please check the error logs."
+          exit 1
+      fi
+  done
+else
+  echo "Skipping phasing and move on to Fraposa"
+fi
+
+
 #########################################################################################################
 
 
 ######################################## Ethnicity ######################################################
-echo "(Step 4) PCA"
+echo "(Step 5) ancestry estimate"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  pca_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
+  if [ ! -f "${pca_check}" ]; then
+    sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  fi
 else # Alternative behavior
   ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+fi
+
+if [ ! -f "${pca_check}" ]; then
+  echo "PCA software has failed please check the error logs."
+  exit 1
 fi
 #########################################################################################################
 
@@ -146,10 +228,10 @@ mv -f ${WORK}/rfmix ${WORK}/temp/
 mv -f ${WORK}/PCA ${WORK}/temp/
 mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
-mv -f ${WORK}/*.out ${WORK}/logs/out/
-mv -f ${WORK}/*.err ${WORK}/logs/errors/
+mv -f ${WORK}/*.out ${WORK}/temp/logs/out/
+mv -f ${WORK}/*.err ${WORK}/temp/logs/errors/
 
-rm ${WORK}/*.lifted* #To clean up the working directory of unnecessary files 
+mv ${WORK}/*.lifted* ${WORK}/temp/lifted #To clean up the working directory of unnecessary files 
 
 #4. execute run_generate_reports.sh ## Need to make this optional ##
 module load R/4.4.0-openblas-rocky8
