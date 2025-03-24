@@ -145,7 +145,7 @@ fi
 if [ ${rfmix_option} -eq 1 ]; then
   for phase_check in "${phase_files[@]}"; do
       if [ ! -f "$phase_check" ]; then
-          echo "PCA software has failed, please check the error logs."
+          echo "Phasing has failed, please check the error logs."
           exit 1
       fi
   done
@@ -161,17 +161,69 @@ fi
 echo "(Step 5) ancestry estimate"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  pca_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
-  if [ ! -f "${pca_check}" ]; then
+  rfmix_files=()
+  for CHR in {1..22}; do
+      rfmix_files+=("${WORK}/rfmix/ancestry_chr${CHR}.rfmix.Q")
+  done
+
+  # Check if all rfmix files exist
+  all_exist=true
+  for rfmix_check in "${rfmix_files[@]}"; do
+      if [ ! -f "$rfmix_check" ]; then
+          all_exist=false
+          break
+      fi
+  done
+
+  # If any file is missing, run the phasing script
+  if ! $all_exist; then
     sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
   fi
 else # Alternative behavior
   ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 fi
 
-if [ ! -f "${pca_check}" ]; then
-  echo "PCA software has failed please check the error logs."
+# Check again if all rfmix files exist after running the script
+if [ ${rfmix_option} -eq 1 ]; then
+  for rfmix_check in "${rfmix_files[@]}"; do
+      if [ ! -f "$rfmix_check" ]; then
+          echo "Rfmix has failed, please check the error logs."
+          exit 1
+      fi
+  done
+else
+  echo "Skipping to next step"
+fi
+
+##########################################################################################################
+
+
+############################################ PCA #########################################################
+echo "(Step 6) Subpopulations"
+if [ ${rfmix_option} -eq 1 ]; then
+  ## requires a text file that has all of the flags and specifications
+  subpop_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
+  if [ ! -f "${subpop_check}" ]; then
+    sbatch --wait ${path_to_repo}/src/run_subpops.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  fi
+else # Alternative behavior
+  echo "Skip subpopulations"
+fi
+
+if [ ! -f "${subpop_check}" ]; then
+  echo "Subpopulations estimation has failed please check the error logs."
   exit 1
+fi
+##########################################################################################################
+
+
+######################################## Ancestry Plots ##################################################
+echo "(Step 7) ancestry plots"
+if [ ${rfmix_option} -eq 1 ]; then
+  sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  rm -r ${WORK}/visualization
+else # Alternative behavior
+  echo "Plot module only for rfmix"
 fi
 #########################################################################################################
 
@@ -226,6 +278,8 @@ mv -f ${WORK}/logs ${WORK}/temp/
 mv -f ${WORK}/phased ${WORK}/temp/
 mv -f ${WORK}/rfmix ${WORK}/temp/
 mv -f ${WORK}/PCA ${WORK}/temp/
+mv -f ${WORK}/GAP_plots ${WORK}/temp/
+mv -f ${WORK}/LAP_plots ${WORK}/temp/
 mv -f ${WORK}/relatedness ${WORK}/temp/
 mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
 mv -f ${WORK}/*.out ${WORK}/temp/logs/out/
