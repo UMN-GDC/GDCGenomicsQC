@@ -17,8 +17,8 @@ cd $WORK/rfmix
 
 /home/gdc/and02709/ancestry_OG/rfmix/rfmix \
  -f $WORK/phased/${NAME}.chr${CHR}.phased.vcf.gz \
- -r /home/ljmills/and06841/misc/ALL_phase3_shapeit2_mvncall_integrated_v3plus_nounphased_rsID_genotypes_GRCh38_dbSNP.vcf.gz \
- -m /home/araduski/shared/POPULATION_MAP_FILE.txt \
- -g /home/araduski/shared/genetic_map_hg38.txt \
+ -r /home/gdc/shared/rfmix_ref/hg38_phased.vcf.gz \
+ -m /home/gdc/shared/rfmix_ref/super_population_map_file.txt \
+ -g /home/gdc/shared/rfmix_ref/genetic_map_hg38.txt \
  -o ancestry_chr${CHR} \
  --chromosome=$CHR
