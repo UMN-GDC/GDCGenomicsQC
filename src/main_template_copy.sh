@@ -13,7 +13,7 @@
 
 # This pipeline assumes the input is in plink binary format.
 
-#################################### Specifying paths #########################################
+#################################### Specifying paths #################################################
 
 # Hard-code the path to the Reference folder (containing reference dataset, other bash scripts, and programs' executables like CrossMap, GenomeHarmonizer, PRIMUS, and fraposa)
 REF=/home/gdc/shared/GDC_pipeline/Ref
@@ -29,15 +29,15 @@ custom_qc=CSTQC
 
 cd ${WORK}
 
-#################################################################################################
+####################################### Environment Setup ##############################################
 
 source /home/faird/shared/code/external/envs/miniconda3/load_miniconda3.sh
 conda activate GDC_pipeline
-source ${path_to_repo}/src/bash_functions.sh
+source ${path_to_repo}/src/bash_functions.sh # Helper functions
 module load plink
 module load perl
 
-############## Updating genome build and conducting strand alignment/allele flipping #############
+############## Updating genome build and conducting strand alignment/allele flipping ###################
 if [ ${crossmap} -eq 1 ]; then
   file_to_use=study.${NAME}.lifted
   crossmap_check=${WORK}/${file_to_use}.bim
@@ -47,23 +47,11 @@ if [ ${crossmap} -eq 1 ]; then
   else  # Default behavior
   file_to_use=${FILE}/${NAME} #Original file
 fi
-
-
-# Break the dataset by chromosomes for faster processing in the next step (genome harmonizer)
+############## Genome harmonizer section 
 if [ ${genome_harmonizer} -eq 1 ]; then
   file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
-
   run_genome_harmonizer_if_needed ${file_to_submit} ${path_to_repo} ${WORK} ${REF} ${NAME} ${file_to_use}
-
-  if [ ! -f "${file_to_submit}.bim" ]; then
-    echo "Begin genome harmonization"
-    ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} #file_to_use is the primary change
-  fi
-
-  if [ ! -f "${file_to_submit}.bim" ]; then
-    echo "Genome Harmonizer has failed please check the error logs."
-    exit 1
-  fi
+  genome_harmonizer_check_after_call ${file_to_submit}
 else # Default behavior
   if [ ${crossmap} -eq 1 ]; then
     file_to_submit=study.$NAME.lifted #For using crossmap but not genome harmonizer
@@ -75,7 +63,7 @@ fi
 
 
 ###################################### QC #############################################################
-echo "(Step 2) Standard variants and samples filtering"
+echo "Variants and samples filtering"
 # Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
 cd $WORK
 DATATYPE=full
@@ -84,29 +72,16 @@ if [ ${custom_qc} -eq 1 ]; then
   sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
   file_to_check_qc=${WORK}/${DATATYPE}/${DATATYPE}.QC8.bim
-  if [ ! -f "${file_to_check_qc}" ]; then
-    sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
-  fi
-  
-  if [ ! -f "${file_to_check_qc}" ]; then
-    echo "Standard QC steps have failed please check the error logs."
-    exit 1
-  fi
+  run_standard_qc_if_needed ${file_to_check_qc} ${path_to_repo} ${file_to_submit} ${DATATYPE}
+  standard_qc_check_after_call() ${file_to_check_qc}
 fi
 ########################################################################################################
 
 
 ######################################## Pedigree ######################################################
 primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
-if [ ! -f "${primus_check}" ]; then
-  echo "(Step 3) Relatedness check"
-  ${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
-fi
-
-if [ ! -f "${primus_check}" ]; then
-  echo "Primus relatedness check has failed please check the error logs."
-  exit 1
-fi
+run_primus_if_needed ${primus_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ${DATATYPE}
+primus_check_after_call ${primus_check}
 #########################################################################################################
 
 
@@ -114,41 +89,11 @@ fi
 echo "(Step 4) Phasing"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  phase_files=()
-  for CHR in {1..22}; do
-      phase_files+=("${WORK}/phased/${NAME}.chr${CHR}.phased.vcf.gz")
-  done
-
-  # Check if all phase files exist
-  all_exist=true
-  for phase_check in "${phase_files[@]}"; do
-      if [ ! -f "$phase_check" ]; then
-          all_exist=false
-          break
-      fi
-  done
-
-  # If any file is missing, run the phasing script
-  if ! $all_exist; then
-      sbatch --wait ${path_to_repo}/src/run_phase.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-  fi
+  run_phasing_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo} 
+  phasing_check_after_call ${WORK} ${NAME}
 else
   echo "Skip phasing and move to Fraposa"
 fi
-
-# Check again if all phase files exist after running the script
-if [ ${rfmix_option} -eq 1 ]; then
-  for phase_check in "${phase_files[@]}"; do
-      if [ ! -f "$phase_check" ]; then
-          echo "Phasing has failed, please check the error logs."
-          exit 1
-      fi
-  done
-else
-  echo "Skipping phasing and move on to Fraposa"
-fi
-
-
 #########################################################################################################
 
 
@@ -156,59 +101,24 @@ fi
 echo "(Step 5) ancestry estimate"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  rfmix_files=()
-  for CHR in {1..22}; do
-      rfmix_files+=("${WORK}/rfmix/ancestry_chr${CHR}.rfmix.Q")
-  done
-
-  # Check if all rfmix files exist
-  all_exist=true
-  for rfmix_check in "${rfmix_files[@]}"; do
-      if [ ! -f "$rfmix_check" ]; then
-          all_exist=false
-          break
-      fi
-  done
-
-  # If any file is missing, run the phasing script
-  if ! $all_exist; then
-    sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-  fi
+  run_rfmix_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo}
+  rfmix_check_after_call ${WORK}
 else # Alternative behavior
   ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 fi
-
-# Check again if all rfmix files exist after running the script
-if [ ${rfmix_option} -eq 1 ]; then
-  for rfmix_check in "${rfmix_files[@]}"; do
-      if [ ! -f "$rfmix_check" ]; then
-          echo "Rfmix has failed, please check the error logs."
-          exit 1
-      fi
-  done
-else
-  echo "Skipping to next step"
-fi
-
 ##########################################################################################################
 
 
-############################################ PCA #########################################################
+###################################### Subpopulations ####################################################
 echo "(Step 6) Subpopulations"
+subpop_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  subpop_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
-  if [ ! -f "${subpop_check}" ]; then
-    sbatch --wait ${path_to_repo}/src/run_subpops.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-  fi
+  run_subpopulations_if_needed ${subpop_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
 else # Alternative behavior
   echo "Skip subpopulations"
 fi
-
-if [ ! -f "${subpop_check}" ]; then
-  echo "Subpopulations estimation has failed please check the error logs."
-  exit 1
-fi
+subpop_check_after_call ${subpop_check}
 ##########################################################################################################
 
 
@@ -231,58 +141,16 @@ else # Alternative behavior
   ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
 fi
 
-for DATATYPE in ${ETHNICS}; do
-    plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
-    if [ ${custom_qc} -eq 1 ]; then
-    ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
-      sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-    else # Default behavior
-      sbatch ${path_to_repo}/src/standard_QC.job ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-    fi
-done
+subset_ancestries_run_standard_qc ${ETHNICS} ${WORK} ${NAME} ${custom_qc} ${path_to_repo}
+##Putting in to wait until the jobs are done
+wait_for_ancestry_qc_to_finish
 ###########################################################################################################
 
-##Putting in to wait until the jobs are done
-jobs_remaining=$(squeue --me | grep QC | wc -l)
-echo "${jobs_remaining} jobs remaining at the start of this waiting loop"
-x=1
-while [ ${jobs_remaining} -gt 0 ]
-do
-  sleep 1m
-  jobs_remaining=$(squeue --me | grep QC | wc -l)
-  echo "${jobs_remaining} after waiting for ${x} minutes"
-  ((x++))
-done
   
 ########################## Restructuring and cleaning up for the report writer ############################
-#1. move over png and .popu file from PCA directory into the 'full' directory
-cp ${WORK}/PCA/study.${NAME}*popu ${WORK}/full/
-cp ${WORK}/PCA/study.${NAME}*png ${WORK}/full/
+restructure_and_clean_outputs ${WORK} ${NAME}
 
-#2. move the genome_harmonizer_full_log.txt into the 'full' directory
-cp ${WORK}/aligned/*harmonizer*.txt ${WORK}/full/
-primus_file=$(find ${WORK} -type f -name "full.QC8_cleaned.genome")
-cp -v ${primus_file} ${WORK}/full/primus_file.genome
-
-#3. move other directories into a temporary location called 'temp'
-# aligned, lifted, logs, PCA, relatedness, relatedness_OLD
-mkdir ${WORK}/temp
-mv -f ${WORK}/aligned ${WORK}/temp/
-mv -f ${WORK}/lifted ${WORK}/temp/
-mv -f ${WORK}/logs ${WORK}/temp/
-mv -f ${WORK}/phased ${WORK}/temp/
-mv -f ${WORK}/rfmix ${WORK}/temp/
-mv -f ${WORK}/PCA ${WORK}/temp/
-mv -f ${WORK}/GAP_plots ${WORK}/temp/
-mv -f ${WORK}/LAP_plots ${WORK}/temp/
-mv -f ${WORK}/relatedness ${WORK}/temp/
-mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
-mv -f ${WORK}/*.out ${WORK}/temp/logs/out/
-mv -f ${WORK}/*.err ${WORK}/temp/logs/errors/
-
-mv ${WORK}/*.lifted* ${WORK}/temp/lifted #To clean up the working directory of unnecessary files 
-
-#4. execute run_generate_reports.sh ## Need to make this optional ##
+#4. execute run_generate_reports.sh ##
 module load R/4.4.0-openblas-rocky8
 if [ ${report_writer} -eq 1 ]; then
   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
