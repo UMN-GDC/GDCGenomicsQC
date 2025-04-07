@@ -1,0 +1,34 @@
+#!/bin/bash -l
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=100GB
+#SBATCH --time=10:00:00
+#SBATCH -p agsmall
+#SBATCH -o genome_harmonizer.%j.out
+#SBATCH -e genome_harmonizer.%j.err
+#SBATCH --job-name genome_harmonizer
+#SBATCH --array 0-23
+
+module load java/openjdk-17.0.2
+module load plink
+
+REF=/home/gdc/shared/GDC_pipeline/Ref
+WORK=$1
+NAME=$2
+OUTDIR="aligned"
+
+mkdir -p $WORK/$OUTDIR
+
+DATA=($(find "$WORK/lifted" -name "study.$NAME.lifted.chr*.bed" | sort -V))
+LIST=${DATA[$SLURM_ARRAY_TASK_ID]}
+SAMPLE=$(basename $LIST | sed "s/.bed//g")
+
+java -Xmx8g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/$SAMPLE --inputType PLINK_BED --ref $REF/1000G_highcoverage/1kGP_high_coverage_Illumina.ALL.filtered.SNV_INDEL_SV_phased_panel --refType VCF --keep --output $WORK/$OUTDIR/${SAMPLE}.aligned
+
+mkdir -p ${WORK}/logs
+mkdir -p ${WORK}/logs/errors
+mkdir -p ${WORK}/logs/out
+
+mv ${WORK}/*.out ${WORK}/logs/out/
+mv ${WORK}/*.err ${WORK}/logs/errors/
