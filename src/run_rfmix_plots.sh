@@ -133,3 +133,5 @@ for ind in $(seq 1 "$n_subs"); do
 done
 # python /home/gdc/shared/RFMIX2-Pipeline-to-plot/LAP/Scripts/BedToLAP.py --input ancestry.bed --out ancestry_GAP.bed
 # python /home/gdc/shared/RFMIX2-Pipeline-to-plot/LAP/Scripts/GAP.py --input ancestry_GAP.bed --output ancestry_GAP.pdf
+
+
