@@ -3,7 +3,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=20GB
-#SBATCH --time=10:00:00
+#SBATCH --time=48:00:00
 #SBATCH -p msismall
 #SBATCH --mail-type=ALL  
 #SBATCH --mail-user=x500@umn.edu 
@@ -73,7 +73,7 @@ if [ ${custom_qc} -eq 1 ]; then
 else # Default behavior
   file_to_check_qc=${WORK}/${DATATYPE}/${DATATYPE}.QC8.bim
   run_standard_qc_if_needed ${file_to_check_qc} ${path_to_repo} ${file_to_submit} ${DATATYPE}
-  standard_qc_check_after_call() ${file_to_check_qc}
+  standard_qc_check_after_call ${file_to_check_qc}
 fi
 ########################################################################################################
 
