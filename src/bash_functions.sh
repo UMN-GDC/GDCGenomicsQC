@@ -74,7 +74,7 @@ run_standard_qc_if_needed() {
 
 
 standard_qc_check_after_call() {
-  local file_to_check_qc
+  local file_to_check_qc="$1"
 
   if [ ! -f "${file_to_check_qc}" ]; then
     echo "Standard QC steps have failed please check the error logs."
@@ -249,7 +249,7 @@ subset_ancestries_run_standard_qc() {
   local custom_qc="$4"
   local path_to_repo="$5"
 
-  for DATATYPE in ${ETHNICS}; do
+  for DATATYPE in "${ETHNICS}"; do
     plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
     if [ ${custom_qc} -eq 1 ]; then
     ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
@@ -257,7 +257,7 @@ subset_ancestries_run_standard_qc() {
     else # Default behavior
       sbatch ${path_to_repo}/src/standard_QC.job ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
     fi
-done
+  done
 }
 
 # subset_ancestries_run_standard_qc ${ETHNICS} ${WORK} ${NAME} ${custom_qc} ${path_to_repo} ## Sample call
