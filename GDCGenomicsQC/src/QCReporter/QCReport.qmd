@@ -1,0 +1,65 @@
+---
+title: "Genomics QC Report"
+author: "GDC Data Team"
+date: today
+format: 
+  pdf:
+    toc: true
+execute:
+  echo: false
+  warning: false
+  error: false
+  message: false
+  toc: true
+editor: 
+  markdown: 
+    wrap: 72
+params: 
+  path_to_data: "/home/gdc/shared/GDC_pipeline/logs/"
+  path_to_save_pdf: "/home/gdc/shared/GDC_pipeline/results/"
+project:
+  output-dir: /home/gdc/shared/GDC_pipeline/results/
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+#library(ggmanh)
+source("distViz.R")
+#source("logReader.R")
+```
+
+The following is an automated report describing the quality control (QC)
+processing of your dataset. detailed description of the QC steps taken.
+
+# General Summary
+
+The QC process outline below first process the data in aggregate
+removing SNPs and subjects with large amounts of missingness. In
+addition, SNPs are filtered to remove those with low minor allele
+frequency (MAF), frequencies are two out of equlibrium based on
+[Hardy-Weinberg equilibrium
+(HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/).
+Then, for multiethnic samples, subject ancestries are predicted using
+[principal components analysis
+(PCA)](https://www.nature.com/articles/ng1847) and [k-means
+clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally,
+the original data is filtered again at the level of each predicted
+ancestry before it is later rejoined into the full dataset. Table
+@ref(tab:summary) summarizes the number of SNPs and subjects at each
+step of the QC process.
+
+
+```{r}
+data.frame(x= rnorm(10)) %>%
+  ggplot(aes(x =x )) + 
+  geom_histogram()
+
+```
+
+jjlaksjdfsadf
+
+```{r}
+data.frame(x= rnorm(10)) %>%
+  ggplot(aes(x =x )) + 
+  geom_histogram()
+```

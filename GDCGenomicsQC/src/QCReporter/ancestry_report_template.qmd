@@ -1,0 +1,109 @@
+---
+title: "Genomics QC Ancestry Report"
+author: "GDC Data Team"
+date: today
+format:
+  pdf:
+    self-contained: true
+editor: visual
+execute:
+  echo: false
+  warning: false
+  error: false
+  message: false
+  toc: true
+params:
+  path_to_data: "/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA/Full/"
+  gender_file_name: "plink.sexcheck"
+project:
+  output-dir: /home/gdc/shared/GDC_pipeline/results/
+---
+
+The following is an automated report describing the quality control (QC) processing of your dataset. detailed description of the QC steps taken.
+
+```{r loadPackages}
+#| message: false
+#| echo: false
+library(dplyr)
+library(ggplot2)
+library(gt)
+library(forcats)
+```
+
+# Ancestry predictions
+
+Ancestries are predicted after the initial round of QC steps. The principal components upon which the population is stratifed, are based off of the [genetic relatedness matrix (GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html). The subjects are then projected onto the PC space and assigned ethnicities using k-means clustering based on either a standard genomic dataset (such as though genomes) are by the reported ancestries of the subject in the study. Figure @fig-ancestryPredictions the projection of each subject onto the first few PCs. They are colored by their reported ancestries.
+
+The densities of ancestries based on the reference set are represent by the 10% contour lines of the 2d density plots with the observed populations presented as points over top of the densities shown in @fig-ancestryPredictions.
+
+```{r importdata, echo=FALSE}
+path_to_data="PATH"
+file_name="NAME"
+#Data 
+ancestry_prediction <- read.delim(paste0(path_to_data, file_name), header=FALSE)
+
+```
+
+<!-- ## Ancestry distribution -->
+
+```{r datacleaning ancestryprediction}
+#| echo: false
+ncols_ap=ncol(ancestry_prediction)
+colnames(ancestry_prediction)[1:5] = c("FID", "IID", "Ancestry", "Estimate_percent", "Distance") 
+ancestry_prediction_core=ancestry_prediction %>%
+  select(FID, IID, Ancestry, Estimate_percent, Distance)
+```
+
+```{r Ancestry Distribution}
+ggplot(data=ancestry_prediction, aes(x=Ancestry, fill = Ancestry))+
+  geom_histogram(stat = "count", show.legend = FALSE) + 
+  ggtitle("Histogram of Predicted Ancestries") +
+  theme_classic()
+```
+
+```{r Ancestry Distribution Split}
+ggplot(data=ancestry_prediction, aes(x=Estimate_percent, fill = as_factor(Ancestry)))+
+  geom_histogram(stat = "count") + 
+  facet_wrap(vars(as_factor(Ancestry)), scales = "free_y")+
+  ggtitle("Histogram of predicted ancestries by estimation percentage") +
+  labs(fill = "Ancestry") +
+  theme_classic()
+```
+
+## Table displaying Predictions
+
+```{r Ancestry Distribution Split Table}
+#| warning: false
+#| message: false
+ancestry_prediction %>% 
+  group_by(Ancestry, Estimate_percent) %>%
+  summarise(Count = n()) %>%
+  gt(rowname_col = "Estimation", groupname_col = "Ancestry") %>%
+  cols_label(
+    Estimate_percent="Estimated %"
+  ) %>%
+  summary_rows(
+    groups = everything(),
+    columns = Count,
+    fns = list(
+      total = "sum" 
+    )
+  )
+
+```
+
+![Ancestry Prediction PC Plot](SED)
+
+```{r subj_relatedness_hist}
+#| label: fig-SubjRelatedness
+#| fig-cap: "Subject relatedness."
+#| include: true
+#| eval: true
+relatedness = read.table(paste0(path_to_data,"primus_file.genome"), header=T)
+ggplot(data= relatedness, aes(x=PI_HAT, color="blue"))+
+  geom_histogram(show.legend = F, bins = round(nrow(relatedness)/50))+
+  xlab("Proportion IBD") +
+  ggtitle("Histogram Relatedness") +
+  theme_classic()
+
+```
