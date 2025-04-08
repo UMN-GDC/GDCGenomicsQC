@@ -50,7 +50,7 @@ ancestry_all <- bind_rows(ancestry, extra_ancestry) %>%
 data <- pca %>%
   left_join(ancestry_all, by = c("FID", "IID")) %>%
   left_join(fam, by = c("FID", "IID")) %>%
-  mutate(Pheno = factor(Pheno, levels = c(1, 2), labels = c("Control", "Case")))
+  mutate(Pheno = factor(Pheno, levels = c(1, 2), labels = c("Reference", "Study")))
 
 
 # Function to plot pairs of PCs
