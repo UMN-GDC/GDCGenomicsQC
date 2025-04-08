@@ -145,7 +145,11 @@ fi
 if [ ${rfmix_option} -eq 1 ]; then
   for phase_check in "${phase_files[@]}"; do
       if [ ! -f "$phase_check" ]; then
+<<<<<<< HEAD
           echo "Phasing has failed, please check the error logs."
+=======
+          echo "PCA software has failed, please check the error logs."
+>>>>>>> refs/remotes/origin/alpha
           exit 1
       fi
   done
@@ -161,6 +165,7 @@ fi
 echo "(Step 5) ancestry estimate"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
+<<<<<<< HEAD
   rfmix_files=()
   for CHR in {1..22}; do
       rfmix_files+=("${WORK}/rfmix/ancestry_chr${CHR}.rfmix.Q")
@@ -177,12 +182,17 @@ if [ ${rfmix_option} -eq 1 ]; then
 
   # If any file is missing, run the phasing script
   if ! $all_exist; then
+=======
+  pca_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
+  if [ ! -f "${pca_check}" ]; then
+>>>>>>> refs/remotes/origin/alpha
     sbatch --wait ${path_to_repo}/src/run_rfmix.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
   fi
 else # Alternative behavior
   ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 fi
 
+<<<<<<< HEAD
 # Check again if all rfmix files exist after running the script
 if [ ${rfmix_option} -eq 1 ]; then
   for rfmix_check in "${rfmix_files[@]}"; do
@@ -214,6 +224,8 @@ if [ ! -f "${subpop_check}" ]; then
   echo "Subpopulations estimation has failed please check the error logs."
   exit 1
 fi
+
+sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 ##########################################################################################################
 
 
@@ -222,9 +234,17 @@ echo "(Step 7) ancestry plots"
 if [ ${rfmix_option} -eq 1 ]; then
   sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
   rm -r ${WORK}/visualization
+  sbatch --wait ${path_to_repo}/src/run_pc_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
 else # Alternative behavior
   echo "Plot module only for rfmix"
 fi
+exit 1
+=======
+if [ ! -f "${pca_check}" ]; then
+  echo "PCA software has failed please check the error logs."
+  exit 1
+fi
+>>>>>>> refs/remotes/origin/alpha
 #########################################################################################################
 
 
