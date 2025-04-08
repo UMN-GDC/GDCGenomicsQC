@@ -1,0 +1,23 @@
+#!/bin/bash -l
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=20GB
+#SBATCH --time=20:00:00
+#SBATCH -p agsmall
+#SBATCH -o genome_harmonizer_%a.out
+#SBATCH -e genome_harmonizer_%a.err
+#SBATCH --job-name genome_harmonizer
+
+module load java/openjdk-17.0.2
+module load plink
+
+# REF=/home/gdc/shared/GDC_pipeline/Ref
+WORK=$1
+NAME=$2
+REF=$3
+CHR=$SLURM_ARRAY_TASK_ID
+
+java -Xmx8g -jar $REF/GenotypeHarmonizer/GenotypeHarmonizer.jar --input $WORK/lifted/study.$NAME.lifted.chr${CHR} --inputType PLINK_BED --ref $REF/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5/ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 --refType VCF --keep --output $WORK/aligned/study.$NAME.lifted.chr${CHR}.aligned 
+
+# Option that works for non plink bed/bim/fam formats '--forceChr SHAPEIT2'

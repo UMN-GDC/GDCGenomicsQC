@@ -14,15 +14,6 @@ REF=$2
 NAME=$3
 path_to_repo=$4
 
-mkdir $WORK/rfmix
-sbatch --time 18:00:00 --mem 64GB --array 1-22 --wait -N1 ${path_to_repo}/src/rfmix_individual.sh ${WORK} ${NAME}
-
-module load R/4.4.0-openblas-rocky8
-
-Rscript ${path_to_repo}/src/gai.R ${WORK} ${NAME}
-<<<<<<< HEAD
-=======
-
 mkdir $WORK/PCA
 cp $WORK/study.$NAME.unrelated.comm.popu $WORK/PCA/study.$NAME.unrelated.comm.popu
 cd $WORK/PCA
@@ -32,4 +23,3 @@ awk '{print $3}' study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
 awk '{print $1 "\t" $2 "\t" $3}' study.$NAME.unrelated.comm.popu > data.txt
 Rscript ${path_to_repo}/src/subpop.R ${WORK} ${NAME}
 #rm *.dat
->>>>>>> refs/remotes/origin/alpha
