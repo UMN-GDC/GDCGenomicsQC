@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=8GB
+#SBATCH --mem=32GB
 #SBATCH --time=48:00:00
 #SBATCH -p agsmall
 #SBATCH -o plinkPCA.out
