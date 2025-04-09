@@ -1,7 +1,19 @@
+path_to_packages <- "/home/gdc/shared/GDC_pipeline/Ref"
+.libPaths(c(path_to_packages, .libPaths()))  # Ensure R looks there for packages
+
+
+install_if_missing <- function(pkg, lib = path_to_packages) {
+  if (!requireNamespace(pkg, quietly = TRUE, lib.loc = lib)) {
+    install.packages(pkg, lib = lib, dependencies = TRUE, repos = "https://cloud.r-project.org")
+  }
+  suppressMessages(library(pkg, character.only = TRUE, lib.loc = lib))
+}
+
 # Load libraries
-library(ggplot2)
-library(data.table)
-library(dplyr)
+install_if_missing("ggplot2")
+install_if_missing("data.table")
+install_if_missing("tidyverse")
+# install_if_missing("dplyr")
 
 # Parse command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -56,7 +68,7 @@ data <- pca %>%
 # Function to plot pairs of PCs
 plot_pc <- function(df, pcx, pcy) {
   ggplot(df, aes(x = .data[[pcx]], y = .data[[pcy]], color = Ancestry, shape = Pheno)) +
-    geom_point(size = 2, alpha = 0.8) +
+    geom_point(size = 2, alpha = 0.6) +
     theme_minimal() +
     labs(title = paste(pcx, "vs", pcy), x = pcx, y = pcy) +
     theme(
@@ -68,25 +80,17 @@ plot_pc <- function(df, pcx, pcy) {
 }
 
 
-# Load the Cairo package
-library(Cairo)
-
 # Save PC1 vs PC2
-CairoPNG(file.path(save_dir, "PC1_vs_PC2.png"), width = 7, height = 6, units = "in", res = 300)
+png(file.path(save_dir, "PC1_vs_PC2.png"), width = 7, height = 6, units = "in", res = 300)
 print(plot_pc(data, "PC1", "PC2"))
 dev.off()
 
 # Save PC1 vs PC3
-CairoPNG(file.path(save_dir, "PC1_vs_PC3.png"), width = 7, height = 6, units = "in", res = 300)
+png(file.path(save_dir, "PC1_vs_PC3.png"), width = 7, height = 6, units = "in", res = 300)
 print(plot_pc(data, "PC1", "PC3"))
 dev.off()
 
 # Save PC2 vs PC3
-CairoPNG(file.path(save_dir, "PC2_vs_PC3.png"), width = 7, height = 6, units = "in", res = 300)
+png(file.path(save_dir, "PC2_vs_PC3.png"), width = 7, height = 6, units = "in", res = 300)
 print(plot_pc(data, "PC2", "PC3"))
 dev.off()
-
-
-
-
-
