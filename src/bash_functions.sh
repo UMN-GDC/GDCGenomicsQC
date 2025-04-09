@@ -227,7 +227,7 @@ run_subpopulations_if_needed() {
   fi
 }
 
-run_subpopulations_if_needed ${subpop_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ## Sample call
+# run_subpopulations_if_needed ${subpop_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ## Sample call
 
 
 subpop_check_after_call() {
@@ -249,7 +249,7 @@ subset_ancestries_run_standard_qc() {
   local custom_qc="$4"
   local path_to_repo="$5"
 
-  for DATATYPE in "${ETHNICS}"; do
+  for DATATYPE in ${ETHNICS}; do
     plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
     if [ ${custom_qc} -eq 1 ]; then
     ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
