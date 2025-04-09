@@ -162,4 +162,3 @@ module load R/4.4.0-openblas-rocky8
 if [ ${report_writer} -eq 1 ]; then
   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
 fi
-
