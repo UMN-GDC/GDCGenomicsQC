@@ -122,11 +122,18 @@ subpop_check_after_call ${subpop_check}
 ##########################################################################################################
 
 
+############################################ PCA #########################################################
+echo "PCA"
+sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+##########################################################################################################
+
+
 ######################################## Ancestry Plots ##################################################
 echo "(Step 7) ancestry plots"
 if [ ${rfmix_option} -eq 1 ]; then
   sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
   rm -r ${WORK}/visualization
+  Rscript ${path_to_repo}/src/plot_pca.R ${WORK}
 else # Alternative behavior
   echo "Plot module only for rfmix"
 fi
@@ -141,7 +148,7 @@ else # Alternative behavior
   ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
 fi
 
-subset_ancestries_run_standard_qc ${ETHNICS} ${WORK} ${NAME} ${custom_qc} ${path_to_repo}
+subset_ancestries_run_standard_qc "${ETHNICS}" ${WORK} ${NAME} ${custom_qc} ${path_to_repo}
 ##Putting in to wait until the jobs are done
 wait_for_ancestry_qc_to_finish
 ###########################################################################################################
