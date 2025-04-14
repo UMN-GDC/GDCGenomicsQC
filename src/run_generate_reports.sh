@@ -1,83 +1,109 @@
 #!/bin/bash
 
-# module load R
+# Usage: ./this_script.sh <working_directory> <path_to_repo>
 
-working_directory=$1 #Only argument needed for this process to run
-path_to_repo=$2
+set -uo pipefail
 
-array_location_base=($(ls -d ${working_directory}/*/))
-num_elements=${#array_location_base[@]}
+# Check for correct number of arguments
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <working_directory> <path_to_repo>"
+    exit 1
+fi
 
-path_to_qmd=${path_to_repo}/src/QCReporter
-path_to_gen_all_reports=${path_to_repo}/src/QCReporter
-file1=${path_to_qmd}/updated_report_template.qmd #Full path to report
-file2=${path_to_qmd}/ancestry_report_template.qmd
+working_directory="$1"
+path_to_repo="$2"
 
-for ((i=0; i<${num_elements}; i++)); do
-    array_location[i]=${array_location_base[$i]%/} #This gets the full paths to each directory
-    filepreffix_test[i]=${array_location[$i]##*/}
-    filepreffix[i]=${filepreffix_test[i]}.QC
-    echo ${filepreffix[i]}
-    echo ${filepreffix_test[i]}
-    if [ "${filepreffix_test[i]}" == "temp" ]; then
-        continue #Skipping the temp location
+path_to_qmd="${path_to_repo}/src/QCReporter"
+template_main="${path_to_qmd}/updated_report_template.qmd"
+template_ancestry="${path_to_qmd}/ancestry_report_template.qmd"
+generate_script="${path_to_repo}/src/QCReporter/generate_all_reports.sh"
+
+generate_report() {
+    local subject_dir="$1"
+    local target_dir="$2"
+    local file_prefix="${target_dir}.QC"
+    local output_dir="${subject_dir}/results"
+    local output_qmd="${output_dir}/${file_prefix}.qmd"
+    local final_pdf="${output_dir}/${file_prefix}.pdf"
+
+    mkdir -p "$output_dir"
+
+    # Run generate_all_reports
+    "$generate_script" --FILE "$file_prefix" --PATHTOSTOREOUTPUTS "$subject_dir"
+
+    # Find gender file
+    local gender_file_path
+    gender_file_path=$(find "$subject_dir" -maxdepth 1 -name "*.sexcheck" | head -n 1)
+    if [ -z "$gender_file_path" ]; then
+        echo "No .sexcheck file found in $subject_dir. Skipping."
+        return
     fi
-    path_to_store_outputs=${array_location[i]}
-    ${path_to_gen_all_reports}/generate_all_reports.sh --FILE ${filepreffix[i]} --PATHTOSTOREOUTPUTS ${path_to_store_outputs} 
+    local gender_file_name
+    gender_file_name=$(basename "$gender_file_path")
 
-    final_location=${path_to_store_outputs}/results/${filepreffix[i]}.pdf
-    mkdir -p ${path_to_store_outputs}/results
+    # Prepare the report file
+    cp -v "$template_main" "$output_qmd"
+    sed -i -e "s@PATH@${subject_dir}/@" \
+           -e "s@NAME@${gender_file_name}@" "$output_qmd"
 
-## Changes where the qmd looks for the data... 
-    gender_file_name=$(ls ${path_to_store_outputs}/*.sexcheck) #Returns the full path
-    pushd ${path_to_store_outputs}
-    gender_file_name=$(ls *.sexcheck)
-    popd
-    path_read_files=${path_to_store_outputs}/
-    
-    ## Making QC report based on saved template
-    output_qmd_1=${path_to_store_outputs}/results/${filepreffix[i]}.qmd
-    cp -v ${file1} ${output_qmd_1}
-    sed -i 's@PATH@'${path_read_files}'@' ${output_qmd_1}
-    sed -i 's@NAME@'${gender_file_name}'@' ${output_qmd_1}
-
-    ## Generating report
-    quarto render ${output_qmd_1} 
-
-    
-    if [ -f "${final_location}" ]; then
-      rm ${output_qmd_1}
-      echo "Report has been successfully generated for ${array_location[i]}"
-      echo "Removing temp quarto document"
+    # Render the report
+    if quarto render "$output_qmd"; then
+        rm -v "$output_qmd"
+        echo "Report successfully generated for $target_dir"
     else
-      echo "Skipping removal of temp file since an error occured while generating report"
+        echo "Error generating report for $target_dir"
     fi
-    
-    
-    if [ "${filepreffix_test[i]}" == "full" ]; then
-      ## For full ancestry directory
-      pushd ${path_to_store_outputs}
-      fraposa_log_file=$(ls *.unrelated.comm.popu)
-      popd
-      frapose_png=$(ls ${path_to_store_outputs}/*.unrelated.comm*.png)
-      
-      output_qmd_2=${path_to_store_outputs}/results/ancestry_report.qmd
-      cp -v ${file2} ${output_qmd_2}
-      sed -i 's@PATH@'${path_read_files}'@' ${output_qmd_2}
-      sed -i 's@NAME@'${fraposa_log_file}'@' ${output_qmd_2}
-      sed -i 's@SED@'${frapose_png}'@' ${output_qmd_2} 
-    
+}
 
-      quarto render ${output_qmd_2} 
-      final_location_2=${path_to_store_outputs}/results/ancestry_report.pdf
+generate_ancestry_report() {
+    local subject_dir="$1"
+    local output_dir="${subject_dir}/results"
+    local output_qmd="${output_dir}/ancestry_report.qmd"
+    local final_pdf="${output_dir}/ancestry_report.pdf"
 
-      if [ -f "${final_location_2}" ]; then
-        rm ${output_qmd_2}
-        echo "Ancestry report has been successfully generated for ${array_location[i]}"
-        echo "Removing temp quarto document"
-      else
-        echo "Skipping removal of temp file since an error occured while generating report"
-      fi
+    mkdir -p "$output_dir"
+
+    local fraposa_log
+    fraposa_log=$(find "$subject_dir" -maxdepth 1 -name "*.unrelated.comm.popu" | head -n 1)
+    local pc1_pc2
+    pc1_pc2=$(find "$subject_dir" -name "PC1*PC2.png" | head -n 1)
+    local pc1_pc3
+    pc1_pc3=$(find "$subject_dir" -name "PC1*PC3.png" | head -n 1)
+    local pc2_pc3
+    pc2_pc3=$(find "$subject_dir" -name "PC2*PC3.png" | head -n 1)
+
+    if [[ -z "$fraposa_log" || -z "$pc1_pc2" || -z "$pc1_pc3" || -z "$pc2_pc3" ]]; then
+        echo "L Missing ancestry components in $subject_dir. Skipping ancestry report."
+        return
     fi
 
+    cp -v "$template_ancestry" "$output_qmd"
+    sed -i -e "s@PATH@${subject_dir}/@" \
+           -e "s@NAME@$(basename "$fraposa_log")@" \
+           -e "s@PL1P@${pc1_pc2}@" \
+           -e "s@PL2P@${pc1_pc3}@" \
+           -e "s@PL3P@${pc2_pc3}@" "$output_qmd"
+
+    if quarto render "$output_qmd"; then
+        rm -v "$output_qmd"
+        echo "Ancestry report successfully generated for $(basename "$subject_dir")"
+    else
+        echo "Error generating ancestry report for $(basename "$subject_dir")"
+    fi
+}
+
+# Main loop
+for dir in "$working_directory"/*/; do
+    dir="${dir%/}"
+    target_dir="${dir##*/}"
+
+    [[ "$target_dir" == "temp" ]] && continue
+
+    echo "Processing subject: $target_dir"
+
+    generate_report "$dir" "$target_dir"
+
+    if [[ "$target_dir" == "full" ]]; then
+        generate_ancestry_report "$dir"
+    fi
 done
