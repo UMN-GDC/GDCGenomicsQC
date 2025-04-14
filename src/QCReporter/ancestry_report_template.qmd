@@ -14,7 +14,6 @@ execute:
   toc: true
 params:
   path_to_data: "/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA/Full/"
-  gender_file_name: "plink.sexcheck"
 project:
   output-dir: /home/gdc/shared/GDC_pipeline/results/
 ---
@@ -92,7 +91,11 @@ ancestry_prediction %>%
 
 ```
 
-![Ancestry Prediction PC Plot](SED)
+![Ancestry Prediction PC1 and PC2 Plot](PL1P)
+
+![Ancestry Prediction PC1 and PC3 Plot](PL2P)
+
+![Ancestry Prediction PC2 and PC3 Plot](PL3P)
 
 ```{r subj_relatedness_hist}
 #| label: fig-SubjRelatedness
