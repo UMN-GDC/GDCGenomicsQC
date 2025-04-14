@@ -19,7 +19,7 @@ extractLog<- function(filepath, plinkoption){
 
   test <- log[grep("people .* from .fam", log)]
   test1 <- str_extract_all(test, "[0-9]+")
-  nSubjects <- as.numeric(test1[[1]][1])
+  nSubjects_in <- as.numeric(test1[[1]][1])
   nMale <- as.numeric(test1[[1]][2])
   nFemale <- as.numeric(test1[[1]][3])
 
@@ -27,7 +27,7 @@ extractLog<- function(filepath, plinkoption){
   test <- log[grep("loaded from .bim", log)]
   nSNPs <- as.numeric(gsub("[^0-9]", "", test))
 
-  initData <-c(nSubjects, nMale, nFemale, nSNPs)
+  initData <-c(nSubjects_in, nMale, nFemale, nSNPs)
   names(initData) <- c("InSubjects", "InMale", "InFemale", "InSNPs")
 
 
@@ -52,8 +52,10 @@ extractLog<- function(filepath, plinkoption){
     out_label="NumVariantsRemoved"
   }
   if (plinkoption ==3) { #--check-sex logs
-    string_to_find_a=".* Xchr and .* Ychr variant.* scanned, .* problems detected." 
-    num_args=3
+    string_to_find_a="--remove: [0-9]+ people remaining"
+    # string_to_find_a=".* Xchr and .* Ychr variant.* scanned, .* problems detected." 
+    # num_args=3
+    out_label="NumPeopleRemoved"
   }
   if (plinkoption ==4) { #--maf logs 
     string_to_find_a=".*variants removed due to minor allele threshold.*"
@@ -83,6 +85,10 @@ extractLog<- function(filepath, plinkoption){
     stop(print(error_message))
   } else{
     nRemoved <- as.numeric(test2[[1]][1])
+  }
+  if (plinkoption ==3) { 
+    # print(nRemoved)
+    nRemoved <- nSubjects_in - as.numeric(test2[[1]][1])
   }
   if(num_args ==3) {
     nY <- as.numeric(test2[[1]][2])
