@@ -59,7 +59,7 @@ Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}1.log geno QC2_geno
 Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}2.log mind QC3_mind.txt ${place_to_store_data}
 Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}3.log geno QC4_geno.txt ${place_to_store_data}
 Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}4.log mind QC5_mind.txt ${place_to_store_data}
-#Rscript ${path_to_logReader} ${path_to_store_outputs}/gender_check.log check-sex QC6_sex_check.txt ${place_to_store_data}
+Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}5.log check-sex QC6_sex_check.txt ${place_to_store_data}
 Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}6.log maf QC_7_maf.txt ${place_to_store_data} 
 Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}7a.log hwe QC_8_hwe.txt ${place_to_store_data}
 Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}7.log hwe QC_8b_hwe.txt ${place_to_store_data}
