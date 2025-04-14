@@ -286,11 +286,11 @@ restructure_and_clean_outputs() {
 
   #1. move over png and .popu file from PCA directory into the 'full' directory
   cp ${WORK}/PCA/study.${NAME}*popu ${WORK}/full/
-  cp ${WORK}/PCA/study.${NAME}*png ${WORK}/full/
+  cp ${WORK}/PCA/*png ${WORK}/full/
 
   #2. move the genome_harmonizer_full_log.txt into the 'full' directory
   cp ${WORK}/aligned/*harmonizer*.txt ${WORK}/full/
-  primus_file=$(find ${WORK} -type f -name "full.QC8_cleaned.genome")
+  primus_file=$(find ${WORK} -type f -name "full.QC8.genome_network1.genome")
   cp ${primus_file} ${WORK}/full/primus_file.genome
 
   #3. move other directories into a temporary location called 'temp'
