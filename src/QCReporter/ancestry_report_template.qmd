@@ -18,7 +18,7 @@ project:
   output-dir: /home/gdc/shared/GDC_pipeline/results/
 ---
 
-The following is an automated report describing the quality control (QC) processing of your dataset. detailed description of the QC steps taken.
+The following is an automated report describing the quality control (QC) processing of your dataset.
 
 ```{r loadPackages}
 #| message: false
@@ -34,6 +34,8 @@ library(forcats)
 Ancestries are predicted after the initial round of QC steps. The principal components upon which the population is stratifed, are based off of the [genetic relatedness matrix (GRM)](https://zjuwhw.github.io/2021/08/20/GRM.html). The subjects are then projected onto the PC space and assigned ethnicities using k-means clustering based on either a standard genomic dataset (such as though genomes) are by the reported ancestries of the subject in the study. Figure @fig-ancestryPredictions the projection of each subject onto the first few PCs. They are colored by their reported ancestries.
 
 The densities of ancestries based on the reference set are represent by the 10% contour lines of the 2d density plots with the observed populations presented as points over top of the densities shown in @fig-ancestryPredictions.
+
+Because of the granularity in which rfMix calculats predicted ancestry we have lumped information into 5 bins 0-20, 20-40, 40-60, 60-80, and 80-100 % with intervals being left-closed and right-open for this report. To view the detailed ancestry percentages look at the .popu file inside of the 'full' directory.
 
 ```{r importdata, echo=FALSE}
 path_to_data="PATH"
@@ -61,13 +63,21 @@ ggplot(data=ancestry_prediction, aes(x=Ancestry, fill = Ancestry))+
 ```
 
 ```{r Ancestry Distribution Split}
-ggplot(data=ancestry_prediction, aes(x=Estimate_percent, fill = as_factor(Ancestry)))+
-  geom_histogram(stat = "count") + 
+ancestry_prediction %>%
+  mutate(Estimation_bucket = cut(Estimate_percent,
+                      breaks = c(0, 20, 40, 60, 80, 100),
+                      labels = c("0-20", "20-40", "40-60", "60-80", "80-100"),
+                      include.lowest = TRUE,
+                      right = FALSE)) %>%
+  ggplot(aes(x=Estimation_bucket, fill = Ancestry)) +
+  geom_bar(show.legend = F) + 
   facet_wrap(vars(as_factor(Ancestry)), scales = "free_y")+
-  ggtitle("Histogram of predicted ancestries by estimation percentage") +
+  ggtitle("Predicted ancestries by estimation percentage") +
   labs(fill = "Ancestry") +
+  xlab("Ancestry Estimation Percentage") +
+  ylab("Number of Individuals") +
   theme_classic()
-```
+  ```
 
 ## Table displaying Predictions
 
@@ -75,11 +85,16 @@ ggplot(data=ancestry_prediction, aes(x=Estimate_percent, fill = as_factor(Ancest
 #| warning: false
 #| message: false
 ancestry_prediction %>% 
-  group_by(Ancestry, Estimate_percent) %>%
+  mutate(Estimation_bucket = cut(Estimate_percent,
+                      breaks = c(0, 20, 40, 60, 80, 100),
+                      labels = c("0-20", "20-40", "40-60", "60-80", "80-100"),
+                      include.lowest = TRUE,
+                      right = FALSE)) %>%
+  group_by(Ancestry, Estimation_bucket) %>%
   summarise(Count = n()) %>%
   gt(rowname_col = "Estimation", groupname_col = "Ancestry") %>%
   cols_label(
-    Estimate_percent="Estimated %"
+    Estimation_bucket="Estimated %"
   ) %>%
   summary_rows(
     groups = everything(),
@@ -103,10 +118,10 @@ ancestry_prediction %>%
 #| include: true
 #| eval: true
 relatedness = read.table(paste0(path_to_data,"primus_file.genome"), header=T)
-ggplot(data= relatedness, aes(x=PI_HAT, color="blue"))+
-  geom_histogram(show.legend = F, bins = round(nrow(relatedness)/50))+
+ggplot(data= relatedness, aes(x=PI_HAT, fill="blue"))+
+  geom_bar(show.legend = F) + 
   xlab("Proportion IBD") +
-  ggtitle("Histogram Relatedness") +
+  ggtitle("Relatedness of Individuals with PI_hat > 0.2") +
   theme_classic()
 
 ```
