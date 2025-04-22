@@ -21,6 +21,7 @@ generate_script="${path_to_repo}/src/QCReporter/generate_all_reports.sh"
 generate_report() {
     local subject_dir="$1"
     local target_dir="$2"
+    local path_to_repo="$3"
     local file_prefix="${target_dir}.QC"
     local output_dir="${subject_dir}/results"
     local output_qmd="${output_dir}/${file_prefix}.qmd"
@@ -29,7 +30,7 @@ generate_report() {
     mkdir -p "$output_dir"
 
     # Run generate_all_reports
-    "$generate_script" --FILE "$file_prefix" --PATHTOSTOREOUTPUTS "$subject_dir"
+    "$generate_script" --FILE "$file_prefix" --PATHTOSTOREOUTPUTS "$subject_dir" --path_to_repo "${path_to_repo}"
 
     # Find gender file
     local gender_file_path
@@ -101,7 +102,7 @@ for dir in "$working_directory"/*/; do
 
     echo "Processing subject: $target_dir"
 
-    generate_report "$dir" "$target_dir"
+    generate_report "$dir" "$target_dir" "$path_to_repo"
 
     if [[ "$target_dir" == "full" ]]; then
         generate_ancestry_report "$dir"
