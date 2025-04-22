@@ -5,6 +5,7 @@ show_help() {
   echo "Options:"
   echo "  --FILE <file_name>  Specify the file to gather QC information after running main.sh. Must be a .bed file"
   echo "  --PATHTOSTOREOUTPUTS  Specify the full path to where you would like the outputs of this pipeline to go"
+  echo "  --path_to_repo  Specify the full path to the GDCGenomicsQC github repository"
   echo "  --help              Display this help message."
 }
 
@@ -27,6 +28,11 @@ while [[ $# -gt 0 ]]; do
     --PATHTOSTOREOUTPUTS)
         path_to_store_outputs="$2"
         echo "Path provided is $path_to_store_outputs"
+        shift 2
+      ;;
+    --path_to_repo)
+        path_to_repo="$2"
+        echo "Path repo is ${path_to_repo}"
         shift 2
       ;;   
     --help)
@@ -51,8 +57,8 @@ echo "You are currently in: $current_dir"
 place_to_store_data=${path_to_store_outputs}
 mkdir -p ${place_to_store_data}
 
-path_to_logReader=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/QCReporter/logReader.R
-path_to_logReader_extended=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC/src/QCReporter/logReader_extended.R
+path_to_logReader=${path_to_repo}/src/QCReporter/logReader.R
+path_to_logReader_extended=${path_to_repo}/src/QCReporter/logReader_extended.R
 
 #Gathers all the information from logs and puts them into tables for later use
 Rscript ${path_to_logReader} ${path_to_store_outputs}/${FILE}1.log geno QC2_geno.txt ${place_to_store_data}
