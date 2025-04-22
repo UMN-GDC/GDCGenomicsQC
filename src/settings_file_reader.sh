@@ -126,4 +126,6 @@ ${using_rfmix} \
 ${making_report} \
 ${custom_qc} 
 
-
+pushd ${desired_working_directory}
+sbatch ${input_file_name}_wrapper.sh
+popd
