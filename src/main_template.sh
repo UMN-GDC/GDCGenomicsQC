@@ -31,8 +31,7 @@ cd ${WORK}
 
 ####################################### Environment Setup ##############################################
 
-source /home/faird/shared/code/external/envs/miniconda3/load_miniconda3.sh
-conda activate GDC_pipeline
+conda activate /home/gdc/public/envs/GDC_pipeline
 source ${path_to_repo}/src/bash_functions.sh # Helper functions
 module load plink
 module load perl
