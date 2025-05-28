@@ -12,6 +12,7 @@
 WORK=$1
 NAME=$2
 CHR=$SLURM_ARRAY_TASK_ID
+REF=$3
 
 cd $WORK/phased
 module load plink
@@ -21,9 +22,9 @@ plink --bfile $WORK/relatedness/study.$NAME.unrelated --chr $CHR --recode vcf --
 bgzip -c ${NAME}.chr${CHR}.vcf > ${NAME}.chr${CHR}.vcf.gz
 bcftools index -f ${NAME}.chr${CHR}.vcf.gz
 
-/home/gdc/and02709/ancestry_OG/shapeit4/bin/shapeit4.2 \
+${REF}/ancestry_OG/shapeit4/bin/shapeit4.2 \
         --input ${NAME}.chr${CHR}.vcf.gz \
-        --map /home/gdc/and02709/ancestry_OG/chr${CHR}.b38.gmap.gz \
+        --map ${REF}/ancestry_OG/chr${CHR}.b38.gmap.gz \
         --region ${CHR} \
         --output ${NAME}.chr${CHR}.phased.vcf.gz \
         --thread 8
