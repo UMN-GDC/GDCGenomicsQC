@@ -30,8 +30,7 @@ custom_qc=CSTQC
 cd ${WORK}
 
 ####################################### Environment Setup ##############################################
-
-conda activate /home/gdc/public/envs/GDC_pipeline
+source /home/gdc/public/envs/load_miniconda3.sh
 source ${path_to_repo}/src/bash_functions.sh # Helper functions
 module load plink
 module load perl
