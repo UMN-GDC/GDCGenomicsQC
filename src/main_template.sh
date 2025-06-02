@@ -23,6 +23,7 @@ NAME=FLE
 WORK=WK
 crossmap=CRSMP
 genome_harmonizer=GNHRM
+primus=PRMUS
 rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
@@ -79,14 +80,23 @@ fi
 
 
 ######################################## Pedigree ######################################################
-primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
-run_primus_if_needed ${primus_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ${DATATYPE}
-primus_check_after_call ${primus_check}
+
+echo "(Step 4) Relatedness"
+if [ ${primus} -eq 1 ]; then
+  primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
+  run_primus_if_needed ${primus_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ${DATATYPE}
+  primus_check_after_call ${primus_check}
+else
+  cd $WORK
+  king_check=$WORK/relatedness/study.$NAME.unrelated.bim
+  run_king_if_needed ${king_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ${DATATYPE}
+  king_check_after_call ${king_check}
+fi
 #########################################################################################################
 
 
 ######################################## Phasing ########################################################
-echo "(Step 4) Phasing"
+echo "(Step 5) Phasing"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
   run_phasing_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo} 
@@ -98,7 +108,7 @@ fi
 
 
 ######################################## Ethnicity ######################################################
-echo "(Step 5) ancestry estimate"
+echo "(Step 6) ancestry estimate"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
   run_rfmix_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo}
@@ -110,7 +120,7 @@ fi
 
 
 ###################################### Subpopulations ####################################################
-echo "(Step 6) Subpopulations"
+echo "(Step 7) Subpopulations"
 subpop_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
@@ -129,7 +139,7 @@ sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_re
 
 
 ######################################## Ancestry Plots ##################################################
-echo "(Step 7) ancestry plots"
+echo "(Step 8) ancestry plots"
 if [ ${rfmix_option} -eq 1 ]; then
   sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
   rm -r ${WORK}/visualization
