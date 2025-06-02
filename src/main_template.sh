@@ -157,6 +157,8 @@ restructure_and_clean_outputs ${WORK} ${NAME}
 
 #4. execute run_generate_reports.sh ##
 module load R/4.4.0-openblas-rocky8
+export R_LIBS="/home/gdc/public/Ref/R"
+
 if [ ${report_writer} -eq 1 ]; then
   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
 fi
