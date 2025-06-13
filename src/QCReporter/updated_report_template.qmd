@@ -1,0 +1,374 @@
+---
+title: "Genomics QC Report"
+author: "GDC Data Team"
+date: today
+format:
+  pdf:
+    self-contained: true
+    geometry: left=1cm, right=1cm, top=2cm, bottom=2cm
+editor: visual
+execute:
+  echo: false
+  warning: false
+  error: false
+  message: false
+  toc: true
+params:
+  path_to_data: "/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA/Full/"
+  gender_file_name: "plink.sexcheck"
+project:
+  output-dir: /home/gdc/shared/GDC_pipeline/results/
+---
+
+The following is an automated report describing the quality control (QC) processing of your dataset. detailed description of the QC steps taken.
+
+```{r loadPackages}
+#| message: false
+#| echo: false
+.libPaths("/home/gdc/public/Ref/R")
+library(dplyr)
+library(ggplot2)
+library(gt)
+library(tidyr)
+library(forcats)
+```
+
+# General Summary
+
+The QC process outline below first process the data in aggregate removing SNPs and subjects with large amounts of missingness. In addition, SNPs are filtered to remove those with low minor allele frequency (MAF), frequencies are two out of equlibrium based on [Hardy-Weinberg equilibrium (HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/). Then, for multiethnic samples, subject ancestries are predicted using [principal components analysis (PCA)](https://www.nature.com/articles/ng1847) and [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally, the original data is filtered again at the level of each predicted ancestry before it is later rejoined into the full dataset. Table @ref(tab:summary) summarizes the number of SNPs and subjects at each step of the QC process.
+
+```{r importdata, echo=FALSE}
+#path_to_data="/home/gdc/shared/GDC_pipeline/data/"
+path_to_data="PATH"
+gender_file_name="NAME"
+
+# Data
+indmiss<-read.table(file=paste0(path_to_data,"plink.imiss"), header=TRUE)
+snpmiss<-read.table(file=paste0(path_to_data, "plink.lmiss"), header=TRUE)
+gender <- read.table(paste0(path_to_data, gender_file_name), header=T,as.is=T)
+maf_freq <- read.table(paste0(path_to_data, "MAF_check.frq"), header =TRUE, as.is=T)
+hwe<-read.table (file=paste0(path_to_data, "plink.hwe"), header=TRUE)
+hwe_zoom<-read.table (file=paste0(path_to_data, "plinkzoomhwe.hwe"), header=FALSE)
+het <- read.table(paste0(path_to_data,"R_check.het"), head=TRUE)
+# relatedness = read.table(paste0(path_to_data,"pihat_min0.2.genome"), header=T)
+
+#Reading in the tables for later use
+QC2_geno_table <- read.table(file = paste0(path_to_data, "QC2_geno.txt"),  quote="\"", comment.char="")
+QC3_mind_table <- read.table(paste0(path_to_data,"QC3_mind.txt"),  quote="\"", comment.char="")
+QC4_geno_table <- read.table(paste0(path_to_data, "QC4_geno.txt"),  quote="\"", comment.char="")
+QC5_mind_table <- read.table(paste0(path_to_data, "QC5_mind.txt"),  quote="\"", comment.char="")
+QC6_sex_check_table <- read.table(paste0(path_to_data, "QC6_sex_check.txt"), quote="\"", comment.char="")
+QC7_maf_table <- read.table(paste0(path_to_data,"QC_7_maf.txt"), quote="\"", comment.char="")
+QC8_hwe_table <- read.table(paste0(path_to_data, "QC_8_hwe.txt"), quote="\"", comment.char="")
+QC8b_hwe_table <- read.table(paste0(path_to_data,"QC_8b_hwe.txt"), quote="\"", comment.char="")
+# QC9_filter_founders_table <- read.table(paste0(path_to_data, "QC_9_filter-founders.txt"), quote="\"", comment.char="")
+
+QC_indep_pairwise_table <- read.csv(paste0(path_to_data,"QC_indep_pairwise.txt"), sep = "")
+QC_indep_pairwise_bychr <- read.csv(paste0(path_to_data, "each_SNP_QC_indep_pairwise.txt"), sep = "")
+# ancestry_prediction <- read.delim(paste0(path_to_data, "study.SMILES_GDA.unrelated.comm.popu"), header=FALSE)
+
+```
+
+```{r easierCleaning}
+QC2_updated = QC2_geno_table %>% 
+  pivot_wider(names_from = V1, values_from = V2) %>%
+  mutate(QC_Step = "Geno")
+
+QC3_updated = QC3_mind_table %>% 
+  pivot_wider(names_from = V1, values_from = V2) %>%
+  mutate(QC_Step = "Mind")
+
+QC4_updated = QC4_geno_table %>% 
+  pivot_wider(names_from = V1, values_from = V2) %>%
+  mutate(QC_Step = "Geno")
+
+QC5_updated = QC5_mind_table %>% 
+  pivot_wider(names_from = V1, values_from = V2) %>%
+  mutate(QC_Step = "Mind")
+
+QC6_updated = QC6_sex_check_table %>% 
+  pivot_wider(names_from = V1, values_from = V2) %>%
+  mutate(QC_Step = "Gender Check")
+
+QC7_updated = QC7_maf_table %>%
+  pivot_wider(names_from = V1, values_from = V2) %>%
+  mutate(QC_Step = "MAF")
+
+QC8_updated = QC8_hwe_table %>%
+  pivot_wider(names_from = V1, values_from = V2) %>%
+  mutate(QC_Step = "HWE Controls")
+
+QC8b_updated = QC8b_hwe_table %>%
+  pivot_wider(names_from = V1, values_from = V2) %>%
+  mutate(QC_Step = "HWE Cases")
+
+updated_names <- ls(pattern = "updated")
+updated_dfs <- mget(updated_names)
+QC_summarized <- bind_rows(updated_dfs)
+QC_summarized = QC_summarized %>% relocate(QC_Step, InSubjects, InMale, InFemale, InSNPs, NumPeopleRemoved, NumVariantsRemoved)
+```
+
+```{r full_table}
+#| label: tab-summary
+gt(QC_summarized) %>%
+  tab_header(title="QC Steps Summary Table") %>%
+  tab_spanner(
+    label = "Inputs",
+    columns = c(InSubjects, InMale, InFemale, InSNPs)
+  ) %>%
+  tab_spanner(
+    label = "Outputs",
+    columns = c(OutSubjects, OutSNPs)
+  ) %>%
+  tab_spanner(
+    label = "Alterations",
+    columns = c(NumPeopleRemoved, NumVariantsRemoved)
+  ) %>%
+  cols_add(
+    Threshold=c(".10", ".10", ".02", ".02", "0.2 to 0.8", "0.01", "1e-6", "1e-10"),
+    .after = QC_Step
+  ) %>%
+  cols_label(
+    QC_Step = "QC Step",
+    Threshold = "Threshold",
+    InSubjects = "Subjects",
+    InMale = "Male",
+    InFemale= "Female",
+    InSNPs="SNPs",
+    NumPeopleRemoved= "Subjects",
+    NumVariantsRemoved = "SNPS", 
+    OutSubjects = "Subjects", 
+    OutSNPs = "SNPs"
+  ) %>%
+  fmt_number(
+    columns = c(NumPeopleRemoved,NumVariantsRemoved),
+    pattern = "-{x}",
+    decimals = 0
+  ) %>%
+  tab_footnote(
+    locations = cells_column_labels(columns = Threshold),
+    footnote = "Exclusion criteria threshold"
+  ) %>%
+  tab_footnote(
+    locations = cells_body(columns = Threshold, rows = 5),
+    footnote = "F-values < 0.2 are assigned as female and F-values > 0.8 are assigned as male others are flagged as problems and excluded from the dataset"
+  ) %>%
+  tab_options(
+    table.align = "left",
+    table.width = pct(100)  # Or set to something like px(500)
+  )
+
+```
+
+```{r indep_pairwise_table}
+QC_indep_pairwise_table=as.data.frame(QC_indep_pairwise_table)
+gt(QC_indep_pairwise_table) %>%
+  tab_header(title="QC Independent Pairwise Summary Table")
+```
+
+```{r indep_bychr_pairwise}
+QC_indep_pairwise_bychr=as.data.frame(QC_indep_pairwise_bychr)
+summary_row=QC_indep_pairwise_bychr %>% 
+  mutate(group = 1) %>%
+  group_by(group) %>%
+  summarise(PrunedSNPs=sum(PrunedSNPS), RemainingSNPs = sum(RemainingSNPS))
+gt(QC_indep_pairwise_bychr) %>%
+  tab_header(title="SNPs Pruned by Chromosome") 
+   
+```
+
+# Detailed QC summary
+
+## Per Subject summary
+
+Subjects were filtered based on missingness and heterozygosity. An LD pruning step was also performed.
+
+```{r ind_missingness_hist}
+#| label: fig-IndMissingness
+#| fig-cap: "Subject missingness with cutoff shown as red vertical line."
+num_indmiss=nrow(indmiss)
+data.frame("Subject" = 1:nrow(indmiss),
+           "Missingness" = indmiss$F_MISS) %>%
+  ggplot(aes(x = Missingness, color ="blue")) +
+  geom_histogram(bins = round(num_indmiss/25, digits = 0), show.legend = FALSE) + 
+  geom_vline(xintercept = 0.01, color = "red") + 
+  xlab("Percent Missing SNPs") +
+  ggtitle("SNPS missingness per subject") +
+  theme_classic()
+
+```
+
+The [heterozygosity F statistic (FIS)](https://en.wikipedia.org/wiki/F-statistics) the departure from HWE in a population. The heterozygosity F statistic is given by the following equation: $$
+F = \frac{1}{N}\sum_{i=1}^N \frac{O_i - E_i}{E_i}
+$$
+
+```{r hetFilter}
+#| label: fig-hetFilter
+#| fig-cap: "Heterozygosity distributions with cutoff shown as red vertical line."
+
+het$HET_RATE = (het$"N.NM." - het$"O.HOM.")/het$"N.NM."
+lower_cutoff_het=mean(het$HET_RATE)-3*sd(het$HET_RATE)
+upper_cutoff_het=mean(het$HET_RATE)+3*sd(het$HET_RATE)
+
+data.frame("Subject" = 1:nrow(het),
+           "Heterozygosity" = het$HET_RATE) %>%
+  ggplot(aes(x = Heterozygosity, color ="blue")) +
+  geom_histogram(bins = 100, show.legend = FALSE) + 
+  geom_vline(xintercept = c(lower_cutoff_het, upper_cutoff_het), color = "red") + 
+  xlab("Heterozygosity F statistic") +
+  ggtitle("Heterozygous F Statistic Distribution") +
+  theme_classic()
+```
+
+@fig-HetBinary
+
+```{r hetSimpleVisual, warning=FALSE}
+#| label: fig-HetBinary
+#| fig-cap: "Heterozygosity analysis results."
+het_fail = subset(het, (het$HET_RATE < mean(het$HET_RATE)-3*sd(het$HET_RATE)) | (het$HET_RATE > mean(het$HET_RATE)+3*sd(het$HET_RATE)));
+
+placeholder = c()
+for(i in 1:nrow(het)) {
+  if(het[i, 2] %in% het_fail[[2]]) {
+    placeholder[i]="PROBLEM"
+  }
+  if(!het[i,2] %in% het_fail[[2]]) {
+    placeholder[i] = "OK"
+  }
+}
+
+temp_table = table(placeholder)
+het_refined=cbind(het, placeholder)
+
+het_refined$placeholder=as.factor(het_refined$placeholder)
+het_refined %>% 
+  mutate(
+    outcome= fct_relevel(
+      placeholder, 
+      c("PROBLEM", "OK")
+  )) %>%
+  ggplot(aes(x=outcome, fill = outcome)) +
+  geom_histogram(stat = "count", show.legend = FALSE)+ 
+  xlab("Status") +
+  ggtitle("Heterozygosity Analysis") + 
+  theme_classic()
+```
+
+## Per SNP summary
+
+SNPS were filtered based on missingness and MAF as well as HWE @fig-SNPFiltering
+
+```{r firstFilter}
+#| label: fig-SNPFiltering
+#| fig-cap: "SNP missingness, cutoffs are shown as red vertical lines."
+num_snpmiss=nrow(snpmiss)
+
+data.frame("SNP" = 1:nrow(snpmiss),
+           "Missingness" = snpmiss$F_MISS) %>%
+  ggplot(aes(x = Missingness)) +
+  geom_density(aes(fill="blue", color ="blue"), show.legend = FALSE) +
+  geom_vline(xintercept = 0.01, color = "red") +
+  xlab("Missingness per SNP") +
+  ggtitle("Percent calls missing per SNP") +
+  theme_classic()
+```
+
+```{r Maf_freq_hist}
+#| label: fig-MAFDistribution
+#| fig-cap: "MAF distribution with cutoff shown as red vertical line."
+data.frame("SNP" = 1:nrow(maf_freq),
+           "MAF" = maf_freq[,5]) %>%
+  ggplot(aes(x = MAF, color ="blue")) +
+  geom_histogram(bins = 100, show.legend = FALSE) +
+  geom_vline(xintercept = 0.1, color = "red") +
+  xlab("Minor allele frequency") +
+  ggtitle("MAF distribution") + 
+  theme_classic()
+```
+
+```{r HWE_hist}
+#| label: fig-HWE
+#| fig-cap: "HWE distribution with cutoff shown as red vertical line."
+data.frame("SNP" = 1:nrow(hwe),
+           "HWE" = hwe[,9]) %>%
+  ggplot(aes(x = HWE, color="blue")) +
+  geom_histogram(bins = 100, show.legend = F) +
+  geom_vline(xintercept = 0.10, color = "red") +
+  xlab("log(HWE p-value)") +
+  ggtitle("Hardy-Weinberg Equilibrium p-value distribution") +
+  theme_classic()
+
+
+```
+
+## Gender checks
+
+```{r gender_plots_initial}
+#| label: fig-GenderPlotSpread
+#| fig-cap: "Gender Plot distribution with cutoff shown as red vertical line."
+ggplot(data=gender, aes(x=F, color = "blue"))+
+  geom_histogram(bins = 100, show.legend = F)+
+  geom_vline(xintercept = 0.20, color = "red") +
+  geom_vline(xintercept = 0.80, color = "red") +
+  xlab("F Value") +
+  ggtitle("Gender Analysis") +
+  theme_classic()
+```
+
+```{r gender_plots}
+#| label: fig-GenderPlotClassification
+#| fig-cap: "Gender Plot distribution with cutoff shown as red vertical line."
+ggplot(data=gender, aes(x=F, fill=STATUS))+
+  geom_histogram(bins = 100, show.legend = T)+
+  geom_vline(xintercept = 0.20, color = "red") +
+  geom_vline(xintercept = 0.80, color = "red") +
+  xlab("F Value") +
+  ggtitle("Gender Analysis by Status") +
+  theme_classic()
+```
+
+```{r gender_plots_status}
+#| label: fig-GenderPlotOriginalClassification
+#| fig-cap: "Gender Plot distribution with cutoff shown as red vertical line."
+ggplot(data=gender, aes(x=F, fill=STATUS))+
+  geom_histogram(bins = 100, show.legend = T)+
+  geom_vline(xintercept = 0.20, color = "red") +
+  geom_vline(xintercept = 0.80, color = "red") +
+  facet_wrap(~PEDSEX, scales = "free_y") +
+  xlab("F Value") +
+  ggtitle("Gender Analysis by Original Specification") +
+  theme_classic()
+```
+
+```{r gender_plot2, warning=FALSE}
+#| label: fig-GenderPlotBinary
+#| fig-cap: "Gender analysis results."
+gender$STATUS=as.factor(gender$STATUS)
+gender %>% 
+  mutate(
+    outcome= fct_relevel(
+      STATUS, 
+      c(
+        "PROBLEM", "OK"
+      )
+    )
+  ) %>%
+  ggplot(aes(x=outcome, fill =outcome))+
+  geom_bar(stat = "count", show.legend = F) +
+  xlab("Status") +
+  ggtitle("Homozygosity Gender Analysis") +
+  theme_classic()
+```
+
+```{r HWE_strong}
+#| label: fig-HWE-strong
+#| fig-cap: "HWE distribution strongly deviating SNPs."
+
+data.frame("SNP" = 1:nrow(hwe_zoom),
+           "HWE" = hwe_zoom[,9]) %>%
+  ggplot(aes(x = HWE, color="blue")) +
+  geom_histogram(bins = round(nrow(hwe_zoom)/600, digits = 0), show.legend = F)  +
+  xlab("P-value") +
+  ggtitle("Histogram HWE: strongly deviating SNPs only") +
+  theme_classic()
+```
