@@ -16,7 +16,7 @@
 #################################### Specifying paths #################################################
 
 # Hard-code the path to the Reference folder (containing reference dataset, other bash scripts, and programs' executables like CrossMap, GenomeHarmonizer, PRIMUS, and fraposa)
-REF=/home/gdc/shared/GDC_pipeline/Ref
+REF=/home/gdc/public/Ref
 path_to_repo=PRPO
 FILE=PND
 NAME=FLE
@@ -31,9 +31,7 @@ custom_qc=CSTQC
 cd ${WORK}
 
 ####################################### Environment Setup ##############################################
-
-source /home/faird/shared/code/external/envs/miniconda3/load_miniconda3.sh
-conda activate GDC_pipeline
+source /home/gdc/public/envs/load_miniconda3.sh
 source ${path_to_repo}/src/bash_functions.sh # Helper functions
 module load plink
 module load perl
@@ -169,6 +167,8 @@ restructure_and_clean_outputs ${WORK} ${NAME}
 
 #4. execute run_generate_reports.sh ##
 module load R/4.4.0-openblas-rocky8
+export R_LIBS="/home/gdc/public/Ref/R"
+
 if [ ${report_writer} -eq 1 ]; then
   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
 fi
