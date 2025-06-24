@@ -113,6 +113,34 @@ primus_check_after_call() {
 
 # primus_check_after_call ${primus_check} ## Sample call
 
+run_king_if_needed() {
+  local king_check="$1"
+  local path_to_repo="$2"
+  local WORK="$3"
+  local REF="$4"
+  local NAME="$5"
+  local DATATYPE="$6"
+
+  if [ ! -f "${king_check}" ]; then
+    echo "(Step 3) Relatedness check"
+    ${path_to_repo}/src/run_king.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+  fi
+}
+
+# run_king_if_needed ${king_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ${DATATYPE} ## Sample call
+
+
+king_check_after_call() {
+  local king_check="$1"
+
+  if [ ! -f "${king_check}" ]; then
+    echo "King relatedness check has failed please check the error logs."
+    exit 1
+  fi
+}
+
+# king_check_after_call ${primus_check} ## Sample call
+
 
 run_phasing_if_needed() {
   local WORK="$1"

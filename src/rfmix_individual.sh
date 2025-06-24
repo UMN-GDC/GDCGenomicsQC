@@ -12,13 +12,14 @@
 WORK=$1
 NAME=$2
 CHR=$SLURM_ARRAY_TASK_ID
+REF="/home/gdc/public/Ref"
 
 cd $WORK/rfmix
 
-/home/gdc/and02709/ancestry_OG/rfmix/rfmix \
+${REF}/ancestry_OG/rfmix/rfmix \
  -f $WORK/phased/${NAME}.chr${CHR}.phased.vcf.gz \
- -r /home/gdc/shared/rfmix_ref/hg38_phased.vcf.gz \
- -m /home/gdc/shared/rfmix_ref/super_population_map_file.txt \
- -g /home/gdc/shared/rfmix_ref/genetic_map_hg38.txt \
+ -r ${REF}/rfmix_ref/hg38_phased.vcf.gz \
+ -m ${REF}/rfmix_ref/super_population_map_file.txt \
+ -g ${REF}/rfmix_ref/genetic_map_hg38.txt \
  -o ancestry_chr${CHR} \
  --chromosome=$CHR

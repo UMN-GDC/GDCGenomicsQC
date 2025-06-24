@@ -14,6 +14,7 @@ show_help() {
   echo "--custom_qc						Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering"
   echo "								When providing this flag you will need to answer all of the questions prompted by the terminal"
   echo "--using_rfmix					Enter '1' if you would like to use rfmix to do PCA analysis instead of fraposa"
+  echo "--use_primus			Enter '1' if you would like to use primus to estimate relatedness"
   echo "Default settings: The pipeline by default if flags are not provided will use crossmap, genome harmonizer and will generate the automated reports"
   echo "  --help              Display this help message."
 }
@@ -32,6 +33,7 @@ using_crossmap=1
 using_genome_harmonizer=1
 making_report=1
 custom_qc=0
+use_primus=0
 using_rfmix=1
 desired_working_directory=/scratch.global/gdc
 
@@ -82,6 +84,10 @@ while [[ $# -gt 0 ]]; do
         fi
         shift 2 
       ;;
+    --use_primus )
+        use_primus=$2
+        shift 2
+      ;;
     --making_report)
         making_report="$2"
         if [ ${making_report} -eq 1 ]; then
@@ -122,6 +128,7 @@ ${user_x500} \
 ${desired_working_directory} \
 ${using_crossmap} \
 ${using_genome_harmonizer} \
+${use_primus} \
 ${using_rfmix} \
 ${making_report} \
 ${custom_qc} 

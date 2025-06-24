@@ -19,7 +19,7 @@ sbatch --time 18:00:00 --mem 64GB --array 1-22 --wait -N1 ${path_to_repo}/src/rf
 
 module load R/4.4.0-openblas-rocky8
 
-Rscript ${path_to_repo}/src/gai.R ${WORK} ${NAME}
+Rscript ${path_to_repo}/src/gai2.R ${WORK} ${NAME}
 
 echo "Potential duplication below"
 mkdir $WORK/PCA
@@ -31,4 +31,3 @@ awk '{print $3}' study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
 awk '{print $1 "\t" $2 "\t" $3}' study.$NAME.unrelated.comm.popu > data.txt
 Rscript ${path_to_repo}/src/subpop.R ${WORK} ${NAME}
 #rm *.dat
-echo "End potetntial duplication"

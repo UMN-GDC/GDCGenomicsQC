@@ -30,12 +30,12 @@ for chr in {1..22}; do
     done
 done
 
-python /home/gdc/shared/RFMIX2-Pipeline-to-plot/GAP/Scripts/RFMIX2ToBed4GAP.py --prefix $WORK/visualization/ancestry --output $WORK/visualization
-python /home/gdc/shared/RFMIX2-Pipeline-to-plot/GAP/Scripts/BedToGap.py --input ancestry.bed --out ancestry_GAP.bed
-# python /home/gdc/shared/RFMIX2-Pipeline-to-plot/GAP/Scripts/GAP.py --input ancestry_GAP.bed --output ancestry_GAP.pdf
+python ${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/RFMIX2ToBed4GAP.py --prefix $WORK/visualization/ancestry --output $WORK/visualization
+python ${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/BedToGap.py --input ancestry.bed --out ancestry_GAP.bed
+# python ${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/GAP.py --input ancestry_GAP.bed --output ancestry_GAP.pdf
 
 input_bed="ancestry_GAP.bed"
-gap_script="/home/gdc/shared/RFMIX2-Pipeline-to-plot/GAP/Scripts/GAP.py"
+gap_script="${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/GAP.py"
 output_dir="./GAP_individual_plots"
 
 mkdir -p "$output_dir"
@@ -115,7 +115,7 @@ for chr in {1..22}; do
 done
 
 
-python /home/gdc/shared/RFMIX2-Pipeline-to-plot/LAP/Scripts/RFMIX2ToBed.py --prefix $WORK/visualization/ancestry --output $WORK/visualization
+python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/RFMIX2ToBed.py --prefix $WORK/visualization/ancestry --output $WORK/visualization
 
 mkdir $WORK/LAP_plots
 
@@ -128,10 +128,10 @@ for ind in $(seq 1 "$n_subs"); do
     # Debugging
     echo "Processing: $output_file"
         
-    python /home/gdc/shared/RFMIX2-Pipeline-to-plot/LAP/Scripts/BedToLAP.py --bed1 "$input_file_1" --bed2 "$input_file_2" --out "$output_file"
-    python /home/gdc/shared/RFMIX2-Pipeline-to-plot/LAP/Scripts/LAP.py -I "$output_file" -O "$output_file"
+    python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/BedToLAP.py --bed1 "$input_file_1" --bed2 "$input_file_2" --out "$output_file"
+    python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/LAP.py -I "$output_file" -O "$output_file"
 done
-# python /home/gdc/shared/RFMIX2-Pipeline-to-plot/LAP/Scripts/BedToLAP.py --input ancestry.bed --out ancestry_GAP.bed
-# python /home/gdc/shared/RFMIX2-Pipeline-to-plot/LAP/Scripts/GAP.py --input ancestry_GAP.bed --output ancestry_GAP.pdf
+# python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/BedToLAP.py --input ancestry.bed --out ancestry_GAP.bed
+# python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/GAP.py --input ancestry_GAP.bed --output ancestry_GAP.pdf
 
 
