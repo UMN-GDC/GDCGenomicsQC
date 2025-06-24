@@ -21,6 +21,7 @@ show_help() {
   echo "--user_x500			Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions"
   echo "--use_crossmap			Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38"
   echo "--use_genome_harmonizer 	Enter '1' if you would like to update strand allignment by using genome harmonizer"
+  echo "--use_primus			Enter '1' if you would like to use primus to estimate relatedness"
   echo "--use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry"
   echo "--make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed"
   echo "--custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering"
@@ -45,6 +46,7 @@ path_to_github_repo=$(pwd)
 user_x500=99
 use_crossmap=1
 use_genome_harmonizer=1
+use_primus=0
 use_rfmix=1
 make_report=1
 custom_qc=0
@@ -93,6 +95,10 @@ while [[ $# -gt 0 ]]; do
         	;;
 	--use_genome_harmonizer )
         	use_genome_harmonizer=$2
+        	shift 2
+        	;;
+	--use_primus )
+        	use_primus=$2
         	shift 2
         	;;
 	--use_rfmix )
@@ -148,6 +154,7 @@ echo "github repository path: $path_to_github_repo"
 echo "user: $user_x500"
 echo "crossmap: $use_crossmap"
 echo "genome harmonizer: $use_genome_harmonizer"
+echo "primus: $use_primus"
 echo "genome rfmix: $use_rfmix"
 echo "make report: $make_report"
 echo "custom qc: $custom_qc"
@@ -166,6 +173,7 @@ ${user_x500} \
 ${set_working_directory} \
 ${use_crossmap} \
 ${use_genome_harmonizer} \
+${use_primus} \
 ${use_rfmix} \
 ${make_report} \
 ${custom_qc}

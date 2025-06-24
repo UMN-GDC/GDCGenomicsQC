@@ -20,7 +20,7 @@ mkdir -p $WORK/PCA
 cp $WORK/relatedness/study.$NAME.unrelated.* $WORK/PCA/
 cd $WORK/PCA
 
-sh ${path_to_repo}/src/commvar.sh /home/gdc/shared/rfmix_ref/hg38_phased study.$NAME.unrelated refpref stupref
+sh ${path_to_repo}/src/commvar.sh ${REF}/rfmix_ref/hg38_phased study.$NAME.unrelated refpref stupref
 
 # For controls (reference panel)
 awk '{$6=1; print}' refpref.fam > refpref_recode.fam

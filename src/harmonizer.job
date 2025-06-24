@@ -13,7 +13,7 @@
 module load java/openjdk-17.0.2
 module load plink
 
-REF=/home/gdc/shared/GDC_pipeline/Ref
+REF=/home/gdc/public/Ref
 WORK=$1
 NAME=$2
 OUTDIR="aligned"
