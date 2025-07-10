@@ -1,4 +1,4 @@
-path_to_packages <- "/home/gdc/shared/GDC_pipeline/Ref"
+path_to_packages <- "/home/gdc/public/Ref/R"
 .libPaths(c(path_to_packages, .libPaths()))  # Ensure R looks there for packages
 
 
