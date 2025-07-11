@@ -32,6 +32,8 @@ We perform an initial round of Quality Control prior to runing relatedness check
 
 ### Module 4: Relatedness
 
+We first run kinship test using KING.  This separates the plink dataset into related and unrelated plink study samples.  Many of the subsequent steps involving ancestry estimation require the sample subjects to be unrelated.  To provide some analysis of related subjects we also perform PC-AiR and PC-Relate in this module.  We convert PLINK format to GDS format and perform an initial kinship estimate with the KING algorithm, but pivot to perform Principal Component Analysis and infer genetic ancestry on each inidvidual.  We finally run PC-Relate to calculate highly accurate measures of genetic relatedness. (kinship coefficients, IBD probabilities).
+
 
 
 -   Exclude SNPs with greater than 10% missingness **(Plink)**
