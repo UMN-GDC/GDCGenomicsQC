@@ -64,7 +64,16 @@ We infer ancestry of individual samples using rfmix.  In addition to phased file
 
 We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
 
+### Module 9: ancestry plots
 
+This module provides visualization for ancestry estimation.  We provide two sets of plots.  
+
+-   GAP:  This visualization the proportion of each ancestry in individual samples.
+-   LAP:  This visualization shows most probable posterior ancestry by regions of the chromosome.
+
+### Subpopulation QC
+
+We can also provide individual QC steps stratified by population.
 
 ## Optional Pipeline Output
 
