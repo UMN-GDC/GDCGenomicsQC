@@ -13,6 +13,8 @@ A quality control pipeline for genomics data developed by the Masonic Institute 
 
 ## Standard Procedure *(Done in order)*
 
+### Module 1: Crossmap (optional)
+
 -   Exclude SNPs with greater than 10% missingness **(Plink)**
 
 -   Exclude individuals with greater than 10% missingness **(Plink)**
