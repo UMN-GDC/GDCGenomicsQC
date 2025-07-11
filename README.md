@@ -21,6 +21,19 @@ This moudle converts the genome build to GRCh38.  The default setting is convers
 
 This module aligns sample to the GRCh38 reference genome.  The reference genome alignment file we use is `ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5.vcf` which is designed for the GRCh38 build.  All subsequent steps in this pipeline assume we have an aligned GRCH38 build study sample.  We can control for alignment using the flag `--use_genome_harmonizer`.  The defualt flag setting is `1`, but this can be manually set to `0`.
 
+### Module 3: Initial QC
+
+We perform an initial round of Quality Control prior to runing relatedness checks.
+
+-   Exclude SNPs with greater than 10% missingness **(Plink)**
+-   Exclude individuals with greater than 10% missingness **(Plink)**
+-   Exclude SNPs with greater than 2% missingness **(Plink)**
+-   Exclude individuals with greater than 2% missingness **(Plink)**
+
+### Module 4: Relatedness
+
+
+
 -   Exclude SNPs with greater than 10% missingness **(Plink)**
 
 -   Exclude individuals with greater than 10% missingness **(Plink)**
