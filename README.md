@@ -15,6 +15,10 @@ A quality control pipeline for genomics data developed by the Masonic Institute 
 
 ### Module 1: Crossmap (optional)
 
+-   This moudle converts the genome build to GRCh38.  The default setting is conversion from GRCh37 to GRCh38.  This is controlled for using 
+
+### Module 2: GenotypeHarmonizer (optional)
+
 -   Exclude SNPs with greater than 10% missingness **(Plink)**
 
 -   Exclude individuals with greater than 10% missingness **(Plink)**
