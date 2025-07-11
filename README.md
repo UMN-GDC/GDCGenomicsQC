@@ -58,7 +58,13 @@ We perform phasing using shapeit4.2.  This is necessary to use rfmix to infer an
 
 ### Module 7: rfmix
 
-We infer ancestry of individual samples using rfmix.  In addition to phased file provide by `module 6: phasing`, we also need reference genome that has also been phased, a population map or super population map file, and a genetic map file for GRch 38 build.  In our script we use reference genome `hg38_phased.vcf.gz`, super population map file `super_population_map_file.txt`, and genetic map `genetic_map_hg38.txt`.  Initially we generate posterior probabilities for each ancestry by sample.  These posterior probabilities represent each of the 22 chromosomes.  To get global ancestries for each individual, we take the mean posterior probabilities for each super population across all 22 .Q files.
+We infer ancestry of individual samples using rfmix.  In addition to phased file provide by `module 6: phasing`, we also need reference genome that has also been phased, a population map or super population map file, and a genetic map file for GRch 38 build.  In our script we use reference genome `hg38_phased.vcf.gz`, super population map file `super_population_map_file.txt`, and genetic map `genetic_map_hg38.txt`.  Initially we generate posterior probabilities for each ancestry by sample.  These posterior probabilities represent each of the 22 chromosomes.  To get global ancestries for each individual, we take the mean posterior probabilities for each super population across all 22 .Q files.  Assignment to globabl ancestry is based on the highest posterior probabilty that is greater than 0.8.  If no posterior probablitiy is greater than 0.8, that subject classified as `Other`.
+
+### Module 8: population stratification
+
+We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
+
+
 
 ## Optional Pipeline Output
 
