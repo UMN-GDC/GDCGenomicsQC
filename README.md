@@ -15,7 +15,7 @@ A quality control pipeline for genomics data developed by the Masonic Institute 
 
 ### Module 1: Crossmap (optional)
 
--   This moudle converts the genome build to GRCh38.  The default setting is conversion from GRCh37 to GRCh38.  This is controlled for using 
+-   This moudle converts the genome build to GRCh38.  The default setting is conversion from GRCh37 to GRCh38.  This is controlled using the `--use_crossmap` flag.  The default setting is `1`, but if the build is already GRCh38 this flag should be manually set to `0`.
 
 ### Module 2: GenotypeHarmonizer (optional)
 
