@@ -52,7 +52,13 @@ This runs the standard quality control measures expected of GWAS on unrelated in
 -   Exclude individuals with a pi_hat threshold \> 0.2 **(Primus)**
 -   Principal Component Analysis (**FRAPOSA**)
 
+### Module 6: Phasing
 
+We perform phasing using shapeit4.2.  This is necessary to use rfmix to infer ancestry.  This module first recodes the QC unrleated dataset into vcf format separated by chromosome.  Phasing is then performed using reference map `chr${CHR}.b38.gmap.gz`.  The files are then ready to be run using rfmix.
+
+### Module 7: rfmix
+
+We infer ancestry of individual samples using rfmix.  In addition to phased file provide by `module 6: phasing`, we also need reference genome that has also been phased, a population map or super population map file, and a genetic map file for GRch 38 build.  In our script we use reference genome `hg38_phased.vcf.gz`, super population map file `super_population_map_file.txt`, and genetic map `genetic_map_hg38.txt`.  Initially we generate posterior probabilities for each ancestry by sample.  These posterior probabilities represent each of the 22 chromosomes.  To get global ancestries for each individual, we take the mean posterior probabilities for each super population across all 22 .Q files.
 
 ## Optional Pipeline Output
 
