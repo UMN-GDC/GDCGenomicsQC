@@ -20,8 +20,8 @@ git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
 
 # Usage
 After cloning this repository the steps to run this pipeline are as follows:
-1.	Copy the settings_file_template.sh into your desired working directory. This file is inside the src directory.
-2.	In your copy of the settings_file_template.sh alter lines 3-12 to meet your desired needs.
+1.	To run pipeline: `sh ./GDCGenomicsQC/Run.sh`
+2.	Flags to be appended to run command `sh ./GDCGenomicsQC/Run.sh --flag1 option1 --flag2 option2`
 		
 		Line 3: Should be the path to where you cloned this github repository with the addition of 'src/settings_file_reader.sh'.
 		
