@@ -33,10 +33,9 @@ After cloning this repository the steps to run this pipeline are as follows:
  -	`--use_rfmix`	Enter '1' if you would like to use rfmix to estimate ancestry
  -	`--make_report`	Enter '1' if you would like an automated report to be generated of the qc steps and what was changed
  -	`--custom_qc`	Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering
-3.	Execute or source the copy of the settings_file_template.sh to create a file ending with _wrapper.sh.
-4.	Run the wrapper file created as an sbatch submission. Below is an example of how to do so. 
+3.	This script can also be executed using the sbatch command
 	```shell
-	sbatch sample_wrapper.sh
+	sbatch ./GDCGenomicsQC/Run.sh --set_working_directory $PWD --input_directory ${PWD}/input_data --input_file_name study_stem --path_to_github_repo ${PWD}/GDCGenomicsQC --user_x500 sample213
 	```
 
 ![GDC_pipeline_overview](https://github.com/UMN-GDC/GDCGenomicsQC/assets/140092486/e7f11909-9ab8-4def-90e5-c5f67c28a4bb)
