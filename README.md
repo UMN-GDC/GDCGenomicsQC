@@ -9,6 +9,15 @@
 
 A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing Plink, Liftover, R-language, Python, and Bashed, and can be housed in a Docker image.
 
+# Installation
+## Git clone
+```shell
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+```
+### Reqirements
+-	Access to MSI computing resources.
+-	Genomic files in plink bed formatting (bim, bed, & fam)
+
 ![GDC_pipeline_overview](https://github.com/UMN-GDC/GDCGenomicsQC/assets/140092486/e7f11909-9ab8-4def-90e5-c5f67c28a4bb)
 
 ## Standard Procedure *(Done in order)*
@@ -79,15 +88,6 @@ We can also provide individual QC steps stratified by population.
 
 -   Gather information from log files created by standardized steps and create an automated report with tables and figures regarding each step.
 
-
-# Installation
-## Git clone
-```shell
-git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
-```
-### Reqirements
--	Access to MSI computing resources.
--	Genomic files in plink bed formatting (bim, bed, & fam)
 
 
 # Usage
