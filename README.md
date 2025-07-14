@@ -24,6 +24,15 @@ After cloning this repository the steps to run this pipeline are as follows:
 2.	Flags to be appended to run command `sh ./GDCGenomicsQC/Run.sh --flag1 option1 --flag2 option2`
  -	`--set_working_directory`	Provide a path to where you'd like the outputs to be stored
  -	`--input_directory`	Provide the path to where the bim/bed/fam data is stored
+ -	`--input_file_name`	Provide a path to where you'd like the outputs to be stored
+ -	`--path_to_github_repo`	Provide the path to where the bim/bed/fam data is stored
+ -	`--user_x500`	Provide a path to where you'd like the outputs to be stored
+ -	`--use_crossmap`	Provide the path to where the bim/bed/fam data is stored
+ -	`--use_genome_harmonizer`	Provide a path to where you'd like the outputs to be stored
+ -	`--use_genome_harmonizer`	Provide the path to where the bim/bed/fam data is stored
+ -	`--use_genome_harmonizer`	Provide the path to where the bim/bed/fam data is stored
+ -	`--use_genome_harmonizer`	Provide the path to where the bim/bed/fam data is stored
+ -	`--use_genome_harmonizer`	Provide the path to where the bim/bed/fam data is stored
 3.	Execute or source the copy of the settings_file_template.sh to create a file ending with _wrapper.sh.
 4.	Run the wrapper file created as an sbatch submission. Below is an example of how to do so. 
 	```shell
