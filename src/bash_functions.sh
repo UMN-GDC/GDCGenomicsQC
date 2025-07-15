@@ -377,6 +377,7 @@ restructure_and_clean_outputs() {
   mv -f ${WORK}/aligned ${WORK}/temp/
   mv -f ${WORK}/lifted ${WORK}/temp/
   mv -f ${WORK}/logs ${WORK}/temp/
+  mv -f ${WORK}/Initial_QC ${WORK}/temp/Initial_QC
   mv -f ${WORK}/phased ${WORK}/temp/
   mv -f ${WORK}/rfmix ${WORK}/temp/
   mv -f ${WORK}/PCA ${WORK}/temp/
