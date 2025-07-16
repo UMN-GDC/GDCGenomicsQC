@@ -12,10 +12,10 @@
 WORK=$1
 REF=$2
 NAME=$3
-OUTDIR=$4
+DATATYPE=$4
 path_to_repo=$5
 
 mkdir $WORK/phased
-sbatch --time 4:00:00 --mem 16GB --array 1-22 --wait -N1 ${path_to_repo}/src/phase_individual.sh ${WORK} ${NAME} ${REF} ${OUTDIR}
+sbatch --time 4:00:00 --mem 16GB --array 1-22 --wait -N1 ${path_to_repo}/src/phase_individual.sh ${WORK} ${NAME} ${REF} ${DATATYPE}
 
 
