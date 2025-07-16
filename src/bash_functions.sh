@@ -216,7 +216,7 @@ run_phasing_if_needed() {
 
   # If any file is missing, run the phasing script
   if ! $all_exist; then
-    sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}" "${DATATYPE}"
+    sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${DATATYPE}" "${path_to_repo}"
   fi
 }
 
