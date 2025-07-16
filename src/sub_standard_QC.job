@@ -54,7 +54,3 @@ Rscript --no-save $REF/src/heterozygosity_outliers_list.R
 sed 's/"// g' fail-het-qc.txt | awk '{print$1, $2}'> het_fail_ind.txt 
 # plink --bfile $OUTDIR.QC7 --remove het_fail_ind.txt --make-bed --out $OUTDIR.QC8
 plink --bfile $OUTDIR.QC7 --make-bed --out $OUTDIR.QC8
-
-# Extract snps retained in $OUTDIR.QC8
-plink --bfile $OUTDIR/QC8 --write-snplist --out $OUTDIR/QC8
-plink --bfile ${WORK}/relatedness/study.${NAME}.related --extract $OUTDIR.QC8.snplist --make-bed --out study.${NAME}.related.QC8snps
