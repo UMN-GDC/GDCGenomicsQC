@@ -13,13 +13,13 @@ WORK=$1
 NAME=$2
 CHR=$SLURM_ARRAY_TASK_ID
 REF=$3
-OUTDIR=$4
+DATATYPE=$4
 
 cd $WORK/phased
 module load plink
 module load bcftools
 
-plink --bfile $WORK/$OUTDIR/${OUTDIR}.QC8 --chr $CHR --recode vcf --out ${NAME}.chr${CHR}
+plink --bfile $WORK/$DATATYPE/${DATATYPE}.QC8 --chr $CHR --recode vcf --out ${NAME}.chr${CHR}
 bgzip -c ${NAME}.chr${CHR}.vcf > ${NAME}.chr${CHR}.vcf.gz
 bcftools index -f ${NAME}.chr${CHR}.vcf.gz
 
