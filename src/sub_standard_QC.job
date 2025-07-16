@@ -5,24 +5,22 @@
 #SBATCH --mem=30GB
 #SBATCH --time=1:00:00
 #SBATCH -p agsmall
-#SBATCH -o QC.out
-#SBATCH -e QC.err
-#SBATCH --job-name QC
+#SBATCH -o sub_QC.out
+#SBATCH -e sub_QC.err
+#SBATCH --job-name sub_QC
 
 module load plink
 module load R
 
 WORK=$1
-NAME=$2
+FILE=$2
 REF=$3
 OUTDIR=$4
 
-cd $WORK
-mkdir -p $OUTDIR
-cd $OUTDIR
+cd ${WORK}/${OUTDIR}
 
 # Marker missingness initial filter
-plink --bfile ${WORK}/relatedness/study.${NAME}.unrelated --geno 0.1 --make-bed --out $OUTDIR.QC1
+plink --bfile $FILE --geno 0.1 --make-bed --out $OUTDIR.QC1
 
 # Sample missingness initial filter
 plink --bfile $OUTDIR.QC1 --mind 0.1 --make-bed --out $OUTDIR.QC2
