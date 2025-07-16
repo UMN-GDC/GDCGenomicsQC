@@ -13,6 +13,7 @@ WORK=$1
 NAME=$2
 CHR=$SLURM_ARRAY_TASK_ID
 REF=$3
+OUTDIR=$4
 
 cd $WORK/phased
 module load plink
