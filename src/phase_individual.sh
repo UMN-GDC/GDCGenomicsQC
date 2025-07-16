@@ -19,7 +19,7 @@ cd $WORK/phased
 module load plink
 module load bcftools
 
-plink --bfile $WORK/relatedness/study.$NAME.unrelated --chr $CHR --recode vcf --out ${NAME}.chr${CHR}
+plink --bfile $WORK/$OUTDIR/${OUTDIR}.QC8 --chr $CHR --recode vcf --out ${NAME}.chr${CHR}
 bgzip -c ${NAME}.chr${CHR}.vcf > ${NAME}.chr${CHR}.vcf.gz
 bcftools index -f ${NAME}.chr${CHR}.vcf.gz
 
