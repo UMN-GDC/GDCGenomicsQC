@@ -197,6 +197,7 @@ run_phasing_if_needed() {
   local REF="$2"
   local NAME="$3"
   local path_to_repo="$4"
+  local DATATYPE="$5"
 
   # Generate the list of expected phase files
   local phase_files=()
@@ -215,7 +216,7 @@ run_phasing_if_needed() {
 
   # If any file is missing, run the phasing script
   if ! $all_exist; then
-    sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
+    sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}" "${DATATYPE}"
   fi
 }
 
