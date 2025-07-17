@@ -12,17 +12,15 @@
 module load plink
 module load R
 
-WORK=$1
-NAME=$2
+FILE=$1
+OUTDIR=$2
 REF=$3
-OUTDIR=$4
 
-cd $WORK
 mkdir -p $OUTDIR
 cd $OUTDIR
 
 # Marker missingness initial filter
-plink --bfile ${WORK}/relatedness/study.${NAME}.unrelated --geno 0.1 --make-bed --out $OUTDIR.QC1
+plink --bfile $FILE --geno 0.1 --make-bed --out $OUTDIR.QC1
 
 # Sample missingness initial filter
 plink --bfile $OUTDIR.QC1 --mind 0.1 --make-bed --out $OUTDIR.QC2
@@ -56,8 +54,3 @@ Rscript --no-save $REF/src/heterozygosity_outliers_list.R
 sed 's/"// g' fail-het-qc.txt | awk '{print$1, $2}'> het_fail_ind.txt 
 # plink --bfile $OUTDIR.QC7 --remove het_fail_ind.txt --make-bed --out $OUTDIR.QC8
 plink --bfile $OUTDIR.QC7 --make-bed --out $OUTDIR.QC8
-
-# Extract snps retained in $OUTDIR.QC8
-plink --bfile $OUTDIR/QC8 --write-snplist --out $OUTDIR/QC8
-plink --bfile ${WORK}/relatedness/study.${NAME}.related --extract $OUTDIR.QC8.snplist --make-bed --out study.${NAME}.related.QC8snps
-

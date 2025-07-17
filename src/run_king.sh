@@ -1,14 +1,22 @@
-#!/bin/bash
+#!/bin/bash -l
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64GB
+#SBATCH --time=12:00:00
+#SBATCH -p agsmall
+#SBATCH -o king.out
+#SBATCH -e king.err
+#SBATCH --job-name king
 
 WORK=$1           # e.g., /scratch.global/and02709
 REF=$2            # unused for now
 NAME=$3           # e.g., SMILES_GDA
 path_to_repo=$4   # Repo used in other steps not yet performed
-DATATYPE=$5       # e.g., full
 
 # Derived paths
 ROOT_DIR=$WORK/relatedness
-PLINK_FILE=$WORK/$DATATYPE/${DATATYPE}.QC8
+PLINK_FILE=$WORK/Initial_QC/QC4
 KING_REPO=/home/gdc/shared/king
 
 # Create directory

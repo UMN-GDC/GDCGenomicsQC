@@ -23,7 +23,7 @@ NAME=FLE
 WORK=WK
 crossmap=CRSMP
 genome_harmonizer=GNHRM
-primus=PRMUS
+king=KING
 rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
@@ -60,6 +60,35 @@ else # Default behavior
 fi
 #######################################################################################################
 
+###################################### Initial QC #####################################################
+echo "Variants and samples filtering"
+# Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
+cd $WORK
+file_to_check_qc=${WORK}/Initial_QC/QC4.bim
+run_initial_qc_if_needed ${file_to_check_qc} ${path_to_repo} ${file_to_submit}
+initial_qc_check_after_call ${file_to_check_qc}
+
+########################################################################################################
+
+######################################## Pedigree ######################################################
+
+echo "(Step 4) Relatedness"
+if [ ${king} -eq 1 ]; then
+  cd $WORK
+  king_check=$WORK/relatedness/study.$NAME.unrelated.bim
+  run_king_if_needed ${king_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+  king_check_after_call ${king_check}
+  echo "(Step 4b) Ancestry and kinship adjustment via PC-AiR / PC-Relate"
+  pcair_check=$WORK/relatedness/study.$NAME.unrelated.bim
+  run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+  pca_ir_check_after_call ${pcair_check}
+else
+  primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
+  run_primus_if_needed ${primus_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+  primus_check_after_call ${primus_check}
+fi
+
+#########################################################################################################
 
 ###################################### QC #############################################################
 echo "Variants and samples filtering"
@@ -71,26 +100,10 @@ if [ ${custom_qc} -eq 1 ]; then
   sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
   file_to_check_qc=${WORK}/${DATATYPE}/${DATATYPE}.QC8.bim
-  run_standard_qc_if_needed ${file_to_check_qc} ${path_to_repo} ${file_to_submit} ${DATATYPE}
+  run_standard_qc_if_needed ${file_to_check_qc} ${WORK} ${NAME} ${path_to_repo} ${DATATYPE}
   standard_qc_check_after_call ${file_to_check_qc}
 fi
 ########################################################################################################
-
-
-######################################## Pedigree ######################################################
-
-echo "(Step 4) Relatedness"
-if [ ${primus} -eq 1 ]; then
-  primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
-  run_primus_if_needed ${primus_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ${DATATYPE}
-  primus_check_after_call ${primus_check}
-else
-  cd $WORK
-  king_check=$WORK/relatedness/study.$NAME.unrelated.bim
-  run_king_if_needed ${king_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ${DATATYPE}
-  king_check_after_call ${king_check}
-fi
-#########################################################################################################
 
 
 ######################################## Phasing ########################################################
