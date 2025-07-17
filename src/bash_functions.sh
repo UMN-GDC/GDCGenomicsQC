@@ -40,7 +40,7 @@ run_genome_harmonizer_if_needed() {
 
   if [ ! -f "${file_to_submit}.bim" ]; then
     echo "Begin genome harmonization"
-    ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
+    sbatch ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
   fi
 }
 
