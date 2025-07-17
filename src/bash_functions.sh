@@ -58,15 +58,39 @@ genome_harmonizer_check_after_call() {
 
 # genome_harmonizer_check_after_call ${file_to_submit} ## Sample call 
 
-
-run_standard_qc_if_needed() {
+run_initial_qc_if_needed() {
   local file_to_check_qc="$1"
   local path_to_repo="$2"
   local file_to_submit="$3"
-  local DATATYPE="$4"
 
   if [ ! -f "${file_to_check_qc}" ]; then
-    sbatch --wait ${path_to_repo}/src/standard_QC.job ${file_to_submit} ${DATATYPE} ${path_to_repo}
+    sbatch --wait ${path_to_repo}/src/initial_QC.sh ${file_to_submit} ${path_to_repo}
+  fi
+}
+
+# run_standard_qc_if_needed ${file_to_check_qc} ${path_to_repo} ${file_to_submit} ${DATATYPE} ## Sample call
+
+
+initial_qc_check_after_call() {
+  local file_to_check_qc="$1"
+
+  if [ ! -f "${file_to_check_qc}" ]; then
+    echo "Standard QC steps have failed please check the error logs."
+    exit 1
+  fi
+}
+
+# standard_qc_check_after_call() ${file_to_check_qc} ## Sample call
+
+run_standard_qc_if_needed() {
+  local file_to_check_qc="$1"
+  local WORK="$2"
+  local NAME="$3"
+  local path_to_repo="$4"
+  local DATATYPE="$5"
+
+  if [ ! -f "${file_to_check_qc}" ]; then
+    sbatch --wait ${path_to_repo}/src/standard_QC.job ${WORK} ${NAME} ${path_to_repo} ${DATATYPE}
   fi
 }
 
@@ -139,7 +163,33 @@ king_check_after_call() {
   fi
 }
 
-# king_check_after_call ${primus_check} ## Sample call
+# king_check_after_call ${king_check} ## Sample call
+
+run_pca_ir_if_needed() {
+  local pcair_check="$1"
+  local path_to_repo="$2"
+  local WORK="$3"
+  local REF="$4"
+  local NAME="$5"
+
+  if [ ! -f "${pcair_check}" ]; then
+    echo "(Step 3) Running PC-AiR and PC-Relate"
+    ${path_to_repo}/src/run_pcair.sh ${WORK} ${REF} ${NAME} ${path_to_repo} 
+  fi
+}
+
+# run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME} ## Sample call
+
+pca_ir_check_after_call() {
+  local pcair_check="$1"
+
+  if [ ! -f "${pcair_check}" ]; then
+    echo "PC-AiR and PC-Relate relatedness check has failed please check the error logs."
+    exit 1
+  fi
+}
+
+# pca_ir_check_after_call ${pcair_check} ## Sample call
 
 
 run_phasing_if_needed() {
@@ -282,8 +332,8 @@ subset_ancestries_run_standard_qc() {
     if [ ${custom_qc} -eq 1 ]; then
     ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
       sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-    else # Default behavior
-      sbatch ${path_to_repo}/src/standard_QC.job ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+    else # Default behavior      
+      sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK} ${DATATYPE} ${path_to_repo}
     fi
   done
 }
