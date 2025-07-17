@@ -11,7 +11,7 @@ run_crossmap_if_needed() {
 
   if [ ! -f "${crossmap_check}" ]; then
     echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-    "${path_to_repo}/src/run_crossmap.sh" "${WORK}" "${REF}" "${FILE}" "${NAME}" "${path_to_repo}"
+    sbatch "${path_to_repo}/src/run_crossmap.sh" "${WORK}" "${REF}" "${FILE}" "${NAME}" "${path_to_repo}"
   fi
 }
 
