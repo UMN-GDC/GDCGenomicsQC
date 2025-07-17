@@ -11,7 +11,7 @@ run_crossmap_if_needed() {
 
   if [ ! -f "${crossmap_check}" ]; then
     echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-    sbatch ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
+    sbatch --wait ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
   fi
 }
 
@@ -40,7 +40,7 @@ run_genome_harmonizer_if_needed() {
 
   if [ ! -f "${file_to_submit}.bim" ]; then
     echo "Begin genome harmonization"
-    sbatch ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
+    sbatch --wait ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
   fi
 }
 
