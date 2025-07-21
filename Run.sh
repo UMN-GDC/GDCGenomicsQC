@@ -115,6 +115,10 @@ while [[ $# -gt 0 ]]; do
         	custom_qc=$2
         	shift 2
         	;;
+	 --custom_ancestry )
+        	custom_ancestry=$2
+        	shift 2
+        	;;
     --help )
 			show_help
 			shift 2
