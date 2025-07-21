@@ -140,6 +140,7 @@ if [ ${rfmix_option} -eq 1 ]; then
 else # Alternative behavior
   echo "Plot module only for rfmix"
 fi
+exit 1
 #########################################################################################################
 
 
