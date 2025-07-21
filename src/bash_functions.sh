@@ -334,9 +334,8 @@ subset_ancestries_run_standard_qc() {
     if [ ${custom_qc} -eq 1 ]; then
     ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
       sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-    else # Default behavior
-      sbatch ${path_to_repo}/src/sub_standard_QC.job ${WORK} ${FILE} ${path_to_repo} ${DATATYPE}
-      # sbatch ${path_to_repo}/src/sub_standard_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+    else # Default behavior      
+      sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK} ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${path_to_repo}
     fi
   done
 }
