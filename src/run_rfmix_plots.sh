@@ -95,8 +95,8 @@ rm header.tmp individual_ids.txt
 
 mv ./GAP_individual_plots $WORK/GAP_plots
 
-mv ancestry.bed ancestry_GAP_posterior.bed
-cp ancestry_GAP_posterior.bed $WORK/GAP_plots/ancestry_GAP_posterior.bed
+cp ancestry.bed $WORK/ancestry.txt
+cp ancestry.bed $WORK/GAP_plots/ancestry_GAP_posterior.bed
 
 
 for chr in {1..22}; do
