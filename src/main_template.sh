@@ -110,8 +110,8 @@ fi
 echo "(Step 5) Phasing"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  run_phasing_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo} 
-  phasing_check_after_call ${WORK} ${NAME}
+  run_phasing_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+  phasing_check_after_call ${WORK} ${NAME} ${DATATYPE}
 else
   echo "Skip phasing and move to Fraposa"
 fi

@@ -11,7 +11,7 @@ run_crossmap_if_needed() {
 
   if [ ! -f "${crossmap_check}" ]; then
     echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-    "${path_to_repo}/src/run_crossmap.sh" "${WORK}" "${REF}" "${FILE}" "${NAME}" "${path_to_repo}"
+    sbatch --wait ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
   fi
 }
 
@@ -40,7 +40,7 @@ run_genome_harmonizer_if_needed() {
 
   if [ ! -f "${file_to_submit}.bim" ]; then
     echo "Begin genome harmonization"
-    ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
+    sbatch --wait ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
   fi
 }
 
@@ -197,6 +197,7 @@ run_phasing_if_needed() {
   local REF="$2"
   local NAME="$3"
   local path_to_repo="$4"
+  local DATATYPE="$5"
 
   # Generate the list of expected phase files
   local phase_files=()
@@ -215,7 +216,7 @@ run_phasing_if_needed() {
 
   # If any file is missing, run the phasing script
   if ! $all_exist; then
-    sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
+    sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${DATATYPE}" "${path_to_repo}"
   fi
 }
 
@@ -328,7 +329,8 @@ subset_ancestries_run_standard_qc() {
   local path_to_repo="$5"
 
   for DATATYPE in ${ETHNICS}; do
-    plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned
+    mkdir -p $DATATYPE
+    plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned
     if [ ${custom_qc} -eq 1 ]; then
     ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
       sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
@@ -377,6 +379,7 @@ restructure_and_clean_outputs() {
   mv -f ${WORK}/aligned ${WORK}/temp/
   mv -f ${WORK}/lifted ${WORK}/temp/
   mv -f ${WORK}/logs ${WORK}/temp/
+  mv -f ${WORK}/Initial_QC ${WORK}/temp/Initial_QC
   mv -f ${WORK}/phased ${WORK}/temp/
   mv -f ${WORK}/rfmix ${WORK}/temp/
   mv -f ${WORK}/PCA ${WORK}/temp/
