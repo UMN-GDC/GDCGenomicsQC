@@ -27,6 +27,7 @@ king=KING
 rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
+custom_ancestry=CSTANC
 
 cd ${WORK}
 
