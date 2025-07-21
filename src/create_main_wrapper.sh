@@ -12,6 +12,7 @@ using_king=$8
 using_rfmix=$9
 making_report=${10}
 custom_qc=${11}
+custom_ancestry=${12}
 
 output=${desired_working_directory}/${input_file_name}_wrapper.sh
 mkdir -p ${desired_working_directory}
@@ -26,4 +27,5 @@ sed -i 's@GNHRM@'${using_genome_harmonizer}'@' ${output}
 sed -i 's@KING@'${using_king}'@' ${output}
 sed -i 's@RPT@'${making_report}'@' ${output}
 sed -i 's@CSTQC@'${custom_qc}'@' ${output}
+sed -i 's@CSTANC@'${custom_ancestry}'@' ${output}
 sed -i 's@RFMX@'${using_rfmix}'@' ${output} 
