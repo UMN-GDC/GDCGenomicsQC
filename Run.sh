@@ -25,6 +25,7 @@ show_help() {
   echo "--use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry"
   echo "--make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed"
   echo "--custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering"
+  echo "--custom_ancestry		Enter '1' if you would like to use your own ancestry assignment algorithm"
   echo "					When providing this flag you will need to answer all of the questions prompted by the terminal"
   echo "Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports"
   echo "--help				Display this help message."
