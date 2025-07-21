@@ -131,8 +131,26 @@ fi
 ##########################################################################################################
 
 
+############################################ PCA #########################################################
+echo "PCA"
+sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+##########################################################################################################
+
+
+######################################## Ancestry Plots ##################################################
+echo "(Step 7) ancestry plots"
+if [ ${rfmix_option} -eq 1 ]; then
+  sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  rm -r ${WORK}/visualization
+  Rscript ${path_to_repo}/src/plot_pca.R ${WORK}
+else # Alternative behavior
+  echo "Plot module only for rfmix"
+fi
+#########################################################################################################
+
+
 ###################################### Subpopulations ####################################################
-echo "(Step 7) Subpopulations"
+echo "(Step 8) Subpopulations"
 subpop_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
@@ -142,24 +160,6 @@ else # Alternative behavior
 fi
 subpop_check_after_call ${subpop_check}
 ##########################################################################################################
-
-
-############################################ PCA #########################################################
-echo "PCA"
-sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-##########################################################################################################
-
-
-######################################## Ancestry Plots ##################################################
-echo "(Step 8) ancestry plots"
-if [ ${rfmix_option} -eq 1 ]; then
-  sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-  rm -r ${WORK}/visualization
-  Rscript ${path_to_repo}/src/plot_pca.R ${WORK}
-else # Alternative behavior
-  echo "Plot module only for rfmix"
-fi
-#########################################################################################################
 
 
 ################### Subset data based on Ethnicity and Rerun QC (Step 2) on the subsets #################
