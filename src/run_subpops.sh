@@ -16,6 +16,7 @@ path_to_repo=$4
 
 module load R/4.4.0-openblas-rocky8
 
+cd $WORK
 Rscript ${path_to_repo}/src/gai2.R ${WORK} ${NAME}
 
 echo "Potential duplication below"
