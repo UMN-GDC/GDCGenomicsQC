@@ -51,6 +51,7 @@ use_king=1
 use_rfmix=1
 make_report=1
 custom_qc=0
+custom_ancestry=0
 flag=0
 
 
@@ -58,8 +59,8 @@ flag=0
 getopt -T &>/dev/null
 if [[ $? -ne 4 ]]; then echo "Getopt is too old!" >&2 ; exit 1 ; fi
 
-declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,use_rfmix,make_report,custom_qc,help}
-OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,help' -n "$0" -- "$@")
+declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,use_rfmix,make_report,custom_qc,custom_ancestry,help}
+OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,help' -n "$0" -- "$@")
     # *** Added -o '' ; surrounted the longoptions by ''
 if [[ $? -ne 0 ]] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     # *** This has to be right after the OPTS= assignment or $? will be overwritten
