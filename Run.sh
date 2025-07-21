@@ -164,6 +164,7 @@ echo "king: $use_king"
 echo "genome rfmix: $use_rfmix"
 echo "make report: $make_report"
 echo "custom qc: $custom_qc"
+echo "custom ancestry: $custom_ancestry"
 
 if [ ${custom_qc} -eq 1 ]; then
           echo "You have chosen to customize the standard qc steps, please answer all of the following questions"
