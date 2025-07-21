@@ -183,7 +183,8 @@ ${use_genome_harmonizer} \
 ${use_king} \
 ${use_rfmix} \
 ${make_report} \
-${custom_qc}
+${custom_qc} \
+${custom_ancestry}
 
 sleep 0.5
 
