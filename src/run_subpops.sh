@@ -17,7 +17,21 @@ path_to_repo=$4
 module load R/4.4.0-openblas-rocky8
 
 cd $WORK
-Rscript ${path_to_repo}/src/gai2.R ${WORK} ${NAME}
+mkdir -p $WORK/ancestry_estimation
+cd $WORK/ancestry_estimation
+# Rscript ${path_to_repo}/src/gai2.R ${WORK} ${NAME}
+n_subs=$(wc -l < $WORK/relatedness/study.$NAME.unrelated.fam)
+n_rfmix_rows=$(wc -l < $WORK/rfmix/ancestry_chr1.rfmix.Q)
+
+for chr in {1..22}; do
+    input_file="$WORK/rfmix/ancestry_chr${chr}.rfmix.Q"
+
+    for ind in $(seq 3 "$n_rfmix_rows"); do
+        individual_index=$((ind - 2))
+        output_file="$WORK/ancestry_estimation/ancestry${individual_index}_chr${chr}.rfmix.Q"
+        sed -n -e "1p" -e "2p" -e "${ind}p" "$input_file" > "$output_file"
+    done
+done
 
 echo "Potential duplication below"
 mkdir $WORK/PCA
