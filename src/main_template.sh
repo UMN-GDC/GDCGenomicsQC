@@ -135,7 +135,7 @@ fi
 echo "(Step 7) ancestry plots"
 if [ ${rfmix_option} -eq 1 ]; then
   sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-  rm -r ${WORK}/visualization
+  # rm -r ${WORK}/visualization
   Rscript ${path_to_repo}/src/plot_pca.R ${WORK}
 else # Alternative behavior
   echo "Plot module only for rfmix"
