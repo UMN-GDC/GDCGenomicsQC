@@ -5,9 +5,9 @@
 #SBATCH --mem=8GB
 #SBATCH --time=48:00:00
 #SBATCH -p agsmall
-#SBATCH -o rfmix_all.out
-#SBATCH -e rfmix_all.err
-#SBATCH --job-name rfmix_all
+#SBATCH -o subpops.out
+#SBATCH -e subpops.err
+#SBATCH --job-name subpops
 
 WORK=$1
 REF=$2

@@ -387,6 +387,7 @@ restructure_and_clean_outputs() {
   mv -f ${WORK}/LAP_plots ${WORK}/temp/
   mv -f ${WORK}/relatedness ${WORK}/temp/
   mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
+  mv -f ${WORK}/ancestry_estimation ${WORK}/temp/
   mv -f ${WORK}/*.out ${WORK}/temp/logs/out/
   mv -f ${WORK}/*.err ${WORK}/temp/logs/errors/
 

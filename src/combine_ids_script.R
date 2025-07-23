@@ -2,6 +2,7 @@ library(tidyverse)
 
 args <- commandArgs(trailingOnly = TRUE)
 dir <- args[1]
+name <- args[2]
 
 # Read ancestry file, skipping headers
 ancestry <- read.table("ancestry.bed", skip = 2, header = FALSE)
@@ -21,4 +22,4 @@ final <- merged[, c("individual_id", "AFR", "AMR", "EAS", "EUR", "SAS")]
 colnames(final) <- c("sample", "AFR", "AMR", "EAS", "EUR", "SAS")
 
 # Save the result
-write.table(final, "ancestry.txt", sep = "\t", quote = FALSE, row.names = FALSE
+write.table(final, paste0("ancestry_", name,".txt"), sep = "\t", quote = FALSE, row.names = FALSE)
