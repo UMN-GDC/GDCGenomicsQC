@@ -113,11 +113,14 @@ We can also provide individual QC steps stratified by population.
 ## Docker ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 Still in development
 
-## Individual Module Usage *(Done in order)*
+## Individual Module Usage
 
 ### Module 1: Crossmap (optional)
 
-This moudle converts the genome build to GRCh38.  The default setting is conversion from GRCh37 to GRCh38.  This is controlled using the `--use_crossmap` flag.  The default setting is `1`, but if the build is already GRCh38 this flag should be manually set to `0`.
+Requirements:
+
+-	CrossMap.py
+-	GRCh37_to_GRCh38.chain.gz
 
 ### Module 2: GenotypeHarmonizer (optional)
 
