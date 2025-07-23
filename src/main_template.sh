@@ -135,40 +135,40 @@ fi
 echo "(Step 7) ancestry plots"
 if [ ${rfmix_option} -eq 1 ]; then
   sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-  # rm -r ${WORK}/visualization
-  Rscript ${path_to_repo}/src/plot_pca.R ${WORK}
+  rm -r ${WORK}/visualization
 else # Alternative behavior
   echo "Plot module only for rfmix"
 fi
-exit 1
-#########################################################################################################
-
-
-###################################### Subpopulations ####################################################
-echo "(Step 8) Subpopulations"
-subpop_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
-if [ ${rfmix_option} -eq 1 ]; then
-  ## requires a text file that has all of the flags and specifications
-  run_subpopulations_if_needed ${subpop_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
-else # Alternative behavior
-  echo "Skip subpopulations"
-fi
-subpop_check_after_call ${subpop_check}
 ##########################################################################################################
 
 
 ############################################ PCA #########################################################
-echo "(Step 9) PCA"
+echo "(Step 8) PCA"
 sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+##########################################################################################################
+
+
+###################################### Subpopulations ####################################################
+echo "(Step 9) Subpopulations"
+subpop_check=${WORK}/ancestry_estimation/study.${NAME}.unrelated.comm.popu
+if [ ${rfmix_option} -eq 1 ]; then
+  ## requires a text file that has all of the flags and specifications
+  run_subpopulations_if_needed ${subpop_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+  Rscript ${path_to_repo}/src/plot_pca.R ${WORK}
+else # Alternative behavior
+  echo "Skip subpopulations"
+fi
+subpop_check_after_call ${subpop_check}
+exit 1
 ##########################################################################################################
 
 
 ################### Subset data based on Ethnicity and Rerun QC (Step 2) on the subsets #################
 cd ${WORK}
 if [ ${rfmix_option} -eq 1 ]; then
-  ETHNICS=$(awk '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+  ETHNICS=$(awk '{print $3}' ${WORK}/ancestry_estimation/study.${NAME}.unrelated.comm.popu | sort | uniq)
 else # Alternative behavior
-  ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+  ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/ancestry_estimation/study.${NAME}.unrelated.comm.popu | sort | uniq)
 fi
 
 subset_ancestries_run_standard_qc "${ETHNICS}" ${WORK} ${NAME} ${custom_qc} ${path_to_repo}
