@@ -159,7 +159,6 @@ else # Alternative behavior
   echo "Skip subpopulations"
 fi
 subpop_check_after_call ${subpop_check}
-exit 1
 ##########################################################################################################
 
 
