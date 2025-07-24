@@ -256,7 +256,7 @@ This module provides visualization for ancestry estimation.  We provide two sets
 
 Need to prepare files like this:
 
-`
+```
 for chr in {1..22}; do
     input_file="$WORK/rfmix/ancestry_chr${chr}.rfmix.Q"
     for ind in $(seq 3 "$n_rfmix_rows"); do
@@ -269,10 +269,10 @@ for chr in {1..22}; do
         fi
     done
 done
-`
+```
 Pipeline for Global Ncestry Plots
 
-`
+```
 python ${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/RFMIX2ToBed4GAP.py --prefix $WORK/visualization/ancestry --output $WORK/visualization
 python ${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/BedToGap.py --input ancestry.bed --out ancestry_GAP.bed
 input_bed="ancestry_GAP.bed"
@@ -310,11 +310,11 @@ if [ "${#ids_batch[@]}" -gt 0 ]; then
     python "$gap_script" --input "$batch_file" --output "$batch_pdf"
     rm "$batch_file"
 fi
-`
+```
 
 -   LAP:  This visualization shows most probable posterior ancestry by regions of the chromosome.
 
-`
+```
 n_subs=${#sample_ids[@]}
 for chr in {1..22}; do
     input_file="$WORK/rfmix/ancestry_chr${chr}.msp.tsv"
@@ -337,7 +337,7 @@ for ind in $(seq 1 "$n_subs"); do
     python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/BedToLAP.py --bed1 "$input_file_1" --bed2 "$input_file_2" --out "$output_file"
     python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/LAP.py -I "$output_file" -O "$output_LAP"
 done
-`
+```
 
 ### Subpopulation QC
 
