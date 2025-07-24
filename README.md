@@ -259,12 +259,10 @@ Need to prepare files like this:
 `
 for chr in {1..22}; do
     input_file="$WORK/rfmix/ancestry_chr${chr}.rfmix.Q"
-
     for ind in $(seq 3 "$n_rfmix_rows"); do
         individual_index=$((ind - 2))
         output_file="$WORK/visualization/ancestry${individual_index}_chr${chr}.rfmix.Q"
         sed -n -e "1p" -e "2p" -e "${ind}p" "$input_file" > "$output_file"
-
         if [ "$chr" -eq 1 ]; then
             sample_index=$((individual_index - 1))
             echo -e "${individual_index}\t${sample_ids[$sample_index]}" >> "$mapping_file"
