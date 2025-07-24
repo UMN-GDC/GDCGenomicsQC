@@ -197,6 +197,17 @@ Here are the recommended steps for Standard QC (must be on unrelated individuals
 6. `plink --bfile QC4 --check-sex`
 7. `grep 'PROBLEM' plink.sexcheck| awk '{print$1,$2}'>sex_discrepancy.txt`
 8. `plink --bfile QC4 --remove sex_discrepancy.txt --make-bed --out QC5`
+9. `plink --bfile QC5 --freq --out MAF_check`
+10. `plink --bfile --maf 0.01 --make-bed --out QC6`
+11. `plink --bfile QC6 --hardy`
+12. `awk '{ if ($9 <0.00001) print $0 }' plink.hwe>plinkzoomhwe.hwe`
+13. `plink --bfile QC6 --hwe 1e-6 --make-bed --out QC7a`
+14. `plink --bfile QC7a --hwe 1e-10 --hwe-all --make-bed --out QC7`
+15. `plink --bfile QC7 --exclude /path_to_github_repo/data/inversion.txt --range --indep-pairwise 50 5 0.2 --out indepSNP`
+16. `plink --bfile QC7 --extract indepSNP.prune.in --het --out R_check`
+17. `Rscript --no-save /path_to_github_repo/src/heterozygosity_outliers_list.R`
+18. `sed 's/"// g' fail-het-qc.txt | awk '{print$1, $2}'> het_fail_ind.txt`
+19. `plink --bfile QC7 --make-bed --out QC_final`
 
 ### Module 6: Phasing
 
