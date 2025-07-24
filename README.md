@@ -156,12 +156,10 @@ plink --bfile study_lifted --chr $chr --make-bed --out lifted.chr${chr};  done`
 
 ### Module 3: Initial QC
 
-We perform an initial round of Quality Control prior to runing relatedness checks.
+Initial QC recommends missing by individual and missing by genotype filters of 2 percent.
 
--   Exclude SNPs with greater than 10% missingness **(Plink)**
--   Exclude individuals with greater than 10% missingness **(Plink)**
--   Exclude SNPs with greater than 2% missingness **(Plink)**
--   Exclude individuals with greater than 2% missingness **(Plink)**
+1. `plink --bfile file_stem --geno 0.02 --make-bed QC1`
+2. `plink --bfile QC1 --mind 0.02 --make-bed --out QC2`
 
 ### Module 4: Relatedness
 
