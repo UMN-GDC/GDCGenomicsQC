@@ -241,15 +241,38 @@ Requirements:
 To run rfmix:
 `rfmix -f study.chr${CHR}.phased.vcf.gz -r hg38_phased.vcf.gz -m super_population_map_file.txt -g genetic_map_hg38.txt -o ancestry_chr${CHR} --chromosome=$CHR`
 
-### Module 8: population stratification
+### Module 8: ancestry plots
 
-We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
+This module provides visualization for ancestry estimation.  We provide two sets of plots.  
+
+-   GAP:  This visualization the proportion of each ancestry in individual samples.
+-   LAP:  This visualization shows most probable posterior ancestry by regions of the chromosome.
 
 ### Module 9: ancestry plots
 
 This module provides visualization for ancestry estimation.  We provide two sets of plots.  
 
 -   GAP:  This visualization the proportion of each ancestry in individual samples.
+
+Need to prepare files like this:
+
+`
+for chr in {1..22}; do
+    input_file="$WORK/rfmix/ancestry_chr${chr}.rfmix.Q"
+
+    for ind in $(seq 3 "$n_rfmix_rows"); do
+        individual_index=$((ind - 2))
+        output_file="$WORK/visualization/ancestry${individual_index}_chr${chr}.rfmix.Q"
+        sed -n -e "1p" -e "2p" -e "${ind}p" "$input_file" > "$output_file"
+
+        if [ "$chr" -eq 1 ]; then
+            sample_index=$((individual_index - 1))
+            echo -e "${individual_index}\t${sample_ids[$sample_index]}" >> "$mapping_file"
+        fi
+    done
+done
+`
+
 -   LAP:  This visualization shows most probable posterior ancestry by regions of the chromosome.
 
 ### Subpopulation QC
