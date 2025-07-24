@@ -246,13 +246,6 @@ To run rfmix:
 This module provides visualization for ancestry estimation.  We provide two sets of plots.  
 
 -   GAP:  This visualization the proportion of each ancestry in individual samples.
--   LAP:  This visualization shows most probable posterior ancestry by regions of the chromosome.
-
-### Module 9: ancestry plots
-
-This module provides visualization for ancestry estimation.  We provide two sets of plots.  
-
--   GAP:  This visualization the proportion of each ancestry in individual samples.
 
 Need to prepare files like this:
 
@@ -338,7 +331,36 @@ for ind in $(seq 1 "$n_subs"); do
     python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/LAP.py -I "$output_file" -O "$output_LAP"
 done
 ```
+### Module 9: PCA
 
+1. `sh commvar.sh hg38 phased study_unrelated refpref stupref`
+2. `awk '{$6=1; print}' refpref.fam > refpref_recode.fam`
+3. `mv refpref_recode.fam refpref.fam`
+4. `awk '{$6=2; print}' stupref.fam > stupref_recode.fam`
+5. `mv stupref_recode.fam stupref.fam`
+6. `plink --bfile refpref --write-snplist --out ref_snps`
+7. `plink --bfile stupref --extract ref_snps.snplist --make-bed --out stupref_common`
+8. `plink --bfile refpref --extract ref_snps.snplist --make-bed --out refpref_common`
+9. `echo stupref_common > mergelist.txt`
+10. `plink --bfile stupref_common --biallelic-only strict --make-bed --out stupref_common_bi_tmp`
+11. `plink --bfile refpref_common --biallelic-only strict --make-bed --out refpref_common_bi_tmp`
+12. `plink --bfile stupref_common_bi_tmp --freq --out freq_study`
+13. `plink --bfile refpref_common_bi_tmp --freq --out freq_ref`
+14. `awk 'NR > 1 { print $2, $3, $4 }' freq_study.frq > study_alleles.txt`
+15. `awk 'NR > 1 { print $2, $3, $4 }' freq_ref.frq > ref_alleles.txt`
+16. `sort study_alleles.txt > study_alleles.sorted.txt`
+17. `sort ref_alleles.txt > ref_alleles.sorted.txt`
+18. `join -1 1 -2 1 study_alleles.sorted.txt ref_alleles.sorted.txt > joined_alleles.txt`
+19. `awk '($2 == $4 && $3 == $5) || ($2 == $5 && $3 == $4)' joined_alleles.txt | cut -d' ' -f1 > consistent_snps.txt`
+20. `plink --bfile stupref_common_bi_tmp --extract consistent_snps.txt --make-bed --out stupref_common_bi`
+21. `plink --bfile refpref_common_bi_tmp --extract consistent_snps.txt --make-bed --out refpref_common_bi`
+22. `echo "refpref_common_bi" > merge_list.txt`
+23. `plink --bfile stupref_common_bi --merge-list merge_list.txt --make-bed --out merged_common_bi --allow-no-sex`
+24. `plink --bfile merged_common_bi --pca --out merged_dataset_pca --allow-no-sex`
+
+### Module 10: population stratification
+
+We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
 ### Subpopulation QC
 
 We can also provide individual QC steps stratified by population.
