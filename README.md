@@ -187,21 +187,16 @@ To run PCAIR and PCRelate
 
 ### Module 5: Standard QC
 
-This runs the standard quality control measures expected of GWAS on unrelated individuals.  To compensate for potential related individuals, we perform QC measures on the unrelated study samples from Module 4: Relatedness, but apply similar filtering standards on the related individuals.  We create the unrelated QC dataset, but also a related QC dataset which has the same SNPs extracted as the unrleated dataset.  The following are the standard QC steps.  Custom QC steps can be provided by generating a custom script.
+Here are the recommended steps for Standard QC (must be on unrelated individuals)
 
--   Exclude SNPs with greater than 10% missingness **(Plink)**
--   Exclude individuals with greater than 10% missingness **(Plink)**
--   Exclude SNPs with greater than 2% missingness **(Plink)**
--   Exclude individuals with greater than 2% missingness **(Plink)**
--   Compare sex assignments in input data set with imputed X chromosome coefficients **(Plink)**
-    -   F-values \< 0.2 are assigned as female and F-values \> 0.8 are assigned as male others are flagged as problems and excluded from the dataset
--   Exclude SNPs with Minor Allele Frequency \< 0.01 **(Plink)**
--   Exclude SNPs where Hardy-Weinberg Equilibrium p-values \< 1e-6 for controls **(Plink)**
--   Exclude SNPs where Hardy-Weinberg Equilibrium p-values \< 1e-10 for cases **(Plink)**
--   Exclude SNPs that are highly coordinated using multiple correlation coefficients for a SNP regressed on all other SNPs simultaneously **(Plink)**
--   Exclude individuals with a parent-offspring relationship **(Plink)**
--   Exclude individuals with a pi_hat threshold \> 0.2 **(Primus)**
--   Principal Component Analysis (**FRAPOSA**)
+1. `plink --bfile study_unrelated --geno 0.1 --make-bed --out QC1`
+2. `plink --bfile QC1 --mind 0.1 --make-bed --out QC2`
+3. `plink --bfile QC2 --geno 0.02 --make-bed --out QC3`
+4. `plink --bfile QC3 --mind 0.02 --make-bed --out QC4`
+5. `plink --bfile QC4 --missing`
+6. `plink --bfile QC4 --check-sex`
+7. `grep 'PROBLEM' plink.sexcheck| awk '{print$1,$2}'>sex_discrepancy.txt`
+8. `plink --bfile QC4 --remove sex_discrepancy.txt --make-bed --out QC5`
 
 ### Module 6: Phasing
 
