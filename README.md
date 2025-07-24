@@ -137,9 +137,18 @@ I recommend converting to plink and performing these steps:
 11. `plink --bfile result3 --recode --make-bed --out study_lifted`
 
 
-### Module 2: GenotypeHarmonizer (optional)
+### Module 2: GenotypeHarmonizer
 
-This module aligns sample to the GRCh38 reference genome.  The reference genome alignment file we use is `ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5.vcf` which is designed for the GRCh38 build.  All subsequent steps in this pipeline assume we have an aligned GRCH38 build study sample.  We can control for alignment using the flag `--use_genome_harmonizer`.  The defualt flag setting is `1`, but this can be manually set to `0`.
+Requirements:
+
+-	GenotypeHarmonizer.jar
+-	ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5
+
+Make sure the data is in build GRCh38 first.  Subsequent steps:
+
+1. `for chr in {1..22} X Y; do 
+plink --bfile study_lifted --chr $chr --make-bed --out lifted.chr${chr};  done`
+2. `java -Xmx8g -jar /path_to_genotype_harmonizer/GenotypeHarmonizer/GenotypeHarmonizer.jar --input lifted.chr${CHR} --inputType PLINK_BED --ref ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 --refType VCF --keep --output lifted.chr${CHR}.aligned`
 
 ### Module 3: Initial QC
 
