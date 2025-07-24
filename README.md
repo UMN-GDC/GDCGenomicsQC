@@ -181,6 +181,10 @@ We run kinship:
 
 `/path_to_repo/king -b QC_Initial.bed --kinship --prefix kinships`
 
+To run PCAIR and PCRelate
+
+`Rscript /path_to_repo/src/pca_ir_pipeline.R $WORK_DIRECTORY $FILE_NAME`
+
 ### Module 5: Standard QC
 
 This runs the standard quality control measures expected of GWAS on unrelated individuals.  To compensate for potential related individuals, we perform QC measures on the unrelated study samples from Module 4: Relatedness, but apply similar filtering standards on the related individuals.  We create the unrelated QC dataset, but also a related QC dataset which has the same SNPs extracted as the unrleated dataset.  The following are the standard QC steps.  Custom QC steps can be provided by generating a custom script.
