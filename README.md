@@ -163,7 +163,19 @@ Initial QC recommends missing by individual and missing by genotype filters of 2
 
 ### Module 4: Relatedness
 
-We first run kinship test using KING.  This separates the plink dataset into related and unrelated plink study samples.  Many of the subsequent steps involving ancestry estimation require the sample subjects to be unrelated.  To provide some analysis of related subjects we also perform PC-AiR and PC-Relate in this module.  We convert PLINK format to GDS format and perform an initial kinship estimate with the KING algorithm, but pivot to perform Principal Component Analysis and infer genetic ancestry on each inidvidual.  We finally run PC-Relate to calculate highly accurate measures of genetic relatedness. (kinship coefficients, IBD probabilities).
+We need to check whether the FIDs are all 0.
+
+`all_fids_zero=$(awk '{if ($1 != 0) exit 1}' temp.fam && echo "yes" || echo "no")`
+`if [ "$all_fids_zero" == "yes" ]; then
+    echo "All FIDs are zero. Using IID as FID for KING."
+    # Save mapping to restore later
+    awk '{print $2, $1}' temp.fam > original_fid_map.txt
+    # Replace FID with IID
+    awk '{print $2,$2,$3,$4,$5,$6}' temp.fam > kin.fam
+else
+    echo "FIDs are not all zero. Using original FID/IID."
+    cp temp.fam kin.fam
+fi`
 
 ### Module 5: Standard QC
 
