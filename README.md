@@ -179,6 +179,11 @@ fi`
 
 We run kinship:
 
+Requirements
+
+-	Need to have king executable file
+-	Recommend having our pca_ir_pipeline.R file readily available
+
 `/path_to_repo/king -b QC_Initial.bed --kinship --prefix kinships`
 
 To run PCAIR and PCRelate
@@ -211,7 +216,19 @@ Here are the recommended steps for Standard QC (must be on unrelated individuals
 
 ### Module 6: Phasing
 
-We perform phasing using shapeit4.2.  This is necessary to use rfmix to infer ancestry.  This module first recodes the QC unrleated dataset into vcf format separated by chromosome.  Phasing is then performed using reference map `chr${CHR}.b38.gmap.gz`.  The files are then ready to be run using rfmix.
+Requirements
+-	shapeit4.2
+-	chr${CHR}.b38.gmap.gz
+
+Prepare QC data set `QC8` and break it apart by chromosome and recode to vcf
+
+1. `plink --bfile QC8 --chr $CHR --recode vcf --out study.chr${CHR}`
+2. `bgzip -c study.chr${CHR}.vcf > study.chr${CHR}.vcf.gz`
+3. `bcftools index -f study.chr${CHR}.vcf.gz`
+
+Run phasing through shapeit4
+
+4. `shapeit4.2 --input study.chr${CHR}.vcf.gz --map chr${CHR}.b38.gmap.gz --region ${CHR} --output study.chr${CHR}.phased.vcf.gz --thread`
 
 ### Module 7: rfmix
 
