@@ -115,12 +115,27 @@ Still in development
 
 ## Individual Module Usage
 
-### Module 1: Crossmap (optional)
+### Module 1: Crossmap
 
 Requirements:
 
 -	CrossMap.py
 -	GRCh37_to_GRCh38.chain.gz
+
+I recommend converting to plink and performing these steps:
+
+1. `plink --bfile file_stem --merge-x no-fail --make-bed --out prep1`
+2. `plink --bfile prep1 --recode --output 'MT' --out prep2`
+3. `awk '{print $1, $4-1, $4, $2}' prep2.map > prep.bed`
+4. `python /path_to_crossmap_repo/CrossMap/CrossMap.py /path_to_crossmap_repo/CrossMap/GRCh37_to_GRCh38.chain.gz prep.bed study_lifted.bed`
+5. `awk '{print $4}' study_lifted.bed > updated.snp`
+6. `awk '{print $4, $3}' study_lifted.bed > updated.position`
+7. `awk '{print $4, $1}' study_lifted.bed > updated.chr`
+8. `plink --file prep2 --extract updated.snp --make-bed --out result1`
+9. `plink --bfile result1 --update-map updated.position --make-bed --out result2`
+10. `plink --bfile result2 --update-chr updated.chr --make-bed --out result3`
+11. `plink --bfile result3 --recode --make-bed --out study_lifted`
+
 
 ### Module 2: GenotypeHarmonizer (optional)
 
