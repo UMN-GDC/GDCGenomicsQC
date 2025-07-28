@@ -370,8 +370,8 @@ restructure_and_clean_outputs() {
 
   #2. move the genome_harmonizer_full_log.txt into the 'full' directory
   cp ${WORK}/aligned/*harmonizer*.txt ${WORK}/full/
-  primus_file=$(find ${WORK} -type f -name "full.QC8.genome_network1.genome")
-  cp ${primus_file} ${WORK}/full/primus_file.genome
+  king_file=$(find ${WORK} -type f -name "kinships.kin0")
+  cp ${king_file} ${WORK}/full/kinships.kin0
 
   #3. move other directories into a temporary location called 'temp'
   # aligned, lifted, logs, PCA, relatedness, relatedness_OLD
