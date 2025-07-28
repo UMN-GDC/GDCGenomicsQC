@@ -337,7 +337,8 @@ ggplot(data=gender, aes(x=F, fill=STATUS))+
   facet_wrap(~PEDSEX, scales = "free_y") +
   xlab("F Value") +
   ggtitle("Gender Analysis by Original Specification") +
-  theme_classic()
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=90, vjust = 0.5, hjust=1))
 ```
 
 ```{r gender_plot2, warning=FALSE}
