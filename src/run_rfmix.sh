@@ -17,17 +17,3 @@ path_to_repo=$4
 mkdir $WORK/rfmix
 sbatch --time 18:00:00 --mem 64GB --array 1-22 --wait -N1 ${path_to_repo}/src/rfmix_individual.sh ${WORK} ${NAME}
 
-module load R/4.4.0-openblas-rocky8
-
-Rscript ${path_to_repo}/src/gai2.R ${WORK} ${NAME}
-
-echo "Potential duplication below"
-mkdir $WORK/PCA
-cp $WORK/study.$NAME.unrelated.comm.popu $WORK/PCA/study.$NAME.unrelated.comm.popu
-cd $WORK/PCA
-
-# awk -F '\t' '{print $3}' $WORK/study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
-awk '{print $3}' study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
-awk '{print $1 "\t" $2 "\t" $3}' study.$NAME.unrelated.comm.popu > data.txt
-Rscript ${path_to_repo}/src/subpop.R ${WORK} ${NAME}
-#rm *.dat

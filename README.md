@@ -89,16 +89,20 @@ We perform phasing using shapeit4.2.  This is necessary to use rfmix to infer an
 
 We infer ancestry of individual samples using rfmix.  In addition to phased file provide by `module 6: phasing`, we also need reference genome that has also been phased, a population map or super population map file, and a genetic map file for GRch 38 build.  In our script we use reference genome `hg38_phased.vcf.gz`, super population map file `super_population_map_file.txt`, and genetic map `genetic_map_hg38.txt`.  Initially we generate posterior probabilities for each ancestry by sample.  These posterior probabilities represent each of the 22 chromosomes.  To get global ancestries for each individual, we take the mean posterior probabilities for each super population across all 22 .Q files.  Assignment to globabl ancestry is based on the highest posterior probabilty that is greater than 0.8.  If no posterior probablitiy is greater than 0.8, that subject classified as `Other`.
 
-### Module 8: population stratification
-
-We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
-
-### Module 9: ancestry plots
+### Module 8: ancestry plots
 
 This module provides visualization for ancestry estimation.  We provide two sets of plots.  
 
 -   GAP:  This visualization the proportion of each ancestry in individual samples.
 -   LAP:  This visualization shows most probable posterior ancestry by regions of the chromosome.
+
+### Module 9: PCA
+
+We construct principal components to be used in future analysis (especially for correction with respect to ancestry).
+
+### Module 10: population stratification
+
+We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
 
 ### Subpopulation QC
 
@@ -112,6 +116,254 @@ We can also provide individual QC steps stratified by population.
 
 ## Docker ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 Still in development
+
+## Individual Module Usage
+
+### Module 1: Crossmap
+
+Requirements:
+
+-	CrossMap.py
+-	GRCh37_to_GRCh38.chain.gz
+
+I recommend converting to plink and performing these steps:
+
+1. `plink --bfile file_stem --merge-x no-fail --make-bed --out prep1`
+2. `plink --bfile prep1 --recode --output 'MT' --out prep2`
+3. `awk '{print $1, $4-1, $4, $2}' prep2.map > prep.bed`
+4. `python /path_to_crossmap_repo/CrossMap/CrossMap.py /path_to_crossmap_repo/CrossMap/GRCh37_to_GRCh38.chain.gz prep.bed study_lifted.bed`
+5. `awk '{print $4}' study_lifted.bed > updated.snp`
+6. `awk '{print $4, $3}' study_lifted.bed > updated.position`
+7. `awk '{print $4, $1}' study_lifted.bed > updated.chr`
+8. `plink --file prep2 --extract updated.snp --make-bed --out result1`
+9. `plink --bfile result1 --update-map updated.position --make-bed --out result2`
+10. `plink --bfile result2 --update-chr updated.chr --make-bed --out result3`
+11. `plink --bfile result3 --recode --make-bed --out study_lifted`
+
+
+### Module 2: GenotypeHarmonizer
+
+Requirements:
+
+-	GenotypeHarmonizer.jar
+-	ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5
+
+Make sure the data is in build GRCh38 first.  Subsequent steps:
+
+1. `for chr in {1..22} X Y; do 
+plink --bfile study_lifted --chr $chr --make-bed --out lifted.chr${chr};  done`
+2. `java -Xmx8g -jar /path_to_genotype_harmonizer/GenotypeHarmonizer/GenotypeHarmonizer.jar --input lifted.chr${CHR} --inputType PLINK_BED --ref ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5 --refType VCF --keep --output lifted.chr${CHR}.aligned`
+
+### Module 3: Initial QC
+
+Initial QC recommends missing by individual and missing by genotype filters of 2 percent.
+
+1. `plink --bfile file_stem --geno 0.02 --make-bed QC1`
+2. `plink --bfile QC1 --mind 0.02 --make-bed --out QC2`
+
+### Module 4: Relatedness
+
+We need to check whether the FIDs are all 0.
+
+`all_fids_zero=$(awk '{if ($1 != 0) exit 1}' temp.fam && echo "yes" || echo "no")`
+`if [ "$all_fids_zero" == "yes" ]; then
+    echo "All FIDs are zero. Using IID as FID for KING."
+    # Save mapping to restore later
+    awk '{print $2, $1}' temp.fam > original_fid_map.txt
+    # Replace FID with IID
+    awk '{print $2,$2,$3,$4,$5,$6}' temp.fam > kin.fam
+else
+    echo "FIDs are not all zero. Using original FID/IID."
+    cp temp.fam kin.fam
+fi`
+
+We run kinship:
+
+Requirements
+
+-	Need to have king executable file
+-	Recommend having our pca_ir_pipeline.R file readily available
+
+`/path_to_repo/king -b QC_Initial.bed --kinship --prefix kinships`
+
+To run PCAIR and PCRelate
+
+`Rscript /path_to_repo/src/pca_ir_pipeline.R $WORK_DIRECTORY $FILE_NAME`
+
+### Module 5: Standard QC
+
+Here are the recommended steps for Standard QC (must be on unrelated individuals)
+
+1. `plink --bfile study_unrelated --geno 0.1 --make-bed --out QC1`
+2. `plink --bfile QC1 --mind 0.1 --make-bed --out QC2`
+3. `plink --bfile QC2 --geno 0.02 --make-bed --out QC3`
+4. `plink --bfile QC3 --mind 0.02 --make-bed --out QC4`
+5. `plink --bfile QC4 --missing`
+6. `plink --bfile QC4 --check-sex`
+7. `grep 'PROBLEM' plink.sexcheck| awk '{print$1,$2}'>sex_discrepancy.txt`
+8. `plink --bfile QC4 --remove sex_discrepancy.txt --make-bed --out QC5`
+9. `plink --bfile QC5 --freq --out MAF_check`
+10. `plink --bfile --maf 0.01 --make-bed --out QC6`
+11. `plink --bfile QC6 --hardy`
+12. `awk '{ if ($9 <0.00001) print $0 }' plink.hwe>plinkzoomhwe.hwe`
+13. `plink --bfile QC6 --hwe 1e-6 --make-bed --out QC7a`
+14. `plink --bfile QC7a --hwe 1e-10 --hwe-all --make-bed --out QC7`
+15. `plink --bfile QC7 --exclude /path_to_github_repo/data/inversion.txt --range --indep-pairwise 50 5 0.2 --out indepSNP`
+16. `plink --bfile QC7 --extract indepSNP.prune.in --het --out R_check`
+17. `Rscript --no-save /path_to_github_repo/src/heterozygosity_outliers_list.R`
+18. `sed 's/"// g' fail-het-qc.txt | awk '{print$1, $2}'> het_fail_ind.txt`
+19. `plink --bfile QC7 --make-bed --out QC_final`
+
+### Module 6: Phasing
+
+Requirements
+-	shapeit4.2
+-	chr${CHR}.b38.gmap.gz
+
+Prepare QC data set `QC8` and break it apart by chromosome and recode to vcf
+
+1. `plink --bfile QC8 --chr $CHR --recode vcf --out study.chr${CHR}`
+2. `bgzip -c study.chr${CHR}.vcf > study.chr${CHR}.vcf.gz`
+3. `bcftools index -f study.chr${CHR}.vcf.gz`
+
+Run phasing through shapeit4
+
+4. `shapeit4.2 --input study.chr${CHR}.vcf.gz --map chr${CHR}.b38.gmap.gz --region ${CHR} --output study.chr${CHR}.phased.vcf.gz --thread`
+
+### Module 7: rfmix
+
+RFMIX requires the files be phased and in vcf.gz form.  
+Requirements:
+-	`hg38_phased.vcf.gz`
+-	`super_population_map_file.txt`
+-	`genetic_map_hg38.txt`
+
+To run rfmix:
+`rfmix -f study.chr${CHR}.phased.vcf.gz -r hg38_phased.vcf.gz -m super_population_map_file.txt -g genetic_map_hg38.txt -o ancestry_chr${CHR} --chromosome=$CHR`
+
+### Module 8: ancestry plots
+
+This module provides visualization for ancestry estimation.  We provide two sets of plots.  
+
+-   GAP:  This visualization the proportion of each ancestry in individual samples.
+
+Need to prepare files like this:
+
+```
+for chr in {1..22}; do
+    input_file="$WORK/rfmix/ancestry_chr${chr}.rfmix.Q"
+    for ind in $(seq 3 "$n_rfmix_rows"); do
+        individual_index=$((ind - 2))
+        output_file="$WORK/visualization/ancestry${individual_index}_chr${chr}.rfmix.Q"
+        sed -n -e "1p" -e "2p" -e "${ind}p" "$input_file" > "$output_file"
+        if [ "$chr" -eq 1 ]; then
+            sample_index=$((individual_index - 1))
+            echo -e "${individual_index}\t${sample_ids[$sample_index]}" >> "$mapping_file"
+        fi
+    done
+done
+```
+Pipeline for Global Ncestry Plots
+
+```
+python ${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/RFMIX2ToBed4GAP.py --prefix $WORK/visualization/ancestry --output $WORK/visualization
+python ${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/BedToGap.py --input ancestry.bed --out ancestry_GAP.bed
+input_bed="ancestry_GAP.bed"
+gap_script="${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/GAP.py"
+output_dir="./GAP_individual_plots"
+mkdir -p "$output_dir"
+head -n 2 "$input_bed" > header.tmp
+tail -n +3 "$input_bed" | cut -f1 | sort -u > individual_ids.txt
+batch_num=1
+ids_batch=()
+while read -r id; do
+    ids_batch+=("$id")
+    if [ "${#ids_batch[@]}" -eq 10 ]; then
+        batch_file="$output_dir/batch_${batch_num}.bed"
+        batch_pdf="$output_dir/batch_${batch_num}.pdf"
+        cat header.tmp > "$batch_file"
+        for id_in_batch in "${ids_batch[@]}"; do
+            grep -w "$id_in_batch" "$input_bed" >> "$batch_file"
+        done
+        echo "Generating $batch_pdf..."
+        python "$gap_script" --input "$batch_file" --output "$batch_pdf"
+        rm "$batch_file"
+        ids_batch=()
+        ((batch_num++))
+    fi
+done < individual_ids.txt
+if [ "${#ids_batch[@]}" -gt 0 ]; then
+    batch_file="$output_dir/batch_${batch_num}.bed"
+    batch_pdf="$output_dir/batch_${batch_num}.pdf"
+    cat header.tmp > "$batch_file"
+    for id_in_batch in "${ids_batch[@]}"; do
+        grep -w "$id_in_batch" "$input_bed" >> "$batch_file"
+    done
+    echo "Generating $batch_pdf..."
+    python "$gap_script" --input "$batch_file" --output "$batch_pdf"
+    rm "$batch_file"
+fi
+```
+
+-   LAP:  This visualization shows most probable posterior ancestry by regions of the chromosome.
+
+```
+n_subs=${#sample_ids[@]}
+for chr in {1..22}; do
+    input_file="$WORK/rfmix/ancestry_chr${chr}.msp.tsv"
+    for ind in $(seq 1 "$n_subs"); do
+        ind1=$(( (2 * ind - 1) + 6 ))
+        ind2=$(( (2 * ind) + 6 ))
+        output_file="$WORK/visualization/ancestry${ind}_chr${chr}.msp.tsv"
+        echo "Processing: $output_file (Columns: 1-6, $ind1, $ind2)"
+        cut -f1-6,$ind1,$ind2 "$input_file" > "$output_file"
+    done
+done
+python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/RFMIX2ToBed.py --prefix $WORK/visualization/ancestry --output $WORK/visualization
+mkdir -p $WORK/LAP_plots
+for ind in $(seq 1 "$n_subs"); do
+    input_file_1="$WORK/visualization/ancestry${ind}_hap1.bed"
+    input_file_2="$WORK/visualization/ancestry${ind}_hap2.bed"
+    output_file="$WORK/LAP_plots/ancestry${ind}.bed"
+    output_LAP="$WORK/LAP_plots/ancestry${ind}.pdf"
+    echo "Processing: $output_file"
+    python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/BedToLAP.py --bed1 "$input_file_1" --bed2 "$input_file_2" --out "$output_file"
+    python ${REF}/RFMIX2-Pipeline-to-plot/LAP/Scripts/LAP.py -I "$output_file" -O "$output_LAP"
+done
+```
+### Module 9: PCA
+
+1. `sh commvar.sh hg38 phased study_unrelated refpref stupref`
+2. `awk '{$6=1; print}' refpref.fam > refpref_recode.fam`
+3. `mv refpref_recode.fam refpref.fam`
+4. `awk '{$6=2; print}' stupref.fam > stupref_recode.fam`
+5. `mv stupref_recode.fam stupref.fam`
+6. `plink --bfile refpref --write-snplist --out ref_snps`
+7. `plink --bfile stupref --extract ref_snps.snplist --make-bed --out stupref_common`
+8. `plink --bfile refpref --extract ref_snps.snplist --make-bed --out refpref_common`
+9. `echo stupref_common > mergelist.txt`
+10. `plink --bfile stupref_common --biallelic-only strict --make-bed --out stupref_common_bi_tmp`
+11. `plink --bfile refpref_common --biallelic-only strict --make-bed --out refpref_common_bi_tmp`
+12. `plink --bfile stupref_common_bi_tmp --freq --out freq_study`
+13. `plink --bfile refpref_common_bi_tmp --freq --out freq_ref`
+14. `awk 'NR > 1 { print $2, $3, $4 }' freq_study.frq > study_alleles.txt`
+15. `awk 'NR > 1 { print $2, $3, $4 }' freq_ref.frq > ref_alleles.txt`
+16. `sort study_alleles.txt > study_alleles.sorted.txt`
+17. `sort ref_alleles.txt > ref_alleles.sorted.txt`
+18. `join -1 1 -2 1 study_alleles.sorted.txt ref_alleles.sorted.txt > joined_alleles.txt`
+19. `awk '($2 == $4 && $3 == $5) || ($2 == $5 && $3 == $4)' joined_alleles.txt | cut -d' ' -f1 > consistent_snps.txt`
+20. `plink --bfile stupref_common_bi_tmp --extract consistent_snps.txt --make-bed --out stupref_common_bi`
+21. `plink --bfile refpref_common_bi_tmp --extract consistent_snps.txt --make-bed --out refpref_common_bi`
+22. `echo "refpref_common_bi" > merge_list.txt`
+23. `plink --bfile stupref_common_bi --merge-list merge_list.txt --make-bed --out merged_common_bi --allow-no-sex`
+24. `plink --bfile merged_common_bi --pca --out merged_dataset_pca --allow-no-sex`
+
+### Module 10: population stratification
+
+We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
+### Subpopulation QC
+
+We can also provide individual QC steps stratified by population.
 
 
 ## Contributing

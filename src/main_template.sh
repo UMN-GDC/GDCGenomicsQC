@@ -27,6 +27,7 @@ king=KING
 rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
+custom_ancestry=CSTANC
 
 cd ${WORK}
 
@@ -40,7 +41,7 @@ module load perl
 if [ ${crossmap} -eq 1 ]; then
   file_to_use=study.${NAME}.lifted
   crossmap_check=${WORK}/${file_to_use}.bim
-  run_crossmap_if_needed ${crossmap_check} ${path_to_repo} ${WORK} ${REF} ${FILE} ${NAME}
+  run_crossmap_if_needed "${crossmap_check}" ${path_to_repo} ${WORK} ${REF} ${FILE} ${NAME}
   crossmap_check_after_call ${crossmap_check}
 
   else  # Default behavior
@@ -49,7 +50,7 @@ fi
 ############## Genome harmonizer section 
 if [ ${genome_harmonizer} -eq 1 ]; then
   file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
-  run_genome_harmonizer_if_needed ${file_to_submit} ${path_to_repo} ${WORK} ${REF} ${NAME} ${file_to_use}
+  run_genome_harmonizer_if_needed "${file_to_submit}" ${path_to_repo} ${WORK} ${REF} ${NAME} ${file_to_use}
   genome_harmonizer_check_after_call ${file_to_submit}
 else # Default behavior
   if [ ${crossmap} -eq 1 ]; then
@@ -65,7 +66,7 @@ echo "Variants and samples filtering"
 # Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
 cd $WORK
 file_to_check_qc=${WORK}/Initial_QC/QC4.bim
-run_initial_qc_if_needed ${file_to_check_qc} ${path_to_repo} ${file_to_submit}
+run_initial_qc_if_needed "${file_to_check_qc}" ${path_to_repo} ${file_to_submit}
 initial_qc_check_after_call ${file_to_check_qc}
 
 ########################################################################################################
@@ -76,7 +77,7 @@ echo "(Step 4) Relatedness"
 if [ ${king} -eq 1 ]; then
   cd $WORK
   king_check=$WORK/relatedness/study.$NAME.unrelated.bim
-  run_king_if_needed ${king_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+  run_king_if_needed "${king_check}" ${path_to_repo} ${WORK} ${REF} ${NAME}
   king_check_after_call ${king_check}
   echo "(Step 4b) Ancestry and kinship adjustment via PC-AiR / PC-Relate"
   pcair_check=$WORK/relatedness/study.$NAME.unrelated.bim
@@ -84,7 +85,7 @@ if [ ${king} -eq 1 ]; then
   pca_ir_check_after_call ${pcair_check}
 else
   primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
-  run_primus_if_needed ${primus_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+  run_primus_if_needed "${primus_check}" ${path_to_repo} ${WORK} ${REF} ${NAME}
   primus_check_after_call ${primus_check}
 fi
 
@@ -100,7 +101,7 @@ if [ ${custom_qc} -eq 1 ]; then
   sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
   file_to_check_qc=${WORK}/${DATATYPE}/${DATATYPE}.QC8.bim
-  run_standard_qc_if_needed ${file_to_check_qc} ${WORK} ${NAME} ${path_to_repo} ${DATATYPE}
+  run_standard_qc_if_needed "${file_to_check_qc}" ${WORK} ${NAME} ${path_to_repo} ${DATATYPE}
   standard_qc_check_after_call ${file_to_check_qc}
 fi
 ########################################################################################################
@@ -130,12 +131,30 @@ fi
 ##########################################################################################################
 
 
+######################################## Ancestry Plots ##################################################
+echo "(Step 7) ancestry plots"
+if [ ${rfmix_option} -eq 1 ]; then
+  sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  rm -r ${WORK}/visualization
+else # Alternative behavior
+  echo "Plot module only for rfmix"
+fi
+##########################################################################################################
+
+
+############################################ PCA #########################################################
+echo "(Step 8) PCA"
+sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo} 
+##########################################################################################################
+
+
 ###################################### Subpopulations ####################################################
-echo "(Step 7) Subpopulations"
-subpop_check=${WORK}/PCA/study.${NAME}.unrelated.comm.popu
+echo "(Step 9) Subpopulations"
+subpop_check=${WORK}/ancestry_estimation/study.${NAME}.unrelated.comm.popu
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  run_subpopulations_if_needed ${subpop_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+  run_subpopulations_if_needed "${subpop_check}" ${path_to_repo} ${WORK} ${REF} ${NAME}
+  Rscript ${path_to_repo}/src/plot_pca.R ${WORK}
 else # Alternative behavior
   echo "Skip subpopulations"
 fi
@@ -143,32 +162,15 @@ subpop_check_after_call ${subpop_check}
 ##########################################################################################################
 
 
-############################################ PCA #########################################################
-echo "PCA"
-sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-##########################################################################################################
-
-
-######################################## Ancestry Plots ##################################################
-echo "(Step 8) ancestry plots"
-if [ ${rfmix_option} -eq 1 ]; then
-  sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
-  rm -r ${WORK}/visualization
-  Rscript ${path_to_repo}/src/plot_pca.R ${WORK}
-else # Alternative behavior
-  echo "Plot module only for rfmix"
-fi
-#########################################################################################################
-
-
 ################### Subset data based on Ethnicity and Rerun QC (Step 2) on the subsets #################
 cd ${WORK}
 if [ ${rfmix_option} -eq 1 ]; then
-  ETHNICS=$(awk '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+  ETHNICS=$(awk '{print $3}' ${WORK}/ancestry_estimation/study.${NAME}.unrelated.comm.popu | sort | uniq)
 else # Alternative behavior
-  ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/PCA/study.${NAME}.unrelated.comm.popu | sort | uniq)
+  ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/ancestry_estimation/study.${NAME}.unrelated.comm.popu | sort | uniq)
 fi
 
+cp ${WORK}/ancestry_estimation/* ${WORK}/PCA/
 subset_ancestries_run_standard_qc "${ETHNICS}" ${WORK} ${NAME} ${custom_qc} ${path_to_repo}
 ##Putting in to wait until the jobs are done
 wait_for_ancestry_qc_to_finish
