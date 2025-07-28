@@ -2,7 +2,7 @@ args <- commandArgs(trailingOnly = TRUE)
 dir <- args[1]
 name <- args[2]
 
-work_dir <- paste0(dir, "/PCA")
+work_dir <- paste0(dir, "/ancestry_estimation")
 setwd(work_dir)
 
 x <- read.table("subpop.txt")

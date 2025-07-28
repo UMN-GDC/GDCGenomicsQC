@@ -18,7 +18,6 @@ project:
   output-dir: /home/gdc/shared/GDC_pipeline/results/
 ---
 
-
 The following is an automated report describing the quality control (QC) processing of your dataset.
 
 ```{r loadPackages}
@@ -78,7 +77,8 @@ ancestry_prediction %>%
   labs(fill = "Ancestry") +
   xlab("Ancestry Estimation Percentage") +
   ylab("Number of Individuals") +
-  theme_classic()
+  theme_classic() +
+  theme(axis.text.x=element_text(angle=90, vjust = 0.5, hjust=1))
 ```
 
 ## Table displaying Predictions
@@ -119,11 +119,22 @@ ancestry_prediction %>%
 #| fig-cap: "Subject relatedness."
 #| include: true
 #| eval: true
-relatedness = read.table(paste0(path_to_data,"primus_file.genome"), header=T)
-ggplot(data= relatedness, aes(x=PI_HAT, fill="blue"))+
+relatedness = read.table(paste0(path_to_data,"kinships.kin0"), header=T)
+ggplot(data= relatedness, aes(x=Kinship, fill="blue"))+
   geom_bar(show.legend = F) + 
-  xlab("Proportion IBD") +
-  ggtitle("Relatedness of Individuals with PI_hat > 0.2") +
-  theme_classic()
+  xlab("Kinship Coefficient") +
+  ggtitle("Relatedness of Individuals") +
+  theme_classic() +
+
+ # Vertical lines at reference kinship thresholds
+  geom_vline(xintercept = c(0.354, 0.177, 0.088, 0.044, 0), 
+             linetype = "dashed", color = "red") +
+
+  # Text labels for each line
+  annotate("text", x = 0.354, y = Inf, label = "MZ twin (~0.354)", vjust = -0.5, angle = 90, size = 3) +
+  annotate("text", x = 0.177, y = Inf, label = "1st deg (~0.177)", vjust = -0.5, angle = 90, size = 3) +
+  annotate("text", x = 0.088, y = Inf, label = "2nd deg (~0.088)", vjust = -0.5, angle = 90, size = 3) +
+  annotate("text", x = 0.044, y = Inf, label = "3rd deg (~0.044)", vjust = -0.5, angle = 90, size = 3) +
+  annotate("text", x = 0.0, y = Inf, label = "Unrelated (< 0.0)", vjust = -0.5, angle = 90, size = 3)
 
 ```

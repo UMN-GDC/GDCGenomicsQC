@@ -25,10 +25,10 @@ if (length(args) < 1) {
 work_dir <- args[1]
 
 # File paths
-eigenvec_file <- file.path(work_dir, "/PCA/merged_dataset_pca.eigenvec")
-fam_file <- file.path(work_dir, "/PCA/merged_common_bi.fam")
-ancestry_file <- file.path(work_dir, "/PCA/data.txt")
-save_dir <- file.path(work_dir, "/PCA/")
+eigenvec_file <- file.path(work_dir, "PCA/merged_dataset_pca.eigenvec")
+fam_file <- file.path(work_dir, "PCA/merged_common_bi.fam")
+ancestry_file <- file.path(work_dir, "ancestry_estimation/data.txt")
+save_dir <- file.path(work_dir, "PCA")
 
 # Read ancestry labels
 ancestry <- fread(ancestry_file, header = FALSE, col.names = c("FID", "IID", "Ancestry")) %>%
