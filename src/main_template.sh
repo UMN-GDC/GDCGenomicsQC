@@ -170,6 +170,7 @@ else # Alternative behavior
   ETHNICS=$(awk -F'\t' '{print $3}' ${WORK}/ancestry_estimation/study.${NAME}.unrelated.comm.popu | sort | uniq)
 fi
 
+cp ${WORK}/ancestry_estimation/* ${WORK}/PCA/
 subset_ancestries_run_standard_qc "${ETHNICS}" ${WORK} ${NAME} ${custom_qc} ${path_to_repo}
 ##Putting in to wait until the jobs are done
 wait_for_ancestry_qc_to_finish
