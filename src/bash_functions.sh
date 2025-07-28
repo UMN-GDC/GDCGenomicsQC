@@ -333,9 +333,9 @@ subset_ancestries_run_standard_qc() {
     plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned
     if [ ${custom_qc} -eq 1 ]; then
     ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
-      sbatch ${WORK}/custom_qc.SLURM ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+      sbatch ${WORK}/custom_qc.SLURM ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
     else # Default behavior      
-      sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK} ${WORK}/aligned/study.${NAME}.${DATATYPE}.lifted.aligned ${path_to_repo}
+      sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
     fi
   done
 }
@@ -369,13 +369,15 @@ restructure_and_clean_outputs() {
   cp ${WORK}/PCA/*png ${WORK}/full/
 
   #2. move the genome_harmonizer_full_log.txt into the 'full' directory
-  cp ${WORK}/aligned/*harmonizer*.txt ${WORK}/full/
-  king_file=$(find ${WORK} -type f -name "kinships.kin0")
-  cp ${king_file} ${WORK}/full/kinships.kin0
+  harmonizer_file=$(find ${WORK} -name "*harmonizer*.txt" | head -n 1)
+  cp -u ${harmonizer_file} ${WORK}/full/
+  king_file=$(find ${WORK} -type f -name "kinships.kin0" | head -n 1)
+  cp -u ${king_file} ${WORK}/full/kinships.kin0
 
   #3. move other directories into a temporary location called 'temp'
   # aligned, lifted, logs, PCA, relatedness, relatedness_OLD
   mkdir ${WORK}/temp
+  rm ${WORK}/result* ${WORK}/prep*
   mv -f ${WORK}/aligned ${WORK}/temp/
   mv -f ${WORK}/lifted ${WORK}/temp/
   mv -f ${WORK}/logs ${WORK}/temp/
