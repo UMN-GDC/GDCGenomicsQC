@@ -27,6 +27,7 @@ show_help() {
   echo "--custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering"
   echo "--custom_ancestry		Enter '1' if you would like to use your own ancestry assignment algorithm"
   echo "					When providing this flag you will need to answer all of the questions prompted by the terminal"
+  echo "--interactive		Enter '1' if you would like to run GDCGenomicsQC pipeline interactively instead of as an sbatch"
   echo "Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports"
   echo "--help				Display this help message."
 }
@@ -53,14 +54,15 @@ make_report=1
 custom_qc=0
 custom_ancestry=0
 flag=0
+interactive=0
 
 
 # *** Make sure you have a new enough getopt to handle long options (see the man page)
 getopt -T &>/dev/null
 if [[ $? -ne 4 ]]; then echo "Getopt is too old!" >&2 ; exit 1 ; fi
 
-declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,use_rfmix,make_report,custom_qc,custom_ancestry,help}
-OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,help' -n "$0" -- "$@")
+# declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,use_rfmix,make_report,custom_qc,custom_ancestry,help}
+OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,use_king:,interactive:,help' -n "$0" -- "$@")
     # *** Added -o '' ; surrounted the longoptions by ''
 if [[ $? -ne 0 ]] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     # *** This has to be right after the OPTS= assignment or $? will be overwritten
@@ -115,10 +117,14 @@ while [[ $# -gt 0 ]]; do
         	custom_qc=$2
         	shift 2
         	;;
-	 --custom_ancestry )
+	--custom_ancestry )
         	custom_ancestry=$2
         	shift 2
         	;;
+	--interactive )
+	        interactive=$2
+			shift 2
+			;;
     --help )
 			show_help
 			shift 2
@@ -128,7 +134,11 @@ while [[ $# -gt 0 ]]; do
 			shift
 			break
 			;;
-    	*)
+    *)
+	        echo "Unknown option: $1"
+			show_help
+			exit 1
+			;;
   esac
 done
 
@@ -189,6 +199,11 @@ ${custom_ancestry}
 sleep 0.5
 
 #cp /home/gdc/and02709/QCmja/temp.sh /home/gdc/and02709/QCmja/SMILES_GDA_folder/temp.sh
-source ${set_working_directory}/${input_file_name}_wrapper.sh
+if [ ${interactive} -eq 1 ]; then
+  bash ${set_working_directory}/${input_file_name}_wrapper.sh
+else
+  sbatch ${set_working_directory}/${input_file_name}_wrapper.sh
+  echo "For interactive runs include: '--interactive 1' to parsed options"
+fi 
 
 exit 0
