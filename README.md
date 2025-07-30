@@ -104,9 +104,9 @@ We construct principal components to be used in future analysis (especially for 
 
 We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
 
-### Subpopulation QC
+### Module 11: Subpopulation QC
 
-We can also provide individual QC steps stratified by population.
+We also provide individual QC steps stratified by population.
 
 ## Optional Pipeline Output
 
