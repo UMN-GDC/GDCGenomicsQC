@@ -18,7 +18,7 @@ cd $WORK/rfmix
 
 ${REF}/ancestry_OG/rfmix/rfmix \
  -f $WORK/phased/${NAME}.chr${CHR}.phased.vcf.gz \
- -r ${REF}/rfmix_ref/hg38_phased.vcf.gz \
+ -r ${REF}/ALL_phase3_shapeit2_mvncall_integrated_v3plus_nounphased_rsID_genotypes_GRCh38_dbSNP.vcf.gz \
  -m ${REF}/rfmix_ref/super_population_map_file.txt \
  -g ${REF}/rfmix_ref/genetic_map_hg38.txt \
  -o ancestry_chr${CHR} \
