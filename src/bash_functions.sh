@@ -75,7 +75,7 @@ initial_qc_check_after_call() {
   local file_to_check_qc="$1"
 
   if [ ! -f "${file_to_check_qc}" ]; then
-    echo "Standard QC steps have failed please check the error logs."
+    echo "Initial QC steps have failed please check the error logs."
     exit 1
   fi
 }
