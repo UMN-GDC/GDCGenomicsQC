@@ -8,10 +8,15 @@ run_crossmap_if_needed() {
   local REF="$4"
   local FILE="$5"
   local NAME="$6"
+  local local_modules="$7"
 
   if [ ! -f "${crossmap_check}" ]; then
     echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-    sbatch --wait ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
+    if [ ${local_modules} -eq 1 ]; then
+      sbatch --wait ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
+    else
+      sbatch --wait ${path_to_repo}/src/run_crossmap_module.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
+    fi
   fi
 }
 
@@ -37,10 +42,15 @@ run_genome_harmonizer_if_needed() {
   local REF="$4"
   local NAME="$5"
   local file_to_use="$6"
+  local local_modules="$7"
 
   if [ ! -f "${file_to_submit}.bim" ]; then
     echo "Begin genome harmonization"
-    sbatch --wait ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
+    if [ ${local_modules} -eq 1 ]; then
+      sbatch --wait ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
+    else
+      sbatch --wait ${path_to_repo}/src/run_genome_harmonizer_module.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
+    fi
   fi
 }
 
@@ -144,10 +154,15 @@ run_king_if_needed() {
   local REF="$4"
   local NAME="$5"
   local DATATYPE="$6"
+  local local_modules="$7"
 
   if [ ! -f "${king_check}" ]; then
     echo "(Step 3) Relatedness check"
-    ${path_to_repo}/src/run_king.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+    if [ ${local_modules} -eq 1 ]; then
+      ${path_to_repo}/src/run_king.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+    else
+      ${path_to_repo}/src/run_king_module.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+    fi
   fi
 }
 
@@ -198,6 +213,7 @@ run_phasing_if_needed() {
   local NAME="$3"
   local path_to_repo="$4"
   local DATATYPE="$5"
+  local local_modules="$6" 
 
   # Generate the list of expected phase files
   local phase_files=()
@@ -216,7 +232,11 @@ run_phasing_if_needed() {
 
   # If any file is missing, run the phasing script
   if ! $all_exist; then
-    sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${DATATYPE}" "${path_to_repo}"
+    if [ ${local_modules} -eq 1 ]; then
+      sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${DATATYPE}" "${path_to_repo}"
+    else 
+      sbatch --wait "${path_to_repo}/src/run_phase_module.sh" "${WORK}" "${REF}" "${NAME}" "${DATATYPE}" "${path_to_repo}"
+    fi
   fi
 }
 
@@ -249,6 +269,7 @@ run_rfmix_if_needed() {
   local REF="$2"
   local NAME="$3"
   local path_to_repo="$4"
+  local local_modules="$5"
 
   # Generate the list of expected RFMix files
   local rfmix_files=()
@@ -267,7 +288,11 @@ run_rfmix_if_needed() {
 
   # If any file is missing, run the RFMix script
   if ! $all_exist; then
-    sbatch --wait "${path_to_repo}/src/run_rfmix.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
+    if [ ${local_modules} -eq 1 ]; then  
+      sbatch --wait "${path_to_repo}/src/run_rfmix.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
+    else
+      sbatch --wait "${path_to_repo}/src/run_rfmix_only_module.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
+    fi
   fi
 }
 

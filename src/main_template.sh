@@ -28,6 +28,7 @@ rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
 custom_ancestry=CSTANC
+local_modules=LMDL
 
 cd ${WORK}
 
@@ -41,18 +42,18 @@ module load perl
 if [ ${crossmap} -eq 1 ]; then
   file_to_use=study.${NAME}.lifted
   crossmap_check=${WORK}/${file_to_use}.bim
-  run_crossmap_if_needed "${crossmap_check}" ${path_to_repo} ${WORK} ${REF} ${FILE} ${NAME}
+  run_crossmap_if_needed "${crossmap_check}" ${path_to_repo} ${WORK} ${REF} ${FILE} ${NAME} ${local_modules}
   crossmap_check_after_call ${crossmap_check}
 
-  else  # Default behavior
+  else  # Alternative behavior
   file_to_use=${FILE}/${NAME} #Original file
 fi
 ############## Genome harmonizer section 
 if [ ${genome_harmonizer} -eq 1 ]; then
   file_to_submit=$WORK/aligned/study.$NAME.lifted.aligned
-  run_genome_harmonizer_if_needed "${file_to_submit}" ${path_to_repo} ${WORK} ${REF} ${NAME} ${file_to_use}
+  run_genome_harmonizer_if_needed "${file_to_submit}" ${path_to_repo} ${WORK} ${REF} ${NAME} ${file_to_use} ${local_modules}
   genome_harmonizer_check_after_call ${file_to_submit}
-else # Default behavior
+else # Alternative behavior
   if [ ${crossmap} -eq 1 ]; then
     file_to_submit=study.$NAME.lifted #For using crossmap but not genome harmonizer
   else # Not using crossmap or genome harmonizer
@@ -77,11 +78,11 @@ echo "(Step 4) Relatedness"
 if [ ${king} -eq 1 ]; then
   cd $WORK
   king_check=$WORK/relatedness/study.$NAME.unrelated.bim
-  run_king_if_needed "${king_check}" ${path_to_repo} ${WORK} ${REF} ${NAME}
+  run_king_if_needed "${king_check}" ${path_to_repo} ${WORK} ${REF} ${NAME} ${local_modules}
   king_check_after_call ${king_check}
   echo "(Step 4b) Ancestry and kinship adjustment via PC-AiR / PC-Relate"
   pcair_check=$WORK/relatedness/study.$NAME.unrelated.bim
-  run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+  run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME} 
   pca_ir_check_after_call ${pcair_check}
 else
   primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
@@ -111,7 +112,7 @@ fi
 echo "(Step 5) Phasing"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  run_phasing_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+  run_phasing_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE} ${local_modules}
   phasing_check_after_call ${WORK} ${NAME} ${DATATYPE}
 else
   echo "Skip phasing and move to Fraposa"
@@ -123,7 +124,7 @@ fi
 echo "(Step 6) ancestry estimate"
 if [ ${rfmix_option} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  run_rfmix_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo}
+  run_rfmix_if_needed ${WORK} ${REF} ${NAME} ${path_to_repo} ${local_modules}
   rfmix_check_after_call ${WORK}
 else # Alternative behavior
   ${path_to_repo}/src/run_fraposa.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
