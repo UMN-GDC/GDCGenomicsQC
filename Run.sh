@@ -127,7 +127,7 @@ while [[ $# -gt 0 ]]; do
 	        interactive=$2
 			shift 2
 			;;
-	--local_modules _
+	--local_modules )
 	        local_modules=$2
 			shift 2
 			;;
