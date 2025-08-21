@@ -1,132 +1,105 @@
+# use_king_related.R
 args <- commandArgs(trailingOnly = TRUE)
-dir  <- args[1]                 # directory path
-name <- args[2]                 # KING prefix, e.g. "king" (expects king.kin0, king.kin)
+stopifnot(length(args) >= 2)
+dir  <- args[1]
+name <- args[2]
+kc_cutoff <- if (length(args) >= 3) as.numeric(args[3]) else 1/(2^(9/2))  # 0.04419417...
+ibs0_err  <- if (length(args) >= 4) as.numeric(args[4]) else 0.003        # KING PO IBS0 threshold
 
-# ---- Libraries ----
-if (!requireNamespace("GWASTools", quietly = TRUE)) {
-  install.packages("BiocManager", repos = "https://cloud.r-project.org/")
-  BiocManager::install("GWASTools")
-}
 suppressPackageStartupMessages({
-  library(GWASTools)
   library(reshape2)
 })
 
-# ---- Helper: read a KING table safely ----
+# ---------- Robust reader for KING .kin0/.kin ----------
 read_king <- function(path) {
   if (!file.exists(path)) return(NULL)
   df <- tryCatch(read.table(path, header = TRUE, stringsAsFactors = FALSE),
                  error = function(e) NULL)
   if (is.null(df)) return(NULL)
-  
-  # Normalize column names across KING versions
-  # Expected: FID1, ID1 (or IID1), FID2, ID2 (or IID2), NSNP/N_SNP, HetHet/HETHET, IBS0, Kinship
   cn <- colnames(df)
   if ("IID1" %in% cn) names(df)[names(df)=="IID1"] <- "ID1"
   if ("IID2" %in% cn) names(df)[names(df)=="IID2"] <- "ID2"
   if ("N_SNP" %in% cn) names(df)[names(df)=="N_SNP"] <- "NSNP"
   if ("HETHET" %in% cn) names(df)[names(df)=="HETHET"] <- "HetHet"
   if ("KINSHIP" %in% cn) names(df)[names(df)=="KINSHIP"] <- "Kinship"
-  if ("IBS0" %in% cn) names(df)[names(df)=="IBS0"] <- "IBS0"
-  
-  # Keep only needed columns if present
-  keep <- intersect(c("FID1","ID1","FID2","ID2","NSNP","HetHet","IBS0","Kinship"), colnames(df))
+  keep <- intersect(c("FID1","ID1","FID2","ID2","NSNP","HetHet","IBS0","Kinship"), names(df))
   df <- df[, keep, drop = FALSE]
-  
-  # Coerce numerics
-  for (nm in c("NSNP","HetHet","IBS0","Kinship")) {
-    if (nm %in% names(df)) df[[nm]] <- suppressWarnings(as.numeric(df[[nm]]))
+  for (nm in intersect(c("NSNP","HetHet","IBS0","Kinship"), names(df))) {
+    df[[nm]] <- suppressWarnings(as.numeric(df[[nm]]))
   }
   df
 }
 
-# ---- Read KING outputs (kin0 + kin if present) ----
-kin0_path <- file.path(dir, paste0(name, ".kin0"))
-kin_path  <- file.path(dir, paste0(name, ".kin"))
-
-kin0 <- read_king(kin0_path)
-kinw <- read_king(kin_path)
-
-if (is.null(kin0) && is.null(kinw)) {
-  stop("No KING files found: ", kin0_path, " or ", kin_path)
-}
-
+kin0 <- read_king(file.path(dir, paste0(name, ".kin0")))
+kinw <- read_king(file.path(dir, paste0(name, ".kin")))
+stopifnot(!is.null(kin0) || !is.null(kinw))
 kin <- do.call(rbind, Filter(Negate(is.null), list(kin0, kinw)))
-cat("Loaded KING kinship pairs:", nrow(kin), "rows\n")
+
+cat("Loaded KING pairs:", nrow(kin), "rows\n")
 print(colnames(kin))
 
-# ---- IBD-like plot using KING metrics ----
-# GWASTools::ibdPlot can take KING kinship (kc) and IBS0 directly.
-# (kc = KING kinship coefficient; ibs0 = opposite-homozygote proportion)
-# Ref: GWASTools manual ibdPlot args. 
-pdf(file.path(dir, "ibd_plot_king.pdf"), width = 8, height = 6)
-ibdPlot(
-  kc   = kin$Kinship,
-  ibs0 = kin$IBS0,
-  alpha = 0.05
-)
+# ---------- KING classification (kc = Kinship, ibs0 = IBS0) ----------
+# Thresholds from GWASTools docs: dup 0.3536, 1st 0.1768, 2nd 0.0884, 3rd 0.0442; PO separated by IBS0≈0. :contentReference[oaicite:2]{index=2}
+cut_dup  <- 1/(2^(3/2))  # 0.3535534
+cut_1st  <- 1/(2^(5/2))  # 0.1767767
+cut_2nd  <- 1/(2^(7/2))  # 0.08838835
+cut_3rd  <- 1/(2^(9/2))  # 0.04419417
+
+kc <- kin$Kinship
+ibs0 <- kin$IBS0
+
+deg <- ifelse(kc >= cut_dup, "Dup/MZ",
+       ifelse(kc >= cut_1st & ibs0 <= ibs0_err, "PO",
+       ifelse(kc >= cut_1st, "FS",
+       ifelse(kc >= cut_2nd, "2nd",
+       ifelse(kc >= cut_3rd, "3rd", "U")))))
+kin$degree <- deg
+cat("Pair counts by KING category:\n"); print(table(kin$degree))
+
+# ---------- Plot: IBS0 vs Kinship with KING cut lines ----------
+pdf(file.path(dir, "king_scatter.pdf"), width = 8, height = 6)
+plot(ibs0, kc, pch = 20, cex = 0.6, xlab = "IBS0 (opposite homozygote fraction)",
+     ylab = "KING kinship coefficient", main = "KING: IBS0 vs kinship")
+abline(h = cut_1st, lty = 2)  # 1st vs 2nd
+abline(h = cut_2nd, lty = 2)  # 2nd vs 3rd
+abline(h = cut_3rd, lty = 2)  # 3rd vs unrelated
+abline(v = ibs0_err, lty = 3) # PO split (ibs0≈0)
+legend("topright",
+       legend = c(">=1st (0.1768)","2nd (0.0884)","3rd (0.0442)","PO split (IBS0)"),
+       lty = c(2,2,2,3), bty = "n", cex = 0.9)
 dev.off()
-cat("IBD/KING plot saved to ibd_plot_king.pdf\n")  # :contentReference[oaicite:2]{index=2}
+cat("Plot written: king_scatter.pdf\n")
 
-# ---- Optional: assign degree categories from KING kc + IBS0 ----
-# Default KING cutpoints (GWASTools) for kc:
-# dup >= 0.3536; FS/PO >= 0.1768; deg2 >= 0.0884; deg3 >= 0.0442
-# We'll attach a simple label for convenience.
-assign_deg <- function(kc) {
-  ifelse(kc >= 1/(2^(3/2)),  "dup/MZ",
-         ifelse(kc >= 1/(2^(5/2)),  "1st",
-                ifelse(kc >= 1/(2^(7/2)),  "2nd",
-                       ifelse(kc >= 1/(2^(9/2)),  "3rd", "unrelated"))))
-}
-kin$degree <- assign_deg(kin$Kinship)
-cat("Pair counts by category:\n")
-print(table(kin$degree))  # :contentReference[oaicite:3]{index=3}
-
-# ---- Kinship matrix (KING kinship coefficient) ----
+# ---------- Kinship matrix ----------
 id1 <- if ("FID1" %in% names(kin)) paste(kin$FID1, kin$ID1) else kin$ID1
 id2 <- if ("FID2" %in% names(kin)) paste(kin$FID2, kin$ID2) else kin$ID2
 
-kin_reformat <- data.frame(
-  ID1 = id1,
-  ID2 = id2,
-  Kinship = kin$Kinship
-)
-
+kin_reformat <- data.frame(ID1 = id1, ID2 = id2, Kinship = kc)
 kin_matrix <- dcast(kin_reformat, ID1 ~ ID2, value.var = "Kinship")
 rownames(kin_matrix) <- kin_matrix$ID1
 kin_matrix <- as.matrix(kin_matrix[, -1, drop = FALSE])
-# Symmetrize: ensure missing cells are 0 on off-diagonals, 1/2 on diagonal if desired
-# (KING kinship for identical samples is 0.5; we leave diagonal as 0/NA since pairs file lacks self-pairs)
 kin_matrix[is.na(kin_matrix)] <- 0
-
 saveRDS(kin_matrix, file = file.path(dir, "kinship_matrix.rds"))
-cat("Kinship matrix saved to kinship_matrix.rds\n")
+cat("Kinship matrix saved: kinship_matrix.rds\n")
 
-# ---- Identify related individuals (default: >= 3rd-degree threshold) ----
-kc_cutoff <- 1/(2^(9/2))   # 0.04419417...  (change to 0.0884 for 2nd-degree)
+# ---------- Exclude lists (kc >= kc_cutoff) ----------
 rel_pairs <- subset(kin_reformat, Kinship >= kc_cutoff)
-
-# Unique IDs to exclude (simple union of any pair above threshold)
 ids_unique <- sort(unique(c(rel_pairs$ID1, rel_pairs$ID2)))
 
-# Write two flavors:
-# 1) Proper two-column FID IID (if FIDs present)
+# FID/IID two-column file (if FIDs present)
 if ("FID1" %in% names(kin)) {
   split_ids <- do.call(rbind, strsplit(ids_unique, " ", fixed = TRUE))
   exclude_fid_iid <- data.frame(FID = split_ids[,1], IID = split_ids[,2], stringsAsFactors = FALSE)
-  write.table(exclude_fid_iid,
-              file = file.path(dir, "to_exclude.fid_iid.txt"),
+  write.table(exclude_fid_iid, file = file.path(dir, "to_exclude.fid_iid.txt"),
               col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
-  cat("Exclude list (FID IID) saved to to_exclude.fid_iid.txt\n")
+  cat("Wrote: to_exclude.fid_iid.txt\n")
 }
 
-# 2) Backward-compatible two identical columns of the combined ID (as in your original script)
+# Backward-compatible duplicate-ID format
 write.table(data.frame(ids_unique, ids_unique),
             file = file.path(dir, "to_exclude.txt"),
             col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
-cat("Exclude list (duplicated combined IDs) saved to to_exclude.txt\n")
-
-cat(sprintf("Using cutoff kc >= %.4f yielded %d unique IDs to exclude.\n",
+cat(sprintf("kc_cutoff=%.5f ⇒ %d unique IDs to exclude. Wrote: to_exclude.txt\n",
             kc_cutoff, length(ids_unique)))
 
 # args <- commandArgs(trailingOnly = TRUE)
