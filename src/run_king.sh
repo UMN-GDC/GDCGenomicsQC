@@ -47,7 +47,7 @@ plink --bfile kin --genome full --out kinships
 
 # Kinship + IBD Plotting
 module load R/4.4.2-openblas-rocky8
-Rscript $path_to_repo/src/kinship.R $ROOT_DIR kinships.genome
+Rscript $path_to_repo/src/kinship.R $ROOT_DIR kinships
 
 # Subset unrelated/related samples
 plink --bfile kin --remove to_exclude.txt --make-bed --out study.$NAME.unrelated
