@@ -43,17 +43,24 @@ fi
 # Run KING
 king -b kin.bed --kinship --prefix kinships
 
+# Run KING to generate list to_exclude.txt
+king -b kin.bed --unrelated --degree 2 --prefix test_list
+
 # Run PLINK --genome for IBD estimates (needed for ibdPlot)
 module load plink
 plink --bfile kin --genome full --out kinships
 
 # Kinship + IBD Plotting
-module load R/4.4.2-openblas-rocky8
+module load R/4.4.0-openblas-rocky8
 Rscript $path_to_repo/src/kinship.R $ROOT_DIR kinships.genome
 
-# Subset unrelated/related samples
-plink --bfile kin --remove to_exclude.txt --make-bed --out study.$NAME.unrelated
-plink --bfile kin --keep to_exclude.txt --make-bed --out study.$NAME.related
+# # Subset unrelated/related samples
+# plink --bfile kin --remove to_exclude.txt --make-bed --out study.$NAME.unrelated
+# plink --bfile kin --keep to_exclude.txt --make-bed --out study.$NAME.related
+
+# Adjusted unrelated/related samples based purely on king
+plink --bfile kin --remove test_listunrelated_toberemoved.txt --make-bed --out study.$NAME.unrelated
+plink --bfile kin --keep test_listunrelated_toberemoved.txt --make-bed --out study.$NAME.related
 
 # Restore FIDs if modified
 if [ "$all_fids_zero" == "yes" ]; then
