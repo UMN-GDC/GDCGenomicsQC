@@ -129,7 +129,7 @@ run_primus_if_needed() {
 
   if [ ! -f "${primus_check}" ]; then
     echo "(Step 3) Relatedness check"
-    ${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+    bash ${path_to_repo}/src/run_primus.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
   fi
 }
 
@@ -153,15 +153,14 @@ run_king_if_needed() {
   local WORK="$3"
   local REF="$4"
   local NAME="$5"
-  local DATATYPE="$6"
-  local local_modules="$7"
+  local local_modules="$6"
 
   if [ ! -f "${king_check}" ]; then
     echo "(Step 3) Relatedness check"
-    if [ ${local_modules} -eq 1 ]; then
-      ${path_to_repo}/src/run_king.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+    if [ "${local_modules}" -eq 1 ]; then
+      bash ${path_to_repo}/src/run_king.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
     else
-      ${path_to_repo}/src/run_king_module.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+      bash ${path_to_repo}/src/run_king_module.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
     fi
   fi
 }
@@ -189,7 +188,7 @@ run_pca_ir_if_needed() {
 
   if [ ! -f "${pcair_check}" ]; then
     echo "(Step 3) Running PC-AiR and PC-Relate"
-    ${path_to_repo}/src/run_pcair.sh ${WORK} ${REF} ${NAME} ${path_to_repo} 
+    bash ${path_to_repo}/src/run_pcair.sh ${WORK} ${REF} ${NAME} ${path_to_repo} 
   fi
 }
 
