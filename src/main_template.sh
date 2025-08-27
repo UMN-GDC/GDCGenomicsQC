@@ -17,6 +17,8 @@
 
 # Hard-code the path to the Reference folder (containing reference dataset, other bash scripts, and programs' executables like CrossMap, GenomeHarmonizer, PRIMUS, and fraposa)
 REF=/home/gdc/public/Ref
+export R_LIBS_USER=${REF}/R
+
 path_to_repo=PRPO
 FILE=PND
 NAME=FLE
