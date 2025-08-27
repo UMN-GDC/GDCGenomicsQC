@@ -290,7 +290,7 @@ run_rfmix_if_needed() {
     if [ ${local_modules} -eq 1 ]; then  
       sbatch --wait "${path_to_repo}/src/run_rfmix.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
     else
-      sbatch --wait "${path_to_repo}/src/run_rfmix_only_module.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
+      sbatch --wait "${path_to_repo}/src/run_rfmix_only_module.sh" "${WORK}" "${NAME}" "${path_to_repo}"
     fi
   fi
 }
