@@ -3,6 +3,7 @@
 # Usage: ./this_script.sh <working_directory> <path_to_repo>
 
 set -uo pipefail
+module load quarto/1.7.33 
 
 # Check for correct number of arguments
 if [ "$#" -ne 2 ]; then
