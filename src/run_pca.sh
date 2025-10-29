@@ -63,3 +63,22 @@ plink --bfile stupref_common_bi --merge-list merge_list.txt --make-bed --out mer
 
 plink --bfile merged_common_bi --pca --out merged_dataset_pca --allow-no-sex
 rm -f *_tmp.* snps_*.txt intersect_snps.txt merge_list.txt ref_snps.*
+
+
+# Step 6. UMAP reduction
+# [ ] Need to make sure the filepaths make sense
+#%% UMAP
+Rscript umap.R --eigens merged_dataset_pca --out merged_dataset_umap \
+  --npc 50 --neighbors 50 \
+  --threads 1 \
+  --ncoords 3 \
+  --seed $RANDOM
+
+# Step 7. Variational autoencoder
+#recode plink bfile to vcf (prepping for popVAE)
+plink2 --bfile merged_common_bi --recode vcf-iid --out merged_common_bi
+
+# [ ] Still need to make sure the environment for this is compatible
+/home/gdc/public/envs/popvae/bin/python /home/gdc/public/popvae/popvae.py \
+    --infile merged_common_bi.vcf \
+    --out merged_common_vae
