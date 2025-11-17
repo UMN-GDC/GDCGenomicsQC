@@ -143,11 +143,11 @@ run_king_if_needed() {
   local WORK="$3"
   local REF="$4"
   local NAME="$5"
-  local DATATYPE="$6"
+  local COMB="$6"
 
   if [ ! -f "${king_check}" ]; then
     echo "(Step 3) Relatedness check"
-    ${path_to_repo}/src/run_king.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${DATATYPE}
+    ${path_to_repo}/src/run_king.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${COMB}
   fi
 }
 

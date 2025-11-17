@@ -46,28 +46,8 @@ seqSNP2GDS(gds.fn = gds_file, out.fn = seq_gds_file, verbose = TRUE)
 seqfile <- seqOpen(seq_gds_file)
 seqData <- SeqVarData(seqfile)
 
-# ---- Step 7: PC-Relate ----
-## -- how many variants?  -----------------------------------------------------
-## 1) pull the variant IDs from the file …
-# keep every variant
-variant.id     <- seqGetData(seqfile, "variant.id")
-variantFilter  <- list(variant.sel = rep(TRUE, length(variant.id)))
-
-# now build the iterator
-seqIter <- SeqVarIterator(seqData, variantFilter = variantFilter)
-
-
-## -- PC-Relate ---------------------------------------------------------------
-relate <- pcrelate(
-  seqIter,
-  pcs           = pcaobj$vectors,
-  training.set  = pcaobj$unrels,
-  verbose       = TRUE
-)
-
 # ---- Step 8: Save results ----
 saveRDS(pcaobj, file = file.path(out_dir, paste0(NAME, "_pcaobj.RDS")))
-saveRDS(relate, file = file.path(out_dir, paste0(NAME, "_pcrelate.RDS")))
 write.table(pcaobj$unrels,
             file = file.path(out_dir, paste0(NAME, "_unrelated_ids.txt")),
             quote = FALSE, row.names = FALSE, col.names = FALSE)

@@ -27,6 +27,7 @@ king=KING
 rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
+combine_related=COMB
 custom_ancestry=CSTANC
 
 cd ${WORK}
@@ -77,10 +78,10 @@ echo "(Step 4) Relatedness"
 if [ ${king} -eq 1 ]; then
   cd $WORK
   king_check=$WORK/relatedness/study.$NAME.unrelated.bim
-  run_king_if_needed "${king_check}" ${path_to_repo} ${WORK} ${REF} ${NAME}
+  run_king_if_needed "${king_check}" ${path_to_repo} ${WORK} ${REF} ${NAME} ${combine_related}
   king_check_after_call ${king_check}
   echo "(Step 4b) Ancestry and kinship adjustment via PC-AiR / PC-Relate"
-  pcair_check=$WORK/relatedness/study.$NAME.unrelated.bim
+  pcair_check=$WORK/pca_ir/${NAME}_pcaobj.RDS
   run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
   pca_ir_check_after_call ${pcair_check}
 else

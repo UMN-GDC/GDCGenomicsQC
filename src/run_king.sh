@@ -13,6 +13,7 @@ WORK=$1           # e.g., /scratch.global/and02709
 REF=$2            # unused for now
 NAME=$3           # e.g., SMILES_GDA
 path_to_repo=$4   # Repo used in other steps
+COMB=$5
 
 # Derived paths
 ROOT_DIR=$WORK/relatedness
@@ -50,8 +51,12 @@ module load R/4.4.2-openblas-rocky8
 Rscript $path_to_repo/src/kinship.R $ROOT_DIR kinships
 
 # Subset unrelated/related samples
-plink --bfile kin --remove to_exclude.txt --make-bed --out study.$NAME.unrelated
-plink --bfile kin --keep to_exclude.txt --make-bed --out study.$NAME.related
+if [ ${COMB} -eq 1 ]; then
+    plink --bfile kin --make-bed --out study.$NAME.unrelated
+else
+    plink --bfile kin --remove to_exclude.txt --make-bed --out study.$NAME.unrelated
+    plink --bfile kin --keep to_exclude.txt --make-bed --out study.$NAME.related
+fi
 
 # Restore FIDs if modified
 if [ "$all_fids_zero" == "yes" ]; then

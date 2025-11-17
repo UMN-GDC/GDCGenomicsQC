@@ -24,10 +24,11 @@ show_help() {
   echo "--use_king			Enter '1' if you would like to use king to estimate relatedness"
   echo "--use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry"
   echo "--make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed"
+  echo "--combine_related		Enter '1' if you would like to combine related subjects with the unrelated subjects"
   echo "--custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering"
   echo "--custom_ancestry		Enter '1' if you would like to use your own ancestry assignment algorithm"
   echo "					When providing this flag you will need to answer all of the questions prompted by the terminal"
-  echo "--interactive		Enter '1' if you would like to run GDCGenomicsQC pipeline interactively instead of as an sbatch"
+  echo "--interactive			Enter '1' if you would like to run GDCGenomicsQC pipeline interactively instead of as an sbatch"
   echo "Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports"
   echo "--help				Display this help message."
 }
@@ -55,6 +56,7 @@ custom_qc=0
 custom_ancestry=0
 flag=0
 interactive=0
+combine_related=0
 
 
 # *** Make sure you have a new enough getopt to handle long options (see the man page)
@@ -62,7 +64,7 @@ getopt -T &>/dev/null
 if [[ $? -ne 4 ]]; then echo "Getopt is too old!" >&2 ; exit 1 ; fi
 
 # declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,use_rfmix,make_report,custom_qc,custom_ancestry,help}
-OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,use_king:,interactive:,help' -n "$0" -- "$@")
+OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,use_king:,interactive:,combine_related:,help' -n "$0" -- "$@")
     # *** Added -o '' ; surrounted the longoptions by ''
 if [[ $? -ne 0 ]] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     # *** This has to be right after the OPTS= assignment or $? will be overwritten
@@ -125,6 +127,10 @@ while [[ $# -gt 0 ]]; do
 	        interactive=$2
 			shift 2
 			;;
+	--combine_related )
+	        combine_related=$2
+			shift 2
+			;;
     --help )
 			show_help
 			shift 2
@@ -173,6 +179,7 @@ echo "genome harmonizer: $use_genome_harmonizer"
 echo "king: $use_king"
 echo "genome rfmix: $use_rfmix"
 echo "make report: $make_report"
+echo "combine related: $combine_related"
 echo "custom qc: $custom_qc"
 echo "custom ancestry: $custom_ancestry"
 
@@ -194,6 +201,7 @@ ${use_king} \
 ${use_rfmix} \
 ${make_report} \
 ${custom_qc} \
+${combine_related} \
 ${custom_ancestry}
 
 sleep 0.5
