@@ -17,7 +17,7 @@ COMB=$5
 
 # Derived paths
 ROOT_DIR=$WORK/relatedness
-PLINK_FILE=$WORK/Initial_QC/QC4
+PLINK_FILE=$WORK/Initial_QC/QC4.LDpruned.
 KING_REPO=/home/gdc/shared/king
 
 mkdir -p "$ROOT_DIR"

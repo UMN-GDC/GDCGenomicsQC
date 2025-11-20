@@ -31,6 +31,11 @@ plink --bfile QC2 --geno 0.02 --make-bed --out QC3
 plink --bfile QC3 --mind 0.02 --make-bed --out QC4
 plink --bfile QC4 --missing
 
+# filtering for linkage disequilibrium
+# [ ] May want to have ifelse statment if data is phased or not
+# Then could use pairphase for better estimates
+plink --bfile QC4 --indep-pairwise 500kb 0.1 --out QC4
+plink --bfile QC4 --extract QC4.prune.in --make-bed --out QC4.LDpruned
 
 
 
