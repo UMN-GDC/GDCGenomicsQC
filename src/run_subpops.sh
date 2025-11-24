@@ -16,7 +16,6 @@ path_to_repo=$4
 custom=$5
 
 source /home/gdc/public/envs/load_miniconda3.sh
-export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 cd $WORK
 mkdir -p $WORK/ancestry_estimation

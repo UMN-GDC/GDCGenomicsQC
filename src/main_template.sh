@@ -37,7 +37,6 @@ source /home/gdc/public/envs/load_miniconda3.sh
 source ${path_to_repo}/src/bash_functions.sh # Helper functions
 module load plink
 module load perl
-export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 ############## Updating genome build and conducting strand alignment/allele flipping ###################
 if [ ${crossmap} -eq 1 ]; then
@@ -184,7 +183,6 @@ restructure_and_clean_outputs ${WORK} ${NAME}
 
 #4. execute run_generate_reports.sh ##
 source /home/gdc/public/envs/load_miniconda3.sh
-export R_LIBS="/home/gdc/public/Ref/R"
 
 if [ ${report_writer} -eq 1 ]; then
   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}

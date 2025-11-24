@@ -11,7 +11,6 @@
 
 module load plink
 source /home/gdc/public/envs/load_miniconda3.sh
-export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 WORK=$1
 NAME=$2
