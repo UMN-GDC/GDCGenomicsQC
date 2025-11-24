@@ -10,7 +10,7 @@
 #SBATCH --job-name QC_initial
 
 module load plink
-module load R/4.4.0-openblas-rocky8
+source /home/gdc/public/envs/load_miniconda3.sh
 export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 FILE=$1

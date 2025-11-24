@@ -14,7 +14,7 @@ REF=$2            # unused for now
 NAME=$3           # e.g., SMILES_GDA
 path_to_repo=$4   # Repo used in other steps not yet performed
 
-module load R/4.4.0-openblas-rocky8
+source /home/gdc/public/envs/load_miniconda3.sh
 export R_LIBS="/home/gdc/public/Ref/R"
 
 mkdir $WORK/pca_ir
