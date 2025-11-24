@@ -10,7 +10,8 @@
 #SBATCH --job-name QC_initial
 
 module load plink
-module load R
+module load R/4.4.0-openblas-rocky8
+export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 FILE=$1
 REF=$2
@@ -34,7 +35,7 @@ plink --bfile QC4 --missing
 # filtering for linkage disequilibrium
 # [ ] May want to have ifelse statment if data is phased or not
 # Then could use pairphase for better estimates
-plink --bfile QC4 --indep-pairwise 500kb 0.1 --out QC4
+plink --bfile QC4 --indep-pairwise 500 10 0.1 --out QC4
 plink --bfile QC4 --extract QC4.prune.in --make-bed --out QC4.LDpruned
 
 
