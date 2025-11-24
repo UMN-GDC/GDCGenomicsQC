@@ -16,6 +16,7 @@ path_to_repo=$4
 custom=$5
 
 module load R/4.4.0-openblas-rocky8
+export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 cd $WORK
 mkdir -p $WORK/ancestry_estimation

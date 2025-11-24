@@ -10,7 +10,8 @@
 #SBATCH --job-name QC
 
 module load plink
-module load R
+module load R/4.4.0-openblas-rocky8
+export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 FILE=$1
 OUTDIR=$2

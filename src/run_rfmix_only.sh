@@ -17,6 +17,7 @@ mkdir $WORK/rfmix
 sbatch --time 18:00:00 --mem 64GB --cpus-per-task 30 --array 1-22 --wait -N1 ${path_to_repo}/src/rfmix_individual.sh ${WORK} ${NAME}
 
 module load R/4.4.0-openblas-rocky8
+export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 Rscript ${path_to_repo}/src/gai.R ${WORK} ${NAME}
 

@@ -90,6 +90,7 @@ mv ./GAP_individual_plots $WORK/GAP_plots
 
 # Replace numeric IDs in ancestry.bed using ancestry_index_map.tsv
 module load R/4.4.0-openblas-rocky8
+export R_LIBS_USER="/home/gdc/public/Ref/R"
 Rscript ${path_to_repo}/src/combine_ids_script.R $WORK $NAME
 cp ancestry_${NAME}.txt $WORK/ancestry_${NAME}.txt
 

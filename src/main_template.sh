@@ -37,6 +37,8 @@ source /home/gdc/public/envs/load_miniconda3.sh
 source ${path_to_repo}/src/bash_functions.sh # Helper functions
 module load plink
 module load perl
+module load R/4.4.0-openblas-rocky8
+export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 ############## Updating genome build and conducting strand alignment/allele flipping ###################
 if [ ${crossmap} -eq 1 ]; then

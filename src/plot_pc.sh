@@ -14,7 +14,8 @@ REF=$2
 NAME=$3
 path_to_repo=$4
 
-module load R
+module load R/4.4.0-openblas-rocky8
+export R_LIBS_USER="/home/gdc/public/Ref/R"
 
 cd $WORK/PCA
 Rscript $path_to_repo/src/plot_pca.R $WORK

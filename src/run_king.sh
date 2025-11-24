@@ -9,6 +9,10 @@
 #SBATCH -e king.err
 #SBATCH --job-name king
 
+module load plink
+module load R/4.4.0-openblas-rocky8
+export R_LIBS_USER="/home/gdc/public/Ref/R"
+
 WORK=$1           # e.g., /scratch.global/and02709
 REF=$2            # unused for now
 NAME=$3           # e.g., SMILES_GDA
@@ -17,7 +21,7 @@ COMB=$5
 
 # Derived paths
 ROOT_DIR=$WORK/relatedness
-PLINK_FILE=$WORK/Initial_QC/QC4.LDpruned.
+PLINK_FILE=$WORK/Initial_QC/QC4.LDpruned
 KING_REPO=/home/gdc/shared/king
 
 mkdir -p "$ROOT_DIR"
@@ -43,11 +47,9 @@ fi
 $KING_REPO -b kin.bed --kinship --prefix kinships
 
 # Run PLINK --genome for IBD estimates (needed for ibdPlot)
-module load plink
 plink --bfile kin --genome full --out kinships
 
 # Kinship + IBD Plotting
-module load R/4.4.2-openblas-rocky8
 Rscript $path_to_repo/src/kinship.R $ROOT_DIR kinships
 
 # Subset unrelated/related samples
