@@ -14,9 +14,10 @@ REF=$2            # unused for now
 NAME=$3           # e.g., SMILES_GDA
 path_to_repo=$4   # Repo used in other steps not yet performed
 
-source /home/gdc/public/envs/load_miniconda3.sh
+source /home/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 
-mkdir $WORK/pca_ir
+mkdir -p $WORK/pca_ir
 cd $WORK/pca_ir
 Rscript ${path_to_repo}/src/pca_ir_pipeline.R ${WORK} ${NAME}
 

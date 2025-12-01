@@ -14,7 +14,8 @@ REF=$2
 NAME=$3
 path_to_repo=$4
 
-module load plink
+source /home/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 
 mkdir -p $WORK/PCA
 cp $WORK/relatedness/study.$NAME.unrelated.* $WORK/PCA/

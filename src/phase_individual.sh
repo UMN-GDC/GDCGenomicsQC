@@ -16,8 +16,8 @@ REF=$3
 DATATYPE=$4
 
 cd $WORK/phased
-module load plink
-module load bcftools
+source /home/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 
 plink --bfile $WORK/$DATATYPE/${DATATYPE}.QC8 --chr $CHR --recode vcf --out ${NAME}.chr${CHR}
 bgzip -c ${NAME}.chr${CHR}.vcf > ${NAME}.chr${CHR}.vcf.gz

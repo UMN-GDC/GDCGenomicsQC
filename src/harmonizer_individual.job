@@ -9,8 +9,8 @@
 #SBATCH -e genome_harmonizer_%a.err
 #SBATCH --job-name genome_harmonizer
 
-module load java/openjdk-17.0.2
-module load plink
+source /home/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 
 # REF=/home/gdc/public/Ref
 WORK=$1

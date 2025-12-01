@@ -9,8 +9,8 @@
 #SBATCH -e king.err
 #SBATCH --job-name king
 
-module load plink
-source /home/gdc/public/envs/load_miniconda3.sh
+source /home/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 
 WORK=$1           # e.g., /scratch.global/and02709
 REF=$2            # unused for now

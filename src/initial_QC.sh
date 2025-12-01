@@ -9,8 +9,8 @@
 #SBATCH -e QC_initial.err
 #SBATCH --job-name QC_initial
 
-module load plink
-source /home/gdc/public/envs/load_miniconda3.sh
+source /home/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 
 FILE=$1
 REF=$2

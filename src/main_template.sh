@@ -33,10 +33,9 @@ custom_ancestry=CSTANC
 cd ${WORK}
 
 ####################################### Environment Setup ##############################################
-source /home/gdc/public/envs/load_miniconda3.sh
+source /home/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 source ${path_to_repo}/src/bash_functions.sh # Helper functions
-module load plink
-module load perl
 
 ############## Updating genome build and conducting strand alignment/allele flipping ###################
 if [ ${crossmap} -eq 1 ]; then
