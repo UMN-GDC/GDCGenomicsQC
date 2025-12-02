@@ -107,10 +107,6 @@ cat(sprintf("kc_cutoff=%.5f ⇒ %d unique IDs to exclude. Wrote: to_exclude.txt\
 # name <- args[2]         # filename, e.g. "kinships.genome"
 # 
 # # ---- Load Libraries ----
-# if (!requireNamespace("GWASTools", quietly = TRUE)) {
-#   install.packages("BiocManager", repos = "https://cloud.r-project.org/")
-#   BiocManager::install("GWASTools")
-# }
 # suppressPackageStartupMessages({
 #   library(GWASTools)
 #   library(reshape2)

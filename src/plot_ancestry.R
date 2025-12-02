@@ -1,8 +1,5 @@
 # Load required libraries
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(readr)
+library(tidyverse)
 
 # Load RFMIX2 ancestry output
 rfmix_output <- "local_ancestry_output.rfmix2.local_ancestry.txt"

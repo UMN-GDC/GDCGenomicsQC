@@ -25,4 +25,3 @@ rfmix \
  -g ${REF}/rfmix_ref/genetic_map_hg38.txt \
  -o ancestry_chr${CHR} \
  --chromosome=$CHR
-

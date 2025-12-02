@@ -1,19 +1,5 @@
-path_to_packages <- "/home/gdc/public/Ref/R"
-.libPaths(c(path_to_packages, .libPaths()))  # Ensure R looks there for packages
-
-
-install_if_missing <- function(pkg, lib = path_to_packages) {
-  if (!requireNamespace(pkg, quietly = TRUE, lib.loc = lib)) {
-    install.packages(pkg, lib = lib, dependencies = TRUE, repos = "https://cloud.r-project.org")
-  }
-  suppressMessages(library(pkg, character.only = TRUE, lib.loc = lib))
-}
-
-# Load libraries
-install_if_missing("ggplot2")
-install_if_missing("data.table")
-install_if_missing("tidyverse")
-# install_if_missing("dplyr")
+library(data.table)
+library(tidyverse)
 
 # Parse command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
