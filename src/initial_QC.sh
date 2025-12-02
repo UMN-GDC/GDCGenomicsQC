@@ -37,5 +37,3 @@ plink --bfile QC4 --missing
 plink --bfile QC4 --indep-pairwise 500 10 0.1 --out QC4
 plink --bfile QC4 --extract QC4.prune.in --make-bed --out QC4.LDpruned
 
-
-
