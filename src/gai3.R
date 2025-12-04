@@ -1,4 +1,3 @@
-.libPaths("/projects/standard/gdc/public/Ref/R")
 library(dplyr)
 library(magrittr)
 library(tidyr)
