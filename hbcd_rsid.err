@@ -1,2 +1,0 @@
-sbatch: Setting account: gdc
-slurmstepd: error: *** JOB 43523785 ON acn01 CANCELLED AT 2025-11-14T18:44:43 ***
