@@ -33,7 +33,7 @@ fam <- fam[, .(FID, IID, Pheno)] %>%
   mutate(across(c(FID, IID), as.character))
 
 # Read additional ancestry data
-extra_ancestry_file <- "/home/gdc/shared/rfmix_ref/super_population_map_file.txt"
+extra_ancestry_file <- "/projects/standard/gdc/shared/rfmix_ref/super_population_map_file.txt"
 extra_ancestry <- fread(extra_ancestry_file, header = FALSE, col.names = c("IID", "Ancestry")) %>%
   mutate(IID = as.character(IID)) %>%
   mutate(FID = IID) %>%  # Create dummy FID to match structure

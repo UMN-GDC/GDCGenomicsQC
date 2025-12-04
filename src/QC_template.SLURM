@@ -9,7 +9,7 @@
 #SBATCH -e QC.err
 #SBATCH --job-name QC
 
-source /home/gdc/public/envs/load_miniconda3-2.sh
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 conda activate gdcPipeline
 
 FILE=$1

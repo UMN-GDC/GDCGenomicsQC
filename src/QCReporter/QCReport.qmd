@@ -15,10 +15,10 @@ editor:
   markdown: 
     wrap: 72
 params: 
-  path_to_data: "/home/gdc/shared/GDC_pipeline/logs/"
-  path_to_save_pdf: "/home/gdc/shared/GDC_pipeline/results/"
+  path_to_data: "/projects/standard/gdc/shared/GDC_pipeline/logs/"
+  path_to_save_pdf: "/projects/standard/gdc/shared/GDC_pipeline/results/"
 project:
-  output-dir: /home/gdc/shared/GDC_pipeline/results/
+  output-dir: /projects/standard/gdc/shared/GDC_pipeline/results/
 ---
 
 ```{r setup, include=FALSE}

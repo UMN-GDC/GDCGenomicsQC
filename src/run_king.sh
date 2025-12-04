@@ -9,7 +9,7 @@
 #SBATCH -e king.err
 #SBATCH --job-name king
 
-source /home/gdc/public/envs/load_miniconda3-2.sh
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 conda activate gdcPipeline
 
 WORK=$1           # e.g., /scratch.global/and02709
@@ -21,7 +21,7 @@ COMB=$5
 # Derived paths
 ROOT_DIR=$WORK/relatedness
 PLINK_FILE=$WORK/Initial_QC/QC4.LDpruned
-KING_REPO=/home/gdc/shared/king
+KING_REPO=/projects/standard/gdc/shared/king
 
 mkdir -p "$ROOT_DIR"
 cd "$ROOT_DIR" || exit 1

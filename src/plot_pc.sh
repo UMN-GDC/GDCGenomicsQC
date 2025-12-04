@@ -14,7 +14,7 @@ REF=$2
 NAME=$3
 path_to_repo=$4
 
-source /home/gdc/public/envs/load_miniconda3.sh
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 
 cd $WORK/PCA
 Rscript $path_to_repo/src/plot_pca.R $WORK

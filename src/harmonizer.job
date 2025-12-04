@@ -10,10 +10,10 @@
 #SBATCH --job-name genome_harmonizer
 #SBATCH --array 0-23
 
-source /home/gdc/public/envs/load_miniconda3-2.sh
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 conda activate gdcPipeline
 
-REF=/home/gdc/public/Ref
+REF=/projects/standard/gdc/public/Ref
 WORK=$1
 NAME=$2
 OUTDIR="aligned"

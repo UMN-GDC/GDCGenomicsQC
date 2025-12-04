@@ -12,10 +12,10 @@
 WORK=$1
 NAME=$2
 CHR=$SLURM_ARRAY_TASK_ID
-REF="/home/gdc/public/Ref"
+REF="/projects/standard/gdc/public/Ref"
 
-source /home/gdc/public/envs/load_miniconda3-2.sh
-conda activate /home/gdc/public/envs/gdcPipeline
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 cd $WORK/rfmix
 
 rfmix \

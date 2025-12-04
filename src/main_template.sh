@@ -16,7 +16,7 @@
 #################################### Specifying paths #################################################
 
 # Hard-code the path to the Reference folder (containing reference dataset, other bash scripts, and programs' executables like CrossMap, GenomeHarmonizer, PRIMUS, and fraposa)
-REF=/home/gdc/public/Ref
+REF=/projects/standard/gdc/public/Ref
 path_to_repo=PRPO
 FILE=PND
 NAME=FLE
@@ -33,7 +33,7 @@ custom_ancestry=CSTANC
 cd ${WORK}
 
 ####################################### Environment Setup ##############################################
-source /home/gdc/public/envs/load_miniconda3-2.sh
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 conda activate gdcPipeline
 source ${path_to_repo}/src/bash_functions.sh # Helper functions
 
@@ -181,7 +181,7 @@ wait_for_ancestry_qc_to_finish
 restructure_and_clean_outputs ${WORK} ${NAME}
 
 #4. execute run_generate_reports.sh ##
-source /home/gdc/public/envs/load_miniconda3.sh
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 
 if [ ${report_writer} -eq 1 ]; then
   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}

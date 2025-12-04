@@ -28,7 +28,7 @@ fi
 
 #Default settings
 output_folder=$(pwd)
-path_github_repo=/home/gdc/shared/GDC_pipeline/GDCGenomicsQC
+path_github_repo=/projects/standard/gdc/shared/GDC_pipeline/GDCGenomicsQC
 using_crossmap=1
 using_genome_harmonizer=1
 making_report=1

@@ -15,7 +15,7 @@ work_dir <- paste0(dir, "/rfmix")
 setwd(work_dir)
 
 # Qfiles <- list.files(pattern = ".rfmix.Q")
-# temp <- read.table("/home/gdc/and02709/ancestry/rff/ancestry_chr1.rfmix.Q")
+# temp <- read.table("/projects/standard/gdc/and02709/ancestry/rff/ancestry_chr1.rfmix.Q")
 # qnames <- system(paste("head -n 2 ", Qfiles[1]), intern=T)
 # qnames <- qnames[2]
 # qnames <- sub("#", "", qnames)

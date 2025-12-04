@@ -11,7 +11,7 @@ execute:
   message: false
   toc: true
 project:
-  output-dir: /home/gdc/shared/GDC_pipeline/results/
+  output-dir: /projects/standard/gdc/shared/GDC_pipeline/results/
 ---
 
 The following is an automated report describing the quality control (QC) processing of your dataset. detailed description of the QC steps taken.
@@ -31,10 +31,10 @@ library(forcats)
 The QC process outline below first process the data in aggregate removing SNPs and subjects with large amounts of missingness. In addition, SNPs are filtered to remove those with low minor allele frequency (MAF), frequencies are two out of equlibrium based on [Hardy-Weinberg equilibrium (HWE)](https://www.nature.com/scitable/definition/hardy-weinberg-equilibrium-122/). Then, for multiethnic samples, subject ancestries are predicted using [principal components analysis (PCA)](https://www.nature.com/articles/ng1847) and [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering). Finally, the original data is filtered again at the level of each predicted ancestry before it is later rejoined into the full dataset. Table @ref(tab:summary) summarizes the number of SNPs and subjects at each step of the QC process.
 
 ```{r importdata, echo=FALSE}
-#path_to_data="/home/gdc/shared/GDC_pipeline/data/"
+#path_to_data="/projects/standard/gdc/shared/GDC_pipeline/data/"
 path_to_data="C:/Users/baron063/Desktop/GDC_ppln_development/sample_data/" # Temp for modifications
-path_to_data="/home/gdc/shared/GDC_pipeline/data/"
-path_to_data="/home/gdc/shared/GDC_pipeline/data/"
+path_to_data="/projects/standard/gdc/shared/GDC_pipeline/data/"
+path_to_data="/projects/standard/gdc/shared/GDC_pipeline/data/"
 # Data
 indmiss<-read.table(file=paste0(path_to_data,"plink.imiss"), header=TRUE)
 snpmiss<-read.table(file=paste0(path_to_data, "plink.lmiss"), header=TRUE)

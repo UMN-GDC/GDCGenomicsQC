@@ -9,10 +9,9 @@
 #SBATCH -e genome_harmonizer_%a.err
 #SBATCH --job-name genome_harmonizer
 
-source /home/gdc/public/envs/load_miniconda3-2.sh
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 conda activate gdcPipeline
 
-# REF=/home/gdc/public/Ref
 WORK=$1
 NAME=$2
 REF=$3

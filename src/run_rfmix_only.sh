@@ -16,7 +16,7 @@ path_to_repo=$3
 mkdir $WORK/rfmix
 sbatch --time 18:00:00 --mem 64GB --cpus-per-task 30 --array 1-22 --wait -N1 ${path_to_repo}/src/rfmix_individual.sh ${WORK} ${NAME}
 
-source /home/gdc/public/envs/load_miniconda3.sh
+source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 
 Rscript ${path_to_repo}/src/gai.R ${WORK} ${NAME}
 

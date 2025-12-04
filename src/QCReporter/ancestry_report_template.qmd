@@ -13,9 +13,9 @@ execute:
   toc: true
 editor: visual
 params:
-  path_to_data: "/home/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA/Full/"
+  path_to_data: "/projects/standard/gdc/shared/GDC_pipeline/results/Needed_files_for_report/SMILES_GDA/Full/"
 project:
-  output-dir: /home/gdc/shared/GDC_pipeline/results/
+  output-dir: /projects/standard/gdc/shared/GDC_pipeline/results/
 ---
 
 The following is an automated report describing the quality control (QC) processing of your dataset.
@@ -23,7 +23,7 @@ The following is an automated report describing the quality control (QC) process
 ```{r loadPackages}
 #| message: false
 #| echo: false
-.libPaths("/home/gdc/public/Ref/R")
+.libPaths("/projects/standard/gdc/public/Ref/R")
 library(dplyr)
 library(ggplot2)
 library(gt)

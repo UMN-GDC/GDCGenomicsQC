@@ -18,14 +18,14 @@ Rscript 01aUmap.R --eigens testData/1kg.eigenvec --out testData/1kgUmap \
   --ncoords 2 \
   --seed $RANDOM
 
-# /home/gdc/shared/rfmix_ref/ALL_phase3_shapeit2_mvncall_integrated_v3plus_nounphased_rsID_genotypes_GRCh38_dbSNP.vcf.gz
+# /projects/standard/gdc/shared/rfmix_ref/ALL_phase3_shapeit2_mvncall_integrated_v3plus_nounphased_rsID_genotypes_GRCh38_dbSNP.vcf.gz
 
 #recode plink bfile to vcf (prepping for popVAE)
 plink2 --bfile testData/1kg --recode vcf-iid --out testData/1kg
 
 
 # Works Run PopVAE using the specific Python from the popvae environment
-/home/gdc/public/envs/popvae/bin/python /home/gdc/public/popvae/popvae.py \
+python /projects/standard/gdc/public/popvae/popvae.py \
     --infile testData/1kg.vcf \
     --out testData/1kgvae \
     --max_epochs 500
