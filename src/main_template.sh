@@ -171,7 +171,7 @@ else # Alternative behavior
 fi
 
 cp ${WORK}/ancestry_estimation/* ${WORK}/PCA/
-subset_ancestries_run_standard_qc "${ETHNICS}" ${WORK} ${NAME} ${custom_qc} ${path_to_repo}
+subset_ancestries_run_standard_qc "${ETHNICS}" ${WORK} ${NAME} ${custom_qc} ${path_to_repo} $FILE/$NAME
 ##Putting in to wait until the jobs are done
 wait_for_ancestry_qc_to_finish
 ###########################################################################################################
@@ -179,11 +179,8 @@ wait_for_ancestry_qc_to_finish
   
 ########################## Restructuring and cleaning up for the report writer ############################
 restructure_and_clean_outputs ${WORK} ${NAME}
-
-#4. execute run_generate_reports.sh ##
-source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
-
-if [ ${report_writer} -eq 1 ]; then
-  ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
-fi
+# 
+# if [ ${report_writer} -eq 1 ]; then
+#   ${path_to_repo}/src/run_generate_reports.sh ${WORK} ${path_to_repo}
+# fi
 

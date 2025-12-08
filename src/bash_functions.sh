@@ -327,15 +327,26 @@ subset_ancestries_run_standard_qc() {
   local NAME="$3"
   local custom_qc="$4"
   local path_to_repo="$5"
-
+  local ORIG=${6:-NULL}
   for DATATYPE in ${ETHNICS}; do
     mkdir -p $DATATYPE
-    plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned
-    if [ ${custom_qc} -eq 1 ]; then
-    ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
-      sbatch ${WORK}/custom_qc.SLURM ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
-    else # Default behavior      
-      sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+
+    if [[ -f "${WORK}/aligned/study.${NAME}.lifted.aligned.bed" ]]; then
+      plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned
+      if [ ${custom_qc} -eq 1 ]; then
+      ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
+        sbatch ${WORK}/custom_qc.SLURM ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+      else # Default behavior      
+        sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+      fi
+    else 
+      plink --bfile $ORIG --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}
+      if [ ${custom_qc} -eq 1 ]; then
+      ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
+        sbatch ${WORK}/custom_qc.SLURM ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE} ${DATATYPE} ${path_to_repo}
+      else # Default behavior      
+        sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE} ${DATATYPE} ${path_to_repo}
+      fi
     fi
   done
 }
@@ -377,19 +388,51 @@ restructure_and_clean_outputs() {
   #3. move other directories into a temporary location called 'temp'
   # aligned, lifted, logs, PCA, relatedness, relatedness_OLD
   mkdir ${WORK}/temp
-  rm ${WORK}/result* ${WORK}/prep*
-  mv -f ${WORK}/aligned ${WORK}/temp/
-  mv -f ${WORK}/lifted ${WORK}/temp/
-  mv -f ${WORK}/logs ${WORK}/temp/
   mv -f ${WORK}/Initial_QC ${WORK}/temp/Initial_QC
-  mv -f ${WORK}/phased ${WORK}/temp/
-  mv -f ${WORK}/rfmix ${WORK}/temp/
-  mv -f ${WORK}/PCA ${WORK}/temp/
-  mv -f ${WORK}/GAP_plots ${WORK}/temp/
-  mv -f ${WORK}/LAP_plots ${WORK}/temp/
-  mv -f ${WORK}/relatedness ${WORK}/temp/
-  mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
-  mv -f ${WORK}/ancestry_estimation ${WORK}/temp/
+  if [[ -d "${WORK}/aligned" ]]; then
+    mv -f ${WORK}/aligned ${WORK}/temp/
+  fi 
+  if [[ -d "${WORK}/lifted" ]]; then
+    mv -f ${WORK}/lifted ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/logs" ]]; then
+    mv -f ${WORK}/logs ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/phased" ]]; then
+    mv -f ${WORK}/phased ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/rfmix" ]]; then
+    mv -f ${WORK}/rfmix ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/PCA" ]]; then
+    mv -f ${WORK}/PCA ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/gds" ]]; then
+    mv -f ${WORK}/gds ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/visualization" ]]; then
+    mv -f ${WORK}/visualization ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/pca_ir" ]]; then
+    mv -f ${WORK}/pca_ir ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/GAP_plots" ]]; then
+    mv -f ${WORK}/GAP_plots ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/LAP_plots" ]]; then
+    mv -f ${WORK}/LAP_plots ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/relatedness" ]]; then
+    mv -f ${WORK}/relatedness ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/relatedness_OLD" ]]; then
+    mv -f ${WORK}/relatedness_OLD ${WORK}/temp/
+  fi
+  if [[ -d "${WORK}/ancestry_estimation" ]]; then
+    mv -f ${WORK}/ancestry_estimation ${WORK}/temp/
+  fi
+  mkdir -p ${WORK}/temp/logs/out/
+  mkdir -p ${WORK}/temp/logs/errors/
   mv -f ${WORK}/*.out ${WORK}/temp/logs/out/
   mv -f ${WORK}/*.err ${WORK}/temp/logs/errors/
 

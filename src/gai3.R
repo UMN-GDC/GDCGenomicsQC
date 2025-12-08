@@ -1,18 +1,28 @@
-library(dplyr)
-library(magrittr)
-library(tidyr)
-library(purrr)
-library(readr)
-library(stringr)
-
+library(tidyverse)
 args <- commandArgs(trailingOnly = TRUE)
 dir <- args[1]
 name <- args[2]
 
-ancestry <- read.table(paste0(dir, "/ancestry_", name, ".txt"), header=T)
+ancestry <- list.files(path = paste0(dir, "rfmix"), pattern = "ancestry_chr.*.rfmix.Q", full.names=T) |>
+  map(read_table, skip = 1) |>
+  reduce(left_join, by = "#sample") |>
+  # make one set of columns appear with the intended ancestry names
+  rename_with(
+    .fn = ~ str_replace(., pattern = "\\.[x]$", replacement = ""),
+  ) |>
+  # take the mean across all chromosomes
+  mutate(
+    `#sample`,
+    across(
+    .cols = !starts_with("#sample") & !matches("\\.x$|\\.y$"),
+    .fns = list(mean = ~ mean(c_across(starts_with(str_sub(cur_column(), 1,3))), na.rm = T)),
+    .names = "{str_sub(.col, 1, 3)}"
+  )) |>
+  select(-c(ends_with(".x"), ends_with(".y")))
+
 sample <- ancestry[,1]
 Q_data <- ancestry[,-1]
-index <- apply(Q_data, 1, function(x) which(x==max(x)))
+index <- unlist(apply(Q_data, 1, function(x) which.max(x), simplify = T))
 ancestry_names <- colnames(Q_data)
 ancestry_decision <- data.frame(sample, index)
 colnames(ancestry_decision) <- c("ID", "code_number")

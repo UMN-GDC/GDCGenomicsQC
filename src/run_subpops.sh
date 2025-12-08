@@ -14,8 +14,10 @@ REF=$2
 NAME=$3
 path_to_repo=$4
 custom=$5
+ORIG=$6
 
 source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
+conda activate gdcPipeline
 
 cd $WORK
 mkdir -p $WORK/ancestry_estimation
@@ -28,10 +30,8 @@ else
 fi
 
 echo "Potential duplication below"
-cp $WORK/study.$NAME.unrelated.comm.popu $WORK/ancestry_estimation/study.$NAME.unrelated.comm.popu
-
 # awk -F '\t' '{print $3}' $WORK/study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
-awk '{print $3}' study.$NAME.unrelated.comm.popu | sort | uniq -c > subpop.txt
-awk '{print $1 "\t" $2 "\t" $3}' study.$NAME.unrelated.comm.popu > data.txt
+awk '{print $3}' ancestry_estimation/study.$NAME.unrelated.comm.popu | sort | uniq -c > ancestry_estimation/subpop.txt
+awk '{print $1 "\t" $2 "\t" $3}' ancestry_estimation/study.$NAME.unrelated.comm.popu > ancestry_estimation/data.txt
 Rscript ${path_to_repo}/src/subpop.R ${WORK} ${NAME}
 
