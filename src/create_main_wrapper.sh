@@ -14,6 +14,7 @@ making_report=${10}
 custom_qc=${11}
 combine_related=${12}
 custom_ancestry=${13}
+CHECK_SEX=${14}
 
 output=${desired_working_directory}/${input_file_name}_wrapper.sh
 mkdir -p ${desired_working_directory}
@@ -31,3 +32,4 @@ sed -i 's@CSTQC@'${custom_qc}'@' ${output}
 sed -i 's@COMB@'${combine_related}'@' ${output}
 sed -i 's@CSTANC@'${custom_ancestry}'@' ${output}
 sed -i 's@RFMX@'${using_rfmix}'@' ${output} 
+sed -i 's@CHECK_SEXX@'${CHECK_SEX}'@' ${output} 

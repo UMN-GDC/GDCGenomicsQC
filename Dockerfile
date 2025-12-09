@@ -1,28 +1,33 @@
-# syntax=docker/dockerfile:1
+# Start from a clean, stable Linux base with Miniconda installed
+FROM continuumio/miniconda3:latest
 
-#Python base image
-FROM python:latest 
+# Set a working directory inside the container
+WORKDIR /app
 
-# Set working direcotry (also creates directory)
-WORKDIR ~/app
+# Copy the exported environment file into the container image
+COPY environment.yml /app/
 
-# Install GCTA and plink
-RUN curl -L https://zzz.bwh.harvard.edu/plink/dist/plink-1.08-x86_64.zip ; unzip plink-1.08-x86_64.zip ; rm plink-1.08-x86_64.zip
-RUN curl -L https://cnsgenomics.com/software/gcta/bin/gcta_1.93.2beta.zip -o gcta.zip ; unzip gcta.zip ; rm gcta.zip
+# Install the Conda environment from the YAML file
+# -n my_app_env names the environment (optional, but good practice)
+RUN conda install -y mamba -c conda-forge && \
+    mamba env create -f environment.yml -n my_app_env && \
+    # Clean up unnecessary files to reduce the final image size
+    conda clean --all -f -y
 
-# Install ancestry prediction
-git clone https://github.com/daviddaiweizhang/fraposa.git
-cd fraposa
-wget https://upenn.app.box.com/v/fraposa-demo/file/1170205195226
+# Set the PATH to include the new environment's bin directory
+ENV PATH="/opt/conda/envs/my_app_env/bin:$PATH"
 
-# Copy over test data
-RUN mkdir Estimate
-RUN mkdir Simulate
+# Copy your local source code, scripts, or configuration files
+# Assuming your main script is in the local 'src' directory
+COPY src/ /app/src/
+COPY data/ /app/src/data/
+COPY results/ /app/src/results/
+COPY Run.sh /app/
 
-# copy files over to image
-COPY Estimate Estimate 
-COPY Simulate Simulate 
+ENTRYPOINT= ["/app/Run.sh"]
 
-#load the python script and tell docker to run that script
-#when someone tries to execute the container
-ENTRYPOINT ["python3", "Estimate.py"]
+
+# Define the command that runs when the container is executed
+# This activates the environment and runs your main script
+CMD ["--help"]
+

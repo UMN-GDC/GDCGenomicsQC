@@ -57,6 +57,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
+# defaults
 NYS=1
 set_working_directory=$(pwd)
 input_directory=$(pwd)
@@ -73,6 +74,7 @@ custom_ancestry=0
 flag=0
 interactive=0
 combine_related=0
+CHECK_SEX=false
 
 
 # *** Make sure you have a new enough getopt to handle long options (see the man page)
@@ -198,6 +200,7 @@ echo "make report: $make_report"
 echo "combine related: $combine_related"
 echo "custom qc: $custom_qc"
 echo "custom ancestry: $custom_ancestry"
+echo "Check Sex: $CHECK_SEX"
 
 if [ ${custom_qc} -eq 1 ]; then
           echo "You have chosen to customize the standard qc steps, please answer all of the following questions"
@@ -218,7 +221,8 @@ ${use_rfmix} \
 ${make_report} \
 ${custom_qc} \
 ${combine_related} \
-${custom_ancestry}
+${custom_ancestry} \
+$CHECK_SEX
 
 sleep 0.5
 
