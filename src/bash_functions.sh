@@ -86,11 +86,13 @@ run_standard_qc_if_needed() {
   local file_to_check_qc="$1"
   local WORK="$2"
   local NAME="$3"
-  local path_to_repo="$4"
-  local DATATYPE="$5"
+  local REF="$4"
+  local path_to_repo="$5"
+  local DATATYPE="$6"
+  local CHECK_SEX="$7"
 
   if [ ! -f "${file_to_check_qc}" ]; then
-    sbatch --wait ${path_to_repo}/src/standard_QC.job ${WORK} ${NAME} ${path_to_repo} ${DATATYPE}
+    sbatch --wait ${path_to_repo}/src/standard_QC.job ${WORK} ${NAME} ${REF} ${path_to_repo} ${DATATYPE} ${CHECK_SEX}
   fi
 }
 

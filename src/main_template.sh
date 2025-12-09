@@ -29,6 +29,7 @@ report_writer=RPT
 custom_qc=CSTQC
 combine_related=COMB
 custom_ancestry=CSTANC
+CHECK_SEX=false
 
 cd ${WORK}
 
@@ -101,7 +102,7 @@ if [ ${custom_qc} -eq 1 ]; then
   sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
   file_to_check_qc=${WORK}/${DATATYPE}/${DATATYPE}.QC8.bim
-  run_standard_qc_if_needed "${file_to_check_qc}" ${WORK} ${NAME} ${path_to_repo} ${DATATYPE}
+  run_standard_qc_if_needed "${file_to_check_qc}" ${WORK} ${NAME} ${REF} ${path_to_repo} ${DATATYPE} ${CHECK_SEX}
   standard_qc_check_after_call ${file_to_check_qc}
 fi
 ########################################################################################################

@@ -19,7 +19,7 @@ cd $WORK/phased
 source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
 conda activate gdcPipeline
 
-plink --bfile $WORK/$DATATYPE/${DATATYPE}.QC8 --chr $CHR --recode vcf --out ${NAME}.chr${CHR}
+plink --bfile $WORK/$DATATYPE/QC8 --chr $CHR --recode vcf --out ${NAME}.chr${CHR}
 bgzip -c ${NAME}.chr${CHR}.vcf > ${NAME}.chr${CHR}.vcf.gz
 bcftools index -f ${NAME}.chr${CHR}.vcf.gz
 
