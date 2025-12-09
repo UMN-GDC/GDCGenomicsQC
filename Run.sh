@@ -12,25 +12,41 @@
 #SBATCH --job-name GDCgenomics
 
 show_help() {
-  echo "Usage: $0 [options]"
-  echo "Options:"
-  echo "--set_working_directory		Provide a path to where you'd like the outputs to be stored"
-  echo "--input_directory		Provide the path to where the bim/bed/fam data is stored"
-  echo "--input_file_name 		Provide the common name that ties the bim/bed/fam files together"
-  echo "--path_to_github_repo 		Provide the path to the GDCGenomicsQC pipeline repository"
-  echo "--user_x500			Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions"
-  echo "--use_crossmap			Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38"
-  echo "--use_genome_harmonizer 	Enter '1' if you would like to update strand allignment by using genome harmonizer"
-  echo "--use_king			Enter '1' if you would like to use king to estimate relatedness"
-  echo "--use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry"
-  echo "--make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed"
-  echo "--combine_related		Enter '1' if you would like to combine related subjects with the unrelated subjects"
-  echo "--custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering"
-  echo "--custom_ancestry		Enter '1' if you would like to use your own ancestry assignment algorithm"
-  echo "					When providing this flag you will need to answer all of the questions prompted by the terminal"
-  echo "--interactive			Enter '1' if you would like to run GDCGenomicsQC pipeline interactively instead of as an sbatch"
-  echo "Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports"
-  echo "--help				Display this help message."
+  cat << EOF
+Usage: $0 [options]
+Options:
+--set_working_directory		Provide a path to where you'd like the outputs to be stored
+--input_directory		Provide the path to where the bim/bed/fam data is stored
+--input_file_name 		Provide the common name that ties the bim/bed/fam files together
+--path_to_github_repo 		Provide the path to the GDCGenomicsQC pipeline repository
+--user_x500			Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions
+--use_crossmap			Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38
+--use_genome_harmonizer 	Enter '1' if you would like to update strand allignment by using genome harmonizer
+--use_king			Enter '1' if you would like to use king to estimate relatedness
+--use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry
+--make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed
+--combine_related		Enter '1' if you would like to combine related subjects with the unrelated subjects
+--custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering
+--custom_ancestry		Enter '1' if you would like to use your own ancestry assignment algorithm
+					When providing this flag you will need to answer all of the questions prompted by the terminal
+--interactive			Enter '1' if you would like to run GDCGenomicsQC pipeline interactively instead of as an sbatch
+Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports
+---------------------------------------------------------------------------------------
+EXAMPLE
+# An example call on thousand genome
+sh $HOME/GDCGenomicsQC/Run.sh \
+  --set_working_directory /scratch.global/coffm049/1kgPipeline
+  --input_directory /scratch.global/coffm049/1kgPipeline \
+  --input_file_name 1kgExample \
+  --path_to_github_repo /users/4/coffm049/GDCGenomicsQC \
+  --use_crossmap 0 \
+  --use_king 1 \
+  --use_rfmix 1 \
+  --use_genome_harmonizer 0 \
+  --make_report 0 \
+  --custom_qc 0 \
+  --user_x500 <user email>
+EOF
 }
 
 
