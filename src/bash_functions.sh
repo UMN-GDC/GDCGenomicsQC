@@ -334,7 +334,7 @@ subset_ancestries_run_standard_qc() {
     mkdir -p $DATATYPE
 
     if [[ -f "${WORK}/aligned/study.${NAME}.lifted.aligned.bed" ]]; then
-      plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned
+      plink --bfile ${WORK}/aligned/study.${NAME}.lifted.aligned --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}.lifted.aligned
       if [ ${custom_qc} -eq 1 ]; then
       ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
         sbatch ${WORK}/custom_qc.SLURM ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
@@ -342,12 +342,12 @@ subset_ancestries_run_standard_qc() {
         sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
       fi
     else 
-      plink --bfile $ORIG --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}
+      plink --bfile $ORIG --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}
       if [ ${custom_qc} -eq 1 ]; then
       ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
         sbatch ${WORK}/custom_qc.SLURM ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE} ${DATATYPE} ${path_to_repo}
       else # Default behavior      
-        sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE} ${DATATYPE} ${path_to_repo}
+        sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME} ${DATATYPE} ${REF} ${path_to_repo}
       fi
     fi
   done

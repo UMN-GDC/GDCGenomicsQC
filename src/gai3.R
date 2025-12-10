@@ -3,7 +3,7 @@ args <- commandArgs(trailingOnly = TRUE)
 dir <- args[1]
 name <- args[2]
 
-ancestry <- list.files(path = paste0(dir, "rfmix"), pattern = "ancestry_chr.*.rfmix.Q", full.names=T) |>
+ancestry <- list.files(path = paste0(dir, "/rfmix"), pattern = "ancestry_chr.*.rfmix.Q", full.names=T) |>
   map(read_table, skip = 1) |>
   reduce(left_join, by = "#sample") |>
   # make one set of columns appear with the intended ancestry names
@@ -40,8 +40,7 @@ joined_file <- dplyr::inner_join(fam_file, ancestry_decision, by="ID") %>%
 joined_file$ancestry[which(joined_file$prediction_percentage < 80)] <- "Other"
 
 
-output_name <- paste0("study.",name,".unrelated.comm.popu")
-output_path <- paste0(dir, "/", output_name)
+output_path <- paste0(dir, "/ancestry_estimation/study.",name,".unrelated.comm.popu")
 write.table(joined_file, file=output_path, row.names = F, col.names = F, quote=F, sep="\t")
 
 
