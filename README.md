@@ -7,16 +7,19 @@
 ![R](https://img.shields.io/badge/r-%23276DC3.svg?style=for-the-badge&logo=r&logoColor=white)
 ![Shell Script](https://img.shields.io/badge/shell_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 
-A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing Plink, Liftover, R-language, Python, and Bashed, and can be housed in a Docker image.
+A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing [Plink](https://www.cog-genomics.org/plink/), [Liftover](https://genome.ucsc.edu/cgi-bin/hgLiftOver), [R-language](https://www.r-project.org/), [Python](https://www.python.org/), and [bash](https://www.gnu.org/software/bash/), and  housed in a [Docker image](https://hub.docker.com/_/docker).
 
 # Installation
 ## Git clone
 ```shell
 git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
 ```
-### Reqirements
--	Access to MSI computing resources.
--	Genomic files in plink bed formatting (bim, bed, & fam)
+### Requirements
+- Access to HPC computing resources with SLURM scheduler.
+- Genomic files in Plink bed formatting (bim, bed, & fam)
+- installing `conda env create --file environment.yml`
+    - this installs the conda environment called gdcPipeline
+- Or, singularity to run docker image
 
 # Usage
 After cloning this repository the steps to run this pipeline are as follows:
@@ -42,17 +45,19 @@ After cloning this repository the steps to run this pipeline are as follows:
 
 ## Standard Procedure *(Done in order)*
 
+Full documentation is [here](https://docs.google.com/document/d/147DG4Po_TaSFyiXkmRlszrmQIjsp4UNNe_u90slZbD8/edit?tab=t.0).
+
 ### Module 1: Crossmap (optional)
 
-This moudle converts the genome build to GRCh38.  The default setting is conversion from GRCh37 to GRCh38.  This is controlled using the `--use_crossmap` flag.  The default setting is `1`, but if the build is already GRCh38 this flag should be manually set to `0`.
+This module converts the genome build to GRCh38.  The default setting is conversion from GRCh37 to GRCh38.  This is controlled using the `--use_crossmap` flag.  The default setting is `1`, but if the build is already GRCh38 this flag should be manually set to `0`.
 
 ### Module 2: GenotypeHarmonizer (optional)
 
-This module aligns sample to the GRCh38 reference genome.  The reference genome alignment file we use is `ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5.vcf` which is designed for the GRCh38 build.  All subsequent steps in this pipeline assume we have an aligned GRCH38 build study sample.  We can control for alignment using the flag `--use_genome_harmonizer`.  The defualt flag setting is `1`, but this can be manually set to `0`.
+This module aligns sample to the GRCh38 reference genome.  The reference genome alignment file we use is `ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5.vcf` which is designed for the GRCh38 build.  All subsequent steps in this pipeline assume we have an aligned GRCH38 build study sample.  We can control for alignment using the flag `--use_genome_harmonizer`.  The default flag setting is `1`, but this can be manually set to `0`.
 
 ### Module 3: Initial QC
 
-We perform an initial round of Quality Control prior to runing relatedness checks.
+We perform an initial round of Quality Control prior to running relatedness checks.
 
 -   Exclude SNPs with greater than 10% missingness **(Plink)**
 -   Exclude individuals with greater than 10% missingness **(Plink)**
@@ -61,11 +66,11 @@ We perform an initial round of Quality Control prior to runing relatedness check
 
 ### Module 4: Relatedness
 
-We first run kinship test using KING.  This separates the plink dataset into related and unrelated plink study samples.  Many of the subsequent steps involving ancestry estimation require the sample subjects to be unrelated.  To provide some analysis of related subjects we also perform PC-AiR and PC-Relate in this module.  We convert PLINK format to GDS format and perform an initial kinship estimate with the KING algorithm, but pivot to perform Principal Component Analysis and infer genetic ancestry on each inidvidual.  We finally run PC-Relate to calculate highly accurate measures of genetic relatedness. (kinship coefficients, IBD probabilities).
+We first run kinship test using KING.  This separates the Plink dataset into related and unrelated Plink study samples.  Many of the subsequent steps involving ancestry estimation require the sample subjects to be unrelated.  To provide some analysis of related subjects we also perform PC-AiR and PC-Relate in this module.  We convert PLINK format to GDS format and perform an initial kinship estimate with the KING algorithm, but pivot to perform Principal Component Analysis and infer genetic ancestry on each individual.  We finally run PC-Relate to calculate highly accurate measures of genetic relatedness. (kinship coefficients, IBD probabilities).
 
 ### Module 5: Standard QC
 
-This runs the standard quality control measures expected of GWAS on unrelated individuals.  To compensate for potential related individuals, we perform QC measures on the unrelated study samples from Module 4: Relatedness, but apply similar filtering standards on the related individuals.  We create the unrelated QC dataset, but also a related QC dataset which has the same SNPs extracted as the unrleated dataset.  The following are the standard QC steps.  Custom QC steps can be provided by generating a custom script.
+This runs the standard quality control measures expected of GWAS on unrelated individuals.  To compensate for potential related individuals, we perform QC measures on the unrelated study samples from Module 4: Relatedness, but apply similar filtering standards on the related individuals.  We create the unrelated QC dataset, but also a related QC dataset which has the same SNPs extracted as the unrelated dataset.  The following are the standard QC steps.  Custom QC steps can be provided by generating a custom script.
 
 -   Exclude SNPs with greater than 10% missingness **(Plink)**
 -   Exclude individuals with greater than 10% missingness **(Plink)**
@@ -83,11 +88,11 @@ This runs the standard quality control measures expected of GWAS on unrelated in
 
 ### Module 6: Phasing
 
-We perform phasing using shapeit4.2.  This is necessary to use rfmix to infer ancestry.  This module first recodes the QC unrleated dataset into vcf format separated by chromosome.  Phasing is then performed using reference map `chr${CHR}.b38.gmap.gz`.  The files are then ready to be run using rfmix.
+We perform phasing using shapeit4.2.  This is necessary to use rfmix to infer ancestry.  This module first recodes the QC unrelated dataset into vcf format separated by chromosome.  Phasing is then performed using reference map `chr${CHR}.b38.gmap.gz`.  The files are then ready to be run using rfmix.
 
 ### Module 7: rfmix
 
-We infer ancestry of individual samples using rfmix.  In addition to phased file provide by `module 6: phasing`, we also need reference genome that has also been phased, a population map or super population map file, and a genetic map file for GRch 38 build.  In our script we use reference genome `hg38_phased.vcf.gz`, super population map file `super_population_map_file.txt`, and genetic map `genetic_map_hg38.txt`.  Initially we generate posterior probabilities for each ancestry by sample.  These posterior probabilities represent each of the 22 chromosomes.  To get global ancestries for each individual, we take the mean posterior probabilities for each super population across all 22 .Q files.  Assignment to globabl ancestry is based on the highest posterior probabilty that is greater than 0.8.  If no posterior probablitiy is greater than 0.8, that subject classified as `Other`.
+We infer ancestry of individual samples using rfmix.  In addition to phased file provide by `module 6: phasing`, we also need reference genome that has also been phased, a population map or super population map file, and a genetic map file for GRch 38 build.  In our script we use reference genome `hg38_phased.vcf.gz`, super population map file `super_population_map_file.txt`, and genetic map `genetic_map_hg38.txt`.  Initially we generate posterior probabilities for each ancestry by sample.  These posterior probabilities represent each of the 22 chromosomes.  To get global ancestries for each individual, we take the mean posterior probabilities for each super population across all 22 .Q files.  Assignment to global ancestry is based on the highest posterior probability that is greater than 0.8.  If no posterior probability is greater than 0.8, that subject classified as `Other`.
 
 ### Module 8: ancestry plots
 
@@ -102,7 +107,7 @@ We construct principal components to be used in future analysis (especially for 
 
 ### Module 10: population stratification
 
-We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
+We separate the samples into individual Plink files based on their most probable posterior ancestries determined in Module 7: rfmix.
 
 ### Module 11: Subpopulation QC
 
@@ -126,7 +131,7 @@ Requirements:
 -	CrossMap.py
 -	GRCh37_to_GRCh38.chain.gz
 
-I recommend converting to plink and performing these steps:
+I recommend converting to Plink and performing these steps:
 
 1. `plink --bfile file_stem --merge-x no-fail --make-bed --out prep1`
 2. `plink --bfile prep1 --recode --output 'MT' --out prep2`
@@ -263,7 +268,7 @@ for chr in {1..22}; do
     done
 done
 ```
-Pipeline for Global Ncestry Plots
+Pipeline for Global Ancestry Plots
 
 ```
 python ${REF}/RFMIX2-Pipeline-to-plot/GAP/Scripts/RFMIX2ToBed4GAP.py --prefix $WORK/visualization/ancestry --output $WORK/visualization
@@ -360,7 +365,7 @@ done
 
 ### Module 10: population stratification
 
-We separate the samples into individual plink files based on their most probable posterior ancestries dtermined in Module 7: rfmix.
+We separate the samples into individual Plink files based on their most probable posterior ancestries determined in Module 7: rfmix.
 ### Subpopulation QC
 
 We can also provide individual QC steps stratified by population.
