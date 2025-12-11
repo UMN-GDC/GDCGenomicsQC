@@ -70,4 +70,5 @@ plink --bfile QC7 --make-bed --out QC8
 # Extract snps retained in $OUTDIR.QC8
 plink --bfile QC8 --write-snplist --out QC8
 plink --bfile ${WORK}/relatedness/study.${NAME}.related --extract QC8.snplist --make-bed --out study.${NAME}.related.QC8snps
+cd $WORK
 
