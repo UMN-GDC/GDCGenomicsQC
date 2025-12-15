@@ -222,7 +222,7 @@ dependencies:
   - pygments=2.19.2
   - pyparsing=3.2.5
   - pysocks=1.7.1
-  - python=3.12.12
+  - python=3.11
   - python-dateutil=2.9.0.post0
   - python-fastjsonschema=2.21.2
   - python-json-logger=2.0.7
@@ -510,4 +510,8 @@ dependencies:
   - seaborn
   - statsmodels
   - xarray
+  - crossmap
+  - fraposa-pgsc
+  - shapeit
+  - quarto
 prefix: /projects/standard/gdc/public/envs/gdcPipeline
