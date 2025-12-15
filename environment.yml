@@ -1,7 +1,9 @@
 name: gdcPipeline
 channels:
-  - conda-forge
+  - dranew
+  - bioconda
   - defaults
+  - conda-forge
 dependencies:
   - _libgcc_mutex=0.1
   - _openmp_mutex=4.5
@@ -500,7 +502,6 @@ dependencies:
   - openjdk
   - plink
   - rfmix
-  - git
   - keras
   - tensorflow
   - nibabel
