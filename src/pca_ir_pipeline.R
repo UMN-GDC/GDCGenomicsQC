@@ -51,6 +51,9 @@ saveRDS(pcaobj, file = file.path(out_dir, paste0(NAME, "_pcaobj.RDS")))
 write.table(pcaobj$unrels,
             file = file.path(out_dir, paste0(NAME, "_unrelated_ids.txt")),
             quote = FALSE, row.names = FALSE, col.names = FALSE)
+write.table(pcaobj$vectors,
+            file = file.path(out_dir, paste0(NAME, "pcaLoadings.txt")),
+            quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
 
 # ---- Step 9: Cleanup ----
 seqClose(seqfile)

@@ -1,16 +1,11 @@
 name: gdcPipeline
 channels:
   - conda-forge
-  - bioconda
-  - anaconda
   - defaults
 dependencies:
   - _libgcc_mutex=0.1
   - _openmp_mutex=4.5
-  - _python_abi3_support=1.0
   - _r-mutex=1.0.1
-  - _x86_64-microarch-level=3
-  - absl-py=2.3.1
   - alsa-lib=1.2.14
   - anyio=4.11.0
   - argcomplete=3.6.3
@@ -18,38 +13,16 @@ dependencies:
   - argon2-cffi-bindings=25.1.0
   - arrow=1.4.0
   - asttokens=3.0.1
-  - astunparse=1.6.3
   - async-lru=2.0.5
   - attrs=25.4.0
   - babel=2.17.0
-  - bcftools=1.22
   - beautifulsoup4=4.14.2
   - binutils=2.45
   - binutils_impl_linux-64=2.45
   - binutils_linux-64=2.45
-  - bioconductor-biobase=2.62.0
-  - bioconductor-biocgenerics=0.48.1
-  - bioconductor-biocparallel=1.36.0
-  - bioconductor-biostrings=2.70.1
   - bioconductor-data-packages=20250625
-  - bioconductor-dnacopy=1.76.0
-  - bioconductor-gdsfmt=1.38.0
-  - bioconductor-genesis=2.32.0
-  - bioconductor-genomeinfodb=1.38.1
-  - bioconductor-genomeinfodbdata=1.2.11
-  - bioconductor-genomicranges=1.54.1
-  - bioconductor-gwastools=1.48.0
-  - bioconductor-iranges=2.36.0
-  - bioconductor-quantsmooth=1.68.0
-  - bioconductor-s4vectors=0.40.2
-  - bioconductor-seqarray=1.42.4
-  - bioconductor-seqvartools=1.40.0
-  - bioconductor-snprelate=1.36.0
-  - bioconductor-xvector=0.42.0
-  - bioconductor-zlibbioc=1.48.0
   - bleach=6.3.0
   - bleach-with-css=6.3.0
-  - boost-cpp=1.85.0
   - brotli=1.2.0
   - brotli-bin=1.2.0
   - brotli-python=1.2.0
@@ -67,7 +40,6 @@ dependencies:
   - comm=0.2.3
   - conda-gcc-specs=14.3.0
   - contourpy=1.3.3
-  - cpython=3.12.12
   - curl=8.17.0
   - cxx-compiler=1.11.0
   - cycler=0.12.1
@@ -80,10 +52,9 @@ dependencies:
   - exceptiongroup=1.3.1
   - executing=2.2.1
   - expat=2.7.3
-  - flatbuffers=25.2.10
   - font-ttf-dejavu-sans-mono=2.37
-  - font-ttf-inconsolata=3.000
-  - font-ttf-source-code-pro=2.038
+  - font-ttf-inconsolata=3.0
+  - font-ttf-source-code-pro=2.38
   - font-ttf-ubuntu=0.83
   - fontconfig=2.15.0
   - fonts-conda-ecosystem=1
@@ -92,33 +63,21 @@ dependencies:
   - fqdn=1.5.1
   - freetype=2.14.1
   - fribidi=1.0.16
-  - gast=0.7.0
   - gcc=14.3.0
   - gcc_impl_linux-64=14.3.0
   - gcc_linux-64=14.3.0
-  - gettext=0.25.1
-  - gettext-tools=0.25.1
   - gfortran_impl_linux-64=14.3.0
-  - giflib=5.2.2
-  - git=2.52.0
-  - glib=2.86.2
-  - glib-tools=2.86.2
   - glpk=5.0
   - gmp=6.3.0
-  - google-pasta=0.2.0
   - graphite2=1.3.14
-  - grpcio=1.73.1
   - gsl=2.7
   - gxx=14.3.0
   - gxx_impl_linux-64=14.3.0
   - gxx_linux-64=14.3.0
   - h11=0.16.0
   - h2=4.3.0
-  - h5py=3.15.1
-  - harfbuzz=12.2.0
-  - hdf5=1.14.6
+  - harfbuzz=11.0.0
   - hpack=4.1.0
-  - htslib=1.22.1
   - httpcore=1.0.9
   - httpx=0.28.1
   - hyperframe=6.1.0
@@ -147,7 +106,6 @@ dependencies:
   - jupyterlab=4.5.0
   - jupyterlab_pygments=0.3.0
   - jupyterlab_server=2.28.0
-  - keras=3.12.0
   - kernel-headers_linux-64=6.12.0
   - keyutils=1.6.3
   - king=2.2.7
@@ -157,19 +115,12 @@ dependencies:
   - lcms2=2.17
   - ld_impl_linux-64=2.45
   - lerc=4.0.0
-  - libabseil=20250512.1
-  - libaec=1.1.4
-  - libasprintf=0.25.1
-  - libasprintf-devel=0.25.1
   - libblas=3.11.0
-  - libboost=1.85.0
-  - libboost-devel=1.85.0
-  - libboost-headers=1.85.0
   - libbrotlicommon=1.2.0
   - libbrotlidec=1.2.0
   - libbrotlienc=1.2.0
   - libcblas=3.11.0
-  - libclang13=16.0.1
+  - libclang13=21.1.0
   - libcups=2.3.3
   - libcurl=8.17.0
   - libcxx=21.1.6
@@ -186,25 +137,18 @@ dependencies:
   - libgcc=15.2.0
   - libgcc-devel_linux-64=14.3.0
   - libgcc-ng=15.2.0
-  - libgettextpo=0.25.1
-  - libgettextpo-devel=0.25.1
   - libgfortran=15.2.0
   - libgfortran-ng=15.2.0
   - libgfortran5=15.2.0
   - libgl=1.7.0
-  - libglib=2.86.2
+  - libglib=2.84.0
   - libglvnd=1.7.0
   - libglx=1.7.0
   - libgomp=15.2.0
-  - libgrpc=1.73.1
   - libiconv=1.18
-  - libidn2=2.3.8
   - libjpeg-turbo=3.1.2
   - liblapack=3.11.0
-  - libllvm16=16.0.1
   - liblzma=5.8.1
-  - liblzma-devel=5.8.1
-  - libml_dtypes-headers=0.5.4
   - libnghttp2=1.67.0
   - libnsl=2.0.1
   - libntlm=1.8
@@ -212,44 +156,34 @@ dependencies:
   - libopengl=1.7.0
   - libpciaccess=0.18
   - libpng=1.6.51
-  - libpq=9.5.3
-  - libprotobuf=6.31.1
-  - libre2-11=2025.11.05
+  - libpq=17.7
   - libsanitizer=14.3.0
   - libsodium=1.0.20
-  - libsqlite=3.51.1
+  - libsqlite=3.51.0
   - libssh2=1.11.1
   - libstdcxx=15.2.0
   - libstdcxx-devel_linux-64=14.3.0
   - libstdcxx-ng=15.2.0
-  - libtensorflow_cc=2.19.1
-  - libtensorflow_framework=2.19.1
   - libtiff=4.7.1
-  - libunistring=0.9.10
   - libuuid=2.41.2
   - libuv=1.51.0
   - libvulkan-loader=1.4.328.1
   - libwebp-base=1.6.0
   - libxcb=1.17.0
   - libxcrypt=4.4.36
-  - libxkbcommon=1.0.3
+  - libxkbcommon=1.11.0
   - libxml2=2.13.9
-  - libxslt=1.1.37
+  - libxslt=1.1.43
   - libzlib=1.3.1
   - llvm-openmp=8.0.1
   - make=4.4.1
-  - markdown=3.10
-  - markdown-it-py=4.0.0
   - markupsafe=3.0.3
   - matplotlib-base=3.10.8
   - matplotlib-inline=0.2.1
-  - mdurl=0.1.2
   - mistune=3.1.4
-  - ml_dtypes=0.5.4
   - munkres=1.1.4
   - mysql-common=9.0.1
   - mysql-libs=9.0.1
-  - namex=0.1.0
   - nbclient=0.10.2
   - nbconvert-core=7.16.6
   - nbformat=5.10.4
@@ -258,34 +192,28 @@ dependencies:
   - nlopt=2.10.0
   - notebook=7.5.0
   - notebook-shim=0.2.4
-  - numpy=2.1.3
+  - numpy=2.3.5
   - oniguruma=6.9.10
-  - openjdk=11.0.27
   - openjpeg=2.5.4
   - openldap=2.6.10
   - openmp=8.0.1
   - openssl=3.6.0
-  - opt_einsum=3.4.0
-  - optree=0.18.0
   - overrides=7.7.0
   - packaging=25.0
   - pandas=2.3.3
   - pandoc=3.8.2.1
   - pandocfilters=1.5.0
-  - pango=1.56.4
+  - pango=1.56.3
   - parso=0.8.5
-  - pcre2=10.47
-  - perl=5.32.1
+  - pcre2=10.44
   - pexpect=4.9.0
   - pillow=12.0.0
   - pip=25.3
   - pixman=0.46.4
   - platformdirs=4.5.0
-  - plink=1.90b7.7
   - plink2=2.0.0a.6.9
   - prometheus_client=0.23.1
   - prompt-toolkit=3.0.52
-  - protobuf=6.31.1
   - psutil=7.1.3
   - pthread-stubs=0.4
   - ptyprocess=0.7.0
@@ -297,8 +225,6 @@ dependencies:
   - python=3.12.12
   - python-dateutil=2.9.0.post0
   - python-fastjsonschema=2.21.2
-  - python-flatbuffers=24.3.25
-  - python-gil=3.12.12
   - python-json-logger=2.0.7
   - python-tzdata=2025.2
   - python_abi=3.12
@@ -306,227 +232,205 @@ dependencies:
   - pyyaml=6.0.3
   - pyzmq=27.1.0
   - qhull=2020.2
-  - r-askpass=1.2.1
+  - r-askpass=1.2.0
   - r-assertthat=0.2.1
   - r-backports=1.5.0
-  - r-base=4.3.3
-  - r-base64enc=0.1_3
-  - r-bh=1.87.0_1
-  - r-bit=4.6.0
-  - r-bit64=4.6.0_1
-  - r-bitops=1.0_9
+  - r-base
+  - r-base64enc=0.1.3
+  - r-bit=4.0.5
+  - r-bit64=4.0.5
   - r-blob=1.2.4
-  - r-boot=1.3_32
+  - r-boot=1.3.30
   - r-brio=1.1.5
-  - r-broom=1.0.9
-  - r-bslib=0.9.0
+  - r-broom=1.0.6
+  - r-bslib=0.7.0
   - r-cachem=1.1.0
   - r-callr=3.7.6
-  - r-caret=6.0_94
+  - r-caret=6.0.94
   - r-cellranger=1.1.0
-  - r-class=7.3_23
-  - r-cli=3.6.5
+  - r-class=7.3.22
+  - r-cli=3.6.3
   - r-clipr=0.8.0
-  - r-clock=0.7.3
-  - r-codetools=0.2_20
-  - r-colorspace=2.1_1
+  - r-clock=0.7.0
+  - r-codetools=0.2.20
+  - r-colorspace=2.1.0
   - r-conflicted=1.2.0
   - r-conquer=1.3.3
   - r-cpp11=0.5.2
   - r-crayon=1.5.3
-  - r-curl=7.0.0
-  - r-data.table=1.17.8
+  - r-curl=5.1.0
+  - r-data.table=1.15.4
   - r-dbi=1.2.3
-  - r-dbplyr=2.5.1
+  - r-dbplyr=2.5.0
   - r-desc=1.4.3
   - r-diagram=1.6.5
-  - r-diffobj=0.3.6
-  - r-digest=0.6.37
+  - r-diffobj=0.3.5
+  - r-digest=0.6.36
   - r-dplyr=1.1.4
-  - r-dtplyr=1.3.2
-  - r-e1071=1.7_16
+  - r-dtplyr=1.3.1
+  - r-e1071=1.7.14
   - r-ellipsis=0.3.2
-  - r-evaluate=1.0.5
+  - r-evaluate=0.24.0
   - r-fansi=1.0.6
   - r-farver=2.1.2
   - r-fastmap=1.2.0
-  - r-fontawesome=0.5.3
+  - r-fontawesome=0.5.2
   - r-forcats=1.0.0
   - r-foreach=1.5.2
   - r-formatr=1.14
   - r-formula.tools=1.7.1
-  - r-fs=1.6.6
-  - r-futile.logger=1.4.3
-  - r-futile.options=1.0.1
-  - r-future=1.67.0
-  - r-future.apply=1.20.0
-  - r-gargle=1.6.0
+  - r-fs=1.6.4
+  - r-future=1.33.2
+  - r-future.apply=1.11.2
+  - r-gargle=1.5.2
   - r-gbrd=0.4.12
-  - r-generics=0.1.4
-  - r-ggplot2=3.5.2
-  - r-glmnet=4.1_10
-  - r-globals=0.18.0
-  - r-glue=1.8.0
-  - r-googledrive=2.1.2
-  - r-googlesheets4=1.1.2
+  - r-generics=0.1.3
+  - r-ggplot2=3.5.1
+  - r-glmnet=4.1.8
+  - r-globals=0.16.3
+  - r-glue=1.7.0
+  - r-googledrive=2.1.1
+  - r-googlesheets4=1.1.1
   - r-gower=1.0.1
-  - r-gtable=0.3.6
+  - r-gtable
   - r-gwasexacthw=1.2
-  - r-hardhat=1.4.2
-  - r-haven=2.5.5
-  - r-hdpca=1.1.5
+  - r-hardhat=1.4.0
+  - r-haven=2.5.4
   - r-highr=0.11
   - r-hms=1.1.3
   - r-htmltools=0.5.8.1
   - r-httr=1.4.7
   - r-ids=1.0.1
-  - r-igraph=2.1.4
-  - r-ipred=0.9_15
+  - r-igraph=2.0.3
+  - r-ipred=0.9.14
   - r-isoband=0.2.7
   - r-iterators=1.0.14
-  - r-jomo=2.7_6
+  - r-jomo=2.7.6
   - r-jquerylib=0.1.4
-  - r-jsonlite=2.0.0
-  - r-kernsmooth=2.23_26
-  - r-knitr=1.50
+  - r-jsonlite=1.8.8
+  - r-kernsmooth=2.23.24
+  - r-knitr=1.47
   - r-labeling=0.4.3
-  - r-lambda.r=1.2.4
-  - r-lattice=0.22_7
-  - r-lava=1.8.1
+  - r-lattice=0.22.6
+  - r-lava=1.7.3
   - r-lifecycle=1.0.4
   - r-listenv=0.9.1
-  - r-lme4=1.1_37
-  - r-lmtest=0.9_40
-  - r-logistf=1.26.1
-  - r-lpsolve=5.6.23
-  - r-lubridate=1.9.4
+  - r-lme4=1.1.35.3
+  - r-lmtest=0.9.40
+  - r-logistf=1.26.0
+  - r-lubridate=1.9.3
   - r-magrittr=2.0.3
-  - r-mass=7.3_60.0.1
-  - r-matrix=1.6_5
-  - r-matrixmodels=0.5_4
-  - r-matrixstats=1.5.0
+  - r-mass=7.3.60.0.1
+  - r-matrix=1.6.5
+  - r-matrixmodels=0.5.3
+  - r-matrixstats=1.3.0
   - r-memoise=2.0.1
-  - r-mgcv=1.9_3
-  - r-mice=3.17.0
-  - r-mime=0.13
-  - r-minqa=1.2.8
-  - r-mitml=0.4_5
+  - r-mgcv=1.9.1
+  - r-mice=3.16.0
+  - r-mime=0.12
+  - r-minqa=1.2.7
+  - r-mitml=0.4.5
   - r-modelmetrics=1.2.2.2
   - r-modelr=0.1.11
   - r-munsell=0.5.1
-  - r-nlme=3.1_168
+  - r-nlme=3.1.165
   - r-nloptr=2.0.3
-  - r-nnet=7.3_20
-  - r-numderiv=2016.8_1.1
-  - r-openssl=2.3.3
+  - r-nnet=7.3.19
+  - r-numderiv=2016.8.1.1
+  - r-openssl=2.2.0
   - r-operator.tools=1.6.3
-  - r-ordinal=2023.12_4.1
+  - r-ordinal=2023.12.4
   - r-pan=1.9
-  - r-parallelly=1.45.1
-  - r-pillar=1.11.0
-  - r-pkgbuild=1.4.8
+  - r-parallelly=1.37.1
+  - r-pillar=1.9.0
+  - r-pkgbuild=1.4.4
   - r-pkgconfig=2.0.3
-  - r-pkgload=1.4.0
+  - r-pkgload=1.3.4
   - r-plogr=0.2.0
   - r-plyr=1.8.9
   - r-praise=1.0.0
   - r-prettyunits=1.2.0
-  - r-proc=1.19.0.1
-  - r-processx=3.8.6
-  - r-prodlim=2025.04.28
+  - r-proc=1.18.5
+  - r-processx=3.8.4
+  - r-prodlim=2024.6.25
   - r-progress=1.2.3
-  - r-progressr=0.15.1
-  - r-proxy=0.4_27
-  - r-ps=1.9.1
-  - r-purrr=1.1.0
-  - r-quantreg=6.1
-  - r-r6=2.6.1
-  - r-ragg=1.5.0
+  - r-progressr=0.14.0
+  - r-proxy=0.4.27
+  - r-ps=1.7.6
+  - r-purrr=1.0.2
+  - r-quantreg=5.98
+  - r-r6=2.5.1
+  - r-ragg=1.3.2
   - r-rappdirs=0.3.3
-  - r-rbibutils=2.3
-  - r-rcolorbrewer=1.1_3
-  - r-rcpp=1.1.0
-  - r-rcpparmadillo=15.0.2_1
-  - r-rcppeigen=0.3.4.0.2
-  - r-rcurl=1.98_1.17
-  - r-rdpack=2.6.4
+  - r-rbibutils=2.2.16
+  - r-rcolorbrewer=1.1.3
+  - r-rcpp=1.0.12
+  - r-rcpparmadillo=0.12.8.4.0
+  - r-rcppeigen=0.3.4.0.0
+  - r-rdpack=2.6
   - r-readr=2.1.5
-  - r-readxl=1.4.5
-  - r-recipes=1.3.1
-  - r-reformulas=0.4.1
+  - r-readxl=1.4.3
+  - r-recipes=1.0.10
   - r-rematch=2.0.0
   - r-rematch2=2.1.2
-  - r-reprex=2.1.1
-  - r-reshape2=1.4.4
-  - r-rlang=1.1.6
-  - r-rmarkdown=2.29
-  - r-rpart=4.1.24
-  - r-rprojroot=2.1.1
-  - r-rsqlite=2.4.3
-  - r-rstudioapi=0.17.1
-  - r-rvest=1.0.5
-  - r-sandwich=3.1_1
-  - r-sass=0.4.10
-  - r-scales=1.4.0
-  - r-selectr=0.4_2
+  - r-reprex=2.1.0
+  - r-reshape2
+  - r-rlang=1.1.4
+  - r-rmarkdown=2.27
+  - r-rpart=4.1.23
+  - r-rprojroot=2.0.4
+  - r-rsqlite=2.3.4
+  - r-rstudioapi=0.16.0
+  - r-rvest=1.0.4
+  - r-sandwich=3.1.0
+  - r-sass=0.4.9
+  - r-scales=1.3.0
+  - r-selectr=0.4.2
   - r-shape=1.4.6.1
-  - r-snow=0.4_4
-  - r-sparsem=1.84_2
-  - r-sparsevctrs=0.3.4
+  - r-sparsem=1.84
   - r-squarem=2021.1
-  - r-stringi=1.8.7
-  - r-stringr=1.5.2
-  - r-survival=3.8_3
-  - r-sys=3.4.3
-  - r-systemfonts=1.2.3
-  - r-testthat=3.2.3
-  - r-textshaping=1.0.3
-  - r-tibble=3.3.0
+  - r-stringi=1.7.6
+  - r-stringr=1.5.1
+  - r-survival=3.7.0
+  - r-sys=3.4.2
+  - r-systemfonts=1.1.0
+  - r-testthat=3.2.1.1
+  - r-textshaping=0.4.0
+  - r-tibble=3.2.1
   - r-tidyr=1.3.1
   - r-tidyselect=1.2.1
-  - r-tidyverse=2.0.0
+  - r-tidyverse
   - r-timechange=0.3.0
-  - r-timedate=4041.110
-  - r-tinytex=0.57
-  - r-tzdb=0.5.0
-  - r-ucminf=1.2.2
-  - r-utf8=1.2.6
-  - r-uuid=1.2_1
+  - r-timedate=4032.109
+  - r-tinytex=0.51
+  - r-tzdb=0.4.0
+  - r-ucminf=1.2.1
+  - r-utf8=1.2.4
+  - r-uuid=1.2.0
   - r-vctrs=0.6.5
   - r-viridislite=0.4.2
   - r-vroom=1.6.5
-  - r-waldo=0.6.2
-  - r-withr=3.0.2
-  - r-xfun=0.53
-  - r-xml2=1.4.0
-  - r-yaml=2.3.10
-  - r-zoo=1.8_14
-  - re2=2025.11.05
+  - r-waldo=0.5.2
+  - r-withr=3.0.0
+  - r-xfun=0.45
+  - r-xml2=1.3.6
+  - r-yaml=2.3.8
+  - r-zoo=1.8.12
   - readline=8.2
   - referencing=0.37.0
   - requests=2.32.5
   - rfc3339-validator=0.1.4
   - rfc3986-validator=0.1.1
   - rfc3987-syntax=1.1.0
-  - rfmix=2.03.r0.9505bfa
-  - rich=14.2.0
   - rpds-py=0.29.0
   - sed=4.9
   - send2trash=1.8.3
   - setuptools=80.9.0
   - six=1.17.0
-  - snappy=1.2.2
   - sniffio=1.3.1
   - soupsieve=2.8
-  - sqlite=3.51.1
   - stack_data=0.6.3
   - sysroot_linux-64=2.39
-  - tensorboard=2.19.0
-  - tensorboard-data-server=0.7.0
-  - tensorflow=2.19.1
-  - tensorflow-base=2.19.1
-  - tensorflow-estimator=2.19.1
-  - termcolor=3.2.0
   - terminado=0.18.1
   - tinycss2=1.5.0
   - tk=8.6.13
@@ -548,9 +452,7 @@ dependencies:
   - webcolors=25.10.0
   - webencodings=0.5.1
   - websocket-client=1.9.0
-  - werkzeug=3.1.4
   - wheel=0.45.1
-  - wrapt=2.0.1
   - xcb-util=0.4.1
   - xcb-util-cursor=0.1.6
   - xcb-util-image=0.4.0
@@ -575,9 +477,6 @@ dependencies:
   - xorg-libxt=1.3.1
   - xorg-libxtst=1.2.5
   - xorg-libxxf86vm=1.1.6
-  - xz=5.8.1
-  - xz-gpl-tools=5.8.1
-  - xz-tools=5.8.1
   - yaml=0.2.5
   - yq=3.4.3
   - zeromq=4.3.5
@@ -586,23 +485,29 @@ dependencies:
   - zlib-ng=2.2.5
   - zstandard=0.25.0
   - zstd=1.5.7
-  - pip:
-      - bokeh==3.8.1
-      - click==8.3.1
-      - cloudpickle==3.1.2
-      - dask==2025.11.0
-      - donfig==0.8.1.post1
-      - fsspec==2025.10.0
-      - google-crc32c==1.7.1
-      - locket==1.0.0
-      - narwhals==2.13.0
-      - numcodecs==0.16.5
-      - partd==1.4.2
-      - popvae==1.1
-      - scikit-allel==1.3.13
-      - scipy==1.16.3
-      - toolz==1.1.0
-      - tqdm==4.67.1
-      - xyzservices==2025.11.0
-      - zarr==3.1.5
+  - perl
+  - bioconductor-gdsfmt
+  - bioconductor-snprelate
+  - bioconductor-seqarray
+  - bioconductor-seqvartools
+  - bioconductor-biocparallel
+  - r-hdpca
+  - bioconductor-gwastools
+  - bioconductor-genesis
+  - bioconductor-xvector
+  - bioconductor-biostrings
+  - bcftools
+  - openjdk
+  - plink
+  - rfmix
+  - git
+  - keras
+  - tensorflow
+  - nibabel
+  - pandas-plink
+  - pytest
+  - scikit-learn
+  - seaborn
+  - statsmodels
+  - xarray
 prefix: /projects/standard/gdc/public/envs/gdcPipeline
