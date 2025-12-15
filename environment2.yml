@@ -1,9 +1,0 @@
-name: gdcPipeline
-channels:
-  - dranew
-  - bioconda
-  - defaults
-  - conda-forge
-dependencies:
-  - r-base
-prefix: /projects/standard/gdc/public/envs/gdcPipeline

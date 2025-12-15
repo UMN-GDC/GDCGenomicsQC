@@ -1,11 +1,11 @@
 Bootstrap: docker
-From: continuumio/miniconda3:latest
+From: mambaorg/micromamba:latest
 
 # ---------------------------------------------------------
 # %files
 # ---------------------------------------------------------
 %files
-    environment2.yml /app/environment.yml
+    environment.yml /app/environment.yml
     src/ /app/src/
     Run.sh /app/Run.sh
 
@@ -15,8 +15,7 @@ From: continuumio/miniconda3:latest
 %environment
     export LC_ALL=C
     # This ensures that when you type 'java', it finds the one in the Conda env
-    export PATH="/opt/conda/envs/gdcPipeline/bin:$PATH"
-
+    export PATH="/opt/gdc_env/bin:$PATH"
 # ---------------------------------------------------------
 # %post
 # ---------------------------------------------------------
@@ -32,11 +31,11 @@ From: continuumio/miniconda3:latest
     mkdir -p /app
     mkdir -p /opt/GenotypeHarmonizer
     mkdir -p /opt/primus
+    mkdir -p /opt/gdc_env
 
     # 3. Conda Setup (Java is installed here now via environment.yml)
-    conda install -y mamba -c conda-forge
-    mamba env create -y -n gdcPipeline -f /app/environment.yml
-    # conda clean --all -f -y
+    /bin/micromamba create --yes -p /opt/gdc_env -f /app/environment.yml
+    /bin/micromamba clean --all -f -y
 
     # # 4. Install Pip packages
     # /opt/conda/envs/gdcPipeline/bin/pip install git+https://github.com/liguowang/CrossMap.git
