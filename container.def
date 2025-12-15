@@ -1,0 +1,75 @@
+Bootstrap: docker
+From: continuumio/miniconda3:latest
+
+# ---------------------------------------------------------
+# %files
+# ---------------------------------------------------------
+%files
+    environment.yml /app/environment.yml
+    src/ /app/src/
+    Run.sh /app/Run.sh
+    # Removed data/results COPY to encourage bind-mounting (Best Practice)
+
+# ---------------------------------------------------------
+# %environment
+# ---------------------------------------------------------
+%environment
+    export LC_ALL=C
+    # This ensures that when you type 'java', it finds the one in the Conda env
+    export PATH="/opt/conda/envs/gdcPipeline/bin:$PATH"
+
+# ---------------------------------------------------------
+# %post
+# ---------------------------------------------------------
+%post
+    # 1. Install ONLY build tools via apt (Removed openjdk)
+    apt-get update && apt-get install -y \
+        curl \
+        tar \
+        git \
+        && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+    # 2. Directory Setup
+    mkdir -p /app
+    mkdir -p /opt/GenotypeHarmonizer
+    mkdir -p /opt/primus
+
+    # 3. Conda Setup (Java is installed here now via environment.yml)
+    conda install -y mamba -c conda-forge
+    mamba env create -n gdcPipeline -f /app/environment.yml
+    conda clean --all -f -y
+
+    # 4. Install Pip packages
+    /opt/conda/envs/gdcPipeline/bin/pip install git+https://github.com/liguowang/CrossMap.git
+
+    # 5. Install GenotypeHarmonizer
+    # Note: We rely on the internal folder structure of the tar.gz
+    curl -SL https://github.com/molgenis/systemsgenetics/releases/download/GH_1.4.28/GenotypeHarmonizer-1.4.28-SNAPSHOT-dist.tar.gz \
+    | tar -xzC /opt/GenotypeHarmonizer
+
+    # 6. Install PRIMUS
+    curl -SL https://primus.gs.washington.edu/docroot/versions/PRIMUS_v1.9.0.tgz \
+    | tar -xzC /opt/primus --strip-components=1
+
+    # 7. Create Wrapper
+    # This works because %environment sets the PATH to include the Conda bin
+    echo '#!/bin/sh' > /usr/bin/GenotypeHarmonizer
+    echo 'exec java -jar /opt/GenotypeHarmonizer/GenotypeHarmonizer.jar "$@"' >> /usr/bin/GenotypeHarmonizer
+    chmod +x /usr/bin/GenotypeHarmonizer
+
+    # 8. Permissions
+    chmod +x /app/Run.sh
+
+# ---------------------------------------------------------
+# %runscript
+# ---------------------------------------------------------
+%runscript
+    exec /app/Run.sh "$@"
+
+# ---------------------------------------------------------
+# %labels
+# ---------------------------------------------------------
+%labels
+    Author coffm049
+    Version v0.1
+    Description GDC Pipeline
