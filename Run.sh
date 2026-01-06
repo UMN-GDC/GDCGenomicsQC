@@ -13,40 +13,55 @@
 
 show_help() {
   cat << EOF
-Usage: $0 [options]
-Options:
---set_working_directory		Provide a path to where you'd like the outputs to be stored
---input_directory		Provide the path to where the bim/bed/fam data is stored
---input_file_name 		Provide the common name that ties the bim/bed/fam files together
---path_to_github_repo 		Provide the path to the GDCGenomicsQC pipeline repository
---user_x500			Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions
---use_crossmap			Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38
---use_genome_harmonizer 	Enter '1' if you would like to update strand allignment by using genome harmonizer
---use_king			Enter '1' if you would like to use king to estimate relatedness
---use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry
---make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed
---combine_related		Enter '1' if you would like to combine related subjects with the unrelated subjects
---custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering
---custom_ancestry		Enter '1' if you would like to use your own ancestry assignment algorithm
-					When providing this flag you will need to answer all of the questions prompted by the terminal
---interactive			Enter '1' if you would like to run GDCGenomicsQC pipeline interactively instead of as an sbatch
-Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports
----------------------------------------------------------------------------------------
-EXAMPLE
-# An example call on thousand genome
-sh $HOME/GDCGenomicsQC/Run.sh \
-  --set_working_directory /scratch.global/coffm049/1kgPipeline
-  --input_directory /scratch.global/coffm049/1kgPipeline \
-  --input_file_name 1kgExample \
-  --path_to_github_repo /users/4/coffm049/GDCGenomicsQC \
-  --use_crossmap 0 \
-  --use_king 1 \
-  --use_rfmix 1 \
-  --use_genome_harmonizer 0 \
-  --make_report 0 \
-  --custom_qc 0 \
-  --user_x500 <user email>
+  Usage: $0 [options]
+  Options:
+  --set_working_directory		Provide a path to where you'd like the outputs to be stored
+  --input_directory		Provide the path to where the bim/bed/fam data is stored
+  --input_file_name 		Provide the common name that ties the bim/bed/fam files together
+  --path_to_github_repo 		Provide the path to the GDCGenomicsQC pipeline repository
+  --user_x500			Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions
+  --use_crossmap			Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38
+  --use_genome_harmonizer 	Enter '1' if you would like to update strand allignment by using genome harmonizer
+  --use_king			Enter '1' if you would like to use king to estimate relatedness
+  --use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry
+  --make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed
+  --combine_related		Enter '1' if you would like to combine related subjects with the unrelated subjects
+  --custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering
+  --custom_ancestry		Enter '1' if you would like to use your own ancestry assignment algorithm
+  					When providing this flag you will need to answer all of the questions prompted by the terminal
+  --interactive			Enter '1' if you would like to run GDCGenomicsQC pipeline interactively instead of as an sbatch
+  --dry specify for seeing what the program is going to run without actually running it (reccomended to prevent having to re-run multiple times)
+  Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports
+  ---------------------------------------------------------------------------------------
+  EXAMPLE
+  # An example call on thousand genome
+  sh $HOME/GDCGenomicsQC/Run.sh \
+    --set_working_directory /scratch.global/coffm049/1kgPipeline
+    --input_directory /scratch.global/coffm049/1kgPipeline \
+    --input_file_name 1kgExample \
+    --path_to_github_repo /users/4/coffm049/GDCGenomicsQC \
+    --use_crossmap 0 \
+    --use_king 1 \
+    --use_rfmix 1 \
+    --use_genome_harmonizer 0 \
+    --make_report 0 \
+    --custom_qc 0 \
+    --user_x500 <user email>
 EOF
+}
+
+load_config() {
+    local file_path="$1"
+    if [[ -f "$file_path" ]]; then
+        echo "✅ Loading configuration from: $file_path"
+        # Source the file. Variables set in the config will override defaults.
+        # Note: 'source' is used for shell-readable KEY="VALUE" files.
+        source "$file_path"
+        return 0
+    else
+        echo "❌ ERROR: Configuration file not found at $file_path" >&2
+        return 1
+    fi
 }
 
 
@@ -74,6 +89,7 @@ custom_ancestry=0
 flag=0
 interactive=0
 combine_related=0
+DRY_RUN=false
 CHECK_SEX=false
 
 
@@ -82,7 +98,7 @@ getopt -T &>/dev/null
 if [[ $? -ne 4 ]]; then echo "Getopt is too old!" >&2 ; exit 1 ; fi
 
 # declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,use_rfmix,make_report,custom_qc,custom_ancestry,help}
-OPTS=$(getopt -u -o '' -a --longoptions 'set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,use_king:,interactive:,combine_related:,help' -n "$0" -- "$@")
+OPTS=$(getopt -u -o '' -a --longoptions 'config:,dry-run,set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,use_king:,interactive:,combine_related:,help' -n "$0" -- "$@")
     # *** Added -o '' ; surrounted the longoptions by ''
 if [[ $? -ne 0 ]] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     # *** This has to be right after the OPTS= assignment or $? will be overwritten
@@ -93,63 +109,73 @@ set -- $OPTS
 while [[ $# -gt 0 ]]; do
   key=$1
   case $key in
-	--set_working_directory )
-		set_working_directory=$2
-		shift 2
-		;;
-	--input_directory )
-		input_directory=$2
-		shift 2
-		;;
-	--input_file_name )
-		input_file_name=$2
-		shift 2
-		;;
-	--path_to_github_repo )
-		path_to_github_repo=$2
-		shift 2
-		;;
-	--user_x500 )
-		user_x500=$2
-		shift 2
-		;;
-	--use_crossmap )
-        	use_crossmap=$2
-        	shift 2
-        	;;
-	--use_genome_harmonizer )
-        	use_genome_harmonizer=$2
-        	shift 2
-        	;;
-	--use_king )
-        	use_king=$2
-        	shift 2
-        	;;
-	--use_rfmix )
-        	use_rfmix=$2
-        	shift 2
-        	;;
-	--make_report )
-        	make_report=$2
-        	shift 2
-        	;;
-	--custom_qc )
-        	custom_qc=$2
-        	shift 2
-        	;;
-	--custom_ancestry )
-        	custom_ancestry=$2
-        	shift 2
-        	;;
-	--interactive )
-	        interactive=$2
+    --config)
+      # When --config is found, save the path and break the loop.
+      CONFIG_PATH="$2"
+      shift 2
+      break # !!! CRITICAL: Exit the loop early to ignore other flags
+      ;;
+    --dry-run)
+      DRY_RUN="true"
+      shift
+      ;;
+	  --set_working_directory )
+	  	set_working_directory=$2
+	  	shift 2
+	  	;;
+	  --input_directory )
+	  	input_directory=$2
+	  	shift 2
+	  	;;
+	  --input_file_name )
+	  	input_file_name=$2
+	  	shift 2
+	  	;;
+	  --path_to_github_repo )
+	  	path_to_github_repo=$2
+	  	shift 2
+	  	;;
+	  --user_x500 )
+	  	  user_x500=$2
+	  	  shift 2
+	  	  ;;
+	  --use_crossmap )
+          use_crossmap=$2
+          shift 2
+          ;;
+	  --use_genome_harmonizer )
+          	use_genome_harmonizer=$2
+          	shift 2
+          	;;
+	  --use_king )
+          	use_king=$2
+          	shift 2
+          	;;
+	  --use_rfmix )
+          	use_rfmix=$2
+          	shift 2
+          	;;
+	  --make_report )
+          	make_report=$2
+          	shift 2
+          	;;
+	  --custom_qc )
+          	custom_qc=$2
+          	shift 2
+          	;;
+	  --custom_ancestry )
+          	custom_ancestry=$2
+          	shift 2
+          	;;
+	  --interactive )
+	          interactive=$2
+	  		shift 2
+	  		;;
+	  --combine_related )
+	          combine_related=$2
 			shift 2
 			;;
-	--combine_related )
-	        combine_related=$2
-			shift 2
-			;;
-    --help )
+    -h|--help )
 			show_help
 			shift 2
 			exit 1
@@ -165,6 +191,16 @@ while [[ $# -gt 0 ]]; do
 			;;
   esac
 done
+
+if [[ -n "$CONFIG_PATH" ]]; then
+    # Case 1: --config was specified. Load it, and it overrides ALL defaults.
+    load_config "$CONFIG_PATH" || exit 1
+else
+    # Case 2: No --config was specified.
+    # The variables set by the individual flags in step 3 are used.
+    echo "ℹ️ No --config file specified. Using command-line arguments and defaults."
+fi
+
 
 if (( $input_file_name == 99)); then  
 	echo "Please provide plink binary file root name" 
@@ -223,6 +259,12 @@ ${custom_qc} \
 ${combine_related} \
 ${custom_ancestry} \
 $CHECK_SEX
+
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "⚠️ DRY RUN MODE ENABLED. No changes will be made."
+    echo "Script will now exit, check the created _wrapper.sh file for its intended actions."
+    exit 0 
+fi
 
 sleep 0.5
 
