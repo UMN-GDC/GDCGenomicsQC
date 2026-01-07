@@ -70,6 +70,8 @@ From: mambaorg/micromamba:latest
     # echo 'exec java -jar /opt/GenotypeHarmonizer/GenotypeHarmonizer.jar "$@"' >> /app/GenotypeHarmonizer
     # chmod +x /app/GenotypeHarmonizer
 
+    git clone -b ldPruning4PCA https://github.com/UMN-GDC/GDCGenomicsQC /app/GDCGenomicsQC
+
     # 8. Permissions
     chmod +x /app/Run.sh
 
@@ -91,7 +93,7 @@ From: mambaorg/micromamba:latest
     echo "Starting QC Pipeline..."
     # You can now call the QC programs installed in base_env
     # $1, $2, etc., are the arguments passed by the user
-    exec /app/Run.sh "$@"
+    exec /app/Run.sh --dry-run "$@"
 
 %apphelp QC
     This app runs the Quality Control pipeline (e.g., MultiQC).

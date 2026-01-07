@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [[ -n "$APPTAINER_NAME" || -n "$SINGULARITY_NAME" ]]; then
+    module load apptainer
+    SUBMIT_SUF="apptainer exec $APPTAINER_NAME"
+else
+    SUBMIT_SUF=""
+fi
+
 
 run_crossmap_if_needed() {
   local crossmap_check="$1"
@@ -11,7 +18,7 @@ run_crossmap_if_needed() {
 
   if [ ! -f "${crossmap_check}" ]; then
     echo "(Step 1) Matching data to NIH's GRCh38 genome build"
-    sbatch --wait ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
+    sbatch --wait $SUBMIT_SUF ${path_to_repo}/src/run_crossmap.sh ${WORK} ${REF} ${FILE} ${NAME} ${path_to_repo}
   fi
 }
 
@@ -40,7 +47,7 @@ run_genome_harmonizer_if_needed() {
 
   if [ ! -f "${file_to_submit}.bim" ]; then
     echo "Begin genome harmonization"
-    sbatch --wait ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
+    sbatch --wait $SUBMIT_SUF ${path_to_repo}/src/run_genome_harmonizer.sh ${WORK} ${REF} ${NAME} ${path_to_repo} ${file_to_use} 
   fi
 }
 
@@ -64,7 +71,7 @@ run_initial_qc_if_needed() {
   local file_to_submit="$3"
 
   if [ ! -f "${file_to_check_qc}" ]; then
-    sbatch --wait ${path_to_repo}/src/initial_QC.sh ${file_to_submit} ${path_to_repo}
+    sbatch --wait $SUBMIT_SUF ${path_to_repo}/src/initial_QC.sh ${file_to_submit} ${path_to_repo}
   fi
 }
 
@@ -92,7 +99,7 @@ run_standard_qc_if_needed() {
   local CHECK_SEX="$7"
 
   if [ ! -f "${file_to_check_qc}" ]; then
-    sbatch --wait ${path_to_repo}/src/standard_QC.job ${WORK} ${NAME} ${REF} ${path_to_repo} ${DATATYPE} ${CHECK_SEX}
+    sbatch --wait $SUBMIT_SUF ${path_to_repo}/src/standard_QC.job ${WORK} ${NAME} ${REF} ${path_to_repo} ${DATATYPE} ${CHECK_SEX}
   fi
 }
 
@@ -218,7 +225,7 @@ run_phasing_if_needed() {
 
   # If any file is missing, run the phasing script
   if ! $all_exist; then
-    sbatch --wait "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${DATATYPE}" "${path_to_repo}"
+    sbatch --wait $SUBMIT_SUF "${path_to_repo}/src/run_phase.sh" "${WORK}" "${REF}" "${NAME}" "${DATATYPE}" "${path_to_repo}"
   fi
 }
 
@@ -269,7 +276,7 @@ run_rfmix_if_needed() {
 
   # If any file is missing, run the RFMix script
   if ! $all_exist; then
-    sbatch --wait "${path_to_repo}/src/run_rfmix.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
+    sbatch --wait $SUBMIT_SUF "${path_to_repo}/src/run_rfmix.sh" "${WORK}" "${REF}" "${NAME}" "${path_to_repo}"
   fi
 }
 
@@ -304,7 +311,7 @@ run_subpopulations_if_needed() {
   local NAME="$5"
 
   if [ ! -f "${subpop_check}" ]; then
-    sbatch --wait ${path_to_repo}/src/run_subpops.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+    sbatch --wait $SUBMIT_SUF ${path_to_repo}/src/run_subpops.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
   fi
 }
 
@@ -339,7 +346,7 @@ subset_ancestries_run_standard_qc() {
       ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
         sbatch ${WORK}/custom_qc.SLURM ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
       else # Default behavior      
-        sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
+        sbatch $SUBMIT_SUF ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE}.lifted.aligned ${DATATYPE} ${path_to_repo}
       fi
     else 
       plink --bfile $ORIG --keep ${WORK}/PCA/${DATATYPE} --make-bed --out ${WORK}/${DATATYPE}/study.${NAME}
@@ -347,7 +354,7 @@ subset_ancestries_run_standard_qc() {
       ## Will follow a pre-determined naming such as ${WORK}/custom_qc.SLURM
         sbatch ${WORK}/custom_qc.SLURM ${WORK}/${DATATYPE}/study.${NAME}.${DATATYPE} ${DATATYPE} ${path_to_repo}
       else # Default behavior      
-        sbatch ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME} ${DATATYPE} ${REF} ${path_to_repo}
+        sbatch $SUBMIT_SUF ${path_to_repo}/src/per_ancestry_QC.job ${WORK}/${DATATYPE}/study.${NAME} ${DATATYPE} ${REF} ${path_to_repo}
       fi
     fi
   done

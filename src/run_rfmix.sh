@@ -15,5 +15,5 @@ NAME=$3
 path_to_repo=$4
 
 mkdir $WORK/rfmix
-sbatch --time 18:00:00 --mem 64GB --array 1-22 --wait -N1 ${path_to_repo}/src/rfmix_individual.sh ${WORK} ${NAME}
+sbatch --time 18:00:00 --mem 64GB --array 1-22 --wait -N1 $SUBMIT_SUF ${path_to_repo}/src/rfmix_individual.sh ${WORK} ${NAME}
 

@@ -16,9 +16,19 @@ combine_related=${12}
 custom_ancestry=${13}
 CHECK_SEX=${14}
 
-output=${desired_working_directory}/${input_file_name}_wrapper.sh
+# Check environment if we are currently running inside Apptainer
+if [[ -n "$APPTAINER_NAME" || -n "$SINGULARITY_NAME" ]]; then
+    echo "Environment: Inside Container ($APPTAINER_NAME)"
+    path_github_repo=/app/GDCGenomicsQC
+    template=${path_github_repo}/src/main_template_image.sh
+else
+    echo "Environment: Native Host"
+    template=${path_github_repo}/src/main_template.sh
+
+fi
+
 mkdir -p ${desired_working_directory}
-cp -v ${path_github_repo}/src/main_template.sh ${output}
+cp -v ${template} ${output}
 sed -i 's@PND@'${path_to_input_directory}'@' ${output} 
 sed -i 's@FLE@'${input_file_name}'@' ${output} 
 sed -i 's@PRPO@'${path_github_repo}'@' ${output} 

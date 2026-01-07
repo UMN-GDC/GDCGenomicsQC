@@ -47,6 +47,7 @@ sbatch \
   --array=1-22 \
   --wait \
   -N1 \
+  $SUBMIT_SUF \
   "${path_to_repo}/src/harmonizer_individual.job" \
   "${WORK}" \
   "${NAME}" \
