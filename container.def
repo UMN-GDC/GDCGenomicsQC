@@ -21,7 +21,6 @@ From: mambaorg/micromamba:latest
     # PRS software
 
 
-
 %environment
     export LC_ALL=C
     # This ensures that when you type 'java', it finds the one in the Conda env
@@ -55,9 +54,9 @@ From: mambaorg/micromamba:latest
 
     # 5. Install GenotypeHarmonizer
     # Note: We rely on the internal folder structure of the tar.gz
-    wget -qO- https://github.com/molgenis/systemsgenetics/releases/download/GH_1.4.28/GenotypeHarmonizer-1.4.28-SNAPSHOT-dist.tar.gz \
-      | tar -xz -C /opt/GenotypeHarmonizer --strip-components=1
-    rm -rf /opt/GenotypeHarmonizer/exampleData
+    # wget -qO- https://github.com/molgenis/systemsgenetics/releases/download/GH_1.4.28/GenotypeHarmonizer-1.4.28-SNAPSHOT-dist.tar.gz \
+    #   | tar -xz -C /opt/GenotypeHarmonizer --strip-components=1
+    # rm -rf /opt/GenotypeHarmonizer/exampleData
 
     # 6. Install PRIMUS
 
@@ -67,12 +66,15 @@ From: mambaorg/micromamba:latest
 
     # # 7. Create Wrapper
     # # This works because %environment sets the PATH to include the Conda bin
-    echo '#!/bin/sh' > /app/GenotypeHarmonizer
-    echo 'exec java -jar /opt/GenotypeHarmonizer/GenotypeHarmonizer.jar "$@"' >> /app/GenotypeHarmonizer
-    chmod +x /app/GenotypeHarmonizer
+    # echo '#!/bin/sh' > /app/GenotypeHarmonizer
+    # echo 'exec java -jar /opt/GenotypeHarmonizer/GenotypeHarmonizer.jar "$@"' >> /app/GenotypeHarmonizer
+    # chmod +x /app/GenotypeHarmonizer
 
     # 8. Permissions
     chmod +x /app/Run.sh
+
+    pip install git+https://github.com/coffm049/popvae/tree/master
+
 
 %help
     This container holds multiple bioinformatics pipelines.
@@ -80,6 +82,7 @@ From: mambaorg/micromamba:latest
     Default run: apptainer run my_image.sif [QC|ANALYSIS] <args>
     
     Available Apps:
+    - GH: apptainer run --app QC my_image.sif <input_file>
     - QC: apptainer run --app QC my_image.sif <input_file>
     - ANALYSIS: apptainer run --app ANALYSIS my_image.sif <input_file>
 
@@ -88,32 +91,20 @@ From: mambaorg/micromamba:latest
     echo "Starting QC Pipeline..."
     # You can now call the QC programs installed in base_env
     # $1, $2, etc., are the arguments passed by the user
-    multiqc "$@"
     exec /app/Run.sh "$@"
 
 %apphelp QC
     This app runs the Quality Control pipeline (e.g., MultiQC).
-    Usage: apptainer run --app QC <image> <multiqc_args>
+    Usage: apptainer run --app QC <image> <args>
 
 %apprun GH
     # This script runs when you call: apptainer run --app QC my_image.sif <args>
-    echo "Starting QC Pipeline..."
+    echo "Starting Genotype harmonizer Pipeline..."
     # You can now call the QC programs installed in base_env
     # $1, $2, etc., are the arguments passed by the user
     exec /app/GenotypeHarmonizer "$@"
 
 %apphelp GH
-    This app runs the GenotypeHarmonizer (e.g., MultiQC).
-    Usage: apptainer run --app GH <image> <multiqc_args>
-
-%apprun PRIMUS
-    # This script runs when you call: apptainer run --app QC my_image.sif <args>
-    echo "Starting QC Pipeline..."
-    # You can now call the QC programs installed in base_env
-    # $1, $2, etc., are the arguments passed by the user
-    exec perl run_primus.pl "$@"
-
-%apphelp PRIMUS
     This app runs the GenotypeHarmonizer (e.g., MultiQC).
     Usage: apptainer run --app GH <image> <multiqc_args>
 
