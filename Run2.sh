@@ -107,16 +107,6 @@ set -- $OPTS
 while [[ $# -gt 0 ]]; do
   key=$1
   case $key in
-    --dry-run)
-      DRY_RUN="true"
-      shift
-      ;;
-    --config)
-      # When --config is found, save the path and break the loop.
-      CONFIG_PATH="$2"
-      shift 2
-      break # !!! CRITICAL: Exit the loop early to ignore other flags
-      ;;
 	  --set_working_directory )
 	  	set_working_directory=$2
 	  	shift 2
@@ -169,6 +159,16 @@ while [[ $# -gt 0 ]]; do
 	          combine_related=$2
 			shift 2
 			;;
+    --config)
+      # When --config is found, save the path and break the loop.
+      CONFIG_PATH="$2"
+      load_config "$CONFIG_PATH" || exit 1
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN="true"
+      shift
+      ;;
     -h|--help )
 			show_help
 			shift 2
@@ -231,6 +231,7 @@ echo "combine related: $combine_related"
 echo "custom qc: $custom_qc"
 echo "custom ancestry: $custom_ancestry"
 echo "Check Sex: $CHECK_SEX"
+echo "Dry Run: $DRY_RUN"
 
 if [ ${custom_qc} -eq 1 ]; then
           echo "You have chosen to customize the standard qc steps, please answer all of the following questions"
