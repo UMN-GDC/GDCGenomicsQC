@@ -19,13 +19,15 @@ CHECK_SEX=${14}
 # Check environment if we are currently running inside Apptainer
 if [[ -n "$APPTAINER_NAME" || -n "$SINGULARITY_NAME" ]]; then
     echo "Environment: Inside Container ($APPTAINER_NAME)"
-    path_github_repo=/app/GDCGenomicsQC
-    template=${path_github_repo}/src/main_template_image.sh
+    path_to_github_repo=/app/GDCGenomicsQC
+    template=${path_to_github_repo}/src/main_template_image.sh
 else
     echo "Environment: Native Host"
     template=${path_github_repo}/src/main_template.sh
-
 fi
+
+output=${desired_working_directory}/${input_file_name}_wrapper.sh
+
 
 mkdir -p ${desired_working_directory}
 cp -v ${template} ${output}
