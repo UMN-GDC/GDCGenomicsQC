@@ -1,5 +1,5 @@
-Bootstrap: docker
-From: mambaorg/micromamba:latest
+Bootstrap: localimage
+From: /scratch.global/coffm049/baseImage/base.sif
 
 %files
     environment.yml /app/environment.yml
@@ -75,7 +75,7 @@ From: mambaorg/micromamba:latest
     # 8. Permissions
     chmod +x /app/Run.sh
 
-    pip install git+https://github.com/coffm049/popvae/tree/master
+    # /opt/conda/envs/gdcPipeline/bin/pip install git+https://github.com/coffm049/popvae
 
 
 %help
@@ -93,9 +93,20 @@ From: mambaorg/micromamba:latest
     echo "Starting QC Pipeline..."
     # You can now call the QC programs installed in base_env
     # $1, $2, etc., are the arguments passed by the user
-    exec /app/Run.sh --dry-run "$@"
+    exec /app/Run.sh "$@"
 
 %apphelp QC
+    This app runs the Quality Control pipeline (e.g., MultiQC).
+    Usage: apptainer run --app QC <image> <args>
+
+%apprun QC2
+    # This script runs when you call: apptainer run --app QC my_image.sif <args>
+    echo "Starting QC Pipeline..."
+    # You can now call the QC programs installed in base_env
+    # $1, $2, etc., are the arguments passed by the user
+    exec /app/Run2.sh "$@"
+
+%apphelp QC2
     This app runs the Quality Control pipeline (e.g., MultiQC).
     Usage: apptainer run --app QC <image> <args>
 
