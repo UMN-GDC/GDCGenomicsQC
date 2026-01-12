@@ -18,6 +18,8 @@ REF=$2
 mkdir -p Initial_QC
 cd Initial_QC
 
+plink --bfile $FILE --missing
+
 # Marker missingness initial filter
 plink --bfile $FILE --geno 0.1 --make-bed --out QC1
 
@@ -29,7 +31,6 @@ plink --bfile QC2 --geno 0.02 --make-bed --out QC3
 
 # Sample missingness final filter
 plink --bfile QC3 --mind 0.02 --make-bed --out QC4
-plink --bfile QC4 --missing
 
 # filtering for linkage disequilibrium
 # [ ] May want to have ifelse statment if data is phased or not
