@@ -23,6 +23,7 @@ cd $WORK
 mkdir -p $OUTDIR
 cd $OUTDIR
 
+plink --bfile ${WORK}/relatedness/study.${NAME}.unrelated --missing --out ${WORK}/relatedness/study.${NAME}.unrelated
 # Marker missingness initial filter
 plink --bfile ${WORK}/relatedness/study.${NAME}.unrelated --geno 0.1 --make-bed --out QC1
 
@@ -34,7 +35,6 @@ plink --bfile QC2 --geno 0.02 --make-bed --out QC3
 
 # Sample missingness final filter
 plink --bfile QC3 --mind 0.02 --make-bed --out QC4
-plink --bfile QC4 --missing --out plink
 
 # Gender check:
 if $CHECK_SEX ; then

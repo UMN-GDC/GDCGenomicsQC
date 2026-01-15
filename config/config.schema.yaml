@@ -1,0 +1,11 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+description: "Configuration for the GDC QC pipeline"
+type: object
+properties:
+  hwe:
+    type: number
+    description: "The p-value threshold for HWE filtering. Recommended: 0.001."
+    default: 0.001
+  maf:
+    type: number
+    description: "Minor Allele Frequency cutoff."
