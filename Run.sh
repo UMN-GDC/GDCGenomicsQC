@@ -22,14 +22,13 @@ show_help() {
   --user_x500			Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions
   --use_crossmap			Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38
   --use_genome_harmonizer 	Enter '1' if you would like to update strand allignment by using genome harmonizer
-  --use_king			Enter '1' if you would like to use king to estimate relatedness
+  --relatedness_check			Enter '1' or "king" to use king to estimate relatedness. Enter '2' or "primus" to use king to estimate relatedness. Enter '0' for no checks.
   --use_rfmix			Enter '1' if you would like to use rfmix to estimate ancestry
   --make_report			Enter '1' if you would like an automated report to be generated of the qc steps and what was changed
   --combine_related		Enter '1' if you would like to combine related subjects with the unrelated subjects
   --custom_qc			Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering
   --custom_ancestry		Enter '1' if you would like to use your own ancestry assignment algorithm
   					When providing this flag you will need to answer all of the questions prompted by the terminal
-  --interactive			Enter '1' if you would like to run GDCGenomicsQC pipeline interactively instead of as an sbatch
   --dry specify for seeing what the program is going to run without actually running it (reccomended to prevent having to re-run multiple times)
   Default settings: 		The pipeline by default if flags are not provided will use crossmap, genome harmonizer, fraposa and will generate the automated reports
   ---------------------------------------------------------------------------------------
@@ -41,7 +40,7 @@ show_help() {
     --input_file_name 1kgExample \
     --path_to_github_repo /users/4/coffm049/GDCGenomicsQC \
     --use_crossmap 0 \
-    --use_king 1 \
+    --relatedness_check 0 \
     --use_rfmix 1 \
     --use_genome_harmonizer 0 \
     --make_report 0 \
@@ -81,13 +80,12 @@ path_to_github_repo=$(pwd)
 user_x500=99
 use_crossmap=1
 use_genome_harmonizer=1
-use_king=1
+relatedness_check=1
 use_rfmix=1
 make_report=1
 custom_qc=0
 custom_ancestry=0
 flag=0
-interactive=0
 combine_related=0
 DRY_RUN=false
 CHECK_SEX=false
@@ -98,7 +96,7 @@ getopt -T &>/dev/null
 if [[ $? -ne 4 ]]; then echo "Getopt is too old!" >&2 ; exit 1 ; fi
 
 # declare {set_working_directory,input_directory,input_file_name,path_to_github_repo,user_x500,use_crossmap,use_genome_harmonizer,use_rfmix,make_report,custom_qc,custom_ancestry,help}
-OPTS=$(getopt -u -o '' -a --longoptions 'config:,dry-run,set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,use_king:,interactive:,combine_related:,help' -n "$0" -- "$@")
+OPTS=$(getopt -u -o '' -a --longoptions 'config:,dry-run,set_working_directory:,input_directory:,input_file_name:,path_to_github_repo:,user_x500:,use_crossmap:,use_genome_harmonizer:,use_rfmix:,make_report:,custom_qc:,custom_ancestry:,relatedness_check:,combine_related:,help' -n "$0" -- "$@")
     # *** Added -o '' ; surrounted the longoptions by ''
 if [[ $? -ne 0 ]] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     # *** This has to be right after the OPTS= assignment or $? will be overwritten
@@ -109,16 +107,6 @@ set -- $OPTS
 while [[ $# -gt 0 ]]; do
   key=$1
   case $key in
-    --dry-run)
-      DRY_RUN="true"
-      shift
-      ;;
-    --config)
-      # When --config is found, save the path and break the loop.
-      CONFIG_PATH="$2"
-      shift 2
-      break # !!! CRITICAL: Exit the loop early to ignore other flags
-      ;;
 	  --set_working_directory )
 	  	set_working_directory=$2
 	  	shift 2
@@ -147,8 +135,8 @@ while [[ $# -gt 0 ]]; do
           	use_genome_harmonizer=$2
           	shift 2
           	;;
-	  --use_king )
-          	use_king=$2
+	  --relatedness_check )
+          	relatedness_check=$2
           	shift 2
           	;;
 	  --use_rfmix )
@@ -167,14 +155,20 @@ while [[ $# -gt 0 ]]; do
           	custom_ancestry=$2
           	shift 2
           	;;
-	  --interactive )
-	          interactive=$2
-	  		shift 2
-	  		;;
 	  --combine_related )
 	          combine_related=$2
 			shift 2
 			;;
+    --config)
+      # When --config is found, save the path and break the loop.
+      CONFIG_PATH="$2"
+      load_config "$CONFIG_PATH" || exit 1
+      shift 2
+      ;;
+    --dry-run)
+      DRY_RUN="true"
+      shift
+      ;;
     -h|--help )
 			show_help
 			shift 2
@@ -222,6 +216,10 @@ if [ ! -f "${path_to_github_repo}/README.md" ]; then
             exit 1
 fi
 
+if [[ -n "$APPTAINER_NAME" || -n "$SINGULARITY_NAME" ]]; then
+    echo "Environment: Inside Container ($APPTAINER_NAME)"
+    path_to_github_repo=/app/GDCGenomicsQC
+fi
 
 echo "working directory: $set_working_directory"
 echo "input directory: $input_directory"
@@ -230,13 +228,14 @@ echo "github repository path: $path_to_github_repo"
 echo "user: $user_x500"
 echo "crossmap: $use_crossmap"
 echo "genome harmonizer: $use_genome_harmonizer"
-echo "king: $use_king"
+echo "relatedness_check: $relatedness_check"
 echo "genome rfmix: $use_rfmix"
 echo "make report: $make_report"
 echo "combine related: $combine_related"
 echo "custom qc: $custom_qc"
 echo "custom ancestry: $custom_ancestry"
 echo "Check Sex: $CHECK_SEX"
+echo "Dry Run: $DRY_RUN"
 
 if [ ${custom_qc} -eq 1 ]; then
           echo "You have chosen to customize the standard qc steps, please answer all of the following questions"
@@ -252,7 +251,7 @@ ${user_x500} \
 ${set_working_directory} \
 ${use_crossmap} \
 ${use_genome_harmonizer} \
-${use_king} \
+${relatedness_check} \
 ${use_rfmix} \
 ${make_report} \
 ${custom_qc} \
@@ -268,12 +267,5 @@ fi
 
 sleep 0.5
 
-#cp /home/gdc/and02709/QCmja/temp.sh /home/gdc/and02709/QCmja/SMILES_GDA_folder/temp.sh
-if [ ${interactive} -eq 1 ]; then
-  bash ${set_working_directory}/${input_file_name}_wrapper.sh
-else
-  sbatch ${set_working_directory}/${input_file_name}_wrapper.sh
-  echo "For interactive runs include: '--interactive 1' to parsed options"
-fi 
-
-exit 0
+# Defaulting to interactive version
+bash ${set_working_directory}/${input_file_name}_wrapper.sh

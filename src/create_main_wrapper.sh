@@ -8,7 +8,7 @@ user_x500=$4
 desired_working_directory=$5
 using_crossmap=$6
 using_genome_harmonizer=$7
-using_king=$8
+relatedness_check=$8
 using_rfmix=$9
 making_report=${10}
 custom_qc=${11}
@@ -16,15 +16,7 @@ combine_related=${12}
 custom_ancestry=${13}
 CHECK_SEX=${14}
 
-# Check environment if we are currently running inside Apptainer
-if [[ -n "$APPTAINER_NAME" || -n "$SINGULARITY_NAME" ]]; then
-    echo "Environment: Inside Container ($APPTAINER_NAME)"
-    path_to_github_repo=/app/GDCGenomicsQC
-    template=${path_to_github_repo}/src/main_template_image.sh
-else
-    echo "Environment: Native Host"
-    template=${path_github_repo}/src/main_template.sh
-fi
+template=${path_github_repo}/src/main_template.sh
 
 output=${desired_working_directory}/${input_file_name}_wrapper.sh
 
@@ -38,7 +30,7 @@ sed -i 's@x500@'${user_x500}'@' ${output}
 sed -i 's@WK@'${desired_working_directory}'@' ${output} 
 sed -i 's@CRSMP@'${using_crossmap}'@' ${output} 
 sed -i 's@GNHRM@'${using_genome_harmonizer}'@' ${output}
-sed -i 's@KING@'${using_king}'@' ${output}
+sed -i 's@KING@'${relatedness_check}'@' ${output}
 sed -i 's@RPT@'${making_report}'@' ${output}
 sed -i 's@CSTQC@'${custom_qc}'@' ${output}
 sed -i 's@COMB@'${combine_related}'@' ${output}

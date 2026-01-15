@@ -23,7 +23,7 @@ NAME=FLE
 WORK=WK
 crossmap=CRSMP
 genome_harmonizer=GNHRM
-king=KING
+king=0
 rfmix_option=RFMX
 report_writer=RPT
 custom_qc=CSTQC
@@ -32,6 +32,19 @@ custom_ancestry=CSTANC
 CHECK_SEX=CHECK_SEXX
 
 cd ${WORK}
+
+# Check environment if we are currently running inside Apptainer
+if [[ -n "$APPTAINER_NAME" || -n "$SINGULARITY_NAME" ]]; then
+    echo "Environment: Inside Container ($APPTAINER_NAME)"
+    path_to_github_repo=/app/GDCGenomicsQC
+    EXE="apptainer exec $APPTAINER_NAME"
+else
+    echo "Environment: Native Host"
+    EXE="apptainer exec $APPTAINER_NAME"
+fi
+
+
+
 
 ####################################### Environment Setup ##############################################
 source /projects/standard/gdc/public/envs/load_miniconda3-2.sh
@@ -75,7 +88,7 @@ initial_qc_check_after_call ${file_to_check_qc}
 ######################################## Pedigree ######################################################
 
 echo "(Step 4) Relatedness"
-if [ ${king} -eq 1 ]; then
+if [ ${king} -eq king || ${king} -eq 1 ]; then
   cd $WORK
   king_check=$WORK/relatedness/study.$NAME.unrelated.bim
   run_king_if_needed "${king_check}" ${path_to_repo} ${WORK} ${REF} ${NAME} ${combine_related}
@@ -84,10 +97,15 @@ if [ ${king} -eq 1 ]; then
   pcair_check=$WORK/pca_ir/${NAME}_pcaobj.RDS
   run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
   pca_ir_check_after_call ${pcair_check}
-else
+elif [ ${king} -eq primus || ${king} -eq 2 ]; then
   primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
   run_primus_if_needed "${primus_check}" ${path_to_repo} ${WORK} ${REF} ${NAME}
   primus_check_after_call ${primus_check}
+elif [ ${king} -eq 0 ]; then
+  primus_check=$WORK/relatedness/study.$NAME.unrelated
+  cp ${WORK}/Initial_QC/QC4.bed $primus_check.bed
+  cp ${WORK}/Initial_QC/QC4.bim $primus_check.bim
+  cp ${WORK}/Initial_QC/QC4.fam $primus_check.fam
 fi
 
 #########################################################################################################
@@ -99,7 +117,7 @@ cd $WORK
 DATATYPE=full
 if [ ${custom_qc} -eq 1 ]; then
   ## requires a text file that has all of the flags and specifications
-  sbatch --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
+  $EXE --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
 else # Default behavior
   file_to_check_qc=${WORK}/${DATATYPE}/QC8.bim
   run_standard_qc_if_needed "${file_to_check_qc}" ${WORK} ${NAME} ${REF} ${path_to_repo} ${DATATYPE} ${CHECK_SEX}
@@ -135,7 +153,7 @@ fi
 ######################################## Ancestry Plots ##################################################
 echo "(Step 7) ancestry plots"
 if [ ${rfmix_option} -eq 1 ]; then
-  sbatch --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
+  $EXE --wait ${path_to_repo}/src/run_rfmix_plots.sh ${WORK} ${REF} ${NAME} ${path_to_repo}
   rm -r ${WORK}/visualization
 else # Alternative behavior
   echo "Plot module only for rfmix"
@@ -145,7 +163,7 @@ fi
 
 ############################################ PCA #########################################################
 echo "(Step 8) PCA"
-sbatch --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo} 
+$EXE --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo} 
 ##########################################################################################################
 
 

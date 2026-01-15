@@ -32,7 +32,7 @@ After cloning this repository the steps to run this pipeline are as follows:
  -	`--user_x500`	Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions
  -	`--use_crossmap`	Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38
  -	`--use_genome_harmonizer`	Enter '1' if you would like to update strand allignment by using genome harmonizer
- -	`--use_king`	Enter '1' if you would like to use king to estimate relatedness
+ -	`--relatedness_check`	Enter '1' if you would like to use king to estimate relatedness
  -	`--use_rfmix`	Enter '1' if you would like to use rfmix to estimate ancestry
  -	`--make_report`	Enter '1' if you would like an automated report to be generated of the qc steps and what was changed
  -	`--custom_qc`	Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering
