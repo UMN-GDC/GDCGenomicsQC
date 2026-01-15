@@ -76,9 +76,7 @@ fi
 #######################################################################################################
 
 ###################################### Initial QC #####################################################
-echo "Variants and samples filtering"
 # Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
-cd $WORK
 file_to_check_qc=${WORK}/Initial_QC/QC4.bim
 run_initial_qc_if_needed "${file_to_check_qc}" ${path_to_repo} ${file_to_submit}
 initial_qc_check_after_call ${file_to_check_qc}

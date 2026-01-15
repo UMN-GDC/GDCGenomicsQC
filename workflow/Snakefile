@@ -1,29 +1,9 @@
-configfile: "config.yaml"
-validate(config, schema="config.schema.yaml")
-SLURM_LOGS = "--job-name=%x --output=logs/%x_%j.out --error=logs/%x_%j.err"
+configfile: "../config/config.yaml"
+#validate(config, schema="../config/config.schema.yaml")
 
-rule Initial_QC:
-    threads: config["threads"]
-    params:
-      FILE = ,
-    resources: 
-        mem=32GB
-        nodes=1
-        runtime="1:00:00"
-        slurm_extra=SLURM_LOGS
-    shell: "echo running with {threads} threads"
+# The rule of thumb in Snakemake is: Paths in include and configfile are relative to the Snakefile, but paths inside the rules are relative to where you run the command.
 
-rule Relatedness_check:
-    threads: config["threads"]
-    resources: mem_mb=config["mem_mb"]
-    shell: "echo running with {threads} threads"
+include: "rules/Initial_QC.smk"
 
-rule PCA:
-    threads: config["threads"]
-    resources: mem_mb=config["mem_mb"]
-    shell: "echo running with {threads} threads"
-
-rule PCA:
-    threads: config["threads"]
-    resources: mem_mb=config["mem_mb"]
-    shell: "echo running with {threads} threads"
+rule all:
+    shell: "echo 'this is unde rconstruction"

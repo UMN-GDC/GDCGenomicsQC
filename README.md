@@ -43,6 +43,12 @@ After cloning this repository the steps to run this pipeline are as follows:
 
 ![GDC_pipeline_overview](https://github.com/UMN-GDC/GDCGenomicsQC/assets/140092486/e7f11909-9ab8-4def-90e5-c5f67c28a4bb)
 
+
+# Snakemake
+```
+snakemake --cores 1 Initial_QC
+```
+
 ## Standard Procedure *(Done in order)*
 
 Full documentation is [here](https://docs.google.com/document/d/147DG4Po_TaSFyiXkmRlszrmQIjsp4UNNe_u90slZbD8/edit?tab=t.0).

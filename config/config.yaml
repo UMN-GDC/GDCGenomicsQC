@@ -1,45 +1,9 @@
-$schema: "http://json-schema.org/draft-07/schema#"
-description: "Configuration for the GWAS pipeline"
-type: object
-properties:
-  hwe:
-    type: number
-    description: "The p-value threshold for HWE filtering. Recommended: 0.001."
-    default: 0.001
-  maf:
-    type: number
-    description: "Minor Allele Frequency cutoff."
-
-
 # Project-wide paths
-paths:
-  WORK: "data/raw"
-  output: "results/processed"
+INPUT_FILE: "/scratch.global/coffm049/toyPipeline/temp"
+OUT_DIR: "/scratch.global/coffm049/toyPipeline"
 
 # Tool-specific parameters
 plink_settings:
   hwe_threshold: 0.001
   maf: 0.05
   genome_build: "hg38"
-
-
-paths:
-  WORK: "/scratch.global/coffm049/toyPipeline"
-  =/scratch.global/coffm049/toyPipeline
-input_file_name=temp
-path_to_github_repo=/scratch.global/coffm049/GDCGenomicsQC2
-user_x500=examplex500
-use_crossmap=0
-use_genome_harmonizer=0
-relatedness_check=0
-use_rfmix=0
-make_report=0
-custom_qc=0
-custom_ancestry=0
-flag=0
-interactive=0
-combine_related=0
-CHECK_SEX=0
-user_x500=coffm049
-DRY_RUN=false
-
