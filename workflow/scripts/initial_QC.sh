@@ -14,17 +14,17 @@ plink --bfile $FILE --missing --out $OUTPUT/initial
 plink --bfile $FILE --geno 0.1 --make-bed --out $OUTPUT/QC1
 
 # Sample missingness initial filter
-plink --bfile QC1 --mind 0.1 --make-bed --out $OUTPUT/QC2
+plink --bfile $OUTPUT/QC1 --mind 0.1 --make-bed --out $OUTPUT/QC2
 
 # Marker missingness final filter 
-plink --bfile QC2 --geno 0.02 --make-bed --out $OUTPUT/QC3
+plink --bfile $OUTPUT/QC2 --geno 0.02 --make-bed --out $OUTPUT/QC3
 
 # Sample missingness final filter
-plink --bfile QC3 --mind 0.02 --make-bed --out $OUTPUT/QC4
+plink --bfile $OUTPUT/QC3 --mind 0.02 --make-bed --out $OUTPUT/final
 
 # filtering for linkage disequilibrium
 # [ ] May want to have ifelse statment if data is phased or not
 # Then could use pairphase for better estimates
-plink --bfile QC4 --indep-pairwise 500 10 0.1 --out $OUTPUT/final
-plink --bfile QC4 --extract QC4.prune.in --make-bed --out $OUTPUT/final.LDpruned
+plink --bfile $OUTPUT/final --indep-pairwise 500 10 0.1 --out $OUTPUT/final
+plink --bfile $OUTPUT/final --extract $OUTPUT/final.prune.in --make-bed --out $OUTPUT/final.LDpruned
 

@@ -17,12 +17,12 @@ rule Initial_QC:
         fam = f"{config['OUT_DIR']}/Initial_QC/final.fam",
     params :
         input_prefix = lambda wildcards, input: input.bed[:-4],
-        output_prefix = lambda wildcards, output: output.bed[:-4],
+        output_dir = config['OUT_DIR'],
     shell: """
     echo "Initial QC: Variants and samples filtering"
     echo "Input: {input}"
     echo "Output: {output}"
 
-    scripts/initial_QC.sh {params.input_prefix} {params.output_prefix}
+    bash scripts/initial_QC.sh {params.input_prefix} {params.output_dir}/Initial_QC
     """
 

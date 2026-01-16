@@ -2,7 +2,7 @@
 .Rhistory
 .Rapp.history
 .ipynb_checkpoints
-
+.snakemake
 # Session Data files
 .RData
 .RDataTmp
