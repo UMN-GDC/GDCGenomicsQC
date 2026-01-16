@@ -71,7 +71,7 @@ run_initial_qc_if_needed() {
   local file_to_submit="$3"
 
   if [ ! -f "${file_to_check_qc}" ]; then
-    sbatch --wait $SUBMIT_SUF ${path_to_repo}/src/initial_QC.sh ${file_to_submit} ${path_to_repo}
+    sbatch --wait $SUBMIT_SUF 
   fi
 }
 

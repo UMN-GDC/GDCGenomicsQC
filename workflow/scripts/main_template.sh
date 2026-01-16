@@ -73,13 +73,6 @@ else # Default behavior
     file_to_submit=${FILE}/${NAME} #Original file
   fi
 fi
-#######################################################################################################
-
-###################################### Initial QC #####################################################
-# Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
-file_to_check_qc=${WORK}/Initial_QC/QC4.bim
-run_initial_qc_if_needed "${file_to_check_qc}" ${path_to_repo} ${file_to_submit}
-initial_qc_check_after_call ${file_to_check_qc}
 
 ########################################################################################################
 
@@ -87,24 +80,14 @@ initial_qc_check_after_call ${file_to_check_qc}
 
 echo "(Step 4) Relatedness"
 if [ ${king} -eq king || ${king} -eq 1 ]; then
-  cd $WORK
-  king_check=$WORK/relatedness/study.$NAME.unrelated.bim
   run_king_if_needed "${king_check}" ${path_to_repo} ${WORK} ${REF} ${NAME} ${combine_related}
-  king_check_after_call ${king_check}
   echo "(Step 4b) Ancestry and kinship adjustment via PC-AiR / PC-Relate"
   pcair_check=$WORK/pca_ir/${NAME}_pcaobj.RDS
   run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
   pca_ir_check_after_call ${pcair_check}
 elif [ ${king} -eq primus || ${king} -eq 2 ]; then
-  primus_check=$WORK/relatedness/study.$NAME.unrelated.bim
   run_primus_if_needed "${primus_check}" ${path_to_repo} ${WORK} ${REF} ${NAME}
   primus_check_after_call ${primus_check}
-elif [ ${king} -eq 0 ]; then
-  primus_check=$WORK/relatedness/study.$NAME.unrelated
-  cp ${WORK}/Initial_QC/QC4.bed $primus_check.bed
-  cp ${WORK}/Initial_QC/QC4.bim $primus_check.bim
-  cp ${WORK}/Initial_QC/QC4.fam $primus_check.fam
-fi
 
 #########################################################################################################
 

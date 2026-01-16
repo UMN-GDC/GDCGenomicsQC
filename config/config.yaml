@@ -3,7 +3,5 @@ INPUT_FILE: "/scratch.global/coffm049/toyPipeline/temp"
 OUT_DIR: "/scratch.global/coffm049/toyPipeline"
 
 # Tool-specific parameters
-plink_settings:
-  hwe_threshold: 0.001
-  maf: 0.05
-  genome_build: "hg38"
+relatedness:
+    method: "king"

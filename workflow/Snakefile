@@ -4,6 +4,7 @@ configfile: "../config/config.yaml"
 # The rule of thumb in Snakemake is: Paths in include and configfile are relative to the Snakefile, but paths inside the rules are relative to where you run the command.
 
 include: "rules/Initial_QC.smk"
+include: "rules/Relatedness.smk"
 
 rule all:
     shell: "echo 'this is unde rconstruction"

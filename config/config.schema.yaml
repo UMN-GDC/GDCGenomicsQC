@@ -7,3 +7,5 @@ INPUT_FILE:
 OUT_DIR:
     description: "Path to the output directory"
 
+relatedness: 
+    method
