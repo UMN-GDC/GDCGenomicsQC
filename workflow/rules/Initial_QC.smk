@@ -1,5 +1,6 @@
 SLURM_LOGS = "--job-name=%x --output=logs/%x_%j.out --error=logs/%x_%j.err"
 rule Initial_QC:
+    container: "images/my_tool.sif"  # Works for .sif, .img, or docker://
     resources:
         # nodes=1 is usually the default, but can be specified if needed
         nodes = 1,
