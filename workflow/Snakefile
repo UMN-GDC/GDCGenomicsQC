@@ -5,6 +5,7 @@ configfile: "../config/config.yaml"
 
 include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
+include: "rules/PCA.smk"
 
 rule all:
     shell: "echo 'this is unde rconstruction"

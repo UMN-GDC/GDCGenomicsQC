@@ -6,6 +6,8 @@ INPUT_FILE:
     description: "Path to the input file"
 OUT_DIR:
     description: "Path to the output directory"
+REF:
+    description: "Path to the reference directory"
 
 relatedness: 
     method

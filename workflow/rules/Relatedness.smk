@@ -18,21 +18,23 @@ rule Relatedness:
     params:
         output_dir = f"{config['OUT_DIR']}/relatedness",
         input_prefix = f"{config['OUT_DIR']}/Initial_QC/final.LDpruned",
-        method = config['relatedness'],
-        datatype= "full"
+        method = config['relatedness']['method'],
+        datatype= "full",
+        ref= config["REF"]
     shell: """
     
     echo "Estimating genetic relatedness"
+    echo {params.method}
 
-    if [[ "{params.method}" == "king" || "{params.method}" == "1" ]]; then
+    if [[ {params.method} == king || {params.method} == 1 ]]; then
         echo "KING ESTIMATION"
         bash scripts/run_king.sh {params.output_dir} {params.input_prefix} 1
     elif [[ "{params.method}" == "primus" || "{params.method}" == "2" ]]; then
         echo "PRIMUS ESTIMATION"
-        bash scripts/run_primus.sh {params.input_prefix} {params.output_dir} /projects/standard/gdc/public/Ref {params.datatype}
-    # elif [[ {params.method} == 0]]; then
+        bash scripts/run_primus.sh {params.input_prefix} {params.output_dir} {params.ref} {params.datatype}
+    # elif [[ "{params.method}" == "0"]]; then
     else
-        echo "ASSUMING UNRELATED SAMPLE"
+        echo "ASSUMING UNRELATED SAMPLE, since no method of estimating relatedness specified"
         cp {params.input_prefix}.bed {output.bed}
         cp {params.input_prefix}.bim {output.bim}
         cp {params.input_prefix}.fam {output.fam}

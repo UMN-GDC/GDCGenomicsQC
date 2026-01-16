@@ -1,7 +1,8 @@
 # Project-wide paths
 INPUT_FILE: "/scratch.global/coffm049/toyPipeline/temp"
 OUT_DIR: "/scratch.global/coffm049/toyPipeline"
+REF: "/projects/standard/gdc/public/Ref"
 
 # Tool-specific parameters
 relatedness:
-    method: "king"
+    method: "0"

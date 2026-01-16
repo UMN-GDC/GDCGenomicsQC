@@ -74,20 +74,6 @@ else # Default behavior
   fi
 fi
 
-########################################################################################################
-
-######################################## Pedigree ######################################################
-
-echo "(Step 4) Relatedness"
-if [ ${king} -eq king || ${king} -eq 1 ]; then
-  run_king_if_needed "${king_check}" ${path_to_repo} ${WORK} ${REF} ${NAME} ${combine_related}
-  echo "(Step 4b) Ancestry and kinship adjustment via PC-AiR / PC-Relate"
-  pcair_check=$WORK/pca_ir/${NAME}_pcaobj.RDS
-  run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
-  pca_ir_check_after_call ${pcair_check}
-elif [ ${king} -eq primus || ${king} -eq 2 ]; then
-  run_primus_if_needed "${primus_check}" ${path_to_repo} ${WORK} ${REF} ${NAME}
-  primus_check_after_call ${primus_check}
 
 #########################################################################################################
 
@@ -144,6 +130,9 @@ fi
 
 ############################################ PCA #########################################################
 echo "(Step 8) PCA"
+pcair_check=$WORK/pca_ir/${NAME}_pcaobj.RDS
+run_pca_ir_if_needed ${pcair_check} ${path_to_repo} ${WORK} ${REF} ${NAME}
+pca_ir_check_after_call ${pcair_check}
 $EXE --wait ${path_to_repo}/src/run_pca.sh ${WORK} ${REF} ${NAME} ${path_to_repo} 
 ##########################################################################################################
 
