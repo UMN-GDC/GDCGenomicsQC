@@ -3,9 +3,44 @@ configfile: "../config/config.yaml"
 
 # The rule of thumb in Snakemake is: Paths in include and configfile are relative to the Snakefile, but paths inside the rules are relative to where you run the command.
 
+# run single rule
+# snakemake --cores=1 run Initial_QC
+# snakemake --cores 1 Initial_QC --config stage=01-Initialfilter
+import os 
+PREVIOUS_STEP = {
+    "01-Initialfilter": "00-raw",
+    "02-relatedness": "01-Initialfilter",
+    "03-Standardfilter": "02-relatedness",
+    "05-AncestryFilters": "04-AncestryEstimation",
+}
+
+def get_input_by_stage(wildcards):
+    # Fix the typo 'wilcards' -> 'wildcards'
+    if wildcards.stage == "01-Initialfilter":
+        input_prefix = "data"
+    else:
+        input_prefix = "initialFilter"
+
+    # Ensure the stage exists in the map to avoid KeyErrors
+    if wildcards.stage not in PREVIOUS_STEP:
+        raise ValueError(f"Stage {wildcards.stage} not defined in PREVIOUS_STEP map.")
+
+    prev = PREVIOUS_STEP[wildcards.stage]
+    
+    # Use os.path.abspath to make it bulletproof for SLURM
+    path = os.path.join(config["OUT_DIR"], prev, input_prefix)
+    return os.path.abspath(path)
+
+
+include: "rules/LinkData.smk"
 include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
-include: "rules/PCA.smk"
+include: "rules/Standard_QC.smk"
+#include: "rules/PCA.smk"
 
 rule all:
-    shell: "echo 'this is unde rconstruction"
+    input:
+        # Requesting this file triggers Initial_QC for the first stage
+        os.path.join(config['OUT_DIR'], "01-Initialfilter/initialFilter.bed")
+    #os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.bed")
+  # os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.standardFiltered.bed")

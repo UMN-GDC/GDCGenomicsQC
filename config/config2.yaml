@@ -1,6 +1,6 @@
 # Project-wide paths
 INPUT_FILE: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic"
-OUT_DIR: "/scratch.global/coffm049/toyPipeline"
+OUT_DIR: "/scratch.global/coffm049/toyPipeline2"
 REF: "/projects/standard/gdc/public/Ref"
 
 # Tool-specific parameters

@@ -11,3 +11,8 @@ REF:
 
 relatedness: 
     method
+    
+
+    wildcard_constraints:
+        stage = "01-Initialfilter|02-relatedness|03-Standardfilter|04-AncestryEstimation|05-AncestryFilters"
+        prefix = "initialFiltered|unrelated|related"
