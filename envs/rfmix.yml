@@ -1,0 +1,15 @@
+name: rfmix
+channels:
+  - anaconda
+  - dranew
+  - bioconda
+  - defaults
+  - conda-forge
+dependencies:
+  - samtools
+  - plink
+  - plink2
+  - bcftools
+  - rfmix
+  - shapeit
+prefix: /projects/standard/gdc/public/envs/rfmix

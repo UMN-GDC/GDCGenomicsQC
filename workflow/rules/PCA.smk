@@ -1,5 +1,5 @@
-SLURM_LOGS = "--job-name=%x --output=logs/%x_%j.out --error=logs/%x_%j.err"
 rule PCA:
+    conda: "../../envs/plink.yml"
     container: "images/my_tool.sif"  # Works for .sif, .img, or docker://
     resources:
         # nodes=1 is usually the default, but can be specified if needed
@@ -8,16 +8,17 @@ rule PCA:
         mem_mb = 32000,
         runtime = 2880
     input:
-        bed = f"{config['OUT_DIR']}/relatedness/unrelated.bed",
-        bim = f"{config['OUT_DIR']}/relatedness/unrelated.bim",
-        fam = f"{config['OUT_DIR']}/relatedness/unrelated.fam",
+        bed = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned.bed",
+        bim = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned.bim",
+        fam = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned.fam",
     output:
         # List all files that PLINK will actually create
-        eigen = f"{config['OUT_DIR']}/PCA/merged_dataset_pca.eigenvec",
+        eigen = f"{config['OUT_DIR']}/04-globalAncestry/merged_dataset_pca.eigenvec",
+        tempDir  = temp(directory(f"{config['OUT_DIR']}/04-globalAncestry/intermediates/"))
     params:
         method = config['relatedness']["method"],
-        out_dir = f"{config['OUT_DIR']}/PCA",
-        input_prefix = f"{config['OUT_DIR']}/relatedness/unrelated",
+        out_dir = f"{config['OUT_DIR']}/04-globalAncestry",
+        input_prefix = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned",
         ref= config["REF"]
     shell: """
     echo "PCA: "

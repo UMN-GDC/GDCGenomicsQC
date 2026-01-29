@@ -1,5 +1,4 @@
-SLURM_LOGS = "--job-name=%x --output=logs/%x_%j.out --error=logs/%x_%j.err"
-rule Relatedness:
+rule checkRelatedness:
     resources:
         # nodes=1 is usually the default, but can be specified if needed
         nodes = 1,
@@ -7,17 +6,16 @@ rule Relatedness:
         mem_mb = 128000,
         runtime =720 
     input:
-        bed = f"{config['OUT_DIR']}/Initial_QC/final.bed",
-        fam = f"{config['OUT_DIR']}/Initial_QC/final.fam",
-        bim = f"{config['OUT_DIR']}/Initial_QC/final.bim",
+        bed = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.bed",
+        bim = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.bim",
+        fam = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.fam"
     output:
-        # List all files that PLINK will actually create
-        bed = f"{config['OUT_DIR']}/relatedness/unrelated.bed",
-        fam = f"{config['OUT_DIR']}/relatedness/unrelated.fam",
-        bim = f"{config['OUT_DIR']}/relatedness/unrelated.bim",
+        bed =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.bed"),
+        bim =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.bim"),
+        fam =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.fam"),
     params:
-        output_dir = f"{config['OUT_DIR']}/relatedness",
-        input_prefix = f"{config['OUT_DIR']}/Initial_QC/final.LDpruned",
+        output_dir = os.path.join(config['OUT_DIR'], "{stage}"),
+        input_prefix = lambda wildcards, input: input.bed[:-4],
         method = config['relatedness']['method'],
         datatype= "full",
         ref= config["REF"]

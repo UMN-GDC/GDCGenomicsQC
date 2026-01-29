@@ -1,0 +1,12 @@
+name: plink 
+channels:
+  - anaconda
+  - bioconda
+  - defaults
+  - conda-forge
+dependencies:
+  - plink2=2.0.0a.6.9
+  - plink
+  - r-base
+prefix: /projects/standard/gdc/public/envs/plink
+

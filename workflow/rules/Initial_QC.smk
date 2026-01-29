@@ -1,6 +1,6 @@
 rule Initial_QC:
     container: "images/baseImage.sif"
-    conda: "../../envs/qcEnvironment.yml"
+    conda: "../../envs/plink.yml"
     resources:
         nodes = 1,
         mem_mb = 32000,
@@ -16,7 +16,9 @@ rule Initial_QC:
         LDbed = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.bed"),
         LDbim = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.bim"),
         LDfam = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.fam"),
-        tempDir  = temp(directory(os.path.join(config['OUT_DIR'], "{stage}/intermediates/")))
+        tempDir  = temp(directory(os.path.join(config['OUT_DIR'], "{stage}/intermediates/"))),
+        imiss = os.path.join(config['OUT_DIR'], "{stage}/initial.imiss"),
+        lmiss = os.path.join(config['OUT_DIR'], "{stage}/initial.lmiss")
     params:
         # input.bed is a list of one file, we take index 0
         input_prefix = lambda wildcards, input: input.bed[:-4],

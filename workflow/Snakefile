@@ -1,17 +1,25 @@
+#report: "../report/main.rst"
+
 configfile: "../config/config.yaml"
 #validate(config, schema="../config/config.schema.yaml")
 
-# The rule of thumb in Snakemake is: Paths in include and configfile are relative to the Snakefile, but paths inside the rules are relative to where you run the command.
+# Paths in include and configfile are relative to the Snakefile
+# paths inside the rules are relative to where you run the command.
+
+# CHROMOSOMES = range(1, 22)
+CHROMOSOMES = range(20, 21)
+
 
 # run single rule
-# snakemake --cores=1 run Initial_QC
 # snakemake --cores 1 Initial_QC --config stage=01-Initialfilter
+# snakemake --jobs 22 --configfile ../config/config2.yaml --cluster "sbatch --parsable" --use-singularity
+# snakemake --jobs 22 --configfile ../config/config.yaml --cluster "sbatch --parsable"
 import os 
 PREVIOUS_STEP = {
     "01-Initialfilter": "00-raw",
     "02-relatedness": "01-Initialfilter",
-    "03-Standardfilter": "02-relatedness",
-    "05-AncestryFilters": "04-AncestryEstimation",
+    "03-localAncestry": "02-relatedness",
+    "04-globalAncestry": "03-localAncestry",
 }
 
 def get_input_by_stage(wildcards):
@@ -19,7 +27,7 @@ def get_input_by_stage(wildcards):
     if wildcards.stage == "01-Initialfilter":
         input_prefix = "data"
     else:
-        input_prefix = "initialFilter"
+        input_prefix = "initial"
 
     # Ensure the stage exists in the map to avoid KeyErrors
     if wildcards.stage not in PREVIOUS_STEP:
@@ -36,11 +44,25 @@ include: "rules/LinkData.smk"
 include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
-#include: "rules/PCA.smk"
+include: "rules/RFMIX.smk"
+include: "rules/PCA.smk"
+#include: "rules/plotInitial_QC.smk"
 
 rule all:
+    threads: 1
+    resources:
+        # nodes=1 is usually the default, but can be specified if needed
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
     input:
         # Requesting this file triggers Initial_QC for the first stage
-        os.path.join(config['OUT_DIR'], "01-Initialfilter/initialFilter.bed")
-    #os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.bed")
-  # os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.standardFiltered.bed")
+        os.path.join(config['OUT_DIR'], "00-raw/data.bed")
+        #os.path.join(config['OUT_DIR'], "01-Initialfilter/initialFilter.bed")
+        #os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.bed")
+        #os.path.join(config['OUT_DIR'], "02-relatedness/initialFilter.bed")
+  #os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed")
+        #expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
+        #os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec")
+        # imiss = os.path.join(config['OUT_DIR'], "figures/imiss.png"),
+        #lmiss = os.path.join(config['OUT_DIR'], "figures/lmiss.png")

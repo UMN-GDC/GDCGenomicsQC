@@ -78,18 +78,7 @@ fi
 #########################################################################################################
 
 ###################################### QC #############################################################
-echo "Variants and samples filtering"
-# Run standard_QC.job with the appropriate parameters (full path to dataset name + output folder name)
-cd $WORK
-DATATYPE=full
-if [ ${custom_qc} -eq 1 ]; then
-  ## requires a text file that has all of the flags and specifications
-  $EXE --wait ${WORK}/custom_qc.SLURM ${file_to_submit} ${DATATYPE} ${path_to_repo}
-else # Default behavior
-  file_to_check_qc=${WORK}/${DATATYPE}/QC8.bim
-  run_standard_qc_if_needed "${file_to_check_qc}" ${WORK} ${NAME} ${REF} ${path_to_repo} ${DATATYPE} ${CHECK_SEX}
-  standard_qc_check_after_call ${file_to_check_qc}
-fi
+
 ########################################################################################################
 
 

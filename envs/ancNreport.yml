@@ -1,0 +1,36 @@
+name: ancNreport
+channels:
+  - anaconda
+  - dranew
+  - bioconda
+  - defaults
+  - conda-forge
+dependencies:
+  - python
+  - r-base
+  - r-gtable
+  - r-tidyverse
+  - perl
+  - bioconductor-gdsfmt
+  - bioconductor-snprelate
+  - bioconductor-seqarray
+  - bioconductor-seqvartools
+  - bioconductor-biocparallel
+  - r-hdpca
+  - bioconductor-gwastools
+  - bioconductor-genesis
+  - bioconductor-xvector
+  - bioconductor-biostrings
+  - bcftools
+  - openjdk
+  - keras
+  - tensorflow
+  - pandas-plink
+  - pytest
+  - scikit-learn
+  - seaborn
+  - statsmodels
+  - xarray
+  - crossmap
+  - fraposa-pgsc
+prefix: /projects/standard/gdc/public/envs/ancNreport

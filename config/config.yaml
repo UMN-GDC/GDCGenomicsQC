@@ -8,3 +8,6 @@ relatedness:
     method: "0"
 
 SEX_CHECK : false
+RFMIX : true
+
+thin: true
