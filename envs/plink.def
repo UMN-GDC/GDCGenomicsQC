@@ -1,0 +1,27 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%files
+    plink.yml /app/plink.yml
+    # You can also copy a whole directory and its contents
+    /scratch.global/coffm049/baseImage/data/1kgSynthetic_thinned*                   /app/data/
+
+%post
+    apt-get update && apt-get install -y \
+        curl \
+        tar \
+        git \
+        unzip \
+        && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+%environment
+    export LC_ALL=C
+    # This ensures that when you type 'java', it finds the one in the Conda env
+    export PATH="/bin:/opt/conda/bin:/opt/conda/envs/plink/bin:/usr/bin:$PATH"
+
+
+%post 
+    micromamba create -f /app/plink.yml
+    # micromamba create --yes -f /app/environment.yml
+    micromamba clean --all -f -y
+

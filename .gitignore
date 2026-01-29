@@ -81,6 +81,7 @@ gcta64
 *.log
 *.sexcheck
 *.het
+*.sif
 data/toyData/toy_GSA*
 
 
@@ -89,6 +90,4 @@ data/toyData/toy_GSA*
 /.quarto/
 qc.sif
 envs/logs/build.err
-envs/qcContainer.def
 envs/logs/build.out
-workflow/rules/LinkData.smk
