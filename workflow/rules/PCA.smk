@@ -1,6 +1,7 @@
 rule PCA:
     container: "../envs/plink.sif"
     conda: "../../envs/plink.yml"
+    threads: 8
     resources:
         # nodes=1 is usually the default, but can be specified if needed
         nodes = 1,

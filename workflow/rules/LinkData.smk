@@ -19,7 +19,7 @@ rule linkData:
         if [ "{params.thin}" = "True" ] ;  then
           echo "Thinning data for testing purposes"
           plink2 --bfile {params.input_prefix} \
-            --thin-indiv-count 30000 \
+            --thin-indiv-count 3000 \
             --out {params.output_prefix} \
             --make-bed
         else
