@@ -3,6 +3,7 @@
 INPUT=$1
 STAGE=$2
 REF=$3
+GRM=$4
 
 mkdir -p $STAGE/intermediates
 
@@ -48,12 +49,20 @@ echo "$STAGE/intermediates/refpref_common_bi" > $STAGE/merge_list.txt
 plink --bfile $STAGE/intermediates/stupref_common_bi --merge-list $STAGE/merge_list.txt --make-bed --out $STAGE/merged_common_bi --allow-no-sex
 
 # Compute PCs
-plink2 --bfile $STAGE/merged_common_bi \
-       --freq counts \
-       --pca approx allele-wts vcols=chrom,ref,alt \
-       --out $STAGE/merged_dataset_pca \
-       --make-grm-bin \
-       --allow-no-sex
+if [[ "$GRM" == "True" ]] ; then
+  plink2 --bfile $STAGE/merged_common_bi \
+         --freq counts \
+         --pca approx allele-wts vcols=chrom,ref,alt \
+         --out $STAGE/merged_dataset_pca \
+         --make-grm-bin \
+         --allow-no-sex
+else 
+  plink2 --bfile $STAGE/merged_common_bi \
+         --freq counts \
+         --pca approx allele-wts vcols=chrom,ref,alt \
+         --out $STAGE/merged_dataset_pca \
+         --allow-no-sex
+fi
 
 # then project related onto those PCs if there are unrelated
 if [ -f "${STAGE}/../02-relatedness/related.bed" ]; then

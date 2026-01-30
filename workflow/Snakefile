@@ -18,8 +18,6 @@ import os
 PREVIOUS_STEP = {
     "01-Initialfilter": "00-raw",
     "02-relatedness": "01-Initialfilter",
-    "03-localAncestry": "02-relatedness",
-    "04-globalAncestry": "03-localAncestry",
 }
 
 def get_input_by_stage(wildcards):
@@ -27,7 +25,7 @@ def get_input_by_stage(wildcards):
     if wildcards.stage == "01-Initialfilter":
         input_prefix = "data"
     else:
-        input_prefix = "initial"
+        input_prefix = "initialFilter"
 
     # Ensure the stage exists in the map to avoid KeyErrors
     if wildcards.stage not in PREVIOUS_STEP:
@@ -102,12 +100,12 @@ rule all:
         runtime = 420 # 1 week
     input:
         # Requesting this file triggers Initial_QC for the first stage
-        os.path.join(config['OUT_DIR'], "00-raw/data.bed")
+        # os.path.join(config['OUT_DIR'], "00-raw/data.bed")
         #os.path.join(config['OUT_DIR'], "01-Initialfilter/initialFilter.bed")
-        #os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.bed")
+        #os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.bed"),
         #os.path.join(config['OUT_DIR'], "02-relatedness/initialFilter.bed")
-  #os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed")
+        #os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed")
+        os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec")
         #expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
-        #os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec")
         # imiss = os.path.join(config['OUT_DIR'], "figures/imiss.png"),
         #lmiss = os.path.join(config['OUT_DIR'], "figures/lmiss.png")

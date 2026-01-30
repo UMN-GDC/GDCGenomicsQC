@@ -3,7 +3,7 @@
 INPUT=$1
 OUTPUT=$2
 REF=$3
-DATATYPE=$4
+#DATATYPE=$4
 
 plink --bfile ${INPUT} --genome --out ${INPUT}
 perl ${REF}/PRIMUS/bin/run_PRIMUS.pl --plink_ibd ${INPUT}.genome -t 0.2 -o $OUTPUT

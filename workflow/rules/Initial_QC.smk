@@ -1,5 +1,5 @@
 rule Initial_QC:
-    container: "images/baseImage.sif"
+    container: "../envs/plink.sif"
     conda: "../../envs/plink.yml"
     resources:
         nodes = 1,

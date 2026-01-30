@@ -1,6 +1,6 @@
 rule PCA:
+    container: "../envs/plink.sif"
     conda: "../../envs/plink.yml"
-    container: "images/my_tool.sif"  # Works for .sif, .img, or docker://
     resources:
         # nodes=1 is usually the default, but can be specified if needed
         nodes = 1,
@@ -17,6 +17,7 @@ rule PCA:
         tempDir  = temp(directory(f"{config['OUT_DIR']}/04-globalAncestry/intermediates/"))
     params:
         method = config['relatedness']["method"],
+        grm = config['relatedness']["method"],
         out_dir = f"{config['OUT_DIR']}/04-globalAncestry",
         input_prefix = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned",
         ref= config["REF"]
@@ -29,6 +30,6 @@ rule PCA:
         echo "PCAIR"
     else
         echo "Standard PCA since no method of relatedness estimation included"
-        bash scripts/run_pca.sh {params.input_prefix} {params.out_dir} {params.ref}
+        bash scripts/run_pca.sh {params.input_prefix} {params.out_dir} {params.ref} {params.grm}
     fi
     """

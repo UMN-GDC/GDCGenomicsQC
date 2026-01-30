@@ -1,5 +1,5 @@
 rule Standard_QC:
-    container: "images/my_tool.sif"  # Works for .sif, .img, or docker://
+    container: "../envs/plink.sif"
     conda: "../../envs/plink.yml"
     threads: 8
     resources:
