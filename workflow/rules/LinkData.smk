@@ -1,4 +1,5 @@
 rule linkData:
+    container: "../envs/plink.sif"
     conda: "../../envs/plink.yml"
     input:
         bed = f"{config['INPUT_FILE']}.bed",
