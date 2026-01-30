@@ -39,38 +39,50 @@ def get_input_by_stage(wildcards):
     path = os.path.join(config["OUT_DIR"], prev, input_prefix)
     return os.path.abspath(path)
 
-# mount paths to external if using singularity
-def get_mount_points(config_dict):
-  """Recursively find all unique root directories from absolute paths in config."""
-  paths = set()
-  for value in config_dict.values():
-      if isinstance(value, str) and value.startswith("/"):
-          # Extract the root (e.g., /shared or /scratch)
-          parts = value.split("/")
-          if len(parts) > 1:
-              paths.add(f"/{parts[1]}")
-      elif isinstance(value, dict):
-          paths.update(get_mount_points(value))
-  return paths
 
+
+import os
+
+def get_mount_roots(config_dict):
+    """
+    Recursively scans the config for absolute paths and extracts 
+    the top-level root (e.g., /shared, /scratch) for mounting.
+    """
+    roots = set()
+    for value in config_dict.values():
+        if isinstance(value, str) and value.startswith("/"):
+            # Resolve symlinks to find the true physical disk path
+            real_p = os.path.realpath(value)
+            parts = real_p.split("/")
+            if len(parts) > 1:
+                roots.add(f"/{parts[1]}")
+        elif isinstance(value, dict):
+            roots.update(get_mount_roots(value))
+    return roots
+
+# Initialize auto-binding if Singularity/Apptainer is active
 if workflow.use_singularity:
-    print("DEBUG: Singularity mode detected!")
-    # 1. Start with the current project directory
-    needed_binds = {os.getcwd()}
-    
-    # 2. Add all root directories found in the config
-    needed_binds.update(get_mount_points(config))
-    
-    # 3. Format for Apptainer: --bind /shared:/shared,/scratch:/scratch
-    bind_string = "--bind " + ",".join([f"{b}:{b}" for b in needed_binds])
-    
-    # 4. Inject into the workflow
-    if workflow.singularity_args:
-        workflow.singularity_args += f" {bind_string}"
-    else:
-        workflow.singularity_args = bind_string
+    # 1. Start with the current working directory
+    # Using realpath here ensures the project folder is mapped correctly
+    active_roots = {os.path.realpath(os.getcwd()).split("/")[1]}
+    active_roots = {f"/{r}" if not r.startswith("/") else r for r in active_roots}
 
+    # 2. Add roots from absolute paths found in config
+    active_roots.update(get_mount_roots(config))
 
+    # 3. Create the comma-separated string required by Apptainer
+    # Format: "/shared,/scratch,/project"
+    bind_string = ",".join(active_roots)
+
+    # 4. Inject into environment variables
+    # These are automatically picked up by Singularity/Apptainer exec
+    os.environ["APPTAINER_BIND"] = bind_string
+    os.environ["SINGULARITY_BIND"] = bind_string
+
+    # 5. Optional: Print for user transparency
+    print(f"--- Container Auto-Mount Active ---")
+    print(f"Bound Roots: {bind_string}")
+    print(f"------------------------------------")
 
 
 include: "rules/LinkData.smk"
