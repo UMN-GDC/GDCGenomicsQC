@@ -7,6 +7,6 @@ rule plotInitial_QC:
         imiss = report(os.path.join(config['OUT_DIR'], "figures/imiss.png"), caption = "../report/imiss.rst", category = "Initial QC"),
         lmiss = report(os.path.join(config['OUT_DIR'], "figures/lmiss.png"), caption = "../report/lmiss.rst", category = "Initial QC"),
     shell: """
-    bash scripts/plotMissingness.R {input.imiss} {input.lmiss} {output.imiss} {output.lmiss} 
+    Rscript scripts/plotMissingness.R {input.imiss} {input.lmiss} {output.imiss} {output.lmiss} 
     """
 

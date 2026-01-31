@@ -28,7 +28,7 @@ rule RFMIX:
         --map {params.ref}/ancestry_OG/chr{wildcards.CHR}.b38.gmap.gz \
         --region {wildcards.CHR} \
         --output {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz \
-        --thread 8
+        --thread {threads}
       
 
     echo "RFMIX Ancestry Estimation"

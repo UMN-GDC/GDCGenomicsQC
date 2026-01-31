@@ -7,7 +7,7 @@ configfile: "../config/config.yaml"
 # paths inside the rules are relative to where you run the command.
 
 # CHROMOSOMES = range(1, 22)
-CHROMOSOMES = range(20, 21)
+CHROMOSOMES = range(20, 22)
 
 
 # run single rule
@@ -89,12 +89,12 @@ include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
 include: "rules/RFMIX.smk"
 include: "rules/PCA.smk"
-#include: "rules/plotInitial_QC.smk"
+include: "rules/plotInitial_QC.smk"
+
 
 rule all:
     threads: 1
     resources:
-        # nodes=1 is usually the default, but can be specified if needed
         nodes = 1,
         mem_mb = 4000,
         runtime = 420 # 1 week
@@ -105,7 +105,24 @@ rule all:
         #os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.bed"),
         #os.path.join(config['OUT_DIR'], "02-relatedness/initialFilter.bed")
         #os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed")
+        os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec"),
+        expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
+
+rule report:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        imiss = os.path.join(config['OUT_DIR'], "figures/imiss.png"),
+        lmiss = os.path.join(config['OUT_DIR'], "figures/lmiss.png")
+
+rule run_pca:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
         os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec")
-        #expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
-        # imiss = os.path.join(config['OUT_DIR'], "figures/imiss.png"),
-        #lmiss = os.path.join(config['OUT_DIR'], "figures/lmiss.png")
