@@ -16,7 +16,7 @@ rule Initial_QC:
         LDbed = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.bed"),
         LDbim = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.bim"),
         LDfam = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.fam"),
-        tempDir  = temp(directory(os.path.join(config['OUT_DIR'], "{stage}/intermediates/"))),
+        tempDir  = temp(directory(os.path.join(config['OUT_DIR'], "{stage}/intermediates/initial_filter/"))),
         imiss = os.path.join(config['OUT_DIR'], "{stage}/initial.imiss"),
         lmiss = os.path.join(config['OUT_DIR'], "{stage}/initial.lmiss")
     params:

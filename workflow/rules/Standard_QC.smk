@@ -22,7 +22,7 @@ rule Standard_QC:
         LDbed = os.path.join(config['OUT_DIR'], "{stage}/standardFiltered.LDpruned.bed"),
         LDbim = os.path.join(config['OUT_DIR'], "{stage}/standardFiltered.LDpruned.bim"),
         LDfam = os.path.join(config['OUT_DIR'], "{stage}/standardFiltered.LDpruned.fam"),
-        tempDir  = temp(directory(os.path.join(config['OUT_DIR'], "{stage}/intermediates/")))
+        tempDir  = temp(directory(os.path.join(config['OUT_DIR'], "{stage}/intermediates/standard_filter/")))
     params:
         ref= config["REF"],
         output_dir = os.path.join(config['OUT_DIR'], "{stage}"),

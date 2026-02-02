@@ -3,9 +3,9 @@
 INPUT=$1
 STAGE=$2
 
-mkdir -p $STAGE/intermediates
+mkdir -p $STAGE/intermediates/initial_filter
 
-INTER_FILEPREFIX=$STAGE/intermediates/initial_filter_intermediate
+INTER_FILEPREFIX=$STAGE/intermediates/initial_filter/intermediate
 INPUT_PREF=$(basename $INPUT)
 
 # Marker missingness initial filter

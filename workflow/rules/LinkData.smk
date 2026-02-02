@@ -9,13 +9,15 @@ rule linkData:
         bed = f"{config['OUT_DIR']}/00-raw/data.bed",
         bim = f"{config['OUT_DIR']}/00-raw/data.bim",
         fam = f"{config['OUT_DIR']}/00-raw/data.fam",
+        log = f"{config['OUT_DIR']}/00-raw/data.log",
     params:
         thin = f"{config['thin']}",
         input_prefix = lambda wildcards, input: input.bed[:-4],
         output_prefix = lambda wildcards, output: output.bed[:-4]
     shell: """
         # thinning can be useful for testing out pipeline on large datasets 
-        echo "{params.thin}"
+        mkdir -p {params.output_prefix}
+
         if [ "{params.thin}" = "True" ] ;  then
           echo "Thinning data for testing purposes"
           plink2 --bfile {params.input_prefix} \

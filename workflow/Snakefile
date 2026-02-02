@@ -37,66 +37,38 @@ def get_input_by_stage(wildcards):
     path = os.path.join(config["OUT_DIR"], prev, input_prefix)
     return os.path.abspath(path)
 
-
-
-import os
-
-def get_mount_roots(config_dict):
-    """
-    Recursively scans the config for absolute paths and extracts 
-    the top-level root (e.g., /shared, /scratch) for mounting.
-    """
-    roots = set()
-    for value in config_dict.values():
-        if isinstance(value, str) and value.startswith("/"):
-            # Resolve symlinks to find the true physical disk path
-            real_p = os.path.realpath(value)
-            parts = real_p.split("/")
-            if len(parts) > 1:
-                roots.add(f"/{parts[1]}")
-        elif isinstance(value, dict):
-            roots.update(get_mount_roots(value))
-    return roots
-
-# 1. Check legacy (v7 and below)
-is_singularity = getattr(workflow, "use_singularity", False)
-
-# 2. Check modern (v8+)
-if not is_singularity and hasattr(workflow, "deployment_settings"):
-    # In v8, active methods are stored in a set/collection
-    methods = getattr(workflow.deployment_settings, "deployment_method", set())
-    # We check if 'singularity' is one of the strings in that set
-    is_singularity = "singularity" in str(methods) or hasattr(methods, "singularity")
+# 1. Version-agnostic check
+is_singularity = (
+    getattr(workflow, "use_singularity", False) or 
+    "singularity" in str(getattr(workflow.deployment_settings, "deployment_method", ""))
+)
 
 if is_singularity:
-    # Apply your APPTAINER_BIND logic here
-    pass
+    # Start with the essentials
+    bind_paths = {os.getcwd(), "/scratch", "/tmp"}
 
+    # 2. Extract paths from config/params
+    # This function looks for any string in your config that is an existing directory
+    def find_paths(d):
+        for val in d.values():
+            if isinstance(val, str) and "/" in val:
+                # If it's a file, get the parent directory
+                potential_path = os.path.abspath(val)
+                parent = os.path.dirname(potential_path)
+                if os.path.exists(parent):
+                    bind_paths.add(parent)
+            elif isinstance(val, dict):
+                find_paths(val)
 
+    find_paths(config)
 
-# Initialize auto-binding if Singularity/Apptainer is active
-if is_singularity:
-    # 1. Start with the current working directory
-    # Using realpath here ensures the project folder is mapped correctly
-    active_roots = {os.path.realpath(os.getcwd()).split("/")[1]}
-    active_roots = {f"/{r}" if not r.startswith("/") else r for r in active_roots}
+    # 3. Clean up and set the environment variable
+    # We use a set to ensure no duplicates, then join with commas
+    os.environ["APPTAINER_BIND"] = ",".join(filter(None, bind_paths))
+    os.environ["APPTAINER_WRITABLE_TMPFS"] = "1"
 
-    # 2. Add roots from absolute paths found in config
-    active_roots.update(get_mount_roots(config))
+    print(f"DEBUG: Active Binds: {os.environ['APPTAINER_BIND']}")
 
-    # 3. Create the comma-separated string required by Apptainer
-    # Format: "/shared,/scratch,/project"
-    bind_string = ",".join(active_roots)
-
-    # 4. Inject into environment variables
-    # These are automatically picked up by Singularity/Apptainer exec
-    os.environ["APPTAINER_BIND"] = bind_string
-    os.environ["SINGULARITY_BIND"] = bind_string
-
-    # 5. Optional: Print for user transparency
-    print(f"--- Container Auto-Mount Active ---")
-    print(f"Bound Roots: {bind_string}")
-    print(f"------------------------------------")
 
 
 include: "rules/LinkData.smk"

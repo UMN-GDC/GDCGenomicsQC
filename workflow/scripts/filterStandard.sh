@@ -3,8 +3,8 @@
 INPUT=$1
 STAGE=$2
 
-mkdir -p $STAGE/intermediates
-INTER_FILEPREFIX=$STAGE/intermediates/initial_filter_intermediate
+mkdir -p $STAGE/intermediates/standard_filter
+INTER_FILEPREFIX=$STAGE/intermediates/standard_filter/intermediate
 
 # Minor allele frequency filter
 plink --bfile $INPUT --freq --out $STAGE/MAF_check
