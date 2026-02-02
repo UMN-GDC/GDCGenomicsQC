@@ -58,8 +58,24 @@ def get_mount_roots(config_dict):
             roots.update(get_mount_roots(value))
     return roots
 
+# 1. Check legacy (v7 and below)
+is_singularity = getattr(workflow, "use_singularity", False)
+
+# 2. Check modern (v8+)
+if not is_singularity and hasattr(workflow, "deployment_settings"):
+    # In v8, active methods are stored in a set/collection
+    methods = getattr(workflow.deployment_settings, "deployment_method", set())
+    # We check if 'singularity' is one of the strings in that set
+    is_singularity = "singularity" in str(methods) or hasattr(methods, "singularity")
+
+if is_singularity:
+    # Apply your APPTAINER_BIND logic here
+    pass
+
+
+
 # Initialize auto-binding if Singularity/Apptainer is active
-if workflow.use_singularity:
+if is_singularity:
     # 1. Start with the current working directory
     # Using realpath here ensures the project folder is mapped correctly
     active_roots = {os.path.realpath(os.getcwd()).split("/")[1]}
