@@ -10,7 +10,7 @@ From: /scratch.global/coffm049/baseImage/base.sif
     /projects/standard/gdc/public/Ref/rfmix_ref/hg38_phased.vcf.gz
     /projects/standard/gdc/public/Ref/rfmix_ref/super_population_map_file.txt
     /projects/standard/gdc/public/Ref/rfmix_ref/genetic_map_hg38.txt
-    /projects/standard/gdc/public/Ref/RFMIX2-Pipeline-to-plot
+    # /projects/standard/gdc/public/Ref/RFMIX2-Pipeline-to-plot
     /projects/standard/gdc/public/Ref/ancestry_OG
 
 %environment

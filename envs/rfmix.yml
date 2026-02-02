@@ -1,15 +1,12 @@
 name: rfmix
 channels:
-  - anaconda
-  - dranew
   - bioconda
-  - defaults
   - conda-forge
+  - anaconda
+  - defaults
 dependencies:
-  - samtools
-  - plink
+  - gsl=2.7
   - plink2
-  - bcftools
-  - rfmix
-  - shapeit
+  - bcftools=1.23
+  - rfmix=2.03.r0
 prefix: /projects/standard/gdc/public/envs/rfmix

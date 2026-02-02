@@ -20,10 +20,11 @@ rule RFMIX:
     shell: """
     echo "Shapeit Phasing"
 
-    plink --bfile {params.input_prefix} --chr {wildcards.CHR} --recode vcf --out {params.out_dir}/chr{wildcards.CHR}
-    bgzip -c {params.out_dir}/chr{wildcards.CHR}.vcf > {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+    plink2 --bfile {params.input_prefix} --chr {wildcards.CHR} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
     bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
-    {params.ref}/ancestry_OG/shapeit4/bin/shapeit4.2 \
+    
+    module load shapeit/4.2.2
+    shapeit \
         --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
         --map {params.ref}/ancestry_OG/chr{wildcards.CHR}.b38.gmap.gz \
         --region {wildcards.CHR} \
