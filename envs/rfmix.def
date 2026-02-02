@@ -2,16 +2,12 @@ Bootstrap: localimage
 From: /scratch.global/coffm049/baseImage/base.sif
 
 %files
-    environment.yml /app/environment.yml
+    rfmix.yml /app/environment.yml
 
-    # QC software
-    # src/ /app/src/
-    # Run.sh /app/Run.sh
-    
     # Data
-    # /projects/standard/gdc/public/Ref/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5
+    /projects/standard/gdc/public/Ref/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5
     # /projects/standard/gdc/public/Ref/CrossMap/GRCh37_to_GRCh38.chain.gz
-    # /projects/standard/gdc/public/Ref/rfmix_ref/hg38_phased.vcf.gz
+    /projects/standard/gdc/public/Ref/rfmix_ref/hg38_phased.vcf.gz
     /projects/standard/gdc/public/Ref/rfmix_ref/super_population_map_file.txt
     /projects/standard/gdc/public/Ref/rfmix_ref/genetic_map_hg38.txt
     /projects/standard/gdc/public/Ref/RFMIX2-Pipeline-to-plot
@@ -20,7 +16,7 @@ From: /scratch.global/coffm049/baseImage/base.sif
 %environment
     export LC_ALL=C
     # This ensures that when you type 'java', it finds the one in the Conda env
-    export PATH="/bin:/opt/conda/bin:/opt/conda/envs/gdcPipeline/bin:/opt/primus/bin:/usr/bin:$PATH"
+    export PATH="/bin:/opt/conda/bin:/opt/conda/envs/rfmix/bin:/usr/bin:$PATH"
 
 %post
     # 1. Install ONLY build tools via apt (Removed openjdk)
@@ -32,87 +28,14 @@ From: /scratch.global/coffm049/baseImage/base.sif
         && apt-get clean && rm -rf /var/lib/apt/lists/*
 
     # 2. Directory Setup
-    mkdir -p /opt/GenotypeHarmonizer
-    mkdir -p /opt/primus
     mkdir -p /opt/bin
 
     # 3. Conda Setup (Java is installed here now via environment.yml)
-    micromamba create -n gdcPipeline --yes pip
-    # micromamba create --yes -f /app/environment.yml
+    micromamba create --yes -f /app/environment.yml
     micromamba clean --all -f -y
 
-    # Set the necessary flags to include the headers and libraries from the environment
-    export CPPFLAGS="-I$CONDA_PREFIX/include $CPPFLAGS"
-    export LDFLAGS="-L$CONDA_PREFIX/lib $LDFLAGS"
-
-    # # 4. Install Pip packages
-    # /opt/conda/envs/gdcPipeline/bin/pip install CrossMap
-
-    # 5. Install GenotypeHarmonizer
-    # Note: We rely on the internal folder structure of the tar.gz
-    # wget -qO- https://github.com/molgenis/systemsgenetics/releases/download/GH_1.4.28/GenotypeHarmonizer-1.4.28-SNAPSHOT-dist.tar.gz \
-    #   | tar -xz -C /opt/GenotypeHarmonizer --strip-components=1
-    # rm -rf /opt/GenotypeHarmonizer/exampleData
-
-    # 6. Install PRIMUS
-
-    # wget -qO- https://primus.gs.washington.edu/docroot/versions/PRIMUS_v1.9.0.tgz \
-    #   | tar -xz -C /opt/primus --strip-components=1
-    # rm -rf /opt/primus/exampleData /opt/primus/PRIMUS_*
-
-    # # 7. Create Wrapper
-    # # This works because %environment sets the PATH to include the Conda bin
-    # echo '#!/bin/sh' > /app/GenotypeHarmonizer
-    # echo 'exec java -jar /opt/GenotypeHarmonizer/GenotypeHarmonizer.jar "$@"' >> /app/GenotypeHarmonizer
-    # chmod +x /app/GenotypeHarmonizer
-
-    # /opt/conda/envs/gdcPipeline/bin/pip install git+https://github.com/coffm049/popvae
-
-
-%help
-    This container holds multiple bioinformatics pipelines, but not designed to contain the workflows. So, it is not reccomended to run this directly, but rather to use the related SnakeMake to run the routines.
-    
-    Default run: apptainer run my_image.sif [QC|ANALYSIS] <args>
-    
-    Available Apps:
-    - GH: apptainer run --app QC my_image.sif <input_file>
-    - QC: apptainer run --app QC my_image.sif <input_file>
-    - ANALYSIS: apptainer run --app ANALYSIS my_image.sif <input_file>
-
-%apprun QC
-    # This script runs when you call: apptainer run --app QC my_image.sif <args>
-    echo "Starting QC Pipeline..."
-    # You can now call the QC programs installed in base_env
-    # $1, $2, etc., are the arguments passed by the user
-    exec /app/Run.sh "$@"
-
-%apphelp QC
-    This app runs the Quality Control pipeline (e.g., MultiQC).
-    Usage: apptainer run --app QC <image> <args>
-
-%apprun QC2
-    # This script runs when you call: apptainer run --app QC my_image.sif <args>
-    echo "Starting QC Pipeline..."
-    # You can now call the QC programs installed in base_env
-    # $1, $2, etc., are the arguments passed by the user
-    exec /app/Run2.sh "$@"
-
-%apphelp QC2
-    This app runs the Quality Control pipeline (e.g., MultiQC).
-    Usage: apptainer run --app QC <image> <args>
-
-%apprun GH
-    # This script runs when you call: apptainer run --app QC my_image.sif <args>
-    echo "Starting Genotype harmonizer Pipeline..."
-    # You can now call the QC programs installed in base_env
-    # $1, $2, etc., are the arguments passed by the user
-    exec /app/GenotypeHarmonizer "$@"
-
-%apphelp GH
-    This app runs the GenotypeHarmonizer (e.g., MultiQC).
-    Usage: apptainer run --app GH <image> <multiqc_args>
 
 %labels
     Author coffm049@umn.edu
     Version v0.1
-    Description GDC Pipeline
+    Description RFMIX and SHAPEIT container

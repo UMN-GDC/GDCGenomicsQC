@@ -1,6 +1,6 @@
 rule RFMIX:
     container: "images/my_tool.sif"  # Works for .sif, .img, or docker://
-    conda: "../../envs/qcEnvironment.yml"  # Works for .sif, .img, or docker://
+    conda: "../../envs/rfmix.yml"
     threads: 8
     resources:
         nodes = 1,
