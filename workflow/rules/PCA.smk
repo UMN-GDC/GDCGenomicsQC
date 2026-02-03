@@ -3,11 +3,10 @@ rule PCA:
     conda: "../../envs/plink.yml"
     threads: 8
     resources:
-        # nodes=1 is usually the default, but can be specified if needed
         nodes = 1,
-        # mem=32GB translated to MB
         mem_mb = 32000,
-        runtime = 2880
+        runtime = 2880,
+        slurm_extra = "'--job-name=PCA_{wildcards.stage}'"
     input:
         bed = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned.bed",
         bim = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned.bim",

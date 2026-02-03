@@ -6,7 +6,8 @@ rule checkRelatedness:
         nodes = 1,
         # mem=32GB translated to MB
         mem_mb = 128000,
-        runtime =720 
+        runtime =720,
+        slurm_extra = "'--job-name=Relatedness_{wildcards.stage}'"
     input:
         bed = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.bed",
         bim = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.bim",

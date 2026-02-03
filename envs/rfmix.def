@@ -5,20 +5,22 @@ From: /scratch.global/coffm049/baseImage/base.sif
     rfmix.yml /app/environment.yml
 
     # Data
-    /projects/standard/gdc/public/Ref/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5
+    #/projects/standard/gdc/public/Ref/hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5
     # /projects/standard/gdc/public/Ref/CrossMap/GRCh37_to_GRCh38.chain.gz
     /projects/standard/gdc/public/Ref/rfmix_ref/hg38_phased.vcf.gz
     /projects/standard/gdc/public/Ref/rfmix_ref/super_population_map_file.txt
     /projects/standard/gdc/public/Ref/rfmix_ref/genetic_map_hg38.txt
     # /projects/standard/gdc/public/Ref/RFMIX2-Pipeline-to-plot
-    /projects/standard/gdc/public/Ref/ancestry_OG
+    /projects/standard/gdc/public/Ref/ancestry_OG/chr*.b38.gmap.gz
 
 %environment
     export LC_ALL=C
     # This ensures that when you type 'java', it finds the one in the Conda env
     export PATH="/bin:/opt/conda/bin:/opt/conda/envs/rfmix/bin:/usr/bin:$PATH"
+    export LD_LIBRARY_PATH=/opt/conda/lib:$LD_LIBRARY_PATH
 
 %post
+    export CONDA_PREFIX=$(micromamba info | grep 'base environment :' | awk '{print $4}')
     # 1. Install ONLY build tools via apt (Removed openjdk)
     apt-get update && apt-get install -y \
         curl \
@@ -33,6 +35,20 @@ From: /scratch.global/coffm049/baseImage/base.sif
     # 3. Conda Setup (Java is installed here now via environment.yml)
     micromamba create --yes -f /app/environment.yml
     micromamba clean --all -f -y
+
+
+    git clone https://github.com/odelaneau/shapeit4.git
+    cd shapeit4
+
+    export CXXFLAGS="-I$CONDA_PREFIX/include"
+    export LDFLAGS="-L$CONDA_PREFIX/lib"
+    
+    # Run the build
+    make
+    
+    # Move the binary to a standard path and cleanup
+    cp bin/shapeit4 /usr/bin/
+    cd .. && rm -rf shapeit4
 
 
 %labels

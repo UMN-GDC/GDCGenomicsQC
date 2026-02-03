@@ -9,4 +9,11 @@ dependencies:
   - plink2
   - bcftools=1.23
   - rfmix=2.03.r0
+  - make
+  - gxx_linux-64=9
+  - htslib
+  - boost-cpp=1.82
+  - gsl=2.7
+  - zlib
+  - bzip2
 prefix: /projects/standard/gdc/public/envs/rfmix

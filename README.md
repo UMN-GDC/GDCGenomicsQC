@@ -46,6 +46,9 @@ After cloning this repository the steps to run this pipeline are as follows:
 
 # Snakemake
 ```
+conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
+conda activate snakemake
+
 snakemake --cores 1 --configfile ../config/config.yaml
 snakemake --cores 1 --configfile ../config/config.yaml --executor slurm
 snakemake --cores 1 Initial_QC --use-singularity

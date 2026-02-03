@@ -14,7 +14,7 @@ export TMPDIR=/scratch.global/coffm049/tmp
 # Create the directories so Apptainer doesn't complain
 mkdir -p $APPTAINER_CACHEDIR
 
-apptainer build plink.sif plink.def
+# apptainer build plink.sif plink.def
 apptainer build rfmix.sif rfmix.def
 
 # apptainer build base.sif container.def

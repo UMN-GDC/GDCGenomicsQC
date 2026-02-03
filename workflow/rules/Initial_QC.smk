@@ -1,10 +1,12 @@
 rule Initial_QC:
     container: "../envs/plink.sif"
     conda: "../../envs/plink.yml"
+    threads: 8
     resources:
         nodes = 1,
         mem_mb = 32000,
-        runtime = 60
+        runtime = 60,
+        slurm_extra = "'--job-name=InitialFilter_{wildcards.stage}'"
     input:
         bed = lambda wildcards: get_input_by_stage(wildcards) + ".bed",
         bim = lambda wildcards: get_input_by_stage(wildcards) + ".bim",
@@ -28,5 +30,5 @@ rule Initial_QC:
     echo "Source Prefix: {params.input_prefix}"
     echo "Output Prefix: {params.output_prefix}/initialFilter"
 
-    bash scripts/initialFilter.sh {params.input_prefix} {params.output_prefix}
+    bash scripts/initialFilter.sh {params.input_prefix} {params.output_prefix} {threads}
     """

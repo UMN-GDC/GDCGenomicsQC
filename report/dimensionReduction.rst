@@ -1,0 +1,3 @@
+- Utilize PCA 
+- UMAP on those PC's
+- Variational Autoencoders

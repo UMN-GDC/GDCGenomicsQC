@@ -6,10 +6,15 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python
+  - python=3.10
+  - pip
+  - git
   - r-base
   - r-gtable
   - r-tidyverse
+  - r-uwot
+  - r-randomforest
+  - r-data.table
   - perl
   - bioconductor-gdsfmt
   - bioconductor-snprelate
@@ -24,13 +29,13 @@ dependencies:
   - bcftools
   - openjdk
   - keras
-  - tensorflow
+  - tensorflow=2.15
   - pandas-plink
-  - pytest
   - scikit-learn
   - seaborn
-  - statsmodels
   - xarray
   - crossmap
   - fraposa-pgsc
+  - pip:
+    - git+https://github.com/kr-colab/popvae.git
 prefix: /projects/standard/gdc/public/envs/ancNreport

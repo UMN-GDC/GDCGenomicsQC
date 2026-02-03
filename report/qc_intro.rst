@@ -1,0 +1,3 @@
+- Filtered missingness 
+- ID'd relatedness
+- More strict filters on unrelated individuals

@@ -7,7 +7,8 @@ rule Standard_QC:
         nodes = 1,
         # mem=32GB translated to MB
         mem_mb = 32000,
-        runtime =60 
+        runtime =60,
+        slurm_extra = "'--job-name=standardFilter_{wildcards.stage}'"
     input:
         bed = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.bed"),
         bim = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.bim"),
@@ -45,5 +46,5 @@ rule Standard_QC:
           mv {params.input_prefix}.bim {params.output_dir}/pastSex.bim
           mv {params.input_prefix}.fam {params.output_dir}/pastSex.fam
         fi
-        bash scripts/filterStandard.sh {params.output_dir}/pastSex {params.output_dir}
+        bash scripts/filterStandard.sh {params.output_dir}/pastSex {params.output_dir} {threads}
         """

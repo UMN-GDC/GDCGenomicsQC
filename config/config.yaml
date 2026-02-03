@@ -10,5 +10,6 @@ relatedness:
 SEX_CHECK : false
 GRM : false
 RFMIX : true
+rfmix_test : true
 
 thin: true

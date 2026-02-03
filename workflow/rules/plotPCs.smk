@@ -1,10 +1,16 @@
-rule plotInitial_QC:
+rule plotPCs:
     conda: "../../envs/ancNreport.yml"
     input:
-        eigen = f"{config['OUT_DIR']}/04-globalAncestry/merged_dataset_pca.eigenvec",
+        eigen = f"{config['OUT_DIR']}/04-globalAncestry/{subset}.eigenvec",
+        fam = f"{config['OUT_DIR']}/04-globalAncestry/merged_common_bi.fam",
+        ancestry = f"{config['OUT_DIR']}/04-globalAncestry/data.txt",
     output:
-        report(os.path.join(config['OUT_DIR'], "figures/PCs.png"), caption = "../report/lmiss.rst", category = "Initial QC"),
+        report(os.path.join(config['OUT_DIR'], "figures/{subset}PCs.png"), caption = "../report/lmiss.rst", category = "Initial QC"),
+        popu = lambda wildcards: get_input_by_stage(wildcards) + ".popu",
     shell: """
-    Rscript scripts/plotMissingness.R {input.imiss} {input.lmiss} {output.imiss} {output.lmiss} 
+
+
+    Rscript scripts/plot_pca.R {input.eigen} {input.fam} {input.popu} {output}
+
     """
 

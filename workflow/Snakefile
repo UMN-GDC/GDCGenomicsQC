@@ -1,4 +1,6 @@
 #report: "../report/main.rst"
+import os 
+
 
 configfile: "../config/config.yaml"
 #validate(config, schema="../config/config.schema.yaml")
@@ -10,11 +12,13 @@ configfile: "../config/config.yaml"
 CHROMOSOMES = range(20, 22)
 
 
-# run single rule
-# snakemake --cores 1 Initial_QC --config stage=01-Initialfilter
-# snakemake --jobs 22 --configfile ../config/config2.yaml --cluster "sbatch --parsable" --use-singularity
-# snakemake --jobs 22 --configfile ../config/config.yaml --cluster "sbatch --parsable"
-import os 
+# workflow.report_metadata.category_descriptions= {
+#         "Initial QC": "../report/qc_intro.rst",
+#         "Dimension reduction": "../report/dimensionReduction.rst",
+#         "Ancestry Analysis": "../report/ancestry_intro.rst",
+#         "Ancestry Specific QC": "../report/ancestrySpecificqc_intro.rst",
+#     }
+
 PREVIOUS_STEP = {
     "01-Initialfilter": "00-raw",
     "02-relatedness": "01-Initialfilter",
@@ -75,9 +79,11 @@ include: "rules/LinkData.smk"
 include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
+include: "rules/phase.smk"
 include: "rules/RFMIX.smk"
 include: "rules/PCA.smk"
 include: "rules/plotInitial_QC.smk"
+include: "rules/umap.smk"
 
 
 rule all:
@@ -114,3 +120,21 @@ rule run_pca:
         runtime = 420 # 1 week
     input:
         os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec")
+
+rule run_umap:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        os.path.join(config['OUT_DIR'], "04-globalAncestry/umap.csv")
+
+rule run_phase:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),

@@ -1,0 +1,13 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%environment
+    export PATH="/bin:/opt/conda/bin:/usr/bin:$PATH"
+
+%files
+    ancNreport.yml /app/ancNreport.yml
+
+%post 
+    micromamba create -f /app/ancNreport.yml
+    micromamba clean --all -f -y
+

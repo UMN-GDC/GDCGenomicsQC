@@ -1,0 +1,2 @@
+- Used RFMIX trained on 1k
+- Estimate local genomic ancestry

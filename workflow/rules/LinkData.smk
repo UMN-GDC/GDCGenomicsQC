@@ -1,6 +1,11 @@
 rule linkData:
     container: "../envs/plink.sif"
     conda: "../../envs/plink.yml"
+    resources:
+        nodes = 1,
+        mem_mb = 32000,
+        runtime = 60,
+        slurm_extra = "'--job-name=LinkData'"
     input:
         bed = f"{config['INPUT_FILE']}.bed",
         bim = f"{config['INPUT_FILE']}.bim",

@@ -31,16 +31,20 @@ if (is.null(args$npc)) {
   npc <- args$npc
 }
 
+#pcs <- pcs |>
+#  magrittr::set_colnames(c("FID", "IID", paste("PC", 1:npc, sep = "")))
 pcs <- pcs |>
-  magrittr::set_colnames(c("FID", "IID", paste("PC", 1:npc, sep = "")))
+  #scale() |>
+  mutate(across(-c(1, 2), ~ as.vector(scale(.x))))
+
 pcs |>
-  scale() |>
+  select(-c(1,2)) |>
   uwot::umap(n_threads = args$threads,
              n_components = args$ncoords,
              n_neighbors = args$neighbors) |>
   #with(layout) |>
   magrittr::set_colnames(paste("UMAP", 1:args$ncoords, sep = "")) |>
-  cbind(pcs[,c("FID", "IID")]) |>
-  data.table::fwrite(file = paste0(args$out, ".csv"),
+  cbind(pcs[,c("#FID", "IID")]) |>
+  data.table::fwrite(file = paste0(args$out),
          row.names = FALSE)
-print(paste0("UMAP coordinates saved to ", args$out, ".csv"))
+print(paste0("UMAP coordinates saved to ", args$out))
