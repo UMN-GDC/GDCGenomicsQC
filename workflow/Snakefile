@@ -82,8 +82,9 @@ include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
 include: "rules/RFMIX.smk"
 include: "rules/PCA.smk"
-include: "rules/plotInitial_QC.smk"
 include: "rules/umap.smk"
+include: "rules/estimateAncestry.smk"
+include: "rules/plotInitial_QC.smk"
 
 
 rule all:
@@ -138,3 +139,14 @@ rule run_phase:
         runtime = 420 # 1 week
     input:
         expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
+
+rule run_estimateAncestry:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"),
+        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.csv"),
+
