@@ -5,7 +5,6 @@ rule UMAP:
         nodes = 1,
         mem_mb = 64000,
         runtime = 2880,
-        slurm_extra = "'--job-name=UMAP'"
     input:
         eigen = f"{config['OUT_DIR']}/04-globalAncestry/merged_dataset_pca.eigenvec",
     output:

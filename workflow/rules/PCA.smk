@@ -6,7 +6,6 @@ rule PCA:
         nodes = 1,
         mem_mb = 32000,
         runtime = 2880,
-        slurm_extra = "'--job-name=PCA_{wildcards.stage}'"
     input:
         bed = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned.bed",
         bim = f"{config['OUT_DIR']}/02-relatedness/standardFiltered.LDpruned.bim",

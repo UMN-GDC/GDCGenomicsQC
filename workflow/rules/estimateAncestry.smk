@@ -5,7 +5,6 @@ rule estimateAncestry:
         nodes = 1,
         mem_mb = 64000,
         runtime = 2880,
-        slurm_extra = "'--job-name=estimateAncestry'"
     input:
         fam = os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.LDpruned.fam"),
         ancestry = os.path.join(config['REF'], "rfmix_ref/super_population_map_file.txt"),

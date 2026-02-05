@@ -5,7 +5,6 @@ rule popVAE:
         nodes = 1,
         mem_mb = 64000,
         runtime = 2880,
-        slurm_extra = "'--job-name=UMAP'"
     input:
         bed = os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.LDpruned.bed"),
         bim = os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.LDpruned.bim"),

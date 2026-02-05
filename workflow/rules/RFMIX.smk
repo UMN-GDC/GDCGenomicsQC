@@ -5,7 +5,6 @@ rule RFMIX:
         nodes = 1,
         mem_mb = 64000,
         runtime = 1320,
-        slurm_extra = "'--job-name=RFMIX_{wildcards.CHR}'"
     input:
         vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
     output:

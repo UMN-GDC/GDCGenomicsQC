@@ -5,7 +5,6 @@ rule Phase:
         nodes = 1,
         mem_mb = 64000,
         runtime = 1320,
-        slurm_extra = "'--job-name=phase_{wildcards.CHR}'"
     input:
         bed =   os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed"),
         bim =   os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bim"),

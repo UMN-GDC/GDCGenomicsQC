@@ -6,7 +6,6 @@ rule Initial_QC:
         nodes = 1,
         mem_mb = 32000,
         runtime = 60,
-        slurm_extra = "'--job-name=InitialFilter_{wildcards.stage}'"
     input:
         bed = lambda wildcards: get_input_by_stage(wildcards) + ".bed",
         bim = lambda wildcards: get_input_by_stage(wildcards) + ".bim",
