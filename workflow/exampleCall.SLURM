@@ -9,4 +9,4 @@
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate snakemake
 #snakemake --executor slurm --jobs 25 --profile my_slurm_profile
-snakemake --executor slurm --jobs 25 --configfile=../config/config.yaml --use-conda
+snakemake --executor slurm --jobs 25 --configfile=../config/config.yaml --use-conda run_train_gnomix

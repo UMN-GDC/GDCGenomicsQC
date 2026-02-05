@@ -98,5 +98,5 @@ data/toyData/toy_GSA*
 
 /.quarto/
 qc.sif
-envs/logs/build.err
-envs/logs/build.out
+*.err
+*.out

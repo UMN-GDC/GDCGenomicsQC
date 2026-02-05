@@ -81,6 +81,7 @@ include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
 include: "rules/RFMIX.smk"
+include: "rules/trainGnomix.smk"
 include: "rules/PCA.smk"
 include: "rules/umap.smk"
 include: "rules/estimateAncestry.smk"
@@ -102,16 +103,10 @@ rule all:
         #os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed")
         os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec"),
         expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
-
-rule report:
-    threads: 1
-    resources:
-        nodes = 1,
-        mem_mb = 4000,
-        runtime = 420 # 1 week
-    input:
-        imiss = os.path.join(config['OUT_DIR'], "figures/imiss.png"),
-        lmiss = os.path.join(config['OUT_DIR'], "figures/lmiss.png")
+        os.path.join(config['OUT_DIR'], "figures/imiss.png"),
+        os.path.join(config['OUT_DIR'], "figures/lmiss.png"),
+        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"),
+        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.csv"),
 
 rule run_pca:
     threads: 1
@@ -130,6 +125,26 @@ rule run_umap:
         runtime = 420 # 1 week
     input:
         os.path.join(config['OUT_DIR'], "04-globalAncestry/umap.csv")
+
+rule run_train_gnomix:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}_ancestry_gnomix", CHR=CHROMOSOMES),
+
+
+rule run_rfmix:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}_ancestry", CHR=CHROMOSOMES),
+
 
 rule run_phase:
     threads: 1

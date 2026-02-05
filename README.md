@@ -53,6 +53,8 @@ snakemake --cores 1 --configfile ../config/config.yaml
 snakemake --cores 1 --configfile ../config/config.yaml --executor slurm
 snakemake --cores 1 Initial_QC --use-singularity
 snakemake --jobs 22 --configfile ../config/config2.yaml --cluster "sbatch --parsable" --use-singularity
+
+snakemake --report --report-stylesheet ../report/stylesheet.css
 ```
 
 ## Standard Procedure *(Done in order)*

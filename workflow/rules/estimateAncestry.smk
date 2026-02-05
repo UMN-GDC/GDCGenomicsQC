@@ -12,7 +12,7 @@ rule estimateAncestry:
         eigen = os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec"),
         umap = os.path.join(config['OUT_DIR'], "04-globalAncestry/umap.csv"),
     output:
-        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"),
+        report(os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"), caption = "../../report/PCs.rst", category = "Global ancestry"),
         os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.csv"),
     params:
         dir = os.path.join(config['OUT_DIR'], "04-globalAncestry"),
