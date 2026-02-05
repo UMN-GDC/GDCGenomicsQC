@@ -10,10 +10,36 @@
 A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing [Plink](https://www.cog-genomics.org/plink/), [Liftover](https://genome.ucsc.edu/cgi-bin/hgLiftOver), [R-language](https://www.r-project.org/), [Python](https://www.python.org/), and [bash](https://www.gnu.org/software/bash/), and  housed in a [Docker image](https://hub.docker.com/_/docker).
 
 # Installation
-## Git clone
+## Set up environment
 ```shell
 git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC
+conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
 ```
+
+## Using Snakemake workflows
+- update config files as necessary (located at config/config.yaml)
+- Run the desired workflow (by default looks in config/config.yaml)
+```shell
+conda activate snakemake
+# here are a couple of example calls
+# here is standard run calling from config/config.yaml
+snakemake --cores 1
+# which is identical to this
+snakemake --cores 1 --configfile ../config/config.yaml
+# jobs can be disbatched by slurm as follows
+snakemake --cores 1 --configfile ../config/config.yaml --executor slurm
+# singularity can be invoked and specific rules  can be run as follows
+snakemake --cores 1  --use-singularity Initial_QC
+# SLURM dispatch if you hae an older snakemake version
+snakemake --jobs 22 --configfile ../config/config2.yaml --cluster "sbatch --parsable" --use-singularity
+
+snakemake --report --report-stylesheet ../report/stylesheet.css
+```
+
+To have SLURM dispatch it without dependency on your terminal being open these snakemake calls can be called in a SLURM script.
+ An example is stored at workflow/example.SLURM
+
 ### Requirements
 - Access to HPC computing resources with SLURM scheduler.
 - Genomic files in Plink bed formatting (bim, bed, & fam)
@@ -44,18 +70,6 @@ After cloning this repository the steps to run this pipeline are as follows:
 ![GDC_pipeline_overview](https://github.com/UMN-GDC/GDCGenomicsQC/assets/140092486/e7f11909-9ab8-4def-90e5-c5f67c28a4bb)
 
 
-# Snakemake
-```
-conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
-conda activate snakemake
-
-snakemake --cores 1 --configfile ../config/config.yaml
-snakemake --cores 1 --configfile ../config/config.yaml --executor slurm
-snakemake --cores 1 Initial_QC --use-singularity
-snakemake --jobs 22 --configfile ../config/config2.yaml --cluster "sbatch --parsable" --use-singularity
-
-snakemake --report --report-stylesheet ../report/stylesheet.css
-```
 
 ## Standard Procedure *(Done in order)*
 
