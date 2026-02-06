@@ -20,6 +20,8 @@ conda env create -n snakemake snakemake snakemake-executor-plugin-slurm conda
 ## Using Snakemake workflows
 - update config files as necessary (located at config/config.yaml)
 - Run the desired workflow (by default looks in config/config.yaml)
+- Snakemake expects you to execute from `GDCGenomicsQC/workflow` 
+	- If you want to execute it somewhere else add these flags `--directory /path/to/GDCGenomicsQC/workflow --snakefile /path/to/GDCGenomicsQC/workflow/Snakefile`
 ```shell
 conda activate snakemake
 # here are a couple of example calls
