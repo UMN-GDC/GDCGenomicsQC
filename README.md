@@ -9,8 +9,34 @@
 
 A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing [Plink](https://www.cog-genomics.org/plink/), [Liftover](https://genome.ucsc.edu/cgi-bin/hgLiftOver), [R-language](https://www.r-project.org/), [Python](https://www.python.org/), and [bash](https://www.gnu.org/software/bash/), and  housed in a [Docker image](https://hub.docker.com/_/docker).
 
-# Installation
-## Set up environment
+## Features
+- State-of-the-art genomics quality control pipeline
+    - Assesses relatedness
+    - Assess global and local ancestry
+    - Controls for relatedness and genetic ancestry in QC steps
+    - SNP-heritability methods for multiple ancestries
+    - PRS methods for multiple ancestries
+    - Easy extensibility, reproducibility, and modularity
+
+- Workflow management with [Snakemake](https://snakemake.github.io/)
+    - Smart execution of workflow steps
+        - Specify desired output and Snakemake will back-construct necessary steps to create it
+    - Controlled conda environments automatically handled 
+    - Controlled containers automatically handled (under construction)
+    - Workflow handling on local computers and with SLURM scheduling
+    - Automated report generation
+
+
+# Usage 
+Requirements:
+- Access to HPC computing resources with SLURM scheduler (though it can still run in any terminal , just --executor slurm won't function).
+- Snakemake
+    - Can be installed with `conda env create -n snakemake snakemake snakemake-executor-plugin-slurm conda`
+    - this installs the conda environment called snakemake
+    - Activate conda env: `conda activate snakemake`
+
+## Installation
+
 ```shell
 git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
 cd GDCGenomicsQC
@@ -21,61 +47,77 @@ conda env create -n snakemake snakemake snakemake-executor-plugin-slurm conda
 - update config files as necessary (located at config/config.yaml)
 - Run the desired workflow (by default looks in config/config.yaml)
 - Snakemake expects you to execute from `GDCGenomicsQC/workflow` 
-	- If you want to execute it somewhere else add these flags `--directory /path/to/GDCGenomicsQC/workflow --snakefile /path/to/GDCGenomicsQC/workflow/Snakefile`
-```shell
-conda activate snakemake
-# here are a couple of example calls
-# here is standard run calling from config/config.yaml
-snakemake --cores 1
-# which is identical to this
-snakemake --cores 1 --configfile ../config/config.yaml
-# jobs can be disbatched by slurm as follows
-snakemake --cores 1 --configfile ../config/config.yaml --executor slurm
-# singularity can be invoked and specific rules  can be run as follows
-snakemake --cores 1  --use-singularity Initial_QC
-# SLURM dispatch if you hae an older snakemake version
-snakemake --jobs 22 --configfile ../config/config2.yaml --cluster "sbatch --parsable" --use-singularity
-
-snakemake --report --report-stylesheet ../report/stylesheet.css
-```
 
 To have SLURM dispatch it without dependency on your terminal being open these snakemake calls can be called in a SLURM script.
  An example is stored at workflow/example.SLURM
 
-### Requirements
-- Access to HPC computing resources with SLURM scheduler.
-- Genomic files in Plink bed formatting (bim, bed, & fam)
-- installing `conda env create --file environment.yml`
-    - this installs the conda environment called gdcPipeline
-- Or, singularity to run docker image
-
-# Usage
+## Detailed usage 
 After cloning this repository the steps to run this pipeline are as follows:
-1.	To run pipeline: `sh ./GDCGenomicsQC/Run.sh`
-2.	Flags to be appended to run command `sh ./GDCGenomicsQC/Run.sh --flag1 option1 --flag2 option2`
- -	`--set_working_directory`	Provide a path to where you'd like the outputs to be stored
- -	`--input_directory`	Provide the path to where the bim/bed/fam data is stored
- -	`--input_file_name`	Provide the common name that ties the bim/bed/fam files together
- -	`--path_to_github_repo`	Provide the path to the GDCGenomicsQC pipeline repository
- -	`--user_x500`	Provide your x500 samp213@umn.edu so you may receive email updates regarding sbatch submissions
- -	`--use_crossmap`	Enter '1' for if you would like to update your reference genome build from GRCh37 to GRCh38
- -	`--use_genome_harmonizer`	Enter '1' if you would like to update strand allignment by using genome harmonizer
- -	`--relatedness_check`	Enter '1' if you would like to use king to estimate relatedness
- -	`--use_rfmix`	Enter '1' if you would like to use rfmix to estimate ancestry
- -	`--make_report`	Enter '1' if you would like an automated report to be generated of the qc steps and what was changed
- -	`--custom_qc`	Enter '1' if you would like to use your own settings for the qc steps such as marker and sample filtering
-3.	This script can also be executed using the sbatch command
-	```shell
-	sbatch ./GDCGenomicsQC/Run.sh --set_working_directory $PWD --input_directory ${PWD}/input_data --input_file_name study_stem --path_to_github_repo ${PWD}/GDCGenomicsQC --user_x500 sample213
-	```
+1.	To run pipeline: `snakemake --cores=4`
+    - `--cores` (required) specify maximum number of threads for each step. Each step will use up to this number of threads, but each has their own internally specified number of threads to execute
+2.	Flags to be appended to run command `snakemake --cores=4`
+ - `--use-conda` has snakemake construct the conda envs  in `GDCGenomicsQC/envs` and cache them for running
+ - `--use-singularity` has snakemake construct the conda envs  in `GDCGenomicsQC/envs` and cache them for running
+ - `--configfile </path/to/configfile>` path to .yaml configuring your desired run
+ - `--executor slurm`
+ - to execute it somewhere else add these flags `--directory /path/to/GDCGenomicsQC/workflow --snakefile /path/to/GDCGenomicsQC/workflow/Snakefile`
+    - For older versions of snakemake (if you dindn't install conda env create snakame as specified above) this is `--cluster "sbatch --parsable"`
+ - `--jobs` maximum number of slurm jobs to submit at once. If this is smaller that 22, note that steps that run per autosomal chromosome will be submitted sequentially in phases
+ - `<Rule Name>` if you only want to run specific aspects of the pipeline you can specify the rule you want to run through
+    - Initial_QC
+    - PCA
+    - RFMIX
+ - `--report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css` tells snakemake to create a summary .html report at `GDCGenomicsQC/workflow/report.html`
+
+### Recommended calls
+For local execution
+```bash
+snakemake --cores=4 --use-conda \
+    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile>
+```
+
+For SLURM disbatching
+```bash
+snakemake --cores=4 --use-conda \
+    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
+    --executor slurm \
+    --jobs 25
+```
+
+For running upt a to a certain point (i.e. PCA)
+```bash
+snakemake --cores=4 --use-conda \
+    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
+    PCA
+```
+
+
+## Configuration
+Details for each specific projcet are configured in a .yaml file. An example is provided in `GDCGenomicsQC/config/config.yaml`
+```yaml
+INPUT_FILE: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic"
+OUT_DIR: "/scratch.global/coffm049/toyPipeline"
+REF: "/projects/standard/gdc/public/Ref"
+
+# Tool-specific parameters
+relatedness:
+    method: "0"
+
+SEX_CHECK : false
+GRM : false
+RFMIX : true
+rfmix_test : true
+
+thin: true
+```
 
 ![GDC_pipeline_overview](https://github.com/UMN-GDC/GDCGenomicsQC/assets/140092486/e7f11909-9ab8-4def-90e5-c5f67c28a4bb)
 
 
 
-## Standard Procedure *(Done in order)*
+# Standard Procedure *(Done in order)*
 
-Full documentation is [here](https://docs.google.com/document/d/147DG4Po_TaSFyiXkmRlszrmQIjsp4UNNe_u90slZbD8/edit?tab=t.0).
+Full documentation is [here](https://docs.google.com/document/d/147DG4Po_TaSFyiXkmRlszrmQIjsp4UNNe_u90slZbD8/edit?tab=t.0). Each step is contained in `workflow/rules`
 
 ### Module 1: Crossmap (optional)
 
