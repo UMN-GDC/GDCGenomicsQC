@@ -32,7 +32,7 @@ Requirements:
 - Access to HPC computing resources with SLURM scheduler (though it can still run in any terminal , just --executor slurm won't function).
 - Snakemake
     - Can be installed with `conda env create -n snakemake snakemake snakemake-executor-plugin-slurm conda`
-	- If you are running as a member of UMN MSI this environment already exists and you won't need to reinstall it 
+	- If you are running on MSI at UMN this environment already exists and you won't need to reinstall it 
 	- You can simply add the list of GDC conda envs by running `conda config --add envs_dirs /projects/standard/gdc/public/envs`
     - this installs the conda environment called snakemake
     - Activate conda env: `conda activate snakemake`
