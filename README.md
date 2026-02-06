@@ -14,7 +14,7 @@ A quality control pipeline for genomics data developed by the Masonic Institute 
 ```shell
 git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
 cd GDCGenomicsQC
-conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
+conda env create -n snakemake snakemake snakemake-executor-plugin-slurm conda
 ```
 
 ## Using Snakemake workflows
