@@ -2,11 +2,14 @@
 #SBATCH --job-name=SM_Master
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=4000
-#SBATCH --time=16:00:00  # This is your 420 minutes
+#SBATCH --mem=4000       # doesn't take much memory for the scheduler script
+#SBATCH --time=16:00:00  # This script needs to persist to schedule all downstream scripts
 
-# Now call Snakemake inside this allocated space
-source ~/miniconda3/etc/profile.d/conda.sh
+module load conda
 conda activate snakemake
 #snakemake --executor slurm --jobs 25 --profile my_slurm_profile
-snakemake --executor slurm --jobs 25 --configfile=../config/config.yaml --use-conda run_train_gnomix
+
+snakemake --cores=4 --use-conda \
+    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
+    --executor slurm \
+    --jobs 25

@@ -70,6 +70,8 @@ After cloning this repository the steps to run this pipeline are as follows:
  - `--report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css` tells snakemake to create a summary .html report at `GDCGenomicsQC/workflow/report.html`
 
 ### Recommended calls
+An example batch job is included at `workflow/example.SLURM` for easier adaptation to your workflow.
+
 For local execution
 ```bash
 snakemake --cores=4 --use-conda \
