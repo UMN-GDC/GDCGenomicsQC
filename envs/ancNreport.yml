@@ -15,6 +15,7 @@ dependencies:
   - r-uwot
   - r-randomforest
   - r-data.table
+  - r-argparse
   - perl
   - bioconductor-gdsfmt
   - bioconductor-snprelate
