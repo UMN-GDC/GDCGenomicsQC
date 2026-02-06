@@ -70,7 +70,15 @@ After cloning this repository the steps to run this pipeline are as follows:
  - `--report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css` tells snakemake to create a summary .html report at `GDCGenomicsQC/workflow/report.html`
 
 ### Recommended calls
-An example batch job is included at `workflow/example.SLURM` for easier adaptation to your workflow.
+
+An example batch job is included at `workflow/example.SLURM` for easier adaptation to your workflow. If available, we reccomend letting SLURM handle the disbatching and generating a report.
+```bash
+snakemake --cores=4 --use-conda \
+    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
+    --executor slurm \
+    --jobs 25 \
+    --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css
+```
 
 For local execution
 ```bash
@@ -78,13 +86,6 @@ snakemake --cores=4 --use-conda \
     --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile>
 ```
 
-For SLURM disbatching
-```bash
-snakemake --cores=4 --use-conda \
-    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
-    --executor slurm \
-    --jobs 25
-```
 
 For running upt a to a certain point (i.e. PCA)
 ```bash
@@ -92,6 +93,12 @@ snakemake --cores=4 --use-conda \
     --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
     PCA
 ```
+
+For generating the report
+```bash
+snakemake --cores=4 --use-conda \
+    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
+    --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css
 
 
 ## Configuration

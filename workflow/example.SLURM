@@ -12,4 +12,5 @@ conda activate snakemake
 snakemake --cores=4 --use-conda \
     --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
     --executor slurm \
-    --jobs 25
+    --jobs 25 \
+    --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css
