@@ -9,8 +9,9 @@ module load conda
 conda activate snakemake
 #snakemake --executor slurm --jobs 25 --profile my_slurm_profile
 
-snakemake --cores=4 --use-conda \
+snakemake --cores=1 --use-conda \
     --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
     --executor slurm \
     --jobs 25 \
-    --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css
+    --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css \
+    run_train_gnomix

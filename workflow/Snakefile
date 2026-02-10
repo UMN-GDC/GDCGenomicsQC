@@ -80,7 +80,7 @@ include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
-include: "rules/RFMIX.smk"
+# include: "rules/RFMIX.smk"
 include: "rules/trainGnomix.smk"
 include: "rules/PCA.smk"
 include: "rules/umap.smk"
@@ -102,7 +102,7 @@ rule all:
         #os.path.join(config['OUT_DIR'], "02-relatedness/initialFilter.bed")
         #os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed")
         os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec"),
-        expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
+        #expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
         os.path.join(config['OUT_DIR'], "figures/imiss.png"),
         os.path.join(config['OUT_DIR'], "figures/lmiss.png"),
         os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"),
