@@ -1,7 +1,7 @@
-#report: "../report/main.rst"
 import os 
 
 
+report: "../report/stylesheet.css"
 configfile: "../config/config.yaml"
 #validate(config, schema="../config/config.schema.yaml")
 
