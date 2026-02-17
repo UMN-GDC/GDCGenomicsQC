@@ -1,5 +1,5 @@
 rule Standard_QC:
-    container: "../envs/plink.sif"
+    container: "oras://ghcr.io/coffm049/gdcgnomicsqc/plink:latest"
     conda: "../../envs/plink.yml"
     threads: 8
     resources:

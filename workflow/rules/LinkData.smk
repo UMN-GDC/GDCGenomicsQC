@@ -1,5 +1,5 @@
 rule linkData:
-    container: "../envs/plink.sif"
+    container: "oras://ghcr.io/coffm049/gdcgnomicsqc/plink:latest"
     conda: "../../envs/plink.yml"
     resources:
         nodes = 1,
@@ -20,7 +20,6 @@ rule linkData:
         output_prefix = lambda wildcards, output: output.bed[:-4]
     shell: """
         # thinning can be useful for testing out pipeline on large datasets 
-        mkdir -p {params.output_prefix}
 
         if [ "{params.thin}" = "True" ] ;  then
           echo "Thinning data for testing purposes"

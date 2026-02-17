@@ -41,38 +41,66 @@ def get_input_by_stage(wildcards):
     path = os.path.join(config["OUT_DIR"], prev, input_prefix)
     return os.path.abspath(path)
 
-# 1. Version-agnostic check
-is_singularity = (
-    getattr(workflow, "use_singularity", False) or 
-    "singularity" in str(getattr(workflow.deployment_settings, "deployment_method", ""))
-)
+# -------------------------------------------------------------------------
+# AUTO-MOUNT LOGIC: Automatically bind directories found in config.yaml
+# -------------------------------------------------------------------------
 
-if is_singularity:
-    # Start with the essentials
-    bind_paths = {os.getcwd(), "/scratch", "/tmp"}
+def get_hpc_mounts(config_data):
+    """
+    Recursively finds all absolute paths in the config and returns 
+    a set of top-level mount points (e.g., /scratch.global, /panfs).
+    """
+    mounts = set()
+    
+    # 1. Always bind the current working directory and temp spaces
+    defaults = [os.getcwd(), "/tmp", "/var/tmp"]
+    for d in defaults:
+        if os.path.exists(d):
+            mounts.add(d)
 
-    # 2. Extract paths from config/params
-    # This function looks for any string in your config that is an existing directory
-    def find_paths(d):
-        for val in d.values():
-            if isinstance(val, str) and "/" in val:
-                # If it's a file, get the parent directory
-                potential_path = os.path.abspath(val)
-                parent = os.path.dirname(potential_path)
-                if os.path.exists(parent):
-                    bind_paths.add(parent)
-            elif isinstance(val, dict):
-                find_paths(val)
+    def scan_value(val):
+        # If it's a dict or list, recurse
+        if isinstance(val, dict):
+            for v in val.values(): scan_value(v)
+        elif isinstance(val, list):
+            for v in val: scan_value(v)
+        # If it's a string starting with '/', treat as path
+        elif isinstance(val, str) and val.startswith("/"):
+            # Split path to get the root mount (e.g., /scratch.global/user -> /scratch.global)
+            parts = val.split(os.sep)
+            if len(parts) > 1:
+                root_mount = f"/{parts[1]}"
+                # Only add if it actually exists on this machine
+                if os.path.exists(root_mount):
+                    mounts.add(root_mount)
 
-    find_paths(config)
+    # 2. Scan the user's config
+    scan_value(config_data)
+    
+    return ",".join(mounts)
 
-    # 3. Clean up and set the environment variable
-    # We use a set to ensure no duplicates, then join with commas
-    os.environ["APPTAINER_BIND"] = ",".join(filter(None, bind_paths))
+# Check if we are using Singularity/Apptainer
+use_singularity = config.get("use-singularity", False) or \
+                  "--use-singularity" in sys.argv or \
+                  "singularity" in str(getattr(workflow, "deployment_settings", ""))
+
+if use_singularity:
+    bind_paths = get_hpc_mounts(config)
+    
+    # Export to BOTH variables to cover Apptainer (new) and Singularity (old)
+    os.environ["APPTAINER_BIND"] = bind_paths
+    os.environ["SINGULARITY_BIND"] = bind_paths
+    
+    # Ensure writable tmpfs is on (fixes many 'read-only' errors)
     os.environ["APPTAINER_WRITABLE_TMPFS"] = "1"
+    os.environ["SINGULARITY_WRITABLE_TMPFS"] = "1"
 
-    print(f"DEBUG: Active Binds: {os.environ['APPTAINER_BIND']}")
+    # Print for debugging (so you can see what got mounted)
+    print(f"\n[Auto-Mount] Detected and bound paths: {bind_paths}\n")
 
+# -------------------------------------------------------------------------
+# END AUTO-MOUNT LOGIC
+# -------------------------------------------------------------------------
 
 
 include: "rules/LinkData.smk"

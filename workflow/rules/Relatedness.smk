@@ -1,5 +1,5 @@
 rule checkRelatedness:
-    container: "../envs/plink.sif"
+    container: "oras://ghcr.io/coffm049/gdcgnomicsqc/plink:latest"
     conda: "../../envs/plink.yml"
     resources:
         # nodes=1 is usually the default, but can be specified if needed
