@@ -25,6 +25,7 @@ rule linkData:
           echo "Thinning data for testing purposes"
           plink2 --bfile {params.input_prefix} \
             --thin-indiv-count 3000 \
+            --thin-count 50000 \
             --out {params.output_prefix} \
             --make-bed
         else

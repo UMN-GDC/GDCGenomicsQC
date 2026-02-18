@@ -6,6 +6,12 @@
 *.svg
 *.html
 
+*.yaml
+*.yml
+!config/config.schema.yaml
+!config/config.yaml
+!config/example.config
+
 
 # History files
 .Rhistory
