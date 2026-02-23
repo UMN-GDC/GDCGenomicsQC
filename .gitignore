@@ -6,6 +6,10 @@
 *.svg
 *.html
 
+
+
+
+!.readthedocs.yaml
 *.yaml
 *.yml
 !config/config.schema.yaml
