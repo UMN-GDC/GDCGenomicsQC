@@ -10,12 +10,13 @@ dependencies:
   - pip
   - git
   - r-base
-  - r-gtable
   - r-tidyverse
   - r-uwot
   - r-randomforest
   - r-data.table
   - r-argparse
+  - r-gt
+  - r-eulerr
   - perl
   - bioconductor-gdsfmt
   - bioconductor-snprelate
@@ -37,6 +38,8 @@ dependencies:
   - xarray
   - crossmap
   - fraposa-pgsc
+  - plink
+  - plink2
   - pip:
     - git+https://github.com/kr-colab/popvae.git
 prefix: /projects/standard/gdc/public/envs/ancNreport

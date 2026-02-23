@@ -1,6 +1,6 @@
 rule Standard_QC:
-    container: "../envs/plink.sif"
-    conda: "../../envs/plink.yml"
+    container: "oras://ghcr.io/coffm049/gdcgnomicsqc/plink:latest"
+    conda: "../../envs/ancNreport.yml"
     threads: 8
     resources:
         # nodes=1 is usually the default, but can be specified if needed
