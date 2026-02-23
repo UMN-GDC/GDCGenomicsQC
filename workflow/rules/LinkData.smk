@@ -1,6 +1,6 @@
 rule linkData:
     container: "oras://ghcr.io/coffm049/gdcgnomicsqc/plink:latest"
-    conda: "../../envs/plink.yml"
+    conda: "../../envs/ancNreport.yml"
     resources:
         nodes = 1,
         mem_mb = 32000,

@@ -1,6 +1,6 @@
 rule PCA:
     container: "oras://ghcr.io/coffm049/gdcgnomicsqc/plink:latest"
-    conda: "../../envs/plink.yml"
+    conda: "../../envs/ancNreport.yml"
     threads: 8
     resources:
         nodes = 1,

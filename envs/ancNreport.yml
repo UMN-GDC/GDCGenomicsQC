@@ -38,6 +38,8 @@ dependencies:
   - xarray
   - crossmap
   - fraposa-pgsc
+  - plink
+  - plink2
   - pip:
     - git+https://github.com/kr-colab/popvae.git
 prefix: /projects/standard/gdc/public/envs/ancNreport
