@@ -9,7 +9,7 @@ rule RFMIX:
         vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
     output:
         # List all files that PLINK will actually create
-        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}_ancestry"),
+        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}_lai.vcf.gz"),
     params:
         out_dir = f"{config['OUT_DIR']}/03-localAncestry",
         ref= config["REF"],

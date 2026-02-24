@@ -3,7 +3,7 @@ rule train_gnomix:
     threads: 2
     resources:
         nodes = 1,
-        mem_mb = 64000,
+        mem_mb = 128000,
         runtime = 1320,
     input:
         vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
