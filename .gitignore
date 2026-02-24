@@ -9,13 +9,12 @@
 
 
 
-!.readthedocs.yaml
 *.yaml
 *.yml
 !config/config.schema.yaml
 !config/config.yaml
 !config/example.config
-
+!.readthedocs.yaml
 
 # History files
 .Rhistory
