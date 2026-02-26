@@ -1,6 +1,6 @@
 rule RFMIX:
     conda: "../../envs/rfmix.yml"
-    threads: 2
+    threads: 8
     resources:
         nodes = 1,
         mem_mb = 64000,
