@@ -1,4 +1,5 @@
 import os 
+from pathlib import Path
 
 
 report: "../report/stylesheet.css"
@@ -23,6 +24,8 @@ PREVIOUS_STEP = {
     "01-Initialfilter": "00-raw",
     "02-relatedness": "01-Initialfilter",
 }
+OUT_DIR = Path(config['OUT_DIR'])
+REF = Path(config['REF'])
 
 def get_input_by_stage(wildcards):
     # Fix the typo 'wilcards' -> 'wildcards'
@@ -108,7 +111,7 @@ include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
-# include: "rules/RFMIX.smk"
+include: "rules/RFMIX.smk"
 include: "rules/trainGnomix.smk"
 include: "rules/PCA.smk"
 include: "rules/umap.smk"
@@ -164,15 +167,14 @@ rule run_train_gnomix:
         expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}_ancestry_gnomix", CHR=CHROMOSOMES),
 
 
-  # rule run_rfmix:
-  #     threads: 1
-  #     resources:
-  #         nodes = 1,
-  #         mem_mb = 4000,
-  #         runtime = 420 # 1 week
-  #     input:
-  #         expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}_lai.vcf.gz", CHR=CHROMOSOMES),
-
+rule run_rfmix:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        expand(OUT_DIR / "03-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES)
 
 rule run_phase:
     threads: 1

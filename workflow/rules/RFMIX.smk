@@ -1,44 +1,50 @@
 rule RFMIX:
     conda: "../../envs/rfmix.yml"
-    threads: 8
+    threads: 2
     resources:
         nodes = 1,
         mem_mb = 64000,
         runtime = 1320,
     input:
-        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
+        vcf = OUT_DIR / "03-localAncestry" / "chr{CHR}.phased.vcf.gz",
+        ref = REF / "1000G_GRCh38" / "ALL.chr{CHR}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz",
+        map = REF / "rfmix_ref" / "super_population_map_file.txt",
+        gmap = REF / "rfmix_ref" / "genetic_map_hg38.txt"
     output:
-        # List all files that PLINK will actually create
-        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}_lai.vcf.gz"),
+        OUT_DIR / "03-localAncestry" / "chr{CHR}.lai.fb.tsv",
+        OUT_DIR / "03-localAncestry" / "chr{CHR}.lai.msp.tsv",
+        OUT_DIR / "03-localAncestry" / "chr{CHR}.lai.rfmix.Q",
+        OUT_DIR / "03-localAncestry" / "chr{CHR}.lai.sis.tsv",
+        # temp(OUT_DIR / "03-localAncestry" / "generated_data")
     params:
-        out_dir = f"{config['OUT_DIR']}/03-localAncestry",
-        ref= config["REF"],
-        test=config["rfmix_test"]
+        out_dir = OUT_DIR / "03-localAncestry",
+        test = config["rfmix_test"]
     shell: """
-    # get common snps 
-    #bcftools view -H {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz | cut -f 1,2 > {params.out_dir}/chr{wildcards.CHR}snps.txt
-    # filter reference to match query
-    #bcftools view -T {params.out_dir}/chr{wildcards.CHR}snps.txt ALL_phase3_shapeit2_mvncall_integrated_v3plus_nounphased_rsID_genotypes_GRCh38_dbSNP.vcf.gz -Oz -o {params.out_dir}/chr{wildcards.CHR}reference_filtered.vcf.gz
+
+
+    echo "RFMIX Ancestry Estimation"
     if [ "{params.test}" = "True" ] ;  then
-      echo "RFMIX Ancestry Estimation"
       rfmix \
-          -f {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz \
-          -r {params.ref}/rfmix_ref/ALLp3s2rsidGR38Filtered_chr{wildcards.CHR}.vcf.gz \
-          -m {params.ref}/rfmix_ref/super_population_map_file.txt \
-          -g {params.ref}/rfmix_ref/genetic_map_hg38.txt \
-          -o chr{wildcards.CHR}_ancestry \
+          -f {input.vcf} \
+          -r {input.ref} \
+          -m {input.map} \
+          -g {input.gmap} \
           -e 1 \
-          -t 2 \
-          --n-threads {threads} \
+          -t 10 \
+          --n-threads={threads} \
+          -o {params.out_dir}/chr{wildcards.CHR}.lai \
           --chromosome={wildcards.CHR}
     else
       rfmix \
-          -f {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz \
-          -r {params.ref}/rfmix_ref/ALLp3s2rsidGR38Filtered_chr{wildcards.CHR}.vcf.gz \
-          -m {params.ref}/rfmix_ref/super_population_map_file.txt \
-          -g {params.ref}/rfmix_ref/genetic_map_hg38.txt \
-          -o chr{wildcards.CHR}_ancestry \
-          --n-threads {threads} \
+          -f {input.vcf} \
+          -r {input.ref} \
+          -m {input.map} \
+          -g {input.gmap} \
+          --n-threads={threads} \
+          -o {params.out_dir}/chr{wildcards.CHR}.lai \
           --chromosome={wildcards.CHR}
     fi
+    
+    # Clean up after
+    rm -rf {params.out_dir}/generated_data
     """
