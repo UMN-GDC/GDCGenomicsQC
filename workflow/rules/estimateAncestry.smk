@@ -1,20 +1,19 @@
 rule estimateAncestry:
     conda: "../../envs/ancNreport.yml"
-    threads: 8
     resources:
         nodes = 1,
         mem_mb = 64000,
         runtime = 2880,
     input:
-        fam = os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.LDpruned.fam"),
-        ancestry = os.path.join(config['REF'], "rfmix_ref/super_population_map_file.txt"),
-        eigen = os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec"),
-        umap = os.path.join(config['OUT_DIR'], "04-globalAncestry/umap.csv"),
+        fam = OUT_DIR / "02-relatedness" / "standardFiltered.LDpruned.fam",
+        ancestry = REF / "1000G_GRCh38" / "1000G.popu",
+        eigen = OUT_DIR / "04-globalAncestry" / "merged_dataset_pca.eigenvec",
+        umap = OUT_DIR / "04-globalAncestry" / "umap.csv",
     output:
-        report(os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"), caption = "../../report/PCs.rst", category = "Global ancestry"),
-        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.csv"),
+        report(OUT_DIR / "04-globalAncestry" / "latentDistantRelatedness.png", caption = "../../report/PCs.rst", category = "Global ancestry"),
+        OUT_DIR / "04-globalAncestry" / "latentDistantRelatedness.tsv",
     params:
-        dir = os.path.join(config['OUT_DIR'], "04-globalAncestry"),
+        dir = OUT_DIR / "04-globalAncestry",
 
     shell: """
     echo "Running ancestry estimation:"

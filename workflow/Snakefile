@@ -1,5 +1,6 @@
 import os 
 from pathlib import Path
+import pandas as pd
 
 
 report: "../report/stylesheet.css"
@@ -27,9 +28,16 @@ PREVIOUS_STEP = {
 OUT_DIR = Path(config['OUT_DIR'])
 REF = Path(config['REF'])
 
+# Snakemake helper functions
+def get_unique_ancestries(filepath):
+  return pd.read_csv(filepath, sep = "\t")["pc_label"].dropna().unique().tolist()
+
+
 def get_input_by_stage(wildcards):
     # Fix the typo 'wilcards' -> 'wildcards'
     if wildcards.stage == "01-Initialfilter":
+        input_prefix = "data"
+    elif not wildcards.stage[0].isdigit  :
         input_prefix = "data"
     else:
         input_prefix = "initialFilter"
@@ -117,6 +125,7 @@ include: "rules/PCA.smk"
 include: "rules/umap.smk"
 include: "rules/estimateAncestry.smk"
 include: "rules/plotInitial_QC.smk"
+include: "rules/splitAncestries.smk"
 
 
 rule all:
@@ -193,5 +202,14 @@ rule run_estimateAncestry:
         runtime = 420 # 1 week
     input:
         os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"),
-        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.csv"),
+        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.tsv"),
 
+rule run_splitAncestries:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        expand(f"{config['OUT_DIR']}/{{ANCESTRY}}/data.bed", ANCESTRY=get_unique_ancestries(OUT_DIR / "04-globalAncestry" / "latentDistantRelatedness.csv"))
+    

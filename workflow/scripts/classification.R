@@ -39,7 +39,7 @@ set.seed(args$seed)
 if (!is.null(args$pc)) {
   PCs <- read_table(args$pc, col_names= TRUE)
   colnames(PCs) <- c("FID", "IID", paste0("pc_", 1:(ncol(PCs) -2) ))
-  dat <- left_join(dat, PCs, by = c("IID")) |> drop_na()
+  dat <- full_join(dat, PCs, by = c("IID")) |> drop_na()
   pcMod <- randomForest::randomForest(formula = factor(POP) ~ pc_1 + pc_2 + pc_3 + pc_4 + pc_5 + pc_6+ pc_7 + pc_8 + pc_9 + pc_10, data = dat) 
   saveRDS(pcMod, paste0(args$out, "/RFpc.Rds"))
   dat <- dat |> mutate(pc_label = pcMod$predicted)
@@ -48,7 +48,7 @@ if (!is.null(args$vae)) {
   vae <- read_table(args$vae, col_names= TRUE)
   colnames(vae) <- paste0("vae_", colnames(vae))
   colnames(vae)[length(colnames(vae))] <- "IID"
-  dat <- left_join(dat, vae, by = c("IID")) |> drop_na()
+  dat <- full_join(dat, vae, by = c("IID")) |> drop_na()
   vaeMod <- randomForest::randomForest(formula = factor(POP) ~ vae_mean1 + vae_mean2, data = dat)
   saveRDS(vaeMod, paste0(args$out, "/RFvae.Rds"))
   dat <- dat |> mutate(vae_label = vaeMod$predicted)
@@ -57,7 +57,7 @@ if (!is.null(args$umap)) {
   umap <- read_csv(args$umap) |>
     select(FID = `#FID`, IID, contains("UMAP"))
   colnames(umap) <- c("FID", "IID", str_replace(colnames(umap)[-c(1,2)], "UMAP", "umap_"))
-  dat <- left_join(dat, umap, by = c("FID", "IID")) |> drop_na()
+  dat <- full_join(dat, umap, by = c("FID", "IID")) |> drop_na()
   umapMod <- randomForest::randomForest(formula = factor(POP) ~ umap_1 + umap_2, data = dat)
   saveRDS(umapMod, paste0(args$out, "/RFumap.Rds"))
   dat <- dat |> mutate(umap_label = umapMod$predicted)
@@ -78,12 +78,12 @@ vizDat <- dat |>
   #select(-c(starts_with("mean")))
 
 vizDat |>
-  mutate(mislabeled= POP!= label) |>
+  mutate(Concordant = POP== label) |>
   # mutate(
   #   across(`1`:`20`, scale),
   #   .by = c(alg, mislabeled)
   # ) |>
-  ggplot(aes(x= `1`, y = `2`, shape = POP, col = mislabeled)) +
+  ggplot(aes(x= `1`, y = `2`, col = POP, shape = Concordant)) +
   geom_point(alpha = 0.25) +
   facet_wrap(~ alg, scales= "free", labeller = label_both, ncol = 2) +
   # facet_grid(rows = vars(alg), cols = vars(mislabeled), scales= "free", labeller = label_both) +
@@ -91,4 +91,5 @@ vizDat |>
 ggsave(paste0(args$out, "/latentDistantRelatedness.png"))
 
 dat |>
-  write_delim(paste0(args$out, "/latentDistantRelatedness.csv"), delim = "\t")
+  relocate(FID, IID) |>
+  write_delim(paste0(args$out, "/latentDistantRelatedness.tsv"), delim = "\t")
