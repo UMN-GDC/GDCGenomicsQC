@@ -10,7 +10,7 @@ configfile: "../config/config.yaml"
 # Paths in include and configfile are relative to the Snakefile
 # paths inside the rules are relative to where you run the command.
 
-# CHROMOSOMES = range(1, 22)
+#CHROMOSOMES = range(1, 23)
 CHROMOSOMES = range(20, 22)
 
 
@@ -21,36 +21,10 @@ CHROMOSOMES = range(20, 22)
 #         "Ancestry Specific QC": "../report/ancestrySpecificqc_intro.rst",
 #     }
 
-PREVIOUS_STEP = {
-    "01-Initialfilter": "00-raw",
-    "02-relatedness": "01-Initialfilter",
-}
 OUT_DIR = Path(config['OUT_DIR'])
 REF = Path(config['REF'])
-
-# Snakemake helper functions
-def get_unique_ancestries(filepath):
-  return pd.read_csv(filepath, sep = "\t")["pc_label"].dropna().unique().tolist()
-
-
-def get_input_by_stage(wildcards):
-    # Fix the typo 'wilcards' -> 'wildcards'
-    if wildcards.stage == "01-Initialfilter":
-        input_prefix = "data"
-    elif not wildcards.stage[0].isdigit  :
-        input_prefix = "data"
-    else:
-        input_prefix = "initialFilter"
-
-    # Ensure the stage exists in the map to avoid KeyErrors
-    if wildcards.stage not in PREVIOUS_STEP:
-        raise ValueError(f"Stage {wildcards.stage} not defined in PREVIOUS_STEP map.")
-
-    prev = PREVIOUS_STEP[wildcards.stage]
-    
-    # Use os.path.abspath to make it bulletproof for SLURM
-    path = os.path.join(config["OUT_DIR"], prev, input_prefix)
-    return os.path.abspath(path)
+ANCESTRIES = pd.read_csv(REF / "1000G_highcoverage" / "population.txt", sep = " ")["Superpopulation"].dropna().unique().tolist()
+PREVIOUS_STEP = {ancestry: "01-Initialfilter" for ancestry in ANCESTRIES}
 
 # -------------------------------------------------------------------------
 # AUTO-MOUNT LOGIC: Automatically bind directories found in config.yaml
@@ -114,7 +88,8 @@ if use_singularity:
 # -------------------------------------------------------------------------
 
 
-include: "rules/LinkData.smk"
+include: "rules/kgMeta.smk"
+include: "rules/kgData.smk"
 include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
@@ -141,12 +116,27 @@ rule all:
         #os.path.join(config['OUT_DIR'], "02-relatedness/unrelated.bed"),
         #os.path.join(config['OUT_DIR'], "02-relatedness/initialFilter.bed")
         #os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed")
-        os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec"),
+        os.path.join(config['OUT_DIR'], "02-globalAncestry/merged_dataset_pca.eigenvec"),
         #expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}.phased.vcf.gz", CHR=CHROMOSOMES),
         os.path.join(config['OUT_DIR'], "figures/imiss.png"),
         os.path.join(config['OUT_DIR'], "figures/lmiss.png"),
-        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"),
-        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.csv"),
+        os.path.join(config['OUT_DIR'], "02-globalAncestry/latentDistantRelatedness.png"),
+        os.path.join(config['OUT_DIR'], "02-globalAncestry/latentDistantRelatedness.csv"),
+
+rule assembleRef: 
+    input:
+        REF / "1000G_highcoverage" / "population.txt",
+        REF / "1000G_highcoverage" / "pedigree.txt",
+        expand(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz", CHR = CHROMOSOMES)
+
+rule run_initialQC:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 60
+    input:
+        OUT_DIR / "full" / "initialFilter_9.bed",
 
 rule run_pca:
     threads: 1
@@ -204,12 +194,12 @@ rule run_estimateAncestry:
         os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"),
         os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.tsv"),
 
-rule run_splitAncestries:
-    threads: 1
-    resources:
-        nodes = 1,
-        mem_mb = 4000,
-        runtime = 420 # 1 week
-    input:
-        expand(f"{config['OUT_DIR']}/{{ANCESTRY}}/data.bed", ANCESTRY=get_unique_ancestries(OUT_DIR / "04-globalAncestry" / "latentDistantRelatedness.csv"))
+  # rule run_splitAncestries:
+  #     threads: 1
+  #     resources:
+  #         nodes = 1,
+  #         mem_mb = 4000,
+  #         runtime = 420 # 1 week
+  #     input:
+  #         expand(f"{config['OUT_DIR']}/{{ANCESTRY}}/data.bed", ANCESTRY=get_unique_ancestries(OUT_DIR / "04-globalAncestry" / "latentDistantRelatedness.csv"))
     

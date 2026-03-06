@@ -44,7 +44,7 @@ Requirements:
 ```shell
 git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
 cd GDCGenomicsQC
-conda env create -n snakemake snakemake snakemake-executor-plugin-slurm conda
+conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
 ```
 
 ## Using Snakemake workflows

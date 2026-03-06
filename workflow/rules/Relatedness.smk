@@ -8,13 +8,13 @@ rule checkRelatedness:
         mem_mb = 128000,
         runtime =720,
     input:
-        bed = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.bed",
-        bim = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.bim",
-        fam = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.fam"
+        bed = OUT_DIR / "{stage}" / "initialFilter.LDpruned.bed",
+        bim = OUT_DIR / "{stage}" / "initialFilter.LDpruned.bim",
+        fam = OUT_DIR / "{stage}" / "initialFilter.LDpruned.fam",
     output:
-        bed =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.bed"),
-        bim =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.bim"),
-        fam =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.fam"),
+        bed = OUT_DIR / "{stage}" / "unrelated.bed",
+        bim = OUT_DIR / "{stage}" / "unrelated.bim",
+        fam = OUT_DIR / "{stage}" / "unrelated.fam",
     params:
         output_dir = os.path.join(config['OUT_DIR'], "{stage}"),
         input_prefix = lambda wildcards, input: input.bed[:-4],
