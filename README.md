@@ -27,7 +27,9 @@ A quality control pipeline for genomics data developed by the Masonic Institute 
     - Controlled containers automatically handled (under construction)
     - Workflow handling on local computers and with SLURM scheduling
     - Automated report generation
-
+- Data formatted to be BIDS-compliant
+	- [BIDS genetic template](https://github.com/bids-standard/bids-examples/tree/master/genetics_ukbb):w
+ - 
 
 # Usage 
 Requirements:
