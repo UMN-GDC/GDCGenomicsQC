@@ -2,18 +2,13 @@ name: rfmix
 channels:
   - bioconda
   - conda-forge
-  - anaconda
   - defaults
 dependencies:
-  - gsl=2.7
+  - samtools
+  - plink
   - plink2
-  - bcftools=1.23
-  - rfmix=2.03.r0
-  - make
-  - gxx_linux-64=9
-  - htslib
-  - boost-cpp=1.82
-  - gsl=2.7
-  - zlib
-  - bzip2
+  - bcftools
+  - rfmix
+  - shapeit4
+  - gsl
 prefix: /projects/standard/gdc/public/envs/rfmix

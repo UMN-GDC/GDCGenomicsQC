@@ -6,14 +6,14 @@ rule Phase:
         mem_mb = 64000,
         runtime = 1320,
     input:
-        bed =   os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bed"),
-        bim =   os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.bim"),
-        fam =   os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.fam"),
+        bed =   OUT_DIR / "full" / "standardFilter.bed",
+        bim =   OUT_DIR / "full" / "standardFilter.bim",
+        fam =   OUT_DIR / "full" / "standardFilter.fam",
     output:
         # List all files that PLINK will actually create
-        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
+        vcf = OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
     params:
-        out_dir = f"{config['OUT_DIR']}/03-localAncestry",
+        out_dir = OUT_DIR / "02-localAncestry",
         input_prefix = lambda wildcards, input: input.bed[:-4],
         ref= config["REF"],
         test=config["rfmix_test"]

@@ -7,18 +7,18 @@ rule PCA:
         mem_mb = 32000,
         runtime = 2880,
     input:
-        bed = OUT_DIR / "01-Initialfilter" / "standardFiltered.LDpruned.bed",
-        bim = OUT_DIR / "01-Initialfilter" / "standardFiltered.LDpruned.bim",
-        fam = OUT_DIR / "01-Initialfilter" / "standardFiltered.LDpruned.fam",
+        bed = OUT_DIR / "02-relatedness" / "standardFiltered.LDpruned.bed",
+        bim = OUT_DIR / "02-relatedness" / "standardFiltered.LDpruned.bim",
+        fam = OUT_DIR / "02-relatedness" / "standardFiltered.LDpruned.fam",
     output:
         # List all files that PLINK will actually create
-        eigen = OUT_DIR / "02-globalAncestry" / "merged_dataset_pca.eigenvec",
-        tempDir  = temp(directory(OUT_DIR / "02-globalAncestry" / "intermediates"))
+        eigen = OUT_DIR / "04-globalAncestry" / "merged_dataset_pca.eigenvec",
+        tempDir  = temp(directory(OUT_DIR / "04-globalAncestry" / "intermediates"))
     params:
         method = config['relatedness']["method"],
         grm = config['relatedness']["method"],
-        out_dir = OUT_DIR / "02-globalAncestry",
-        input_prefix = OUT_DIR / "01-Initialfilter" / "standardFiltered.LDpruned",
+        out_dir = OUT_DIR / "04-globalAncestry",
+        input_prefix = OUT_DIR / "02-relatedness" / "standardFiltered.LDpruned",
         ref= REF
     shell: 
         """

@@ -3,26 +3,15 @@
 INPUT=$1
 OUTPRE=$2
 THREADS=$3
-THIN=$4
-TEMP=$5
+TEMP=$4
 
 mkdir -p $TEMP
 
 INTER_FILEPREFIX=$TEMP/intermediate
 INPUT_PREF=$(basename $INPUT)
 
-
-if [ $THIN -eq 1] ; then
-  plink --bfile $INPUT --out ${INTER_FILEPREFIX}_1 --geno 0.1 --make-bed  --threads $THREADS \
-    --thin-indiv-count 3000 \
-    --thin-count 5000
-else 
-  plink --bfile $INPUT --out ${INTER_FILEPREFIX}_1 --geno 0.1 --make-bed  --threads $THREADS
-fi
-
-
 # Sample missingness initial filter
-plink --bfile ${INTER_FILEPREFIX}_1 --mind 0.1 --make-bed --out ${INTER_FILEPREFIX}_2  --threads $THREADS
+plink --bfile $INPUT --mind 0.1 --make-bed --out ${INTER_FILEPREFIX}_2  --threads $THREADS
 
 # Marker missingness final filter 
 plink --bfile ${INTER_FILEPREFIX}_2 --geno 0.02 --make-bed --out ${INTER_FILEPREFIX}_3  --threads $THREADS

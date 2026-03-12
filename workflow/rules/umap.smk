@@ -6,18 +6,22 @@ rule UMAP:
         mem_mb = 64000,
         runtime = 2880,
     input:
-        eigen = f"{config['OUT_DIR']}/04-globalAncestry/merged_dataset_pca.eigenvec",
+        eigen = OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+        sample = OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
     output:
-        os.path.join(config['OUT_DIR'], "04-globalAncestry/umap.csv"),
+        OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
+        OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
     params:
         npc = 10,
         neighbors = 50,
         ncoords = 2,
+        outputPrefix = OUT_DIR / "01-globalAncestry" / "umap",
     shell: """
     echo "Running UMAP:"
 
-    Rscript scripts/Umap.R --eigens {input.eigen} --out {output} \
+    Rscript scripts/Umap.R --eigens {input.eigen} --out {params.outputPrefix} \
       --npc {params.npc} --neighbors {params.neighbors} \
+      --sample {input.sample} \
       --threads {threads} \
       --ncoords {params.ncoords} \
       --seed $RANDOM
