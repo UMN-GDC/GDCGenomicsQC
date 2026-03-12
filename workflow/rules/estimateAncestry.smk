@@ -6,7 +6,7 @@ rule estimateAncestry:
         runtime = 2880,
     input:
         labels = REF / "1000G_GRCh38"/ "1000G.GRCh38.popu",
-        eigen_ref = OUT_DIR / "01-globalAncestry" / "ref.eigenvec",
+        eigen_ref = OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         eigen_sample = OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref = OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
         umap_sample = OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
