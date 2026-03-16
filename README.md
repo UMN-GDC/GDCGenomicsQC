@@ -48,24 +48,22 @@ conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
 ```
 
 ## Using Snakemake workflows
-- update config files as necessary (located at config/config.yaml)
-- Run the desired workflow (by default looks in config/config.yaml)
+- update config files as necessary (located at `config/config.yaml`)
 - Snakemake expects you to execute from `GDCGenomicsQC/workflow` 
+- Run the desired workflow (by default looks in `config/config.yaml`) using the `--configfile=<path/to/confi.yaml/` flag
 
 To have SLURM dispatch it without dependency on your terminal being open these snakemake calls can be called in a SLURM script.
  An example is stored at workflow/example.SLURM
 
 ## Detailed usage 
 After cloning this repository the steps to run this pipeline are as follows:
-1.	To run pipeline: `snakemake --cores=4`
-    - `--cores` (required) specify maximum number of threads for each step. Each step will use up to this number of threads, but each has their own internally specified number of threads to execute
-2.	Flags to be appended to run command `snakemake --cores=4`
- - `--use-conda` has snakemake construct the conda envs  in `GDCGenomicsQC/envs` and cache them for running
- - `--use-singularity` has snakemake construct the conda envs  in `GDCGenomicsQC/envs` and cache them for running
+1.	To run pipeline with SLURM scheduler (reccomended): `snakemake --profile=../profiles/hpc`
+2.	To run pipeline interactively: `snakemake --profile=../profiles/interactive`
+
+These profiles specify using the singularity images (`--use-singularity`), but if desired you can run them with the `--use-conda` flag, which will construct and cache the conda envs locally. Just note that this does not work well with SLURM schedulers (`--executor slurm`), but will work fine when running interactively.
  - `--configfile </path/to/configfile>` path to .yaml configuring your desired run
- - `--executor slurm`
  - to execute it somewhere else add these flags `--directory /path/to/GDCGenomicsQC/workflow --snakefile /path/to/GDCGenomicsQC/workflow/Snakefile`
-    - For older versions of snakemake (if you dindn't install conda env create snakame as specified above) this is `--cluster "sbatch --parsable"`
+ - For older versions of snakemake (if you dindn't install conda env create snakame as specified above) run with a slurm scheduler by appending `--cluster "sbatch --parsable"`
  - `--jobs` maximum number of slurm jobs to submit at once. If this is smaller that 22, note that steps that run per autosomal chromosome will be submitted sequentially in phases
  - `<Rule Name>` if you only want to run specific aspects of the pipeline you can specify the rule you want to run through
     - Initial_QC
@@ -76,12 +74,11 @@ After cloning this repository the steps to run this pipeline are as follows:
 ### Recommended calls
 
 An example batch job is included at `workflow/example.SLURM` for easier adaptation to your workflow. If available, we reccomend letting SLURM handle the disbatching and generating a report.
+
 ```bash
-snakemake --cores=4 --use-conda \
-    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
-    --executor slurm \
-    --jobs 25 \
-    --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css
+snakemake --profile=../profiles/hpc \
+    --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css \
+    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile>
 ```
 
 For local execution
@@ -98,13 +95,7 @@ snakemake --cores=4 --use-conda \
     PCA
 ```
 
-For generating the report
-```bash
-snakemake --cores=4 --use-conda \
-    --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
-    --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css
-
-As of recent Snakemake bug report
+As of recent Snakemake bug report this has been incorporated into the `hpc` profile and might be removed in future versions
 ```bash
 snakemake --executor=slurm --use-singularity --local-storage $(pwd)/.snakemake/storage
 ```
