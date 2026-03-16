@@ -17,6 +17,7 @@
 !envs/*.yaml
 !config/example.config
 !.readthedocs.yaml
+.cache/
 
 # History files
 .Rhistory
