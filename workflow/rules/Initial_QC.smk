@@ -1,33 +1,61 @@
-rule Initial_QC:
-    container: "oras://ghcr.io/coffm049/gdcgnomicsqc/plink:latest"
+rule initialFilter :
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
     threads: 8
     resources:
         nodes = 1,
-        mem_mb = 32000,
+        mem_mb = 16000,
         runtime = 60,
-    input:
-        bed = lambda wildcards: get_input_by_stage(wildcards) + ".bed",
-        bim = lambda wildcards: get_input_by_stage(wildcards) + ".bim",
-        fam = lambda wildcards: get_input_by_stage(wildcards) + ".fam"
     output:
-        bed =   os.path.join(config['OUT_DIR'], "{stage}/initialFilter.bed"),
-        bim =   os.path.join(config['OUT_DIR'], "{stage}/initialFilter.bim"),
-        fam =   os.path.join(config['OUT_DIR'], "{stage}/initialFilter.fam"),
-        LDbed = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.bed"),
-        LDbim = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.bim"),
-        LDfam = os.path.join(config['OUT_DIR'], "{stage}/initialFilter.LDpruned.fam"),
-        tempDir  = temp(directory(os.path.join(config['OUT_DIR'], "{stage}/intermediates/initial_filter/"))),
-        imiss = os.path.join(config['OUT_DIR'], "{stage}/initial.imiss"),
-        lmiss = os.path.join(config['OUT_DIR'], "{stage}/initial.lmiss")
+        bed = OUT_DIR / "{subset}" / "initialFilter.bed",
+        bim = OUT_DIR / "{subset}" / "initialFilter.bim",
+        fam = OUT_DIR / "{subset}" / "initialFilter.fam",
+        LDbed = OUT_DIR / "{subset}" / "initialFilter.LDpruned.bed",
+        LDbim = OUT_DIR / "{subset}" / "initialFilter.LDpruned.bim",
+        LDfam = OUT_DIR / "{subset}" / "initialFilter.LDpruned.fam",
+        tempDir  = temp(directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter")),
+        smiss = OUT_DIR / "{subset}" / "initial.smiss",
+        vmiss = OUT_DIR / "{subset}" / "initial.vmiss",
+        smissIMG = report(OUT_DIR / "{subset}" / "figures" / "smiss.svg", caption = "../../report/smiss.rst", category = "Quality Control"),
+        vmissIMG = report(OUT_DIR / "{subset}" / "figures" / "vmiss.svg", caption = "../../report/vmiss.rst", category = "Quality Control"),
+    input:
+        pgen = expand(OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pgen", CHR = CHROMOSOMES), 
+        psam = expand(OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.psam", CHR = CHROMOSOMES), 
+        pvar = expand(OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pvar", CHR = CHROMOSOMES), 
+        ancestries = get_ancestry_file # Snakemake evaluates this per wildcard
     params:
-        # input.bed is a list of one file, we take index 0
-        input_prefix = lambda wildcards, input: input.bed[:-4],
-        output_prefix = lambda wildcards: os.path.join(config['OUT_DIR'], wildcards.stage)
+        output_prefix = lambda wildcards, output: output.bed[:-4],
     shell: """
-    echo "Processing Stage: {wildcards.stage}"
-    echo "Source Prefix: {params.input_prefix}"
-    echo "Output Prefix: {params.output_prefix}/initialFilter"
+    
+    # MERGE chromosomes
+    # 1. Create/Clear the merge list file
 
-    bash scripts/initialFilter.sh {params.input_prefix} {params.output_prefix} {threads}
+    mkdir -p {output.tempDir}
+    > {output.tempDir}/mergelist.txt
+
+    # 2. Extract prefixes and write to the list
+    for f in {input.pgen}; do
+        echo "${{f%.pgen}}" >> {output.tempDir}/mergelist.txt
+    done
+
+    plink2 --pmerge-list {output.tempDir}/mergelist.txt \
+           --make-bed \
+           --missing \
+           --out {output.tempDir}/intermediate_0
+
+
+    if [ "{wildcards.subset}" == "full" ]; then
+         echo "Processing full dataset without subsetting..."
+         
+         bash scripts/initialFilter.sh {output.tempDir}/intermediate_0 {params.output_prefix} {threads}  {output.tempDir}
+                
+    else
+         echo "Subsetting data for ancestry: {wildcards.subset}..."
+         
+         bash scripts/initialFilter.sh {output.tempDir}/intermediate_0 {params.output_prefix} {threads} {output.tempDir}
+    fi
+    mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
+    mv {output.tempDir}/intermediate_0.smiss {output.smiss}
+    
+    Rscript scripts/plotMissingness.R {output.smiss} {output.vmiss} {output.smissIMG} {output.vmissIMG} 
     """

@@ -44,7 +44,7 @@ Requirements:
 ```shell
 git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
 cd GDCGenomicsQC
-conda env create -n snakemake snakemake snakemake-executor-plugin-slurm conda
+conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
 ```
 
 ## Using Snakemake workflows
@@ -103,6 +103,11 @@ For generating the report
 snakemake --cores=4 --use-conda \
     --configfile </path/to/config.yaml> --directory </path/to/GDCGenomicsQC/workflow> --snakefile </path/to/GDCGenomicsQC/workflow/Snakefile> \
     --report --report-stylesheet /path/to/GDCGenomicsQC/report/stylesheet.css
+
+As of recent Snakemake bug report
+```bash
+snakemake --executor=slurm --use-singularity --local-storage $(pwd)/.snakemake/storage
+```
 
 
 ## Configuration

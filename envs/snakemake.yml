@@ -1,0 +1,9 @@
+name: snakemake
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - snakemake
+  - snakemake-executor-plugin-slurm
+prefix: /projects/standard/gdc/public/envs/snakemake

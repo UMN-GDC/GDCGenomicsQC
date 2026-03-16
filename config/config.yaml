@@ -13,3 +13,8 @@ RFMIX : true
 rfmix_test : true
 
 thin: true
+vcf_template: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic_{CHR}.vcf.gz"
+
+
+conda-frontend: mamba
+local-storage-prefix: "/scratch.global/coffm049/GDCGenomicsQC/workflow/.snakemake/storage"

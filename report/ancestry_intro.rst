@@ -1,2 +1,0 @@
-- Classified global ancestry based on comparison to 1kg
-- Utilized latent variables to train a random forest

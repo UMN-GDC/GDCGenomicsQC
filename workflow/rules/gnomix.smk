@@ -1,5 +1,5 @@
 rule gnomix:
-    conda: "../../envs/gnomix.yml"
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
     threads: 8
     resources:
         nodes = 1,

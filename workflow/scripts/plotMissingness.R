@@ -12,11 +12,11 @@ read_table(imissIn) |>
   geom_histogram() +
   geom_vline(xintercept = c(0.1, 0.02), color = "red") +
   xlab("Subject genome missingness (%)")
-ggsave(imissOut)
+ggsave(imissOut, width = 9, height= 5)
   
 read_table(lmissIn) |>
   ggplot(aes(x = F_MISS * 100)) +
   geom_histogram() +
   geom_vline(xintercept = c(0.1, 0.02), color = "red") +
   xlab("SNP missingness (%)")
-ggsave(lmissOut)
+ggsave(lmissOut, width = 9, height= 5)

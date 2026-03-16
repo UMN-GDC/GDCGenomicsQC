@@ -1,10 +1,10 @@
 name: ancNreport
 channels:
-  - anaconda
+  - conda-forge
+  - nodefaults
   - dranew
   - bioconda
-  - defaults
-  - conda-forge
+  - r
 dependencies:
   - python=3.10
   - pip
@@ -16,14 +16,14 @@ dependencies:
   - r-data.table
   - r-argparse
   - r-gt
-  - r-eulerr
+  - r-svglite
+  - r-hdpca
   - perl
   - bioconductor-gdsfmt
   - bioconductor-snprelate
   - bioconductor-seqarray
   - bioconductor-seqvartools
   - bioconductor-biocparallel
-  - r-hdpca
   - bioconductor-gwastools
   - bioconductor-genesis
   - bioconductor-xvector
