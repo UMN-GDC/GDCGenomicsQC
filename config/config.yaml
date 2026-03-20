@@ -2,19 +2,39 @@
 INPUT_FILE: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic"
 OUT_DIR: "/scratch.global/coffm049/toyPipeline"
 REF: "/projects/standard/gdc/public/Ref"
+vcf_template: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic_{CHR}.vcf.gz"
+local-storage-prefix: "/scratch.global/coffm049/GDCGenomicsQC/workflow/.snakemake/storage"
 
 # Tool-specific parameters
+
+# QC
 relatedness:
     method: "0"
 
 SEX_CHECK : false
-GRM : false
-RFMIX : true
-rfmix_test : true
+GRM : true
 
-thin: true
-vcf_template: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic_{CHR}.vcf.gz"
+localAncestry :
+  RFMIX : true
+  test : true
 
 
+snpHerit:
+    out: phenoEsts
+    method : "AdjHE" # AdjHE, GCTA, PredLMM, SWD, COMBAT
+    randomEffects : true
+    grmPrefix : "jlkasjdlkfdsj"
+    npc:
+        - 10 # can be a list for model comparison
+    covars:
+        - age
+        - sex
+    loop_covs : false
+    RV : "abcd_site"
+    mpheno : ["height"]
+
+
+# development
+thin: false
 conda-frontend: mamba
-local-storage-prefix: "/scratch.global/coffm049/GDCGenomicsQC/workflow/.snakemake/storage"
+

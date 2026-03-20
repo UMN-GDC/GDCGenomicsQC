@@ -1,0 +1,48 @@
+name: genomeUtils
+channels:
+  - bioconda
+  - dranew
+  - r
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.10
+  - pip
+  - git
+  - r-base
+  - r-tidyverse
+  - r-uwot
+  - r-randomforest
+  - r-data.table
+  - r-argparse
+  - r-gt
+  - r-svglite
+  - r-hdpca
+  - perl
+  - bioconductor-gdsfmt
+  - bioconductor-snprelate
+  - bioconductor-seqarray
+  - bioconductor-seqvartools
+  - bioconductor-biocparallel
+  - bioconductor-gwastools
+  - bioconductor-genesis
+  - bioconductor-xvector
+  - bioconductor-biostrings
+  - bcftools
+  - bcftools-liftover-plugin
+  - samtools>=1.17
+  - openjdk
+  - keras
+  - tensorflow=2.15
+  - pandas-plink
+  - scikit-learn
+  - seaborn
+  - xarray
+  - crossmap
+  - fraposa-pgsc
+  - plink
+  - plink2
+  - pip:
+    - git+https://github.com/kr-colab/popvae.git
+prefix: /projects/standard/gdc/public/envs/ancNreport
+

@@ -24,22 +24,28 @@ CHROMOSOMES = range(20, 22)
 
 OUT_DIR = Path(config['OUT_DIR'])
 REF = Path(config['REF'])
-ANCESTRIES = pd.read_csv(REF / "1000G_highcoverage" / "population.txt", sep = " ")["Superpopulation"].dropna().unique().tolist()
+
+def get_ancestries(wildcards):
+    # Wait for the PCArelate checkpoint and get the 'ancestry' output file
+    ancestry_file = checkpoints.estimateAncestry.get(subset="full").output.ancestry
+    return pd.read_csv(ancestry_file, sep="\t").pc_label.dropna().unique().tolist()
+
 
 def get_ancestry_file(wildcards):
     """
     If the subset is 'full', return an empty list (no dependency).
     Otherwise, return the path to the estimated ancestry file.
     """
-    if wildcards.subset in ANCESTRIES:
-        # This forces Snakemake to wait for the estimation rule to finish
-        # OUT_DIR is globally defined
-        return OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
+    if wildcards.subset == "full":
+        return [] 
     else:
-        return []
+        return checkpoints.estimateAncestry.get(subset="full").output.ancestry
+    
+
 
 include: "rules/kgMeta.smk"
 include: "rules/kgData.smk"
+include: "rules/kgAssemble.smk"
 include: "rules/Initial_QC.smk"
 include: "rules/convertNfilt.smk"
 include: "rules/Relatedness.smk"
@@ -48,7 +54,7 @@ include: "rules/phase.smk"
 include: "rules/PCAreference.smk"
 include: "rules/umap.smk"
 include: "rules/estimateAncestry.smk"
-# include: "rules/RFMIX.smk"
+include: "rules/RFMIX.smk"
 # include: "rules/trainGnomix.smk"
 
 
@@ -59,17 +65,19 @@ rule all:
         mem_mb = 4000,
         runtime = 420 # 1 week
     input:
-        expand(OUT_DIR / "{ANCESTRY}" / "initialFilter_{CHR}.pgen", ANCESTRY= ANCESTRIES, CHR = CHROMOSOMES),
-        expand(OUT_DIR / "{ANCESTRY}" / "initialFilter.bed", ANCESTRY= ANCESTRIES),
-        expand(OUT_DIR / "{ANCESTRY}" / "standardFilter.bed", ANCESTRY= ANCESTRIES),
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "initialFilter_{CHR}.pgen", ANCESTRY=get_ancestries(wildcards), CHR = CHROMOSOMES),
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "initialFilter.bed", ANCESTRY= get_ancestries(wildcards)),
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "standardFilter.bed", ANCESTRY= get_ancestries(wildcards)),
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "unrelated.bed", ANCESTRY= get_ancestries(wildcards)),
+        OUT_DIR / "full" / "standardFilter.bed",
         OUT_DIR / "full" / "unrelated.bed",
-        expand(OUT_DIR / "{ANCESTRY}" / "unrelated.bed", ANCESTRY= ANCESTRIES)
 
-rule assembleRef: 
+checkpoint assembleRef:
     input:
         REF / "1000G_highcoverage" / "population.txt",
         REF / "1000G_highcoverage" / "pedigree.txt",
-        expand(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz", CHR = CHROMOSOMES)
+        expand(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz", CHR = CHROMOSOMES),
+        REF / "1000G_highcoverage" / "1000G_highCoveragephased.bed",
 
 rule run_initialQC:
     threads: 1
@@ -78,9 +86,9 @@ rule run_initialQC:
         mem_mb = 4000,
         runtime = 60
     input:
-        #expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES),
-        OUT_DIR / "full" / "standardFilter.bed",
-        OUT_DIR / "full" / "initialFilter.bed",
+        expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES),
+        OUT_DIR / "full" / "standardFilter.pgen",
+        OUT_DIR / "full" / "initialFilter.pgen",
 
 
 rule run_estimateAncestry:
@@ -92,19 +100,19 @@ rule run_estimateAncestry:
     input:
         OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
-        OUT_DIR / "01-globalAncestry/PC_referenceSpace.svg",
-        OUT_DIR / "01-globalAncestry/latentDistantRelatedness.tsv",
+        OUT_DIR / "01-globalAncestry" / "PC_referenceSpace.svg",
+        OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
 
-rule run_splitAncestries:
+rule run_ancestryQC:
     threads: 1
     resources:
         nodes = 1,
         mem_mb = 4000,
         runtime = 420 # 1 week
     input:
-        expand(OUT_DIR / "{ANCESTRY}" / "initialFilter_{CHR}.pgen", ANCESTRY= ANCESTRIES, CHR = CHROMOSOMES),
-        expand(OUT_DIR / "{ANCESTRY}" / "initialFilter.bed", ANCESTRY= ANCESTRIES),
-        expand(OUT_DIR / "{ANCESTRY}" / "standardFilter.bed", ANCESTRY= ANCESTRIES),
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "initialFilter_{CHR}.pgen", ANCESTRY= get_ancestries(wildcards), CHR = CHROMOSOMES),
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "initialFilter.pgen", ANCESTRY= get_ancestries(wildcards)),
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "standardFilter.pgen", ANCESTRY= get_ancestries(wildcards)),
 
 rule run_relatedness:
     threads: 1
@@ -113,8 +121,8 @@ rule run_relatedness:
         mem_mb = 4000,
         runtime = 420 # 1 week
     input:
-        OUT_DIR / "full" / "unrelated.bed",
-        expand(OUT_DIR / "{ANCESTRY}" / "unrelated.bed", ANCESTRY= ANCESTRIES)
+        OUT_DIR / "full" / "unrelated.pgen",
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "unrelated.pgen", ANCESTRY= get_ancestries(wildcards))
 
 ##### GOOD UP TO HERE
 

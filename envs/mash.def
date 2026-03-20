@@ -1,0 +1,32 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%arguments
+    # Best practice: Name your environment something consistent
+    ENV_NAME=mash
+
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export PATH="/opt/conda/envs/{{ ENV_NAME }}/bin:$PATH"
+    export PATH="/bin:/opt/conda/bin:/opt/conda/envs/mash/bin:/usr/bin:$PATH"
+    export LC_ALL=C.UTF-8
+
+%files
+    mash.yml /app/mash.yml
+
+%post
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/mash.yml
+    /usr/bin/micromamba clean --all -y
+    /opt/conda/envs/mash/bin/pip install git+https://github.com/UMN-GDC/MASH.git
+
+%runscript
+    # This runs when you execute the container file directly
+    echo "Container ready."
+    echo "Available commands: 'MASH' and 'SimulateMASH'"
+    exec "$@"
+
+%labels
+    Author Christian Coffman
+    Version v0.0.1
+

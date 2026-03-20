@@ -20,4 +20,7 @@ apptainer push ancNreport.sif oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:l
 
 apptainer build --fakeroot rfmix.sif rfmix.def
 apptainer push rfmix.sif oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest
+
+apptainer build --fakeroot mash.sif mash.def
+apptainer push mash.sif oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest
 ```
