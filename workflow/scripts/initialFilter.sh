@@ -11,13 +11,13 @@ INTER_FILEPREFIX=$TEMP/intermediate
 INPUT_PREF=$(basename $INPUT)
 
 # Sample missingness initial filter
-plink --bfile $INPUT --mind 0.1 --make-bed --out ${INTER_FILEPREFIX}_2  --threads $THREADS
+plink2 --pfile $INPUT --mind 0.1 --make-pgen --out ${INTER_FILEPREFIX}_2  --threads $THREADS --rm-dup exclude-all \
 
 # Marker missingness final filter 
-plink --bfile ${INTER_FILEPREFIX}_2 --geno 0.02 --make-bed --out ${INTER_FILEPREFIX}_3  --threads $THREADS
+plink2 --pfile ${INTER_FILEPREFIX}_2 --geno 0.02 --make-pgen --out ${INTER_FILEPREFIX}_3  --threads $THREADS
 
 # Sample missingness final filter
-plink --bfile ${INTER_FILEPREFIX}_3 --mind 0.02 --make-bed --out $OUTPRE --threads $THREADS
+plink2 --pfile ${INTER_FILEPREFIX}_3 --mind 0.02 --make-pgen --out $OUTPRE --threads $THREADS
 
-plink --bfile $OUTPRE --indep-pairwise 500 10 0.1 --out $OUTPRE --threads $THREADS
-plink --bfile $OUTPRE --extract ${OUTPRE}.prune.in --make-bed --out ${OUTPRE}.LDpruned  --threads $THREADS
+plink2 --pfile $OUTPRE --indep-pairwise 500 10 0.1 --out $OUTPRE --threads $THREADS
+plink2 --pfile $OUTPRE --extract ${OUTPRE}.prune.in --make-pgen --out ${OUTPRE}.LDpruned  --threads $THREADS

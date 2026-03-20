@@ -56,15 +56,15 @@ studyUmap <- pcs |>
 
 mod$embedding |>
   magrittr::set_colnames(paste("UMAP", 1:args$ncoords, sep = "")) |>
-  cbind(pcs[,c("#FID", "IID")]) |>
-  relocate(`#FID`, IID) |>
+  cbind(pcs[,c("#IID")]) |>
+  relocate(`#IID`) |>
   data.table::fwrite(file = paste0(args$out, "_ref.csv"),
          row.names = FALSE)
 print(paste0("UMAP coordinates saved to ", args$out))
 
 studyUmap |>
   magrittr::set_colnames(paste("UMAP", 1:args$ncoords, sep = "")) |>
-  cbind(samplePCs[, c("#FID", "IID")]) |>
-  relocate(`#FID`, IID) |>
+  cbind(samplePCs[, c("#IID")]) |>
+  relocate(`#IID`) |>
   data.table::fwrite(file = paste0(args$out, "_sample.csv"),
          row.names = FALSE)

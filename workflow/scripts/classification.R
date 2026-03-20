@@ -35,33 +35,37 @@ args <- parser$parse_args()
 #   reduce(rbind) |>
 #   mutate(POP = factor(rep(c("AFR", "EUR"), each = 5000)))
 
-ref <- read_table(args$labels, col_names = c("FID", "IID", "POP"))
+ref <- read_table(args$labels) |>
+  select(FID = FamilyID, IID = SampleID, POP = Superpopulation)
+
+print("this is the unique")
+print(unique(ref$POP))
 
 set.seed(args$seed)
 
 # load dimension reductions
 PCs <- read_table(args$eigen_ref, col_names= TRUE) |> select(-c(ALLELE_CT, NAMED_ALLELE_DOSAGE_SUM))
-colnames(PCs) <- c("FID", "IID", paste0("pc_", 1:(ncol(PCs) -2) ))
-ref <- full_join(ref, PCs, by = c("FID", "IID")) |> drop_na()
+colnames(PCs) <- c("IID", paste0("pc_", 1:(ncol(PCs) -1) ))
+ref <- full_join(ref, PCs, by = c("IID")) |> drop_na(pc_1)
 pcMod <- randomForest::randomForest(formula = factor(POP) ~ pc_1 + pc_2 + pc_3 + pc_4 + pc_5 + pc_6+ pc_7 + pc_8 + pc_9 + pc_10, data = ref) 
 saveRDS(pcMod, paste0(args$out, "/RFpc.Rds"))
 ref <- ref |> mutate(pc_label = pcMod$predicted)
 
 sampleDF <- read_table(args$eigen_sample, col_names= TRUE) |> select(-c(ALLELE_CT, NAMED_ALLELE_DOSAGE_SUM))
-colnames(sampleDF) <- c("FID", "IID", paste0("pc_", 1:(ncol(sampleDF) -2) ))
+colnames(sampleDF) <- c("IID", paste0("pc_", 1:(ncol(sampleDF) -1) ))
 sampleDF$pc_label <- predict(pcMod, sampleDF)
 
 if (!is.null(args$umap_ref)) {
   umap_ref <- read_csv(args$umap_ref)
-  colnames(umap_ref) <- c("FID", "IID", str_replace(colnames(umap_ref)[-c(1,2)], "UMAP", "umap_"))
-  ref <- full_join(ref, umap_ref, by = c("FID", "IID")) |> drop_na()
+  colnames(umap_ref) <- c("IID", str_replace(colnames(umap_ref)[-c(1)], "UMAP", "umap_"))
+  ref <- full_join(ref, umap_ref, by = c("IID")) |> drop_na(umap_1)
   umapMod <- randomForest::randomForest(formula = factor(POP) ~ umap_1 + umap_2, data = ref)
   saveRDS(umapMod, paste0(args$out, "/RFumap.Rds"))
   ref$umap_label <- predict(umapMod, ref)
 
   umap_sample <- read_csv(args$umap_sample)
-  colnames(umap_sample) <- c("FID", "IID", str_replace(colnames(umap_sample)[-c(1,2)], "UMAP", "umap_"))
-  sampleDF <- full_join(sampleDF, umap_sample, by = c("FID", "IID")) |> drop_na()
+  colnames(umap_sample) <- c("IID", str_replace(colnames(umap_sample)[-c(1)], "UMAP", "umap_"))
+  sampleDF <- full_join(sampleDF, umap_sample, by = c("IID")) |> drop_na(umap_1)
   sampleDF$umap_label <- predict(umapMod, sampleDF)
 
 }
@@ -80,7 +84,7 @@ if (!is.null(args$vae)) {
 backgroundDat <- ref |>
    select(-any_of(c("vae_sd1", "vae_sd2", "PAT", "MAT", "PHENO"))) |>
    pivot_longer(
-     -c(FID, IID, POP),
+     -c(IID, POP),
      #names_pattern = "([A-Za-z]+?)(\\d+|label)$",
      names_pattern = "([a-z]{2,4})_([a-z]*[0-9]{0,2})$",
      names_to = c("alg", ".value"),
@@ -91,9 +95,9 @@ backgroundDat <- ref |>
   # ) |>
   select(-c(starts_with("mean")))
 foregroundDat <- sampleDF |>
-   select(FID, IID, starts_with("pc_"), starts_with("umap_")) |>
+   select(IID, starts_with("pc_"), starts_with("umap_")) |>
    pivot_longer(
-     -c(FID, IID),
+     -c(IID),
      #names_pattern = "([A-Za-z]+?)(\\d+|label)$",
      names_pattern = "([a-z]{2,4})_([a-z]*[0-9]{0,2})$",
      names_to = c("alg", ".value"),
@@ -133,5 +137,5 @@ ref |>
   geom_point()
 
 sampleDF |>
-  relocate(FID, IID) |>
+  relocate(IID) |>
   write_delim(paste0(args$out, "/latentDistantRelatedness.tsv"), delim = "\t")

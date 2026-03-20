@@ -9,25 +9,25 @@ rule Standard_QC:
         mem_mb = 32000,
         runtime =60,
     input:
-        bed = OUT_DIR / "{subset}" / "initialFilter.bed",
-        bim = OUT_DIR / "{subset}" / "initialFilter.bim",
-        fam = OUT_DIR / "{subset}" / "initialFilter.fam",
-        LDbed = OUT_DIR / "{subset}" / "initialFilter.LDpruned.bed",
-        LDbim = OUT_DIR / "{subset}" / "initialFilter.LDpruned.bim",
-        LDfam = OUT_DIR / "{subset}" / "initialFilter.LDpruned.fam",
+        pgen = OUT_DIR / "{subset}" / "initialFilter.pgen",
+        pvar = OUT_DIR / "{subset}" / "initialFilter.pvar",
+        psam = OUT_DIR / "{subset}" / "initialFilter.psam",
+        LDpgen = OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
+        LDpvar = OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
+        LDpsam = OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
     output:
-        bed =   OUT_DIR / "{subset}" / "standardFilter.bed",
-        bim =   OUT_DIR / "{subset}" / "standardFilter.bim",
-        fam =   OUT_DIR / "{subset}" / "standardFilter.fam",
-        LDbed = OUT_DIR / "{subset}" / "standardFilter.LDpruned.bed",
-        LDbim = OUT_DIR / "{subset}" / "standardFilter.LDpruned.bim",
-        LDfam = OUT_DIR / "{subset}" / "standardFilter.LDpruned.fam",
+        pgen =   OUT_DIR / "{subset}" / "standardFilter.pgen",
+        pvar =   OUT_DIR / "{subset}" / "standardFilter.pvar",
+        psam =   OUT_DIR / "{subset}" / "standardFilter.psam",
+        LDpgen = OUT_DIR / "{subset}" / "standardFilter.LDpruned.pgen",
+        LDpvar = OUT_DIR / "{subset}" / "standardFilter.LDpruned.pvar",
+        LDpsam = OUT_DIR / "{subset}" / "standardFilter.LDpruned.psam",
         tempDir  = temp(directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter"))
     params:
         ref= config["REF"],
         output_dir = lambda wildcards, input: OUT_DIR / wildcards.subset,
         sex_check = config['SEX_CHECK'],
-        input_prefix = lambda wildcards, input: input.LDbed[:-4],
+        input_prefix = lambda wildcards, input: input.LDpgen[:-5],
         relatedness = config['relatedness']['method']
     shell: """
         echo "Standard QC: Variants and samples filtering"
@@ -36,14 +36,14 @@ rule Standard_QC:
 
         if [[ "{params.sex_check}" == "True" ]]; then
           echo "Performing Sex check"
-          plink --bfile {params.input_prefix} --check-sex --out {params.input_prefix}
+          plink2 --pfile {params.input_prefix} --check-sex --out {params.input_prefix} --threads {threads}
           grep 'PROBLEM' {params.input_prefix}.sexcheck | awk '{{print $1,$2}}' > {params.output_dir}/sex_discrepancy.txt
-          plink --bfile {params.input_prefix} --remove {params.output_dir}/sex_discrepancy.txt --make-bed --out {output.tempDir}/pastSex
+          plink2 --pfile {params.input_prefix} --remove {params.output_dir}/sex_discrepancy.txt --make-pgen --out {output.tempDir}/pastSex --threads {threads}
         else
           echo "Ignoring Sex check"
-          mv {input.LDbed} {output.tempDir}/pastSex.bed
-          mv {input.LDbim} {output.tempDir}/pastSex.bim
-          mv {input.LDfam} {output.tempDir}/pastSex.fam
+          mv {input.LDpgen} {output.tempDir}/pastSex.pgen
+          mv {input.LDpvar} {output.tempDir}/pastSex.pvar
+          mv {input.LDpsam} {output.tempDir}/pastSex.psam
         fi
         bash scripts/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
         """
