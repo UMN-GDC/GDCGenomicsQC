@@ -1,10 +1,10 @@
 name: ancNreport
 channels:
+  - bioconda
+  - dranew
+  - r
   - conda-forge
   - nodefaults
-  - dranew
-  - bioconda
-  - r
 dependencies:
   - python=3.10
   - pip
@@ -29,6 +29,8 @@ dependencies:
   - bioconductor-xvector
   - bioconductor-biostrings
   - bcftools
+  - bcftools-liftover-plugin
+  - samtools>=1.17
   - openjdk
   - keras
   - tensorflow=2.15

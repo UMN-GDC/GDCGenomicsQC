@@ -21,7 +21,7 @@ rule crossmap:
         out_dir = OUT_DIR / "04-globalAncestry",
         input_prefix = OUT_DIR / "01-Initialfilter" / "initialFilter",
         input_dir = OUT_DIR / "01-Initialfilter",
-        ref= REF / "1000G_GRCh38" / "1000G.ensembl.105.with.rsid.gender"
+        ref= REF / "1000G_highcoverage" / "1000G_highCoveragephased"
     shell: """
 
     # Since plink denote X chromosome's pseudo-autosomal region as a separate 'XY' chromosome, we want to merge to pass ontto LiftOver/CrossMap. 
