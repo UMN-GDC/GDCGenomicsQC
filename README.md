@@ -126,7 +126,27 @@ thin: true
 
 ![GDC_pipeline_overview](https://github.com/UMN-GDC/GDCGenomicsQC/assets/140092486/e7f11909-9ab8-4def-90e5-c5f67c28a4bb)
 
-
+# Output
+The output directory is organized as follows
+- Genomic data derivatives are prefixed with the number in which they are ran
+	- So far this includes 01-globalAncestry, 02-localAncestry
+- Unnumbered directories include
+	- simulations - simulated phenotypes where the subdirectories describe the combination of ancestires included in each given simulation
+	- data subsets such as `full` and identified ancestry subsets. for thousand genome reference panel this includes `AFR`, `AMR`, `EAS`, `EUR`, `SAS`
+    - Each of these direcotries contain QC output assumning each is a homogeneous group.
+    	- initialFilter_<chr> - are filtered for MAF, and variant missingness
+        - initialFilter - Are fully combined genomes additionally with sample missingness filter
+        - standardFilter - additionally filters for inversion regions, hardy-weinberg equilibrium, and check's sex (if specified in the config)
+        - standardFilter.LDpruned - additionally is filtered for linkage diseqilibrium and the specified level (default is 500 10 0.1)
+ - 01-globalAncestry
+ 	- ref.<acount, eigenval, eigenvec, eigenvec.allele> - PCA information on the reference panel
+  	- <ref, sample>RefPCscores.sscore - projection of sample and reference  onthe reference PCs
+    - umap_<sample, ref>.csv - the UMAP embeddings of the sample and refrence
+    - latentDistantRelatedness.tsv - combination of PC's, UMAPS, and most probable label based on random forest training on PC and UMAP embeddings respectively
+    - RF<pc, umap>.Rds - R object containing the trained random forest on specified latent variables
+- 02-localAncestry
+  	- chr<chr>.lai.<fb, msp, rfmix.Q, sis> - rfmix output specifying posterior probaiblity, most probable LAI label, and chromosome aggregated admixing proportion
+  	- chr<chr>phased.vcf.gz - the Shapeit4 phased haplotypes
 ## Contributing
 
 GDCGenomicsQC is built and maintained by a small team – we'd love your help to fix bugs and add features!
