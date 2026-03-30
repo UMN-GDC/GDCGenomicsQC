@@ -1,14 +1,21 @@
 name: rfmix
 channels:
-  - bioconda
   - conda-forge
-  - defaults
+  - bioconda
+  - nodefaults
 dependencies:
   - samtools
   - plink
   - plink2
   - bcftools
+  - boost-cpp  # SHAPEIT4 is highly sensitive to Boost versions
+  - htslib
+  - libstdcxx-ng
   - rfmix
-  - shapeit4
+  - shapeit4=4.2.2
   - gsl
+  - r-base=4.2
+  - r-tidyverse
+  - bioconductor-karyoploter
+  - bioconductor-genomicranges
 prefix: /projects/standard/gdc/public/envs/rfmix

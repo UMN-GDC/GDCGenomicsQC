@@ -15,6 +15,7 @@ dependencies:
   - r-randomforest
   - r-data.table
   - r-argparse
+  - r-mvtnorm
   - r-gt
   - r-svglite
   - r-hdpca

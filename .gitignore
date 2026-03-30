@@ -5,7 +5,7 @@
 *.jpeg
 *.svg
 *.html
-
+AGENTS.md
 
 
 
@@ -66,6 +66,8 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+init/
+login/
 
 # Exclude the necessary apps
 liftOver

@@ -23,4 +23,8 @@ apptainer push rfmix.sif oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest
 
 apptainer build --fakeroot mash.sif mash.def
 apptainer push mash.sif oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest
+
+
+apptainer build --fakeroot phenotypeSim.sif phenotypeSim.def
+apptainer push phenotypeSim.sif oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest
 ```

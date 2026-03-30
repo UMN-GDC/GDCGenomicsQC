@@ -1,11 +1,14 @@
 # Project-wide paths
-INPUT_FILE: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic"
-OUT_DIR: "/scratch.global/coffm049/toyPipeline"
+INPUT_FILE: "/projects/standard/gdc/public/r25Data/allSubjects_hg38"
+OUT_DIR: "/scratch.global/coffm049/r25Pipeline"
 REF: "/projects/standard/gdc/public/Ref"
-vcf_template: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic_{CHR}.vcf.gz"
+vcf_template: "/projects/standard/gdc/public/r25Data/allSubjects_hg38_chr{CHR}.vcf.gz"
 local-storage-prefix: "/scratch.global/coffm049/GDCGenomicsQC/workflow/.snakemake/storage"
 
 # Tool-specific parameters
+# Data processing options (not yet implemented in workflow)
+# liftover: true    # Convert genome build (e.g., GRCh37 to GRCh38)
+# harmonize: true   # Align strand/orientation to reference panel
 
 # QC
 relatedness:
@@ -17,12 +20,30 @@ GRM : true
 localAncestry :
   RFMIX : true
   test : true
+  thin_subjects : 0.1
+  figures : "figures"
+ancestry:
+    threshold: 0.8
+    model: "pca"  # Options: pca, umap, vae, rfmix
 
+
+
+
+phenotypeSimulation:
+    ancestries: ["AFR", "EUR"]
+    n_sims: 10
+    heritability: 0.4
+    rho: 0.8
+    maf: 0.05
+    seed: 42
+    skip_thinning: true
+    thin_count_snps: 1000000
+    thin_count_inds: 10000
 
 snpHerit:
     out: phenoEsts
     method : "AdjHE" # AdjHE, GCTA, PredLMM, SWD, COMBAT
-    randomEffects : true
+    randomEffects : false
     grmPrefix : "jlkasjdlkfdsj"
     npc:
         - 10 # can be a list for model comparison
@@ -33,8 +54,7 @@ snpHerit:
     RV : "abcd_site"
     mpheno : ["height"]
 
-
 # development
-thin: false
+thin: true
 conda-frontend: mamba
 

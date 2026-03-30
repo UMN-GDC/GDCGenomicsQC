@@ -24,22 +24,23 @@ CHROMOSOMES = range(20, 22)
 
 OUT_DIR = Path(config['OUT_DIR'])
 REF = Path(config['REF'])
+ANCESTRY_MODEL = config.get('ancestry', {}).get('model', 'pca')
 
 def get_ancestries(wildcards):
-    # Wait for the PCArelate checkpoint and get the 'ancestry' output file
-    ancestry_file = checkpoints.estimateAncestry.get(subset="full").output.ancestry
-    return pd.read_csv(ancestry_file, sep="\t").pc_label.dropna().unique().tolist()
+    ancestry_file = rules.classifyAncestry.output.classifications
+    predicted_col = f"{ANCESTRY_MODEL}_predicted"
+    return pd.read_csv(ancestry_file, sep="\t")[predicted_col].dropna().unique().tolist()
 
 
 def get_ancestry_file(wildcards):
     """
     If the subset is 'full', return an empty list (no dependency).
-    Otherwise, return the path to the estimated ancestry file.
+    Otherwise, return the path to the appropriate ancestry keep file.
     """
     if wildcards.subset == "full":
         return [] 
     else:
-        return checkpoints.estimateAncestry.get(subset="full").output.ancestry
+        return OUT_DIR / "01-globalAncestry" / f"keep_{wildcards.subset}.txt"
     
 
 
@@ -53,10 +54,19 @@ include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
 include: "rules/PCAreference.smk"
 include: "rules/umap.smk"
-include: "rules/estimateAncestry.smk"
+include: "rules/classifyAncestry.smk"
 include: "rules/RFMIX.smk"
+include: "rules/plotKaryotypeAncestry.smk"
+include: "rules/simulatePhenotype.smk"
+include: "rules/snpHeritSim.smk"
 # include: "rules/trainGnomix.smk"
 
+
+def get_karyotype_samples():
+    sis_file = OUT_DIR / "02-localAncestry" / "chr20.lai.sis.tsv"
+    if not sis_file.exists():
+        return []
+    return pd.read_csv(sis_file, header=None)[0].tolist()
 
 rule all:
     threads: 1
@@ -66,11 +76,15 @@ rule all:
         runtime = 420 # 1 week
     input:
         lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "initialFilter_{CHR}.pgen", ANCESTRY=get_ancestries(wildcards), CHR = CHROMOSOMES),
-        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "initialFilter.bed", ANCESTRY= get_ancestries(wildcards)),
-        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "standardFilter.bed", ANCESTRY= get_ancestries(wildcards)),
-        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "unrelated.bed", ANCESTRY= get_ancestries(wildcards)),
-        OUT_DIR / "full" / "standardFilter.bed",
-        OUT_DIR / "full" / "unrelated.bed",
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "initialFilter.pgen", ANCESTRY= get_ancestries(wildcards)),
+        lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "standardFilter.pgen", ANCESTRY= get_ancestries(wildcards)),
+        #lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "unrelated.pgen", ANCESTRY= get_ancestries(wildcards)),
+        OUT_DIR / "full" / "standardFilter.pgen",
+        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=CHROMOSOMES),
+        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES),
+        OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+        OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
+        OUT_DIR / "01-globalAncestry" / "posterior_probability_ridgelines.svg",
 
 checkpoint assembleRef:
     input:
@@ -91,17 +105,30 @@ rule run_initialQC:
         OUT_DIR / "full" / "initialFilter.pgen",
 
 
-rule run_estimateAncestry:
+rule run_estimateAdmixing:
     threads: 1
     resources:
         nodes = 1,
         mem_mb = 4000,
         runtime = 420 # 1 week
     input:
-        OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
-        OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
-        OUT_DIR / "01-globalAncestry" / "PC_referenceSpace.svg",
-        OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
+        labels = REF / "1000G_highcoverage" / "population.txt",
+        eigen_ref = OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+        eigen_sample = OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+        umap_ref = OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+        umap_sample = OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
+        rfmix_global = OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+
+rule run_classifyAncestry:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+        OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
+        OUT_DIR / "01-globalAncestry" / "posterior_probability_ridgelines.svg",
 
 rule run_ancestryQC:
     threads: 1
@@ -123,9 +150,6 @@ rule run_relatedness:
     input:
         OUT_DIR / "full" / "unrelated.pgen",
         lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "unrelated.pgen", ANCESTRY= get_ancestries(wildcards))
-
-##### GOOD UP TO HERE
-
 rule run_rfmix:
     threads: 1
     resources:
@@ -136,6 +160,20 @@ rule run_rfmix:
         expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=CHROMOSOMES),
         expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES)
 
+rule run_simulatePhenotype:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420
+    input:
+        lambda wildcards: expand(
+            OUT_DIR / "simulations" / f"{config['phenotypeSimulation']['ancestries'][0]}_{config['phenotypeSimulation']['ancestries'][1]}" / "{anc}_simulation_pheno1.estimates",
+            anc=config['phenotypeSimulation']['ancestries']
+        )
+##### GOOD UP TO HERE
+
+
 
 rule run_train_gnomix:
     threads: 1
@@ -145,3 +183,5 @@ rule run_train_gnomix:
         runtime = 420 # 1 week
     input:
         expand(f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}_ancestry_gnomix", CHR=CHROMOSOMES),
+
+

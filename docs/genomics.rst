@@ -1,7 +1,8 @@
 Genomics
-========
+=======
 
-This section outlines the standard procedures for the genomic data processing pipeline.
+This section outlines the standard procedures for the genomic data processing pipeline
+and how to configure them via the config file.
 
 .. contents:: Table of Contents
    :depth: 2
@@ -12,32 +13,55 @@ Standard Procedure
 
 Module 1: Crossmap (optional)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-CrossMap converts genome coordinates and annotation files between different reference assemblies. It supports a wide array of used file formats, including BAM, CRAM, SAM, VCF, Wiggle, BigWig, BED, GFF, and GTF. For the purposes of our pipeline we will make use of PLINK Binary format and convert the genome build to GRCh38 (default: GRCh37 to GRCh38). 
+CrossMap converts genome coordinates and annotation files between different reference assemblies.
+It supports a wide array of file formats, including BAM, CRAM, SAM, VCF, Wiggle, BigWig,
+BED, GFF, and GTF. For the purposes of our pipeline we will make use of PLINK Binary
+format and convert the genome build to GRCh38 (default: GRCh37 to GRCh38).
 
-* **Flag:** ``--use_crossmap`` (Default: ``1``).
-* **Override:** Set to ``0`` if the build is already GRCh38.
+* **Config option:** ``liftover: true`` (Default: ``true``)
+* **Description:** Set to ``false`` if the input data is already GRCh38.
+
+Example in ``config.yaml``:
+
+.. code-block:: yaml
+
+    liftover: true  # Set to false if data is already GRCh38
 
 Module 2: GenotypeHarmonizer (optional)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GenotypeHarmonizer integrates genetic data by resolving inconsistencies in genomic strand and file format. It will align study datasets to a specified reference genome and uses linkage disequilibrium (LD) to solve unknown or ambiguous strand issues and SNPs. We use it in our pipeline to align sample data to the GRCh38 reference genome using the reference file ``ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5.vcf``.
+GenotypeHarmonizer integrates genetic data by resolving inconsistencies in genomic strand
+and file format. It will align study datasets to a specified reference genome and uses
+linkage disequilibrium (LD) to solve unknown or ambiguous strand issues and SNPs. We
+use it in our pipeline to align sample data to the GRCh38 reference genome using the
+reference file ``ALL.hgdp1kg.filtered.SNV_INDEL.38.phased.shapeit5.vcf``.
 
-* **Flag:** ``--use_genome_harmonizer`` (Default: ``1``).
-* **Override:** Set to ``0`` if the build is already harmonized.
+* **Config option:** ``harmonize: true`` (Default: ``true``)
+* **Description:** Set to ``false`` if the data is already harmonized.
+
+Example in ``config.yaml``:
+
+.. code-block:: yaml
+
+    harmonize: true  # Set to false if data is already harmonized
 
 Module 3: Initial QC
 ~~~~~~~~~~~~~~~~~~~~
-Performs Quality Control prior to relatedness checks.  
+Performs Quality Control prior to relatedness checks.
 
 * Exclude SNPs and individuals with >10% missingness (**Plink**).
 * Exclude SNPs and individuals with >2% missingness (**Plink**).
 
 Module 4: Relatedness
 ~~~~~~~~~~~~~~~~~~~~~
-This module uses **KING** to separate related and unrelated study samples. The module also performs **PC-AiR** and **PC-Relate** for kinship estimation.
+This module uses **KING** to separate related and unrelated study samples. The module
+also performs **PC-AiR** and **PC-Relate** for kinship estimation.
 
-**KING** is a toolset that makes use of SNP data to identify how closely two individuals are related based on their DNA. This inference is based on the **kinship coefficient** (:math:`\phi`).
+**KING** is a toolset that makes use of SNP data to identify how closely two individuals
+are related based on their DNA. This inference is based on the **kinship coefficient** (:math:`\phi`).
 
-The fundamental equation KING uses to estimate the kinship coefficient :math:`\phi` between individuals :math:`i` and :math:`j` is based on the counts of **Heterozygote-Heterozygote (Het-Het)** and **Heterozygote-Homozygote (Het-Hom)** mismatches:
+The fundamental equation KING uses to estimate the kinship coefficient :math:`\phi` between
+individuals :math:`i` and :math:`j` is based on the counts of **Heterozygote-Heterozygote (Het-Het)**
+and **Heterozygote-Homozygote (Het-Hom)** mismatches:
 
 .. math::
 
@@ -67,19 +91,34 @@ Based on the calculated :math:`\phi`, relationships are categorized as follows:
      - No close detectable relation
 
 
-PC-AiR is used to perform Principal Component Analysis (PCA) for population structure detection while accounting for known or cryptic relatedness. It identifies a subset of unrelated individuals that represent the ancestral diversity of the sample to compute the principal components (PCs).
+PC-AiR is used to perform Principal Component Analysis (PCA) for population structure
+detection while accounting for known or cryptic relatedness. It identifies a subset of
+unrelated individuals that represent the ancestral diversity of the sample to compute
+the principal components (PCs).
 
-The method utilizes the kinship coefficients (:math:`\phi`) calculated by **KING** to define a "partition" of the data.
+The method utilizes the kinship coefficients (:math:`\phi`) calculated by **KING** to
+define a "partition" of the data.
 
-PC-Relate uses the principal components from PC-AiR to estimate kinship coefficients and IBS (Identity By State) sharing probabilities while adjusting for population stratification. 
+PC-Relate uses the principal components from PC-AiR to estimate kinship coefficients
+and IBS (Identity By State) sharing probabilities while adjusting for population stratification.
 
-The primary metric produced is the **PC-Relate Kinship Coefficient** (:math:`\phi_{ij}^{PCR}`), which is estimated using a ratio of genetic covariance adjusted for local ancestry:
+The primary metric produced is the **PC-Relate Kinship Coefficient** (:math:`\phi_{ij}^{PCR}`),
+which is estimated using a ratio of genetic covariance adjusted for local ancestry:
 
 .. math::
 
    \phi_{ij}^{PCR} = \frac{\text{Cov}(G_i, G_j)}{2 \sqrt{\text{Var}(G_i) \text{Var}(G_j)}}
 
 
+Config Options:
+
+.. code-block:: yaml
+
+    relatedness:
+        method: "0"  # Options: "0" (KING), "pcair", "pcrelate"
+
+    SEX_CHECK: true  # Whether to perform sex check
+    GRM: true  # Whether to compute GRM
 
 .. list-table:: Relatedness Method Comparison
    :widths: 20 40 40
@@ -112,11 +151,16 @@ Module 6: Phasing
 ~~~~~~~~~~~~~~~~~
 Phasing performed via **shapeit4.2** with reference map ``chr${CHR}.b38.gmap.gz``.
 
-Phasing is the process of estimating haplotypes from observed genotypes, determining which alleles were inherited together from a single parent. In this pipeline, phasing is performed via **shapeit4.2**.
+Phasing is the process of estimating haplotypes from observed genotypes, determining
+which alleles were inherited together from a single parent. In this pipeline, phasing
+is performed via **shapeit4.2**.
 
-The accuracy of the haplotype estimation relies on a high-resolution genetic map that provides the recombination rates across the genome. We use the reference map: ``chr${CHR}.b38.gmap.gz``.
+The accuracy of the haplotype estimation relies on a high-resolution genetic map that
+provides the recombination rates across the genome. We use the reference map: ``chr${CHR}.b38.gmap.gz``.
 
-A common metric for evaluating phasing quality is the **Switch Error Rate**, which measures the frequency of incorrect "switches" between the maternal and paternal haplotypes in the estimated sequence:
+A common metric for evaluating phasing quality is the **Switch Error Rate**, which
+measures the frequency of incorrect "switches" between the maternal and paternal
+haplotypes in the estimated sequence:
 
 .. math::
 
@@ -143,18 +187,30 @@ A common metric for evaluating phasing quality is the **Switch Error Rate**, whi
 
 Module 7: Rfmix
 ~~~~~~~~~~~~~~~
-This module infers local ancestry across the genome using phased genotype files and a reference panel, such as ``hg38_phased.vcf.gz``. **rfmix** uses a discriminative machine learning approach to assign ancestral origins to specific chromosomal segments.
+This module infers local ancestry across the genome using phased genotype files and a
+reference panel, such as ``hg38_phased.vcf.gz``. **rfmix** uses a discriminative
+machine learning approach to assign ancestral origins to specific chromosomal segments.
 
+For high-confidence ancestry calls, the pipeline enforces a strict threshold on the
+posterior probabilities assigned to each segment. Global ancestry estimates are only
+calculated for individuals where the posterior probability exceeds 0.8.
 
-For high-confidence ancestry calls, the pipeline enforces a strict threshold on the posterior probabilities assigned to each segment. Global ancestry estimates are only calculated for individuals where the posterior probability exceeds 0.8.
-
-The posterior probability :math:`P(A | G)` represents the likelihood that a genomic segment belongs to ancestry :math:`A` given the observed genotypes :math:`G`:
+The posterior probability :math:`P(A | G)` represents the likelihood that a genomic
+segment belongs to ancestry :math:`A` given the observed genotypes :math:`G`:
 
 .. math::
 
    P(A | G) = \frac{P(G | A) P(A)}{P(G)}
 
 
+Config Options:
+
+.. code-block:: yaml
+
+    localAncestry:
+        RFMIX: true  # Enable RFMix
+        test: true   # Run in test mode with reduced parameters
+        thin_subjects: 0.1  # Fraction of subjects to use
 
 .. list-table:: rfmix Configuration and Requirements
    :widths: 30 70
@@ -171,6 +227,20 @@ The posterior probability :math:`P(A | G)` represents the likelihood that a geno
    * - **Confidence Threshold**
      - Posterior probability :math:`> 0.8` for global ancestry inclusion.
 
+
+
+Module 8: Global Ancestry Classification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This module classifies global ancestry using dimension reduction (PCA, UMAP, VAE)
+and Random Forest classification. See :doc:`tutorial_ancestry` for detailed usage.
+
+Config Options:
+
+.. code-block:: yaml
+
+    ancestry:
+        threshold: 0.8  # Minimum posterior probability for confident classification
+        model: "pca"    # Embedding model: pca, umap, vae, rfmix
 
 
 
@@ -216,7 +286,7 @@ Module 5: Standard QC (Sex Check)
    $ grep 'PROBLEM' plink.sexcheck | awk '{print $1, $2}' > sex_discrepancy.txt
 
 Module 6: Phasing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-
 .. code-block:: console
 
    # Execute shapeit4 for a specific chromosome
