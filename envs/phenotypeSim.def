@@ -1,0 +1,17 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%arguments
+    ENV_NAME=phenotypeSim
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export PATH="/opt/conda/envs/{{ ENV_NAME }}/bin:$PATH"
+    export LC_ALL=C.UTF-8
+
+%files
+    phenotypeSim.yml /app/phenotypeSim.yml
+
+%post
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/phenotypeSim.yml
+    /usr/bin/micromamba clean --all -y

@@ -1,0 +1,18 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%arguments
+    # Best practice: Name your environment something consistent
+    ENV_NAME=genomeUtils
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export PATH="/opt/conda/envs/{{ ENV_NAME }}/bin:$PATH"
+    export LC_ALL=C.UTF-8
+
+%files
+    genomeUtils.yml /app/ancNreport.yml
+
+%post
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/ancNreport.yml
+    /usr/bin/micromamba clean --all -y
