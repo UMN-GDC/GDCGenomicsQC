@@ -1,28 +1,33 @@
-rule estimateAncestry:
+checkpoint estimateAncestry:
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
-    threads: 8
     resources:
         nodes = 1,
         mem_mb = 64000,
         runtime = 2880,
     input:
-        fam = os.path.join(config['OUT_DIR'], "02-relatedness/standardFiltered.LDpruned.fam"),
-        ancestry = os.path.join(config['REF'], "rfmix_ref/super_population_map_file.txt"),
-        eigen = os.path.join(config['OUT_DIR'], "04-globalAncestry/merged_dataset_pca.eigenvec"),
-        umap = os.path.join(config['OUT_DIR'], "04-globalAncestry/umap.csv"),
+        labels = REF / "1000G_highcoverage"/ "population.txt",
+        eigen_ref = OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+        eigen_sample = OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+        umap_ref = OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+        umap_sample = OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
     output:
-        report(os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.png"), caption = "../../report/PCs.rst", category = "Global ancestry"),
-        os.path.join(config['OUT_DIR'], "04-globalAncestry/latentDistantRelatedness.csv"),
+        report(OUT_DIR / "01-globalAncestry" / "PC_referenceSpace.svg", caption = "../../report/PCs.rst", category = "Global ancestry"),
+        report(OUT_DIR / "01-globalAncestry" / "UMAP_referenceSpace.svg", caption = "../../report/PCs.rst", category = "Global ancestry"),
+        ancestry = OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
     params:
-        dir = os.path.join(config['OUT_DIR'], "04-globalAncestry"),
+        dir = OUT_DIR / "01-globalAncestry",
+
 
     shell: """
     echo "Running ancestry estimation:"
 
     Rscript scripts/classification.R  \
-      --pc {input.eigen} \
-      --umap {input.umap} \
-      --labels {input.ancestry} \
+      --eigen_ref {input.eigen_ref} \
+      --eigen_sample {input.eigen_sample} \
+      --umap_ref {input.umap_ref} \
+      --umap_sample {input.umap_sample} \
+      --labels {input.labels} \
       --out {params.dir} \
       --rseed $RANDOM
 

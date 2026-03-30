@@ -13,8 +13,11 @@
 *.yml
 !config/config.schema.yaml
 !config/config.yaml
+!envs/*.yml
+!envs/*.yaml
 !config/example.config
 !.readthedocs.yaml
+.cache/
 
 # History files
 .Rhistory

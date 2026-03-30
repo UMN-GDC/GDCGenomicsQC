@@ -3,7 +3,7 @@ From: mambaorg/micromamba:latest
 
 %arguments
     # Best practice: Name your environment something consistent
-    ENV_NAME=rfmix
+    ENV_NAME=genomeUtils
 
 %environment
     export MAMBA_ROOT_PREFIX=/opt/conda
@@ -11,9 +11,8 @@ From: mambaorg/micromamba:latest
     export LC_ALL=C.UTF-8
 
 %files
-    rfmix.yml /app/rfmix.yml
+    genomeUtils.yml /app/ancNreport.yml
 
 %post
-    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/rfmix.yml
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/ancNreport.yml
     /usr/bin/micromamba clean --all -y
-

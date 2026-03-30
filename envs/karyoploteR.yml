@@ -1,0 +1,13 @@
+name: karyoploteR
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - r-base>=4.2
+  - r-tidyverse
+  - r-vroom
+  - r-patchwork
+  - r-argparse
+  - bioconductor-karyoploter
+  - bioconductor-regioneR
+prefix: /projects/standard/gdc/public/envs/karyoploteR

@@ -1,0 +1,23 @@
+name: MASH
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - seaborn=0.13.2
+  - xarray=2023.6.0
+  - statsmodels=0.13.5
+  - numpy=1.23.5
+  - pytest
+  - matplotlib=3.7.1
+  - pandas=1.5.2
+  - pandas-plink
+  - scipy=1.10.0
+  - tqdm=4.64.1
+  - scikit-learn
+  - pip
+  - gcta
+  - pyarrow    # This is the "engine"
+  - fastparquet # Optional: an alternative engine often used with Dask
+  - dask
+prefix: /projects/standard/gdc/public/envs/MASH

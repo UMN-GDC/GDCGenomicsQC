@@ -1,0 +1,78 @@
+from pathlib import Path
+
+OUT_DIR = Path(config['OUT_DIR'])
+REF = Path(config['REF'])
+ANCESTRY_MODEL = config.get('ancestry', {}).get('model', 'pca')
+
+
+checkpoint estimateAncestry:
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda: "../../envs/genomeUtils.yml"
+    threads: 8
+    resources:
+        nodes = 1,
+        mem_mb = 64000,
+        runtime = 240,
+    input:
+        labels = REF / "1000G_highcoverage" / "population.txt",
+        eigen_ref = OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+        eigen_sample = OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+        umap_ref = OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+        umap_sample = OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
+        rfmix_global = OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+    output:
+        pos_prob = OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
+        sample_coords = OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
+        ref_coords = OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
+        ridge_plot = report(OUT_DIR / "01-globalAncestry" / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
+            caption = "../../report/ancestry_ridgelines.rst", category = "Global ancestry"),
+    params:
+        dir = OUT_DIR / "01-globalAncestry",
+        script = workflow.source_path("../scripts/trainPredict.R")
+    shell:
+        """
+        Rscript {params.script} \
+          --eigen_ref {input.eigen_ref} \
+          --eigen_sample {input.eigen_sample} \
+          --umap_ref {input.umap_ref} \
+          --umap_sample {input.umap_sample} \
+          --labels {input.labels} \
+          --rfmix_global {input.rfmix_global} \
+          --out {params.dir} \
+          --rseed $RANDOM
+        """
+
+
+def get_posterior_probs(wildcards):
+    checkpoint_output = checkpoints.estimateAncestry.get(**wildcards).output.pos_prob
+    return checkpoint_output
+
+
+rule classifyAncestry:
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda: "../../envs/genomeUtils.yml"
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 16000,
+        runtime = 60,
+    input:
+        pos_prob = get_posterior_probs,
+        sample_coords = OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
+        ref_coords = OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
+    output:
+        classifications = OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
+        class_plot = report(OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
+            caption = "../../report/ancestry_classification.rst", category = "Global ancestry"),
+    params:
+        dir = OUT_DIR / "01-globalAncestry",
+        threshold = config.get('ancestry', {}).get('threshold', 0.8),
+        model = ANCESTRY_MODEL,
+        script = workflow.source_path("../scripts/classify.R")
+    shell:
+        """
+        Rscript {params.script} \
+          --out {params.dir} \
+          --threshold {params.threshold} \
+          --model {params.model}
+        """

@@ -2,8 +2,7 @@ Bootstrap: docker
 From: mambaorg/micromamba:latest
 
 %arguments
-    # Best practice: Name your environment something consistent
-    ENV_NAME=rfmix
+    ENV_NAME=phenotypeSim
 
 %environment
     export MAMBA_ROOT_PREFIX=/opt/conda
@@ -11,9 +10,8 @@ From: mambaorg/micromamba:latest
     export LC_ALL=C.UTF-8
 
 %files
-    rfmix.yml /app/rfmix.yml
+    phenotypeSim.yml /app/phenotypeSim.yml
 
 %post
-    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/rfmix.yml
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/phenotypeSim.yml
     /usr/bin/micromamba clean --all -y
-

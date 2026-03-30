@@ -93,7 +93,7 @@ vizDat |>
   facet_wrap(~ alg, scales= "free", labeller = label_both, ncol = 2) +
   # facet_grid(rows = vars(alg), cols = vars(mislabeled), scales= "free", labeller = label_both) +
   theme_minimal() 
-ggsave(paste0(args$out, "latentDistantRelatedness.png"))
+ggsave(paste0(args$out, "svg"), width = 9, height= 5)
 
 dat |>
   select(-c(PAT, MAT, PHENO)) |>

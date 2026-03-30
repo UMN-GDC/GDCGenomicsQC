@@ -1,5 +1,5 @@
 rule checkRelatedness:
-    container: "oras://ghcr.io/coffm049/gdcgnomicsqc/plink:latest"
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
     resources:
         # nodes=1 is usually the default, but can be specified if needed
@@ -8,18 +8,18 @@ rule checkRelatedness:
         mem_mb = 128000,
         runtime =720,
     input:
-        bed = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.bed",
-        bim = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.bim",
-        fam = lambda wildcards: get_input_by_stage(wildcards) + ".LDpruned.fam"
+        bed = OUT_DIR / "{subset}" / "initialFilter.LDpruned.bed",
+        bim = OUT_DIR / "{subset}" / "initialFilter.LDpruned.bim",
+        fam = OUT_DIR / "{subset}" / "initialFilter.LDpruned.fam",
     output:
-        bed =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.bed"),
-        bim =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.bim"),
-        fam =   os.path.join(config['OUT_DIR'], "{stage}/unrelated.fam"),
+        bed = OUT_DIR / "{subset}" / "unrelated.bed",
+        bim = OUT_DIR / "{subset}" / "unrelated.bim",
+        fam = OUT_DIR / "{subset}" / "unrelated.fam",
     params:
-        output_dir = os.path.join(config['OUT_DIR'], "{stage}"),
+        output_dir = OUT_DIR / "{subset}",
         input_prefix = lambda wildcards, input: input.bed[:-4],
         method = config['relatedness']['method'],
-        ref= config["REF"]
+        ref= REF
     shell: """
     
     echo "Estimating genetic relatedness"
@@ -36,9 +36,9 @@ rule checkRelatedness:
     # elif [[ "{params.method}" == "0"]]; then
     else
         echo "ASSUMING UNRELATED SAMPLE, since no method of estimating relatedness specified"
-        cp {params.input_prefix}.bed {output.bed}
-        cp {params.input_prefix}.bim {output.bim}
-        cp {params.input_prefix}.fam {output.fam}
+        cp {input.bed} {output.bed}
+        cp {input.bim} {output.bim}
+        cp {input.fam} {output.fam}
     fi
 
 
