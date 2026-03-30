@@ -49,6 +49,8 @@ conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
 
 ## Using Snakemake workflows
 - update config files as necessary (located at `config/config.yaml`)
+    - Update Inputs and outputs and methods details as desired
+    - updated SLURM group name for accounting purposes
 - Snakemake expects you to execute from `GDCGenomicsQC/workflow` 
 - Run the desired workflow (by default looks in `config/config.yaml`) using the `--configfile=<path/to/confi.yaml/` flag
 

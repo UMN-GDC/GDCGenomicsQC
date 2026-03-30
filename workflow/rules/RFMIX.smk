@@ -8,7 +8,7 @@ rule RFMIX:
         runtime = 1320,
     input:
         vcf = OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
-        ref = REF / "1000G_GRCh38" / "ALL.chr{CHR}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz",
+        ref = REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
         map = REF / "1000G_highcoverage" / "population.txt",
         gmap = REF / "rfmix_ref" / "genetic_map_hg38.txt"
     output:
@@ -16,35 +16,64 @@ rule RFMIX:
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv",
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.rfmix.Q",
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.sis.tsv",
-        generatedData = temp(OUT_DIR / "02-localAncestry" / "generated_data{CHR}"),
-        tempDir = temp(OUT_DIR / "02-localAncestry" / "temp{CHR}")
+        tempDir = temp(directory(OUT_DIR / "02-localAncestry" / "temp{CHR}"))
     params:
         out_dir = OUT_DIR / "02-localAncestry",
-        test = config["rfmix_test"],
+        test = config["localAncestry"]["test"],
     shell: """
+    mkdir -p {output.tempDir}
+    cut -f1,7 -d' ' {input.map} > {output.tempDir}/population.txt
+    sed -i '1d' {output.tempDir}/population.txt
+    sed -i 's/ /\t/g' {output.tempDir}/population.txt
     
-    cut -f1,7 {input.map} > {params.out_dir}/refsubpop.txt
+    # make 1kg ucsc for RFMIX
+    echo "chr{wildcards.CHR} {wildcards.CHR}" > {output.tempDir}/rename_map{wildcards.CHR}.txt
+    bcftools annotate --rename-chrs {output.tempDir}/rename_map{wildcards.CHR}.txt {input.ref} -Oz -o {output.tempDir}/chr{wildcards.CHR}.vcf.gz
+    bcftools index -t {output.tempDir}/chr{wildcards.CHR}.vcf.gz
 
     echo "RFMIX Ancestry Estimation"
     if [ "{params.test}" = "True" ] ;  then
-      rfmix \
+      rfmix  \
           -f {input.vcf} \
-          -r {input.ref} \
-          -m {params.out_dir}/refsubpop.txt \
+          -r {output.tempDir}/chr{wildcards.CHR}.vcf.gz \
+          -m {output.tempDir}/population.txt \
           -g {input.gmap} \
+          --crf-weight=3.0 \
           -e 1 \
           -t 10 \
+          -s 100 \
           --n-threads={threads} \
           -o {params.out_dir}/chr{wildcards.CHR}.lai \
           --chromosome={wildcards.CHR}
     else
       rfmix \
           -f {input.vcf} \
-          -r {input.ref} \
-          -m {params.out_dir}/refsubpop.txt \
+          -r {output.tempDir}/chr{wildcards.CHR}.vcf.gz \
+          -m {output.tempDir}/population.txt \
           -g {input.gmap} \
           --n-threads={threads} \
           -o {params.out_dir}/chr{wildcards.CHR}.lai \
           --chromosome={wildcards.CHR}
     fi
     """
+
+
+rule rfmixGlobal:
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda: "../../envs/ancNreport.yml"
+    threads: 4
+    resources:
+        nodes = 1,
+        mem_mb = 32000,
+        runtime = 60,
+    input:
+        msp = expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR = CHROMOSOMES),
+        fb = expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv", CHR = CHROMOSOMES),
+    output:
+        mat = OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+    params:
+        script = workflow.source_path("../scripts/rfmixGlobal.R")
+    shell:
+        """
+        Rscript {params.script} {OUT_DIR}
+        """

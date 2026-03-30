@@ -15,7 +15,7 @@ rule convertNfilt :
         vmiss = OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"
     input:
         vcf = config['vcf_template'],
-        ancestries = get_ancestry_file, # Snakemake evaluates this per wildcard
+        keep = get_ancestry_file,
         crossmap = REF / "CrossMap" / "hg19ToHg38.over.chain.gz",
         gr38fasta = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
     params:
@@ -46,8 +46,8 @@ rule convertNfilt :
                --make-pgen \
                --rm-dup force-first \
                --missing \
-               --thin-indiv-count 5000 \
-               --thin-count 20000 \
+               --thin-indiv 0.1 \
+               --thin-count 100000 \
                --threads {threads} \
                --seed 1 \
                --memory {resources.mem_mb} \
@@ -66,10 +66,9 @@ rule convertNfilt :
                --rm-dup force-first \
                --threads {threads} \
                --missing \
-               --covar {input.ancestries} \
-               --keep-if 'pc_label == {wildcards.subset}' \
-               --thin-indiv-count 5000 \
-               --thin-count 20000 \
+               --keep {input.keep} \
+               --thin-indiv-count 10000 \
+               --thin-count 100000 \
                --seed 1 \
                --memory {resources.mem_mb} \
                --out {output.tempDir}/intermediate_0
@@ -80,8 +79,7 @@ rule convertNfilt :
                --threads {threads} \
                --rm-dup force-first \
                --memory {resources.mem_mb} \
-               --covar {input.ancestries} \
-               --keep-if 'pc_label == {wildcards.subset}' \
+               --keep {input.keep} \
                --out {output.tempDir}/intermediate_0
     fi
 
