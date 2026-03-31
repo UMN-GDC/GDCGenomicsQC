@@ -13,7 +13,6 @@ dependencies:
   - r-tidyverse
   - r-uwot
   - r-randomforest
-  - r-ggridges
   - r-data.table
   - r-argparse
   - r-gt

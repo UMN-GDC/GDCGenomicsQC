@@ -22,11 +22,20 @@ rule convertNfilt :
         thin = config['thin'],
         input_prefix = lambda wildcards, input: input.vcf[:-7],
         output_prefix = lambda wildcards, output: output.pgen[:-5],
-        liftover = True
+        liftoover = True,
+        info_r2_min = config.get('convertNfilt', {}).get('info_r2_min'),
+        filter_pass = config.get('convertNfilt', {}).get('filter_pass', True),
+        qual_min = config.get('convertNfilt', {}).get('qual_min'),
     shell: """
     
     mkdir -p {output.tempDir}
-    # if [[ "{params.liftover}" == "True" ]]; then
+    
+    BCFTOOLS_FILTER=""
+    {params.filter_pass:+BCFTOOLS_FILTER="$BCFTOOLS_FILTER -i 'FILTER==\"PASS\"'"}
+    {params.qual_min:+BCFTOOLS_FILTER="$BCFTOOLS_FILTER -i 'QUAL>={params.qual_min}'"}
+    {params.info_r2_min:+BCFTOOLS_FILTER="$BCFTOOLS_FILTER -i 'INFO/R2>={params.info_r2_min}'"}
+    
+    # if [[ "{params.liftoover}" == "True" ]]; then
     #     for i in {{1..22}} X Y MT; do echo "$i chr$i"; done > {output.tempDir}/chr_map.txt
     #     
     #     # Use it in the command
@@ -40,9 +49,17 @@ rule convertNfilt :
     #     ln -sf $(realpath {input.vcf}) {output.tempDir}/intermediate_00.vcf.gz
     # fi
 
+    if [ -n "$BCFTOOLS_FILTER" ]; then
+        echo "Pre-filtering VCF with bcftools: $BCFTOOLS_FILTER"
+        bcftools view {input.vcf} $BCFTOOLS_FILTER -Oz -o {output.tempDir}/filtered.vcf.gz
+        VCF_INPUT={output.tempDir}/filtered.vcf.gz
+    else
+        VCF_INPUT={input.vcf}
+    fi
+
     if [[ "{wildcards.subset}" == "full" && "{params.thin}" == "True" ]]; then
         echo "Processing full dataset without subsetting..."
-        plink2 --vcf {input.vcf} \
+        plink2 --vcf $VCF_INPUT \
                --make-pgen \
                --rm-dup force-first \
                --missing \
@@ -53,7 +70,7 @@ rule convertNfilt :
                --memory {resources.mem_mb} \
                --out {output.tempDir}/intermediate_0
     elif [[ "{wildcards.subset}" == "full" && "{params.thin}" != "True" ]]; then
-        plink2 --vcf {input.vcf} \
+        plink2 --vcf $VCF_INPUT \
                --make-pgen \
                --rm-dup force-first \
                --threads {threads} \
@@ -61,7 +78,7 @@ rule convertNfilt :
                --memory {resources.mem_mb} \
                --out {output.tempDir}/intermediate_0
     elif [[ "{wildcards.subset}" != "full" && "{params.thin}" == "True" ]]; then
-        plink2 --vcf {input.vcf} \
+        plink2 --vcf $VCF_INPUT \
                --make-pgen \
                --rm-dup force-first \
                --threads {threads} \
@@ -73,7 +90,7 @@ rule convertNfilt :
                --memory {resources.mem_mb} \
                --out {output.tempDir}/intermediate_0
     elif [[ "{wildcards.subset}" != "full" && "{params.thin}" != "True" ]]; then
-        plink2 --vcf {input.vcf} \
+        plink2 --vcf $VCF_INPUT \
                --make-pgen \
                --missing \
                --threads {threads} \
