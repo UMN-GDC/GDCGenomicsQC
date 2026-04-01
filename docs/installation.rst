@@ -66,7 +66,7 @@ Example configuration:
     REF: "/path/to/reference/data"
 
     relatedness:
-        method: "0"
+        method: "king"
 
     localAncestry:
         RFMIX: true

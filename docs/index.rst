@@ -1,7 +1,7 @@
 Welcome to the GDC Documentation!
 =================================
 
-.. image:: https://path-to-your-logo.png
+.. image:: images/gdclogo.jpg
    :alt: GDC Logo
    :align: center
 
@@ -18,8 +18,8 @@ high-performance clusters like the UMN MSI Agate cluster.
    usage
    api
    contributing
-   tutorial_qc
-   tutorial_ancestry
+   tutorial_qc_pipeline
+   tutorial_ancestry_classification
 
 Indices and tables
 ==================
