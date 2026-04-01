@@ -1,7 +1,6 @@
 SNP_HERIT_CONFIG = config.get('snpHerit', {})
 SNP_HERIT_ACTIVE = bool(SNP_HERIT_CONFIG.get('pheno') and SNP_HERIT_CONFIG.get('covar'))
 
-# Only validate if snpHerit section exists with partial config
 if SNP_HERIT_CONFIG:
     if SNP_HERIT_CONFIG.get('pheno') and not SNP_HERIT_CONFIG.get('covar'):
         raise ValueError("snpHerit.covar must be specified in config when pheno is specified")
@@ -10,43 +9,42 @@ if SNP_HERIT_CONFIG:
 
 if SNP_HERIT_ACTIVE:
     rule snpHerit:
-        container: "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest"
-        threads: 1
+        container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        conda: "../../envs/ancNreport.yml"
+        threads: 8
         resources:
             nodes = 1,
             mem_mb = 32000,
             runtime = 2880,
         input:
-            grm = OUT_DIR / "full" / "initialFilter.grm.bin",
-            grmid = OUT_DIR / "full" / "initialFilter.grm.id",
-            grmN = OUT_DIR / "full" / "initialFilter.grm.N",
-            eigen = OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+            pcrelate = OUT_DIR / "{subset}" / "pcrelate_kinship.RDS",
+            pcaobj = OUT_DIR / "{subset}" / "pcair_pcaobj.RDS",
+            unrels = OUT_DIR / "{subset}" / "pcair_unrelated_ids.txt",
             pheno = config['snpHerit']['pheno'],
             covar = config['snpHerit']['covar'],
         output:
-            estimates = OUT_DIR / "03-snpHeritability" / config['snpHerit']['out'],
+            estimates = OUT_DIR / "{subset}" / "03-snpHeritability" / config['snpHerit']['out'],
         params:
             method = config['snpHerit']['method'],
-            random_groups = config['snpHerit'].get('random_groups', False),
-            grm_prefix = lambda wildcards, input: input.grm[:-8],
-            npc = config['snpHerit']['npc'],
+            npc = config['snpHerit'].get('npc', 10),
             mpheno = config['snpHerit'].get('mpheno', 1),
             loop_covs = config['snpHerit'].get('loop_covs', False),
             fixed_effects = config['snpHerit'].get('fixed_effects', []),
-        shell: 
+            random_groups = config['snpHerit'].get('random_groups', False),
+            out_dir = lambda wildcards, output: OUT_DIR / wildcards.subset / "03-snpHeritability",
+        shell:
             """
-            echo "Estimating SNP heritability: "
+            mkdir -p {params.out_dir}
             
-            MASH --PC {input.eigen} \
-              --covar {input.covar} \
-              --prefix {params.grm_prefix} \
-              --pheno {input.pheno} \
-              --out {output.estimates} \
-              --npc {params.npc} \
-              --mpheno {params.mpheno} \
-              --Method {params.method} \
-              {params.fixed_effects:+--fixed_effects {params.fixed_effects}} \
-              {params.random_groups:+--random_groups {params.random_groups}} \
-              {params.loop_covs:+--loop_covs}
+            Rscript scripts/run_snp_herit.R \
+                "{params.out_dir}" \
+                "{input.pcrelate}" \
+                "{input.pcaobj}" \
+                "{input.unrels}" \
+                "{input.pheno}" \
+                "{input.covar}" \
+                "{output.estimates}" \
+                {params.npc} \
+                {params.mpheno} \
+                {params.method}
             """
-

@@ -169,7 +169,7 @@ phenotypeSimulation:
 ```yaml
 snpHerit:
     pheno: null  # Path to phenotype file (required)
-    covar: null  # Path to covariate file (required)
+    covar: null  # Path to covariate file(s), comma-separated for multiple files (required)
     out: phenoEsts
     method: "AdjHE"  # AdjHE, GCTA, PredLMM, SWD, COMBAT
     random_groups: false

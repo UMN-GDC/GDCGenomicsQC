@@ -1,0 +1,17 @@
+executor: slurm
+jobs: 25
+use-singularity: true
+singularity-args: "--bind /scratch.global,/projects"
+default-resources:
+  - slurm_account=gdc
+  - mem_mb=4000
+  - runtime=60
+latency-wait: 20
+shared-fs-usage:
+  - input-output
+  - persistence
+  - software-deployment
+  - software-deployment-cache
+  - source-cache
+  - sources
+  - storage-local-copies

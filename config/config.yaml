@@ -5,64 +5,48 @@ REF: "/projects/standard/gdc/public/Ref"
 vcf_template: "/projects/standard/gdc/public/r25Data/allSubjects_hg38_chr{CHR}.vcf.gz"
 local-storage-prefix: "/scratch.global/coffm049/GDCGenomicsQC/workflow/.snakemake/storage"
 
-# Tool-specific parameters
-# Data processing options (not yet implemented in workflow)
-# liftover: true    # Convert genome build (e.g., GRCh37 to GRCh38)
-# harmonize: true   # Align strand/orientation to reference panel
-
-# QC
+# QC Settings
 relatedness:
-    method: "0"
+    method: "king"  # "0" = skip (assume unrelated), "king" = KING algorithm
+    king_cutoff: 0.0884
 
-SEX_CHECK : false
-GRM : true
+SEX_CHECK: false
+GRM: true
+thin: false
 
-localAncestry :
-  RFMIX : true
-  test : true
-  thin_subjects : 0.1
-  figures : "figures"
-ancestry:
-    threshold: 0.8
-    model: "pca"  # Options: pca, umap, vae, rfmix
+# SNP Heritability Estimation
+snpHerit:
+    pheno: null  # Replace with your phenotype file
+    # Path to covariate file(s)
+    # Can be a single file path or comma-separated list for multiple files
+    # e.g., "/path/to/covariates.csv" or "/path/to/cov1.csv,/path/to/cov2.csv"
+    # Format: CSV with columns: IID, <covariates>
+    covar: null
+    out: null
+    method: "AdjHE"
+    npc: 10
+    # Phenotype column(s) - can be column index(es) or column name(s), single value or list
+    # Examples: 1, [1, 2, 3], "pheno_name", ["pheno1", "pheno2"]
+    mpheno: 1
+    # Covariate specification options for MASH
+    fixed_effects: null  # List of covariate column names to include as fixed effects
+    qcovar: null        # Quantitative covariate column names (for GCTA method)
+    covar_discrete: null  # Discrete/categorical covariate column names (for GCTA method)
+
+# Tool settings
+localAncestry:
+    RFMIX: false
+    test: false
+    thin_subjects: 0.1
+    figures: "figures"
 
 internalPCA:
     plot: true
-    color_by: null  # Column name in phenotype file to color by (e.g., "ancestry", "sex"). null = no coloring
-    phenotype_file: null  # Path to phenotype file for coloring (optional)
+    color_by: null
+    phenotype_file: null
 
-
-
-
-phenotypeSimulation:
-    ancestries: ["AFR", "EUR"]
-    n_sims: 10
-    heritability: 0.4
-    rho: 0.8
-    maf: 0.05
-    seed: 42
-    skip_thinning: true
-    thin_count_snps: 1000000
-    thin_count_inds: 10000
-
-snpHerit:
-    pheno: null  # Path to phenotype file (required)
-    covar: null  # Path to covariate file (required)
-    out: phenoEsts
-    method : "AdjHE" # AdjHE, GCTA, PredLMM, SWD, COMBAT
-    random_groups : false
-    npc:
-        - 10 # can be a list for model comparison
-    loop_covs : false
-    mpheno : 1
-
-# development
-thin: true
-
-convertNfilt:
-    info_r2_min: null  # Minimum R2 value from INFO field (e.g., 0.8)
-    filter_pass: true  # Only keep variants where FILTER == PASS (default: true)
-    qual_min: null     # Minimum QUAL value (e.g., 30)
+ancestry:
+    threshold: 0.8
+    model: "pca"
 
 conda-frontend: mamba
-

@@ -94,12 +94,15 @@ For more detailed usage instructions, see :doc:`usage`.
 External Dependencies
 ---------------------
 
-The pipeline automatically handles most dependencies through conda environments
-and Singularity containers. However, you will need:
+All software dependencies are automatically handled through conda environments
+and Singularity containers. The pipeline is entirely self-contained—you only need:
 
+- Snakemake (installed via conda as shown above)
 - Access to reference data (e.g., 1000 Genomes Project)
 - Sufficient storage for intermediate and output files
 - Appropriate HPC resources (see profile configurations)
+
+No manual installation of external tools (PLINK, bcftools, GATK, etc.) is required.
 
 Troubleshooting
 ---------------

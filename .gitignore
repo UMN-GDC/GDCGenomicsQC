@@ -13,10 +13,12 @@ AGENTS.md
 *.yml
 !config/config.schema.yaml
 !config/config.yaml
+!config/example_config.yaml
 !envs/*.yml
 !envs/*.yaml
 !config/example.config
 !.readthedocs.yaml
+!profiles/*/example_config.yaml
 .cache/
 
 # History files

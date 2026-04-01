@@ -1,482 +1,206 @@
 # GDCGenomicsQC Configuration Schema
-# This file defines the expected structure and validation rules for config.yaml
-# Used by Snakemake for validation with --validate flag
+# Used by Snakemake for validation
 
-$schema: "http://json-schema.org/draft-07/schema#"
-title: "GDCGenomicsQC Configuration"
-description: |
-  Configuration schema for the GDC Genomics QC pipeline.
-  This schema defines all configurable parameters for the Snakemake workflow.
+INPUT_FILE:
+  type: str
+  required: true
+  description: |
+    Path to the input genomic data. This can be:
+    - A PLINK dataset prefix (.bed/.bim/.fam or .pgen/.pvar/.psam)
+    - A VCF file (will be converted to PLINK format)
 
-type: object
-required:
-  - INPUT_FILE
-  - OUT_DIR
-  - REF
+OUT_DIR:
+  type: str
+  required: true
+  description: |
+    Base output directory for all pipeline results.
+    The pipeline will create subdirectories for each analysis step.
 
-properties:
+REF:
+  type: str
+  required: true
+  description: |
+    Path to the reference panel directory.
+    Should contain:
+    - 1000G_highcoverage/ (for ancestry analysis)
+    - Homo_sapiens.GRCh38.dna.primary_assembly.fa (genome FASTA)
+    - CrossMap/ (liftover chain files)
+    - rfmix_ref/ (RFMIX genetic maps)
 
-  # ===========================================================================
-  # Core Paths (Required)
-  # ===========================================================================
+vcf_template:
+  type: str
+  nullable: true
+  description: |
+    Template for VCF input files with {CHR} placeholder.
+    Used when input is in VCF format - will be expanded for each chromosome.
+    Set to null if input is already in PLINK format.
 
-  INPUT_FILE:
-    type: string
-    description: |
-      Path to the input genomic data. This can be:
-      - A PLINK dataset prefix (.bed/.bim/.fam or .pgen/.pvar/.psam)
-      - A VCF file (will be converted to PLINK format)
-    example: "/projects/standard/gdc/public/r25Data/allSubjects_hg38"
-    pattern: "^(/|\\.[/).*"
+local-storage-prefix:
+  type: str
+  nullable: true
+  description: |
+    Path for Snakemake's local storage cache.
 
-  OUT_DIR:
-    type: string
-    description: |
-      Base output directory for all pipeline results.
-      The pipeline will create subdirectories for each analysis step.
-    example: "/scratch.global/coffm049/r25Pipeline"
-    pattern: "^(/|\\.[/).*"
+SEX_CHECK:
+  type: bool
+  default: false
+  description: |
+    Whether to perform sex check during Standard QC.
 
-  REF:
-    type: string
-    description: |
-      Path to the reference panel directory.
-      Should contain:
-      - 1000G_highcoverage/ (for ancestry analysis)
-      - Homo_sapiens.GRCh38.dna.primary_assembly.fa (genome FASTA)
-      - CrossMap/ (liftover chain files)
-      - rfmix_ref/ (RFMIX genetic maps)
-    example: "/projects/standard/gdc/public/Ref"
-    pattern: "^(/|\\.[/).*"
+GRM:
+  type: bool
+  default: false
+  description: |
+    Whether to compute a Genetic Relationship Matrix (GRM).
 
-  vcf_template:
-    type: string
-    description: |
-      Template for VCF input files with {CHR} placeholder.
-      Used when input is in VCF format - will be expanded for each chromosome.
-      Set to null if input is already in PLINK format.
-    example: "/projects/standard/gdc/public/r25Data/allSubjects_hg38_chr{CHR}.vcf.gz"
-    pattern: ".*\\{CHR\\}.*|null"
+thin:
+  type: bool
+  default: false
+  description: |
+    Whether to thin input data before processing.
 
-  local-storage-prefix:
-    type: string
-    description: |
-      Path for Snakemake's local storage cache.
-      Used for caching remote input files to reduce network I/O.
-      Optional - if not specified, remote files will be fetched each time.
-    example: "/scratch.global/coffm049/GDCGenomicsQC/workflow/.snakemake/storage"
-    pattern: "^(/|\\.[/).*"
+relatedness:
+  type: dict
+  default: {}
+  schema:
+    method:
+      type: str
+      default: "0"
+      enum: ["0", "1", "2", "king", "primus"]
+    king_cutoff:
+      type: float
+      default: 0.0884
 
-  # ===========================================================================
-  # Quality Control Options
-  # ===========================================================================
+ancestry:
+  type: dict
+  default: {}
+  schema:
+    threshold:
+      type: float
+      default: 0.8
+    model:
+      type: str
+      default: "pca"
+      enum: ["pca", "umap", "vae", "rfmix"]
 
-  SEX_CHECK:
-    type: boolean
-    default: false
-    description: |
-      Whether to perform sex check during Standard QC.
-      If true, will verify reported sex matches genetic sex and flag discrepancies.
-      Uses Plink --check-sex with default thresholds (F < 0.2 = female, F > 0.8 = male).
+internalPCA:
+  type: dict
+  default: {}
+  schema:
+    plot:
+      type: bool
+      default: false
+    color_by:
+      type: str
+      nullable: true
+      default: null
+    phenotype_file:
+      type: str
+      nullable: true
+      default: null
 
-  GRM:
-    type: boolean
-    default: false
-    description: |
-      Whether to compute a Genetic Relationship Matrix (GRM).
-      Required for SNP heritability estimation.
-      Generates .grm.bin, .grm.id, and .grm.N files used by subsequent analyses.
-      Note: Computed on LD-pruned data to reduce computational burden.
+localAncestry:
+  type: dict
+  default: {}
+  schema:
+    RFMIX:
+      type: bool
+      default: false
+    test:
+      type: bool
+      default: false
+    thin_subjects:
+      type: float
+      default: 0.1
+    figures:
+      type: str
+      default: "figures"
 
-  thin:
-    type: boolean
-    default: false
-    description: |
-      Whether to thin input data before processing.
-      When true, randomly samples a subset of individuals to reduce runtime.
-      Useful for testing pipeline or working with very large datasets.
+phenotypeSimulation:
+  type: dict
+  default: {}
+  schema:
+    ancestries:
+      type: list
+      minitems: 2
+      maxitems: 2
+    n_sims:
+      type: int
+      default: 10
+    heritability:
+      type: float
+      default: 0.4
+    rho:
+      type: float
+      default: 0.8
+    maf:
+      type: float
+      default: 0.05
+    seed:
+      type: int
+      default: 42
+    skip_thinning:
+      type: bool
+      default: false
+    thin_count_snps:
+      type: int
+      default: 1000000
+    thin_count_inds:
+      type: int
+      default: 10000
 
-  # ===========================================================================
-  # Relatedness Estimation
-  # ===========================================================================
+snpHerit:
+  type: dict
+  default: {}
+  schema:
+    pheno:
+      type: str
+      nullable: true
+      default: null
+    covar:
+      type: str
+      nullable: true
+      default: null
+    out:
+      type: str
+      default: "phenoEsts"
+    method:
+      type: str
+      default: "AdjHE"
+      enum: ["AdjHE", "GCTA", "PredLMM", "SWD", "COMBAT"]
+    npc:
+      type: int
+      default: 10
+    random_groups:
+      type: bool
+      default: false
+    loop_covs:
+      type: bool
+      default: false
+    mpheno:
+      type: int
+      default: 1
+    fixed_effects:
+      type: list
+      default: []
 
-  relatedness:
-    type: object
-    description: |
-      Configuration for relatedness estimation and filtering.
-      The pipeline can either estimate relatedness or assume samples are unrelated.
-    properties:
-      method:
-        type: string
-        enum: ["0", "1", "2", "king", "primus"]
-        default: "0"
-        description: |
-          Method for relatedness estimation:
-          - "0" or "": Assume samples are unrelated (no estimation performed)
-          - "1" or "king": Use KING for robust relatedness estimation
-          - "2" or "primus": Use PRIMUS for family reconstruction
-        example: "0"
+convertNfilt:
+  type: dict
+  default: {}
+  schema:
+    info_r2_min:
+      type: float
+      nullable: true
+      default: null
+    filter_pass:
+      type: bool
+      default: true
+    qual_min:
+      type: float
+      nullable: true
+      default: null
 
-    default: {}
-
-  # ===========================================================================
-  # Global Ancestry Estimation
-  # ===========================================================================
-
-  ancestry:
-    type: object
-    description: |
-      Configuration for global (population-level) ancestry estimation.
-    properties:
-      threshold:
-        type: number
-        minimum: 0
-        maximum: 1
-        default: 0.8
-        description: |
-          Minimum proportion threshold for ancestry assignment.
-          Samples with no ancestry above this threshold will be unassigned.
-          Used to determine which samples go into ancestry-specific subsets.
-        example: 0.8
-
-      model:
-        type: string
-        enum: ["pca", "umap", "vae", "rfmix"]
-        default: "pca"
-        description: |
-          Latent space model for ancestry classification:
-          - "pca": Principal Component Analysis - uses top PCs as features
-          - "umap": UMAP embeddings - captures non-linear structure
-          - "vae": Variational Autoencoder (under development)
-          - "rfmix": Use RFMIX global ancestry proportions (requires LAI run)
-        example: "pca"
-
-    default: {}
-
-  internalPCA:
-    type: object
-    description: |
-      Configuration for internal PCA (within-ancestry PCA plots).
-      Optional visualization step after ancestry assignment.
-    properties:
-      plot:
-        type: boolean
-        default: false
-        description: |
-          Whether to generate internal PCA plots within each ancestry group.
-          Useful for detecting substructure within ancestry-specific subsets.
-
-      color_by:
-        type: [string, "null"]
-        default: null
-        description: |
-          Column name in phenotype file to color points by.
-          Common options: "ancestry", "sex", "batch"
-          Set to null for no coloring.
-
-      phenotype_file:
-        type: [string, "null"]
-        default: null
-        description: |
-          Path to phenotype file containing columns to color by.
-          Should be a PLINK-style .fam or .tsv file with sample IDs.
-          If null, will look for phenotype data in sample sheet.
-
-    default: {}
-
-  # ===========================================================================
-  # Local Ancestry (RFMIX)
-  # ===========================================================================
-
-  localAncestry:
-    type: object
-    description: |
-      Configuration for local ancestry inference using RFMIX.
-      Requires samples to be phased first (see Phase rule).
-    properties:
-      RFMIX:
-        type: boolean
-        default: false
-        description: |
-          Whether to run RFMIX for local ancestry estimation.
-          RFMIX uses random forests to assign ancestry to each haplotype segment.
-
-      test:
-        type: boolean
-        default: false
-        description: |
-          Run in test mode with thinned data.
-          Reduces runtime by downsampling phased genotypes.
-
-      thin_subjects:
-        type: number
-        minimum: 0
-        maximum: 1
-        default: 0.1
-        description: |
-          Proportion of subjects to keep in test mode.
-          Only used when test: true.
-        example: 0.1
-
-      figures:
-        type: string
-        default: "figures"
-        description: |
-          Subdirectory name for ancestry visualization outputs.
-          Contains karyotype plots and ancestry proportion summaries.
-
-    default: {}
-
-  # ===========================================================================
-  # Phenotype Simulation
-  # ===========================================================================
-
-  phenotypeSimulation:
-    type: object
-    description: |
-      Configuration for simulating phenotypes for method development.
-      Generates synthetic phenotypes with controlled heritability and ancestry effects.
-      Useful for testing PRS and SNP heritability methods.
-    properties:
-      ancestries:
-        type: array
-        items:
-          type: string
-        minItems: 2
-        maxItems: 2
-        description: |
-          Two ancestry groups to simulate between.
-          Must specify exactly two ancestries present in your data.
-        example: ["AFR", "EUR"]
-
-      n_sims:
-        type: integer
-        minimum: 1
-        default: 10
-        description: |
-          Number of phenotype simulations to generate.
-          Each simulation uses different random seeds.
-        example: 10
-
-      heritability:
-        type: number
-        minimum: 0
-        maximum: 1
-        default: 0.4
-        description: |
-          SNP heritability (h²) of the simulated trait.
-          Proportion of phenotypic variance explained by genetic variants.
-        example: 0.4
-
-      rho:
-        type: number
-        minimum: -1
-        maximum: 1
-        default: 0.8
-        description: |
-          Genetic correlation between ancestries.
-          - 1 = perfect correlation (same causal effects across ancestries)
-          - 0 = no correlation (independent genetic effects)
-          - -1 = opposite effects
-        example: 0.8
-
-      maf:
-        type: number
-        minimum: 0
-        maximum: 0.5
-        default: 0.05
-        description: |
-          Minor allele frequency threshold for causal variants.
-          Only SNPs with MAF >= this value can be causal.
-        example: 0.05
-
-      seed:
-        type: integer
-        default: 42
-        description: |
-          Random seed for reproducibility.
-          Used for all random operations in simulation.
-
-      skip_thinning:
-        type: boolean
-        default: false
-        description: |
-          Skip genotype thinning step.
-          If false, will thin genotypes to improve computational efficiency.
-
-      thin_count_snps:
-        type: integer
-        minimum: 1
-        default: 1000000
-        description: |
-          Number of SNPs to keep after thinning.
-          Only used when skip_thinning: false.
-        example: 1000000
-
-      thin_count_inds:
-        type: integer
-        minimum: 1
-        default: 10000
-        description: |
-          Maximum number of individuals to keep after thinning.
-          Only used when skip_thinning: false.
-        example: 10000
-
-    default: {}
-
-  # ===========================================================================
-  # SNP Heritability
-  # ===========================================================================
-
-  snpHerit:
-    type: object
-    description: |
-      Configuration for SNP heritability estimation.
-      Requires GRM to be computed (set GRM: true in QC options).
-      Requires phenotype and covariate files to be provided.
-    properties:
-      pheno:
-        type: [string, "null"]
-        default: null
-        description: |
-          Path to phenotype file.
-          Required for heritability estimation.
-          Format: PLINK .fam file or CSV with columns: IID, phenotype
-        example: "/path/to/phenotype.fam"
-
-      covar:
-        type: [string, "null"]
-        default: null
-        description: |
-          Path to covariate file.
-          Required for heritability estimation.
-          Format: CSV with columns: IID, PC1, PC2, ..., sex, age, ...
-        example: "/path/to/covariates.csv"
-
-      out:
-        type: string
-        default: "phenoEsts"
-        description: |
-          Prefix for output files.
-          Results will be saved as {out}.hsq (heritability estimates).
-        example: "phenoEsts"
-
-      method:
-        type: string
-        enum: ["AdjHE", "GCTA", "PredLMM", "SWD", "COMBAT"]
-        default: "AdjHE"
-        description: |
-          Method for SNP heritability estimation:
-          - "AdjHE": Haseman-Elston regression (recommended, fast)
-          - "GCTA": GREML from GCTA software
-          - "PredLMM": Predictive LMM (slow but accurate)
-          - "SWD": Sliced-Wise Diagonal (efficient for large data)
-          - "COMBAT": Combat method for multiple ancestries
-        example: "AdjHE"
-
-      random_groups:
-        type: boolean
-        default: false
-        description: |
-          Use random grouping for heritability estimation.
-          Splits sample into random groups for variance component estimation.
-
-      npc:
-        type: [integer, array]
-        description: |
-          Number of principal components to include as covariates.
-          Can be a single integer or list for model comparison.
-        items:
-          type: integer
-          minimum: 1
-        example: [10]
-
-      loop_covs:
-        type: boolean
-        default: false
-        description: |
-          Loop over different covariate combinations.
-          Runs heritability estimation for each covariate set.
-
-      mpheno:
-        type: integer
-        minimum: 1
-        default: 1
-        description: |
-          Which phenotype column to use (for .fam files with multiple).
-          Column index starting from 1.
-
-      fixed_effects:
-        type: array
-        items:
-          type: string
-        default: []
-        description: |
-          Additional fixed effects to include in model.
-          Column names from covariate file.
-
-    default: {}
-
-  # ===========================================================================
-  # VCF Conversion
-  # ===========================================================================
-
-  convertNfilt:
-    type: object
-    description: |
-      Configuration for converting VCF files to PLINK format.
-      Only used when input is VCF format.
-    properties:
-      info_r2_min:
-        type: [number, "null"]
-        default: null
-        description: |
-          Minimum R2 value from INFO field to keep variant.
-          R2 typically represents imputation quality.
-          Variants with INFO R2 below this threshold are excluded.
-        example: 0.8
-
-      filter_pass:
-        type: boolean
-        default: true
-        description: |
-          Only keep variants where FILTER == PASS.
-          Variants marked as failed by the variant caller are excluded.
-
-      qual_min:
-        type: [number, "null"]
-        default: null
-        description: |
-          Minimum QUAL value to keep variant.
-          QUAL represents variant call quality from the variant caller.
-          Higher values indicate more confident calls.
-        example: 30
-
-    default: {}
-
-  # ===========================================================================
-  # Environment Configuration
-  # ===========================================================================
-
-  conda-frontend:
-    type: string
-    enum: ["conda", "mamba"]
-    default: "mamba"
-    description: |
-      Package manager for conda environments.
-      - "mamba": Faster solver, recommended (default)
-      - "conda": Standard conda, slower but more compatible
-    example: "mamba"
-
-# ===========================================================================
-# Additional Notes
-# ===========================================================================
-
-additionalProperties: true
-description: |
-  Additional properties not defined in this schema will be passed through
-  to Snakemake and can be used in custom rules or scripts.
-
-  For questions or issues, see:
-  - Documentation: https://gdcgenomicsqc.readthedocs.io
-  - GitHub: https://github.com/UMN-GDC/GDCGenomicsQC
+conda-frontend:
+  type: str
+  default: "mamba"
+  enum: ["conda", "mamba"]

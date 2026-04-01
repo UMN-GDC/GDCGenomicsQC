@@ -1,0 +1,182 @@
+# =============================================================================
+# GDCGenomicsQC Pipeline Configuration
+# =============================================================================
+# This is an example configuration file showing all available options.
+# Copy this file to config.yaml and modify paths/settings for your run.
+
+# =============================================================================
+# Required: Project Paths
+# =============================================================================
+# Input PLINK files (prefix without .bed/.bim/.fam extension)
+INPUT_FILE: "/path/to/your/data/prefix"
+
+# Output directory for pipeline results
+OUT_DIR: "/path/to/output/directory"
+
+# Reference data directory (required for various operations)
+REF: "/path/to/reference/data"
+
+# Optional: VCF template for chromosome-specific loading (use {CHR} placeholder)
+vcf_template: "/path/to/vcf/chr{CHR}.vcf.gz"
+
+# Local snakemake storage for caching
+local-storage-prefix: "/path/to/.snakemake/storage"
+
+
+# =============================================================================
+# Sample Relatedness Estimation
+# =============================================================================
+# Options:
+#   "0"     - Skip (assume all samples are unrelated)
+#   "king"  - Use KING algorithm for relationship inference
+#   "primus" - Use PRIMUS (not fully implemented)
+relatedness:
+    method: "king"              # Relationship estimation method
+    king_cutoff: 0.0884         # KING cutoff for "unrelated" (default: 0.0884)
+
+
+# =============================================================================
+# Sample/Variant Quality Control
+# =============================================================================
+# Perform sex check on samples (requires phenotype file with sex column)
+SEX_CHECK: false
+
+# Compute genetic relationship matrix (GRM) for PCA/heritability
+GRM: true
+
+
+# =============================================================================
+# Internal PCA (Population Structure)
+# =============================================================================
+internalPCA:
+    # Generate PCA plots
+    plot: true
+    
+    # Optional: Color PCA plots by phenotype (specify column name from phenotype file)
+    # Example: "ancestry", "sex", "case_control"
+    color_by: null
+    
+    # Optional: Path to phenotype file for coloring
+    # Must have IID column matching sample IDs
+    phenotype_file: null
+
+
+# =============================================================================
+# Ancestry Estimation
+# =============================================================================
+ancestry:
+    # Minimum posterior probability for ancestry assignment (0-1)
+    threshold: 0.8
+    
+    # Ancestry inference method: "pca", "umap", "vae", or "rfmix"
+    model: "pca"
+
+localAncestry:
+    # Run RFMix for local ancestry inference
+    RFMIX: false
+    
+    # Run in test mode (subset of data)
+    test: false
+    
+    # Fraction of subjects to use (0.0-1.0)
+    thin_subjects: 1.0
+    
+    # Output directory for figures
+    figures: "figures"
+
+
+# =============================================================================
+# SNP Heritability Estimation
+# =============================================================================
+# Estimate SNP-based heritability (h²) using Haseman-Elston regression
+snpHerit:
+    # Path to phenotype file
+    # CSV format with columns: IID, <trait>
+    # Or FAM format (.fam) with phenotype in 6th column
+    pheno: "/path/to/phenotype.csv"
+    
+    # Path to covariate file(s)
+    # Can be a single file path or comma-separated list for multiple files
+    # e.g., "/path/to/covariates.csv" or "/path/to/cov1.csv,/path/to/cov2.csv"
+    # Format: CSV with columns: IID, <covariates>
+    covar: "/path/to/covariates.csv"
+    
+    # Output filename for heritability estimates
+    out: "phenoEsts.csv"
+    
+    # Estimation method: "AdjHE" (Haseman-Elston regression)
+    # Other methods (not yet implemented): "GCTA", "PredLMM", "SWD", "COMBAT"
+    method: "AdjHE"
+    
+    # Number of principal components to include as covariates
+    npc: 10
+    
+    # Phenotype column number in FAM file (if using FAM format)
+    mpheno: 1
+    
+    # Loop through all covariate combinations (for model selection)
+    loop_covs: false
+    
+    # Fixed effect covariates to include
+    fixed_effects: []
+    
+    # Use random grouping for heritability estimation
+    random_groups: false
+
+
+# =============================================================================
+# Phenotype Simulation (Testing)
+# =============================================================================
+# Simulate phenotypes with controlled heritability for testing PRS methods
+phenotypeSimulation:
+    # Ancestries to simulate for
+    ancestries: ["AFR", "EUR"]
+    
+    # Number of simulations
+    n_sims: 10
+    
+    # Target SNP heritability (h²)
+    heritability: 0.4
+    
+    # Genetic correlation between ancestries (-1 to 1)
+    rho: 0.8
+    
+    # Minimum minor allele frequency for causal SNPs
+    maf: 0.05
+    
+    # Random seed for reproducibility
+    seed: 42
+    
+    # Skip thinning of SNPs (faster for small datasets)
+    skip_thinning: true
+    
+    # Number of SNPs to thin to (if not skipping)
+    thin_count_snps: 1000000
+    
+    # Number of individuals to thin to (if not skipping)
+    thin_count_inds: 10000
+
+
+# =============================================================================
+# Data Conversion Options
+# =============================================================================
+convertNfilt:
+    # Minimum R² value from INFO field (set null to skip filter)
+    # Only applies to VCF input
+    info_r2_min: null
+    
+    # Only keep variants where FILTER == PASS
+    filter_pass: true
+    
+    # Minimum QUAL value (set null to skip filter)
+    qual_min: null
+
+
+# =============================================================================
+# Pipeline Behavior
+# =============================================================================
+# Use thin subset for testing (reduces runtime)
+thin: false
+
+# Conda environment solver
+conda-frontend: mamba

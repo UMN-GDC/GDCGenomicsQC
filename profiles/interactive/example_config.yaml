@@ -1,0 +1,12 @@
+cores: 4
+use-singularity: true
+singularity-args: "--bind /scratch.global,/projects"
+latency-wait: 20
+shared-fs-usage:
+  - input-output
+  - persistence
+  - software-deployment
+  - software-deployment-cache
+  - source-cache
+  - sources
+  - storage-local-copies

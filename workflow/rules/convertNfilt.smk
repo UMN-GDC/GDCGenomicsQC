@@ -26,14 +26,18 @@ rule convertNfilt :
         info_r2_min = config.get('convertNfilt', {}).get('info_r2_min'),
         filter_pass = config.get('convertNfilt', {}).get('filter_pass', True),
         qual_min = config.get('convertNfilt', {}).get('qual_min'),
+        bcftools_filter = (
+            "-i 'FILTER==\"PASS\"'" if config.get('convertNfilt', {}).get('filter_pass', True) else ""
+        ) + (
+            f" -i 'QUAL>={config.get('convertNfilt', {}).get('qual_min')}'" if config.get('convertNfilt', {}).get('qual_min') else ""
+        ) + (
+            f" -i 'INFO/R2>={config.get('convertNfilt', {}).get('info_r2_min')}'" if config.get('convertNfilt', {}).get('info_r2_min') else ""
+        ),
     shell: """
     
     mkdir -p {output.tempDir}
     
-    BCFTOOLS_FILTER=""
-    {params.filter_pass:+BCFTOOLS_FILTER="$BCFTOOLS_FILTER -i 'FILTER==\"PASS\"'"}
-    {params.qual_min:+BCFTOOLS_FILTER="$BCFTOOLS_FILTER -i 'QUAL>={params.qual_min}'"}
-    {params.info_r2_min:+BCFTOOLS_FILTER="$BCFTOOLS_FILTER -i 'INFO/R2>={params.info_r2_min}'"}
+    BCFTOOLS_FILTER="{params.bcftools_filter}"
     
     # if [[ "{params.liftoover}" == "True" ]]; then
     #     for i in {{1..22}} X Y MT; do echo "$i chr$i"; done > {output.tempDir}/chr_map.txt

@@ -44,6 +44,12 @@ Lab Exercise: Running Ancestry Classification
 Step 1: Create Configuration File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+For this tutorial, we will classify ancestry using an admix-free resampling
+of the 1000 Genomes reference panel. This reference was generated using the
+CT-Sleb tool and is available on Harvard Dataverse. The resampling ensures
+that only genetically unrelated, ancestry-appropriate samples are included,
+providing a cleaner reference for classification.
+
 Create a configuration file for ancestry classification:
 
 .. code-block:: bash
@@ -53,7 +59,7 @@ Create a configuration file for ancestry classification:
     cat > config_ancestry.yaml << 'EOF'
     ancestry:
         threshold: 0.8
-        model: "pca"  # Options: pca, umap, vae, rfmix
+        model: "pca"  # Options: pca, umap, rfmix (vae not yet implemented)
 
     INPUT_FILE: "/path/to/your/vcf/files"
     OUT_DIR: "/path/to/output/directory"
@@ -75,10 +81,16 @@ Create a configuration file for ancestry classification:
 Key parameters:
 
 - ``threshold``: Minimum posterior probability for confident classification (default: 0.8)
-- ``model``: Embedding used for classification—``pca``, ``umap``, ``vae``, or ``rfmix``
+- ``model``: Embedding used for classification—``pca``, ``umap``, or ``rfmix``
+  (Note: VAE is not yet implemented)
 
 Step 2: Run Classification Pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before classification, the pipeline runs KING to identify related samples.
+For this tutorial using simulated data, you should not find any related
+individuals (KING kinship coefficient ≈ 0), which serves as a good sanity
+check that the simulated data is properly independent.
 
 .. code-block:: bash
 
@@ -91,21 +103,21 @@ Step 2: Run Classification Pipeline
 This trains Random Forest models on reference coordinates and predicts ancestry
 probabilities for your samples.
 
-Step 3: Compare Models
-~~~~~~~~~~~~~~~~~~~~~~
+Step 3: Compare Models (PCA vs UMAP)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Modify ``model`` in your config to compare embeddings:
 
 - **PCA** (default): Linear projection, strongest baseline
 - **UMAP**: Nonlinear, good for visualization
-- **VAE**: Neural network latent space
+- **VAE**: Not yet implemented
 
 .. code-block:: bash
 
-    # Example: Switch to VAE
+    # Example: Switch to UMAP
     ancestry:
         threshold: 0.8
-        model: "vae"
+        model: "umap"
 
     snakemake --profile=../profiles/hpc \
         --configfile ../config_ancestry.yaml \
@@ -186,16 +198,56 @@ Visualizations
 - Samples in PC space with reference density contours
 - Color indicates predicted ancestry
 
+Creating a Confusion Matrix with Reported Race Labels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To evaluate classification performance, you can compare predicted ancestry
+labels against reported race/ethnicity data. Provide a tab-separated file
+with sample IDs and reported labels:
+
+**Input format** (``reported_race.tsv``):
+
++----------+-----------+
+| IID      | reported  |
++==========+===========+
+| Sample1  | AFR       |
++----------+-----------+
+| Sample2  | EUR       |
++----------+-----------+
+| Sample3  | unknown   |
++----------+-----------+
+
+To generate the confusion matrix, add to your config:
+
+.. code-block:: bash
+
+    ancestry:
+        threshold: 0.8
+        model: "pca"
+        reported_race: "/path/to/reported_race.tsv"
+
+The pipeline will output:
+
+- ``ancestry_confusion_matrix.tsv``: Contingency table of predicted vs. reported
+- ``ancestry_confusion_matrix.svg``: Heatmap visualization
+
+**Interpretation notes**:
+
+- Self-reported race is a social construct, not a genetic one—expect imperfect
+  concordance due to genetic ancestry not aligning with social categorization
+- Admixed individuals may not map cleanly to discrete categories
+- Discrepancies can reveal both classification errors and limitations of
+  self-reported labels
+
 ----
 
 Discussion Points
-----------------
 
 These questions extend the practical exercise into deeper methodological considerations:
 
 1. **Model comparison**: How do posterior probability distributions differ between
-   PCA, UMAP, and VAE? Does this align with the simulation findings that PCA
-   remains the strongest baseline?
+   PCA and UMAP? Does this align with the simulation findings that PCA
+   remains the strongest baseline? (VAE not yet available for comparison)
 
 2. **Threshold selection**: What happens to the number of "uncertain" classifications
    as you vary the threshold from 0.6 to 0.95? How does this affect downstream

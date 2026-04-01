@@ -16,13 +16,10 @@ rule generateSimPCA:
         bim = SIM_OUT_DIR / "{anc}_simulation.bim",
         fam = SIM_OUT_DIR / "{anc}_simulation.fam",
     output:
-        grm = SIM_OUT_DIR / "{anc}_simulation.grm.bin",
-        grmid = SIM_OUT_DIR / "{anc}_simulation.grm.id",
-        grmN = SIM_OUT_DIR / "{anc}_simulation.grm.N.bin",
         eigenvec = SIM_OUT_DIR / "{anc}_simulation.eigenvec",
     params:
         prefix = lambda wildcards, input: input.bed[:-4],
-        npc = config.get("snpHerit", {}).get("npc", [10])[0]
+        npc = config.get("snpHerit", {}).get("npc", 10)
     shell:
         """
         plink2 --bfile {params.prefix} --make-grm-bin --pca approx {params.npc} --out {params.prefix}
@@ -55,8 +52,9 @@ rule snpHeritSim:
         estimates = SIM_OUT_DIR / "{anc}_simulation_pheno1.estimates"
     params:
         method = config.get("snpHerit", {}).get("method", "AdjHE"),
-        npc = config.get("snpHerit", {}).get("npc", [10])[0],
-        grm_prefix = lambda wildcards, input: input.grm[:-4]
+        npc = config.get("snpHerit", {}).get("npc", 10),
+        grm_prefix = lambda wildcards, input: input.grm[:-4],
+        covar = config.get("snpHerit", {}).get("covar", ""),
     shell:
         """
         MASH --PC {input.eigen} \
@@ -64,5 +62,6 @@ rule snpHeritSim:
           --pheno {input.pheno} \
           --out {output.estimates} \
           --npc {params.npc} \
-          --Method {params.method}
+          --Method {params.method} \
+          --covar {params.covar}
         """
