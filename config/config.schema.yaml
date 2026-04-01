@@ -1,0 +1,206 @@
+# GDCGenomicsQC Configuration Schema
+# Used by Snakemake for validation
+
+INPUT_FILE:
+  type: str
+  required: true
+  description: |
+    Path to the input genomic data. This can be:
+    - A PLINK dataset prefix (.bed/.bim/.fam or .pgen/.pvar/.psam)
+    - A VCF file (will be converted to PLINK format)
+
+OUT_DIR:
+  type: str
+  required: true
+  description: |
+    Base output directory for all pipeline results.
+    The pipeline will create subdirectories for each analysis step.
+
+REF:
+  type: str
+  required: true
+  description: |
+    Path to the reference panel directory.
+    Should contain:
+    - 1000G_highcoverage/ (for ancestry analysis)
+    - Homo_sapiens.GRCh38.dna.primary_assembly.fa (genome FASTA)
+    - CrossMap/ (liftover chain files)
+    - rfmix_ref/ (RFMIX genetic maps)
+
+vcf_template:
+  type: str
+  nullable: true
+  description: |
+    Template for VCF input files with {CHR} placeholder.
+    Used when input is in VCF format - will be expanded for each chromosome.
+    Set to null if input is already in PLINK format.
+
+local-storage-prefix:
+  type: str
+  nullable: true
+  description: |
+    Path for Snakemake's local storage cache.
+
+SEX_CHECK:
+  type: bool
+  default: false
+  description: |
+    Whether to perform sex check during Standard QC.
+
+GRM:
+  type: bool
+  default: false
+  description: |
+    Whether to compute a Genetic Relationship Matrix (GRM).
+
+thin:
+  type: bool
+  default: false
+  description: |
+    Whether to thin input data before processing.
+
+relatedness:
+  type: dict
+  default: {}
+  schema:
+    method:
+      type: str
+      default: "0"
+      enum: ["0", "1", "2", "king", "primus"]
+    king_cutoff:
+      type: float
+      default: 0.0884
+
+ancestry:
+  type: dict
+  default: {}
+  schema:
+    threshold:
+      type: float
+      default: 0.8
+    model:
+      type: str
+      default: "pca"
+      enum: ["pca", "umap", "vae", "rfmix"]
+
+internalPCA:
+  type: dict
+  default: {}
+  schema:
+    plot:
+      type: bool
+      default: false
+    color_by:
+      type: str
+      nullable: true
+      default: null
+    phenotype_file:
+      type: str
+      nullable: true
+      default: null
+
+localAncestry:
+  type: dict
+  default: {}
+  schema:
+    RFMIX:
+      type: bool
+      default: false
+    test:
+      type: bool
+      default: false
+    thin_subjects:
+      type: float
+      default: 0.1
+    figures:
+      type: str
+      default: "figures"
+
+phenotypeSimulation:
+  type: dict
+  default: {}
+  schema:
+    ancestries:
+      type: list
+      minitems: 2
+      maxitems: 2
+    n_sims:
+      type: int
+      default: 10
+    heritability:
+      type: float
+      default: 0.4
+    rho:
+      type: float
+      default: 0.8
+    maf:
+      type: float
+      default: 0.05
+    seed:
+      type: int
+      default: 42
+    skip_thinning:
+      type: bool
+      default: false
+    thin_count_snps:
+      type: int
+      default: 1000000
+    thin_count_inds:
+      type: int
+      default: 10000
+
+snpHerit:
+  type: dict
+  default: {}
+  schema:
+    pheno:
+      type: str
+      nullable: true
+      default: null
+    covar:
+      type: str
+      nullable: true
+      default: null
+    out:
+      type: str
+      default: "phenoEsts"
+    method:
+      type: str
+      default: "AdjHE"
+      enum: ["AdjHE", "GCTA", "PredLMM", "SWD", "COMBAT"]
+    npc:
+      type: int
+      default: 10
+    random_groups:
+      type: bool
+      default: false
+    loop_covs:
+      type: bool
+      default: false
+    mpheno:
+      type: int
+      default: 1
+    fixed_effects:
+      type: list
+      default: []
+
+convertNfilt:
+  type: dict
+  default: {}
+  schema:
+    info_r2_min:
+      type: float
+      nullable: true
+      default: null
+    filter_pass:
+      type: bool
+      default: true
+    qual_min:
+      type: float
+      nullable: true
+      default: null
+
+conda-frontend:
+  type: str
+  default: "mamba"
+  enum: ["conda", "mamba"]

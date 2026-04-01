@@ -15,18 +15,31 @@ rule convertNfilt :
         vmiss = OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"
     input:
         vcf = config['vcf_template'],
-        ancestries = get_ancestry_file, # Snakemake evaluates this per wildcard
+        keep = get_ancestry_file,
         crossmap = REF / "CrossMap" / "hg19ToHg38.over.chain.gz",
         gr38fasta = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
     params:
         thin = config['thin'],
         input_prefix = lambda wildcards, input: input.vcf[:-7],
         output_prefix = lambda wildcards, output: output.pgen[:-5],
-        liftover = True
+        liftoover = True,
+        info_r2_min = config.get('convertNfilt', {}).get('info_r2_min'),
+        filter_pass = config.get('convertNfilt', {}).get('filter_pass', True),
+        qual_min = config.get('convertNfilt', {}).get('qual_min'),
+        bcftools_filter = (
+            "-i 'FILTER==\"PASS\"'" if config.get('convertNfilt', {}).get('filter_pass', True) else ""
+        ) + (
+            f" -i 'QUAL>={config.get('convertNfilt', {}).get('qual_min')}'" if config.get('convertNfilt', {}).get('qual_min') else ""
+        ) + (
+            f" -i 'INFO/R2>={config.get('convertNfilt', {}).get('info_r2_min')}'" if config.get('convertNfilt', {}).get('info_r2_min') else ""
+        ),
     shell: """
     
     mkdir -p {output.tempDir}
-    # if [[ "{params.liftover}" == "True" ]]; then
+    
+    BCFTOOLS_FILTER="{params.bcftools_filter}"
+    
+    # if [[ "{params.liftoover}" == "True" ]]; then
     #     for i in {{1..22}} X Y MT; do echo "$i chr$i"; done > {output.tempDir}/chr_map.txt
     #     
     #     # Use it in the command
@@ -40,20 +53,28 @@ rule convertNfilt :
     #     ln -sf $(realpath {input.vcf}) {output.tempDir}/intermediate_00.vcf.gz
     # fi
 
+    if [ -n "$BCFTOOLS_FILTER" ]; then
+        echo "Pre-filtering VCF with bcftools: $BCFTOOLS_FILTER"
+        bcftools view {input.vcf} $BCFTOOLS_FILTER -Oz -o {output.tempDir}/filtered.vcf.gz
+        VCF_INPUT={output.tempDir}/filtered.vcf.gz
+    else
+        VCF_INPUT={input.vcf}
+    fi
+
     if [[ "{wildcards.subset}" == "full" && "{params.thin}" == "True" ]]; then
         echo "Processing full dataset without subsetting..."
-        plink2 --vcf {input.vcf} \
+        plink2 --vcf $VCF_INPUT \
                --make-pgen \
                --rm-dup force-first \
                --missing \
-               --thin-indiv-count 5000 \
-               --thin-count 20000 \
+               --thin-indiv 0.1 \
+               --thin-count 100000 \
                --threads {threads} \
                --seed 1 \
                --memory {resources.mem_mb} \
                --out {output.tempDir}/intermediate_0
     elif [[ "{wildcards.subset}" == "full" && "{params.thin}" != "True" ]]; then
-        plink2 --vcf {input.vcf} \
+        plink2 --vcf $VCF_INPUT \
                --make-pgen \
                --rm-dup force-first \
                --threads {threads} \
@@ -61,27 +82,25 @@ rule convertNfilt :
                --memory {resources.mem_mb} \
                --out {output.tempDir}/intermediate_0
     elif [[ "{wildcards.subset}" != "full" && "{params.thin}" == "True" ]]; then
-        plink2 --vcf {input.vcf} \
+        plink2 --vcf $VCF_INPUT \
                --make-pgen \
                --rm-dup force-first \
                --threads {threads} \
                --missing \
-               --covar {input.ancestries} \
-               --keep-if 'pc_label == {wildcards.subset}' \
-               --thin-indiv-count 5000 \
-               --thin-count 20000 \
+               --keep {input.keep} \
+               --thin-indiv-count 10000 \
+               --thin-count 100000 \
                --seed 1 \
                --memory {resources.mem_mb} \
                --out {output.tempDir}/intermediate_0
     elif [[ "{wildcards.subset}" != "full" && "{params.thin}" != "True" ]]; then
-        plink2 --vcf {input.vcf} \
+        plink2 --vcf $VCF_INPUT \
                --make-pgen \
                --missing \
                --threads {threads} \
                --rm-dup force-first \
                --memory {resources.mem_mb} \
-               --covar {input.ancestries} \
-               --keep-if 'pc_label == {wildcards.subset}' \
+               --keep {input.keep} \
                --out {output.tempDir}/intermediate_0
     fi
 

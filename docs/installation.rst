@@ -4,76 +4,113 @@
 Installation
 ============
 
+This guide covers installing and configuring the GDCGenomicsQC pipeline.
 
-Stable release
---------------
+Requirements
+------------
 
-When the software is complete, run this command in your terminal:
+- Access to HPC computing resources with SLURM scheduler (recommended)
+- Snakemake
+- Git
 
-.. code-block:: console
+Clone the Repository
+-------------------
 
-    $ pip install GDC
+.. code-block:: bash
 
+    git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+    cd GDCGenomicsQC
 
-From Source (Development)
--------------------------
+Set Up Snakemake
+----------------
 
-If you wish to contribute or use the latest developmental features, install directly from the source code.
+We recommend creating a dedicated conda environment for Snakemake:
 
-1. **Clone the repository:**
+.. code-block:: bash
 
-   .. code-block:: console
+    conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
 
-       $ git clone https://github.com/and02709/GDC.git
-       $ cd GDC
+If you are running at MSI at UMN, this environment may already exist. You can also add
+the GDC conda environments:
 
-2. **Set up a Virtual Environment (Recommended):**
+.. code-block:: bash
 
-   .. code-block:: console
+    conda config --add envs_dirs /projects/standard/gdc/public/envs
 
-    $ source /home/gdc/public/envs/load_miniconda3.sh
-    $ module load plink
-    $ module load perl
+Activate the environment:
 
+.. code-block:: bash
+
+    conda activate snakemake
+
+.. note::
+   The pipeline can also be run interactively without SLURM using the ``interactive``
+   profile. However, most production runs should use the SLURM scheduler for
+   reliability.
+
+Configure Your Run
+------------------
+
+Edit the configuration file at ``config/config.yaml`` to specify:
+
+- Input and output paths
+- Reference data locations
+- Pipeline options (relatedness, ancestry methods, etc.)
+
+Example configuration:
+
+.. code-block:: yaml
+
+    INPUT_FILE: "/path/to/your/vcf/files"
+    OUT_DIR: "/path/to/output/directory"
+    REF: "/path/to/reference/data"
+
+    relatedness:
+        method: "0"
+
+    localAncestry:
+        RFMIX: true
+        test: true
+
+    thin: true
+
+Running the Pipeline
+-------------------
+
+Execute from the ``workflow`` directory:
+
+.. code-block:: bash
+
+    cd GDCGenomicsQC/workflow
+
+    # With SLURM (recommended)
+    snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
+
+    # Interactive (local)
+    snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
+
+For more detailed usage instructions, see :doc:`usage`.
 
 External Dependencies
 ---------------------
 
-GDC acts as a high-level interface for genetic data processing. **You must have the following binaries installed and available in your system PATH.**
+All software dependencies are automatically handled through conda environments
+and Singularity containers. The pipeline is entirely self-contained—you only need:
 
-PLINK (1.9 and 2.0)
-~~~~~~~~~~~~~~~~~~~
+- Snakemake (installed via conda as shown above)
+- Access to reference data (e.g., 1000 Genomes Project)
+- Sufficient storage for intermediate and output files
+- Appropriate HPC resources (see profile configurations)
 
-GDC relies heavily on PLINK for rapid data cleaning.
+No manual installation of external tools (PLINK, bcftools, GATK, etc.) is required.
 
-* **Download:** Get the latest stable binaries from `cog-genomics.org <https://www.cog-genomics.org/plink/>`_.
-* **Setup:** Ensure the executables are named ``plink`` (for 1.9) and ``plink2`` (for 2.0).
-* **Verify:** Run the following in your terminal to ensure they are accessible:
+Troubleshooting
+---------------
 
-  .. code-block:: console
+If jobs fail to start:
 
-      $ plink --version
-      $ plink2 --version
+- Verify SLURM is available: ``sbatch --version``
+- Check that your config paths are correct
+- Ensure output directories are writable
 
-.. note::
-   If you are working on a High-Performance Computing (HPC) cluster using SLURM, you may need to load these via modules (e.g., ``module load plink/1.9``).
-
-
-Configuration & Troubleshooting
--------------------------------
-
-If GDC cannot find your PLINK binaries, you can verify your system PATH:
-
-.. code-block:: console
-
-    # Linux/macOS
-    $ echo $PATH
-
-    # Windows (PowerShell)
-    $ $env:Path
-
-Ensure the directory containing your binaries is listed. If you encounter permission errors when running from source, ensure the scripts have execution privileges:
-
-.. code-block:: console
-
-    $ chmod +x GDC/*.py
+For additional help, see the :doc:`usage` guide or open an issue on GitHub.

@@ -19,6 +19,7 @@ rule checkRelatedness:
         output_dir = OUT_DIR / "{subset}",
         input_prefix = lambda wildcards, input: input.bed[:-4],
         method = config['relatedness']['method'],
+        king_cutoff = config['relatedness'].get('king_cutoff', 0.0884),
         ref= REF
     shell: """
     
@@ -26,9 +27,8 @@ rule checkRelatedness:
     echo {params.method}
 
     if [[ {params.method} == king || {params.method} == 1 ]]; then
-        echo "KING ESTIMATION"
-        # [ ] Needs to be verified
-        bash scripts/run_king.sh {params.output_dir} {params.input_prefix} 1
+        echo "KING ESTIMATION with cutoff {params.king_cutoff}"
+        bash scripts/run_king.sh {params.output_dir} {params.input_prefix} 1 {params.king_cutoff}
     elif [[ "{params.method}" == "primus" || "{params.method}" == "2" ]]; then
         # [ ] NEeds to be fixed
         echo "PRIMUS ESTIMATION"

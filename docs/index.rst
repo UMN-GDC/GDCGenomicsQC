@@ -18,6 +18,8 @@ high-performance clusters like the UMN MSI Agate cluster.
    usage
    api
    contributing
+   tutorial_qc
+   tutorial_ancestry
 
 Indices and tables
 ==================

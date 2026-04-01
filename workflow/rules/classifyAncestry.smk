@@ -64,6 +64,12 @@ rule classifyAncestry:
         classifications = OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
         class_plot = report(OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
             caption = "../../report/ancestry_classification.rst", category = "Global ancestry"),
+        keep_AFR = OUT_DIR / "01-globalAncestry" / "keep_AFR.txt",
+        keep_AMR = OUT_DIR / "01-globalAncestry" / "keep_AMR.txt",
+        keep_EAS = OUT_DIR / "01-globalAncestry" / "keep_EAS.txt",
+        keep_EUR = OUT_DIR / "01-globalAncestry" / "keep_EUR.txt",
+        keep_SAS = OUT_DIR / "01-globalAncestry" / "keep_SAS.txt",
+        keep_Other = OUT_DIR / "01-globalAncestry" / "keep_Other.txt",
     params:
         dir = OUT_DIR / "01-globalAncestry",
         threshold = config.get('ancestry', {}).get('threshold', 0.8),

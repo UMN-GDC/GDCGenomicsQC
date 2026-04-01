@@ -32,13 +32,13 @@ rule train_gnomix:
     fi
     
     python3 {params.ref}/gnomix/gnomix.py \
-      {params.ref}/1000G_GRCh38/ALL.chr{wildcards.CHR}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz \
+      {params.ref}/1000G_highcoverage/1kGP_high_coverage_Illumina.chr{wildcards.CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
       {params.out_dir} \
       {wildcards.CHR} \
       {params.PHASE} \
       {params.ref}/rfmix_ref/genetic_map_hg38.txt \
-      {params.ref}/1000G_GRCh38/ALL.chr{wildcards.CHR}.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz \
-      {params.ref}/1000G_GRCh38/1000G.popu \
+      {params.ref}/1000G_highcoverage/1kGP_high_coverage_Illumina.chr{wildcards.CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+      {params.ref}/1000G_highcoverage/population.txt \
       {params.out_dir}/chr{wildcards.CHR}config.yaml
     """
 

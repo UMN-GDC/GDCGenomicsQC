@@ -7,27 +7,30 @@ rule Phase:
         mem_mb = 64000,
         runtime = 1320,
     input:
-        bed =   OUT_DIR / "full" / "standardFilter.bed",
-        bim =   OUT_DIR / "full" / "standardFilter.bim",
-        fam =   OUT_DIR / "full" / "standardFilter.fam",
+        pgen =   OUT_DIR / "full" / "initialFilter.pgen",
+        pvar =   OUT_DIR / "full" / "initialFilter.pvar",
+        psam =   OUT_DIR / "full" / "initialFilter.psam",
     output:
         # List all files that PLINK will actually create
         vcf = OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
     params:
         out_dir = OUT_DIR / "02-localAncestry",
-        input_prefix = lambda wildcards, input: input.bed[:-4],
+        input_prefix = lambda wildcards, input: input.pgen[:-5],
         ref= config["REF"],
-        test=config["rfmix_test"]
+        test = config["localAncestry"]["test"],
+        thin = config["localAncestry"]["thin_subjects"],
     shell: """
     echo "Shapeit Phasing"
 
-    plink2 --bfile {params.input_prefix} --chr {wildcards.CHR} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
+    plink2 --pfile {params.input_prefix} --chr {wildcards.CHR} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
     bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
     
-    module load shapeit/4.2.2
     if [ "{params.test}" = "True" ] ;  then
+      plink2 --vcf {params.out_dir}/chr{wildcards.CHR}.vcf.gz --bp-space 100000 --thin-indiv {params.thin} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}.thinned
+      mv {params.out_dir}/chr{wildcards.CHR}.thinned.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+      bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
       echo "{params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz"
-      shapeit \
+      shapeit4 \
           --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
           --map {params.ref}/ancestry_OG/chr{wildcards.CHR}.b38.gmap.gz \
           --region {wildcards.CHR} \
@@ -40,7 +43,7 @@ rule Phase:
       rm {params.out_dir}/chr{wildcards.CHR}.phased.vcf
       
     else
-      shapeit \
+      shapeit4 \
           --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
           --map {params.ref}/ancestry_OG/chr{wildcards.CHR}.b38.gmap.gz \
           --region {wildcards.CHR} \

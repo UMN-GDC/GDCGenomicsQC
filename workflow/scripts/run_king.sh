@@ -6,6 +6,7 @@ conda activate gdcPipeline
 OUT=$1           # e.g., /scratch.global/and02709
 INPUT_PREFIX=$2          # e.g., SMILES_GDA
 COMB=$3
+KING_CUTOFF=${4:-0.0884}  # Default to exclude 2nd-degree (0.0884)
 
 KING_REPO=/projects/standard/gdc/shared/king
 
@@ -36,8 +37,8 @@ $KING_REPO -b $BED --kinship --prefix $OUT/kinships
 # Run PLINK --genome for IBD estimates (needed for ibdPlot)
 plink --bfile $OUT/kin --genome $OUT/full --out $OUT/kinships
 
-# Kinship + IBD Plotting
-Rscript scripts/kinship.R $OUT $OUT/kinships
+# Kinship + IBD Plotting with user-specified cutoff
+Rscript scripts/kinship.R $OUT $OUT/kinships $KING_CUTOFF
 
 # Subset unrelated/related samples
 if [ ${COMB} -eq 1 ]; then

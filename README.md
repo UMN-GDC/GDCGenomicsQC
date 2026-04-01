@@ -49,6 +49,12 @@ conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
 
 ## Using Snakemake workflows
 - update config files as necessary (located at `config/config.yaml`)
+    - Update Inputs and outputs and methods details as desired
+    - updated SLURM group name for accounting purposes
+- Validate your configuration against the schema:
+  ```bash
+  snakemake --validate --configfile config/config.yaml
+  ```
 - Snakemake expects you to execute from `GDCGenomicsQC/workflow` 
 - Run the desired workflow (by default looks in `config/config.yaml`) using the `--configfile=<path/to/confi.yaml/` flag
 
@@ -102,23 +108,106 @@ snakemake --executor=slurm --use-singularity --local-storage $(pwd)/.snakemake/s
 
 
 ## Configuration
-Details for each specific projcet are configured in a .yaml file. An example is provided in `GDCGenomicsQC/config/config.yaml`
+Details for each specific project are configured in a .yaml file. An example is provided in `GDCGenomicsQC/config/config.yaml`
+
+### Core Parameters
 ```yaml
-INPUT_FILE: "/projects/standard/gdc/public/Ref/toyData/1kgSynthetic"
-OUT_DIR: "/scratch.global/coffm049/toyPipeline"
-REF: "/projects/standard/gdc/public/Ref"
-
-# Tool-specific parameters
-relatedness:
-    method: "0"
-
-SEX_CHECK : false
-GRM : false
-RFMIX : true
-rfmix_test : true
-
-thin: true
+INPUT_FILE: "/path/to/input/vcf"
+OUT_DIR: "/path/to/output"
+REF: "/path/to/reference"
+vcf_template: "/path/to/vcf_template_chr{chr}.vcf.gz"
+local-storage-prefix: "/path/to/.snakemake/storage"
 ```
+
+### QC Options
+```yaml
+relatedness:
+    method: "0"  # 0=assume unrelated, 1=KING, 2=PRIMUS
+
+SEX_CHECK: false
+GRM: true  # Generate genetic relationship matrix
+
+thin: true  # Thin input data
+```
+
+### Ancestry Estimation
+```yaml
+ancestry:
+    threshold: 0.8  # Minimum ancestry proportion
+    model: "pca"  # Options: pca, umap, vae, rfmix
+
+internalPCA:
+    plot: true
+    color_by: null  # Column to color by (e.g., "ancestry", "sex")
+    phenotype_file: null
+```
+
+### Local Ancestry (RFMIX)
+```yaml
+localAncestry:
+  RFMIX: true
+  test: true
+  thin_subjects: 0.1
+  figures: "figures"
+```
+
+### Phenotype Simulation
+```yaml
+phenotypeSimulation:
+    ancestries: ["AFR", "EUR"]
+    n_sims: 10
+    heritability: 0.4
+    rho: 0.8
+    maf: 0.05
+    seed: 42
+    skip_thinning: true
+    thin_count_snps: 1000000
+    thin_count_inds: 10000
+```
+
+### SNP Heritability
+```yaml
+snpHerit:
+    pheno: null  # Path to phenotype file (required)
+    covar: null  # Path to covariate file(s), comma-separated for multiple files (required)
+    out: phenoEsts
+    method: "AdjHE"  # AdjHE, GCTA, PredLMM, SWD, COMBAT
+    random_groups: false
+    npc: [10]
+    loop_covs: false
+    mpheno: 1
+```
+
+### VCF Conversion
+```yaml
+convertNfilt:
+    info_r2_min: null  # Minimum R2 from INFO field
+    filter_pass: true  # Only keep FILTER==PASS
+    qual_min: null     # Minimum QUAL value
+```
+
+### Environment
+```yaml
+conda-frontend: mamba
+```
+
+## Available Rules
+The pipeline includes the following rules:
+
+| Rule | Description |
+|------|-------------|
+| `convertNfilt` | Convert VCF to PLINK format with filtering |
+| `Initial_QC` | Initial quality control (MAF, missingness) |
+| `Standard_QC` | Standard QC (HWE, inversion regions, sex check) |
+| `Relatedness` | Check and filter related samples |
+| `PCAreference` | PCA on reference panel and sample projection |
+| `UMAP` | UMAP dimensionality reduction |
+| `estimateAncestry` | Estimate global ancestry using PC/UMAP |
+| `classifyAncestry` | Classify ancestry with multiple models |
+| `Phase` | Phase genotypes with SHAPEIT4 |
+| `RFMIX` | Local ancestry inference with RFMIX |
+| `simulatePhenotype` | Simulate phenotypes for GWAS |
+| `snpHerit` | Estimate SNP heritability |
 
 ![GDC_pipeline_overview](https://github.com/UMN-GDC/GDCGenomicsQC/assets/140092486/e7f11909-9ab8-4def-90e5-c5f67c28a4bb)
 
@@ -135,14 +224,18 @@ The output directory is organized as follows
         - standardFilter - additionally filters for inversion regions, hardy-weinberg equilibrium, and check's sex (if specified in the config)
         - standardFilter.LDpruned - additionally is filtered for linkage diseqilibrium and the specified level (default is 500 10 0.1)
  - 01-globalAncestry
- 	- ref.<acount, eigenval, eigenvec, eigenvec.allele> - PCA information on the reference panel
-  	- <ref, sample>RefPCscores.sscore - projection of sample and reference  onthe reference PCs
-    - umap_<sample, ref>.csv - the UMAP embeddings of the sample and refrence
-    - latentDistantRelatedness.tsv - combination of PC's, UMAPS, and most probable label based on random forest training on PC and UMAP embeddings respectively
-    - RF<pc, umap>.Rds - R object containing the trained random forest on specified latent variables
-- 02-localAncestry
-  	- chr<chr>.lai.<fb, msp, rfmix.Q, sis> - rfmix output specifying posterior probaiblity, most probable LAI label, and chromosome aggregated admixing proportion
-  	- chr<chr>phased.vcf.gz - the Shapeit4 phased haplotypes
+    - ref.<eigenvec, eigenval> - PCA information on the reference panel
+    - <ref, sample>RefPCscores.sscore - projection of sample and reference on the reference PCs
+    - umap_<sample, ref>.csv - the UMAP embeddings of the sample and reference
+    - posterior_probabilities.tsv - posterior probability for each ancestry
+    - sample_coords.tsv - sample coordinates in latent space
+    - ref_coords.tsv - reference coordinates in latent space
+    - posterior_probability_stacked_<model>.svg - ridge plot of ancestry proportions
+ - 02-localAncestry
+    - chr<chr>.lai.<fb, msp, rfmix.Q, sis> - rfmix output specifying posterior probability, most probable LAI label, and chromosome aggregated admixing proportion
+    - chr<chr>phased.vcf.gz - the Shapeit4 phased haplotypes
+ - 03-snpHeritability - SNP heritability estimates
+
 ## Contributing
 
 GDCGenomicsQC is built and maintained by a small team – we'd love your help to fix bugs and add features!
