@@ -5,7 +5,7 @@ rule convertNfilt :
     resources:
         nodes = 1,
         mem_mb = 32000,
-        runtime = 60,
+        runtime = 240,
     output:
         pgen = OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen",
         pvar = OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar",
@@ -19,27 +19,48 @@ rule convertNfilt :
         crossmap = REF / "CrossMap" / "hg19ToHg38.over.chain.gz",
         gr38fasta = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
     params:
-        thin = config['thin'],
-        input_prefix = lambda wildcards, input: input.vcf[:-7],
-        output_prefix = lambda wildcards, output: output.pgen[:-5],
-        liftoover = True,
-        info_r2_min = config.get('convertNfilt', {}).get('info_r2_min'),
-        filter_pass = config.get('convertNfilt', {}).get('filter_pass', True),
-        qual_min = config.get('convertNfilt', {}).get('qual_min'),
-        bcftools_filter = (
-            "-i 'FILTER==\"PASS\"'" if config.get('convertNfilt', {}).get('filter_pass', True) else ""
-        ) + (
-            f" -i 'QUAL>={config.get('convertNfilt', {}).get('qual_min')}'" if config.get('convertNfilt', {}).get('qual_min') else ""
-        ) + (
-            f" -i 'INFO/R2>={config.get('convertNfilt', {}).get('info_r2_min')}'" if config.get('convertNfilt', {}).get('info_r2_min') else ""
-        ),
+        thin = config.get('thin', False),
+        # Safer way to get prefixes without counting characters
+        input_prefix = lambda wildcards, input: input.vcf.replace(".vcf.gz", "").replace(".vcf", ""),
+        output_prefix = lambda wildcards, output: output.pgen.replace(".pgen", ""),
+        liftover = True,
+        bcftools_filter = lambda wildcards: (
+            lambda c=config.get('convertNfilt', {}): (
+                " && ".join(filter(None, [
+                    'FILTER=="PASS"' if c.get('filter_pass', True) else None,
+                    f'QUAL>={c.get("qual_min")}' if c.get('qual_min') and c.get('qual_min') > 0 else None,
+                    f'INFO/R2>={c.get("info_r2_min")}' if c.get('info_r2_min') else None
+                ]))
+            )
+        )()
     shell: """
-    
     mkdir -p {output.tempDir}
+
+    # Build the include string. If params.bcftools_filter is not empty, 
+    # wrap it in the -i flag.
+    if [ -n "{params.bcftools_filter}" ]; then
+        FILTER_CMD="-i '{params.bcftools_filter}'"
+        echo "Applying filters: $FILTER_CMD"
+        echo "Running: bcftools view --threads {threads} $FILTER_CMD -Oz -o {output.tempDir}/filtered.vcf.gz {input.vcf}"
+        
+        bcftools view --threads {threads} \
+            $FILTER_CMD \
+            -Oz -o {output.tempDir}/filtered.vcf.gz \
+            {input.vcf}
+            
+        VCF_INPUT="{output.tempDir}/filtered.vcf.gz"
+    else
+        echo "No filters applied."
+        VCF_INPUT="{input.vcf}"
+    fi
     
-    BCFTOOLS_FILTER="{params.bcftools_filter}"
+    if [[ "{params.thin}" == "True" ]]; then
+        echo "Applying bcftools pruning (10kb window)..."
+        bcftools +prune -m none -w 10kb -Oz -o {output.tempDir}/pruned.vcf.gz $VCF_INPUT
+        VCF_INPUT="{output.tempDir}/pruned.vcf.gz"
+    fi
     
-    # if [[ "{params.liftoover}" == "True" ]]; then
+    # if [[ "{params.liftover}" == "True" ]]; then
     #     for i in {{1..22}} X Y MT; do echo "$i chr$i"; done > {output.tempDir}/chr_map.txt
     #     
     #     # Use it in the command
@@ -53,13 +74,6 @@ rule convertNfilt :
     #     ln -sf $(realpath {input.vcf}) {output.tempDir}/intermediate_00.vcf.gz
     # fi
 
-    if [ -n "$BCFTOOLS_FILTER" ]; then
-        echo "Pre-filtering VCF with bcftools: $BCFTOOLS_FILTER"
-        bcftools view {input.vcf} $BCFTOOLS_FILTER -Oz -o {output.tempDir}/filtered.vcf.gz
-        VCF_INPUT={output.tempDir}/filtered.vcf.gz
-    else
-        VCF_INPUT={input.vcf}
-    fi
 
     if [[ "{wildcards.subset}" == "full" && "{params.thin}" == "True" ]]; then
         echo "Processing full dataset without subsetting..."

@@ -20,6 +20,8 @@ high-performance clusters like the UMN MSI Agate cluster.
    contributing
    tutorial_qc_pipeline
    tutorial_ancestry_classification
+   tutorial_1kg_assembly
+   tutorial_heritability
 
 Indices and tables
 ==================
