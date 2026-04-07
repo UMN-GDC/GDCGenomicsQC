@@ -102,6 +102,8 @@ rule all:
         OUT_DIR / "full" / "figures" / "pcair_pcs.svg",
         OUT_DIR / "full" / "pcair_coordinates.tsv",
         lambda wildcards: expand(OUT_DIR / "{subset}" / "03-snpHeritability" / config['snpHerit']['out'], subset=["full"] + get_ancestries(wildcards)) if SNP_HERIT_ACTIVE else [],
+        lambda wildcards: expand(OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec", subset=["full"] + get_ancestries(wildcards)) if config.get('internalPCA', {}).get('method') == 'plink2' else [],
+        lambda wildcards: expand(OUT_DIR / "{subset}" / "internal_pca_plink2.eigenval", subset=["full"] + get_ancestries(wildcards)) if config.get('internalPCA', {}).get('method') == 'plink2' else [],
 
 checkpoint assembleRef:
     input:

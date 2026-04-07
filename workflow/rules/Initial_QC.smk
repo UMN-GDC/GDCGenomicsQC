@@ -1,7 +1,7 @@
 rule initialFilter :
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
-    threads: 4
+    threads: 8
     resources:
         nodes = 1,
         mem_mb = 32000,

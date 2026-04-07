@@ -1,0 +1,126 @@
+---
+title: DAG
+---
+flowchart TB
+	id0[run_initialQC]
+	id1[kgMeta]
+	id2[Standard_QC]
+	id3[convertNfilt - CHR: 1 - subset: full]
+	id4[convertNfilt - CHR: 2 - subset: full]
+	id5[convertNfilt - CHR: 3 - subset: full]
+	id6[convertNfilt - CHR: 4 - subset: full]
+	id7[convertNfilt - CHR: 5 - subset: full]
+	id8[convertNfilt - CHR: 6 - subset: full]
+	id9[convertNfilt - CHR: 7 - subset: full]
+	id10[convertNfilt - CHR: 8 - subset: full]
+	id11[convertNfilt - CHR: 9 - subset: full]
+	id12[convertNfilt - CHR: 10 - subset: full]
+	id13[convertNfilt - CHR: 11 - subset: full]
+	id14[convertNfilt - CHR: 12 - subset: full]
+	id15[convertNfilt - CHR: 13 - subset: full]
+	id16[convertNfilt - CHR: 14 - subset: full]
+	id17[convertNfilt - CHR: 15 - subset: full]
+	id18[convertNfilt - CHR: 16 - subset: full]
+	id19[convertNfilt - CHR: 17 - subset: full]
+	id20[convertNfilt - CHR: 18 - subset: full]
+	id21[convertNfilt - CHR: 19 - subset: full]
+	id22[convertNfilt - CHR: 20 - subset: full]
+	id23[convertNfilt - CHR: 21 - subset: full]
+	id24[convertNfilt - CHR: 22 - subset: full]
+	id25[initialFilter]
+	style id0 fill:#57D5D9,stroke-width:2px,color:#333333
+	style id1 fill:#57D95F,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id2 fill:#D9A657,stroke-width:2px,color:#333333
+	style id3 fill:#ADD957,stroke-width:2px,color:#333333
+	style id4 fill:#ADD957,stroke-width:2px,color:#333333
+	style id5 fill:#ADD957,stroke-width:2px,color:#333333
+	style id6 fill:#ADD957,stroke-width:2px,color:#333333
+	style id7 fill:#ADD957,stroke-width:2px,color:#333333
+	style id8 fill:#ADD957,stroke-width:2px,color:#333333
+	style id9 fill:#ADD957,stroke-width:2px,color:#333333
+	style id10 fill:#ADD957,stroke-width:2px,color:#333333
+	style id11 fill:#ADD957,stroke-width:2px,color:#333333
+	style id12 fill:#ADD957,stroke-width:2px,color:#333333
+	style id13 fill:#ADD957,stroke-width:2px,color:#333333
+	style id14 fill:#ADD957,stroke-width:2px,color:#333333
+	style id15 fill:#ADD957,stroke-width:2px,color:#333333
+	style id16 fill:#ADD957,stroke-width:2px,color:#333333
+	style id17 fill:#ADD957,stroke-width:2px,color:#333333
+	style id18 fill:#ADD957,stroke-width:2px,color:#333333
+	style id19 fill:#ADD957,stroke-width:2px,color:#333333
+	style id20 fill:#ADD957,stroke-width:2px,color:#333333
+	style id21 fill:#ADD957,stroke-width:2px,color:#333333
+	style id22 fill:#ADD957,stroke-width:2px,color:#333333
+	style id23 fill:#ADD957,stroke-width:2px,color:#333333
+	style id24 fill:#ADD957,stroke-width:2px,color:#333333
+	style id25 fill:#7ED957,stroke-width:2px,color:#333333
+	id2 --> id0
+	id3 --> id0
+	id4 --> id0
+	id5 --> id0
+	id6 --> id0
+	id7 --> id0
+	id8 --> id0
+	id9 --> id0
+	id10 --> id0
+	id11 --> id0
+	id12 --> id0
+	id13 --> id0
+	id14 --> id0
+	id15 --> id0
+	id16 --> id0
+	id17 --> id0
+	id18 --> id0
+	id19 --> id0
+	id20 --> id0
+	id21 --> id0
+	id22 --> id0
+	id23 --> id0
+	id24 --> id0
+	id25 --> id0
+	id25 --> id2
+	id1 --> id3
+	id1 --> id4
+	id1 --> id5
+	id1 --> id6
+	id1 --> id7
+	id1 --> id8
+	id1 --> id9
+	id1 --> id10
+	id1 --> id11
+	id1 --> id12
+	id1 --> id13
+	id1 --> id14
+	id1 --> id15
+	id1 --> id16
+	id1 --> id17
+	id1 --> id18
+	id1 --> id19
+	id1 --> id20
+	id1 --> id21
+	id1 --> id22
+	id1 --> id23
+	id1 --> id24
+	id1 --> id25
+	id3 --> id25
+	id4 --> id25
+	id5 --> id25
+	id6 --> id25
+	id7 --> id25
+	id8 --> id25
+	id9 --> id25
+	id10 --> id25
+	id11 --> id25
+	id12 --> id25
+	id13 --> id25
+	id14 --> id25
+	id15 --> id25
+	id16 --> id25
+	id17 --> id25
+	id18 --> id25
+	id19 --> id25
+	id20 --> id25
+	id21 --> id25
+	id22 --> id25
+	id23 --> id25
+	id24 --> id25
