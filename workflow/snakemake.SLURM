@@ -6,6 +6,4 @@
 
 source /users/4/coffm049/miniconda3/etc/profile.d/conda.sh
 conda activate snakemake
-
-# The magic flag is --executor slurm (or --cluster for older versions)
-snakemake --profile=../profiles/hpc --rerun-incomplete --set-resources "runtime=60"
+snakemake --profile=../profiles/hpc --configfile=../config/abcd_config.yaml --rerun-incomplete run_classifyAncestry
