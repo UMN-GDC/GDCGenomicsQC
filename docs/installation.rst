@@ -24,18 +24,21 @@ Clone the Repository
 Set Up Snakemake
 ----------------
 
-We recommend creating a dedicated conda environment for Snakemake:
+We recommend creating a dedicated conda environment for Snakemake (we have a .yaml file in the envs/ directory for this use):
 
 .. code-block:: bash
 
-    conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
+    conda create -f envs/snakemake.yml
 
-If you are running at MSI at UMN, this environment may already exist. You can also add
-the GDC conda environments:
+.. dropdown:: GDC internal snakemake env
+   :open:
 
-.. code-block:: bash
+   If you are running at MSI at UMN, this environment may already exist. You can also add
+   the GDC conda environments:
 
-    conda config --add envs_dirs /projects/standard/gdc/public/envs
+   .. code-block:: bash
+   
+       conda config --add envs_dirs /projects/standard/gdc/public/envs
 
 Activate the environment:
 
