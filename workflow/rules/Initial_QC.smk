@@ -5,7 +5,7 @@ rule initialFilter :
     resources:
         nodes = 1,
         mem_mb = 32000,
-        runtime = 60,
+        runtime = 240,
     output:
         pgen = OUT_DIR / "{subset}" / "initialFilter.pgen",
         pvar = OUT_DIR / "{subset}" / "initialFilter.pvar",
