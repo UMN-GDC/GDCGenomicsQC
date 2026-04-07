@@ -11,6 +11,8 @@ AGENTS.md
 
 *.yaml
 *.yml
+!docs/images/*.svg
+!docs/*.svg
 !config/abcdR25.yaml
 !config/config.schema.yaml
 !config/config.yaml

@@ -128,6 +128,19 @@ After ancestry classification, run QC on specific ancestry groups:
 
 Available subsets are dynamically determined from classification results.
 
+Visualizations
+~~~~~~~~~~~~~~
+
+**Reference Space (PCA)**: ``images/PC_reference_space.svg``
+
+- Reference panel samples in PC space with density contours
+- Shows how target samples map to known ancestry groups
+
+**Reference Space (UMAP)**: ``images/UMAP_reference_space.svg``
+
+- Reference panel samples in UMAP embedding with density contours
+- Nonlinear visualization of ancestry structure
+
 ----
 
 Interpreting Pipeline Outputs
@@ -137,11 +150,16 @@ Sample Missingness Plot
 
 **File**: ``{subset}/figures/smiss.svg``
 
+.. image:: images/smiss.svg
+   :width: 600
+
 The sample missingness histogram shows the distribution of missing data per individual.
 
 - X-axis: Percentage of genotype calls missing per sample
 - Red vertical lines: Threshold cutoffs (10% initial, 2% final)
 - Samples to the right of the rightmost line are removed
+
+**Note**: Since we used synthetic and (in case of the R25 data) imputed data, we don't expect to see any missingness in this exercise.
 
 Standard interpretation:
 
@@ -154,11 +172,16 @@ Variant Missingness Plot
 
 **File**: ``{subset}/figures/vmiss.svg``
 
+.. image:: images/vmiss.svg
+   :width: 600
+
 The variant missingness histogram shows the distribution of missing data per SNP.
 
 - X-axis: Percentage of samples missing genotype call per variant
 - Red vertical lines: Threshold cutoffs
 - Variants to the right of the line are removed
+
+**Note**: Since we used synthetic and (in case of the R25 data) imputed data, we don't expect to see any missingness in this exercise.
 
 Standard interpretation:
 
