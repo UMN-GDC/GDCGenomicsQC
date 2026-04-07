@@ -12,7 +12,9 @@ AGENTS.md
 *.yaml
 *.yml
 !docs/images/*.svg
+!docs/images/*.mmd
 !docs/*.svg
+!docs/*.mmd
 !config/abcdR25.yaml
 !config/config.schema.yaml
 !config/config.yaml
