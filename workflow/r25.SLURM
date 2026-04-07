@@ -6,5 +6,5 @@
 
 source /users/4/coffm049/miniconda3/etc/profile.d/conda.sh
 conda activate snakemake
-snakemake --profile=../profiles/hpc --configfile=../config/abcd_config.yaml --rerun-incomplete run_classifyAncestry
+snakemake --profile=../profiles/hpc --configfile=../config/abcd_config.yaml --rerun-incomplete run_pca
 
