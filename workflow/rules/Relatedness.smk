@@ -1,25 +1,30 @@
 rule checkRelatedness:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda: "../../envs/ancNreport.yml"
+    log:
+        OUT_DIR / "logs" / "checkRelatedness_{subset}.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
     resources:
-        nodes = 1,
-        mem_mb = 128000,
-        runtime = 720,
+        nodes=1,
+        mem_mb=128000,
+        runtime=720,
     input:
-        bed = OUT_DIR / "{subset}" / "initialFilter.LDpruned.bed",
-        bim = OUT_DIR / "{subset}" / "initialFilter.LDpruned.bim",
-        fam = OUT_DIR / "{subset}" / "initialFilter.LDpruned.fam",
+        bed=OUT_DIR / "{subset}" / "initialFilter.LDpruned.bed",
+        bim=OUT_DIR / "{subset}" / "initialFilter.LDpruned.bim",
+        fam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.fam",
     output:
-        bed = OUT_DIR / "{subset}" / "unrelated.bed",
-        bim = OUT_DIR / "{subset}" / "unrelated.bim",
-        fam = OUT_DIR / "{subset}" / "unrelated.fam",
-        grm = OUT_DIR / "{subset}" / "unrelated.grm.bin",
-        grmid = OUT_DIR / "{subset}" / "unrelated.grm.id",
-        grmN = OUT_DIR / "{subset}" / "unrelated.grm.N.bin",
+        bed=OUT_DIR / "{subset}" / "unrelated.bed",
+        bim=OUT_DIR / "{subset}" / "unrelated.bim",
+        fam=OUT_DIR / "{subset}" / "unrelated.fam",
+        grm=OUT_DIR / "{subset}" / "unrelated.grm.bin",
+        grmid=OUT_DIR / "{subset}" / "unrelated.grm.id",
+        grmN=OUT_DIR / "{subset}" / "unrelated.grm.N.bin",
     params:
-        king_cutoff = config['relatedness'].get('king_cutoff', 0.0884),
-        method = config['relatedness']['method'],
-    shell: """
+        king_cutoff=config["relatedness"].get("king_cutoff", 0.0884),
+        method=config["relatedness"]["method"],
+    shell:
+        """
     
     echo "Estimating genetic relatedness"
     echo "Method: {params.method}"
@@ -53,4 +58,3 @@ rule checkRelatedness:
     fi
 
     """
-

@@ -1,20 +1,22 @@
 rule gnomix:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
     threads: 8
     resources:
-        nodes = 1,
-        mem_mb = 64000,
-        runtime = 1320,
+        nodes=1,
+        mem_mb=64000,
+        runtime=1320,
     input:
-        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
+        vcf=os.path.join(config["OUT_DIR"], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
     output:
         # List all files that PLINK will actually create
-        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}_ancestry"),
+        vcf=os.path.join(config["OUT_DIR"], "03-localAncestry/chr{CHR}_ancestry"),
     params:
-        out_dir = f"{config['OUT_DIR']}/03-localAncestry",
-        ref= config["REF"],
-        test=config["rfmix_test"]
-    shell: """
+        out_dir=f"{config['OUT_DIR']}/03-localAncestry",
+        ref=config["REF"],
+        test=config["rfmix_test"],
+    shell:
+        """
     # get common snps 
     #bcftools view -H {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz | cut -f 1,2 > {params.out_dir}/chr{wildcards.CHR}snps.txt
     # filter reference to match query

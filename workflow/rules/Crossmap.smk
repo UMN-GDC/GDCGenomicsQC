@@ -1,28 +1,31 @@
 rule crossmap:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda: "../../envs/ancNreport.yml"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
     threads: 8
     resources:
-        nodes = 1,
-        mem_mb = 32000,
-        runtime = 120,
+        nodes=1,
+        mem_mb=32000,
+        runtime=120,
     input:
-        bed = OUT_DIR / "01-Initialfilter" / "initialFilter.bed",
-        bim = OUT_DIR / "01-Initialfilter" / "initialFilter.bim",
-        fam = OUT_DIR / "01-Initialfilter" / "initialFilter.fam",
+        bed=OUT_DIR / "01-Initialfilter" / "initialFilter.bed",
+        bim=OUT_DIR / "01-Initialfilter" / "initialFilter.bim",
+        fam=OUT_DIR / "01-Initialfilter" / "initialFilter.fam",
     output:
         # List all files that PLINK will actually create
-        eigen = OUT_DIR / "04-globalAncestry" / "ref.eigenvec",
-        projected = OUT_DIR / "04-globalAncestry" / "sampleRefPCscores.sscore",
-        tempDir  = temp(directory(OUT_DIR / "04-globalAncestry" / "intermediates"))
+        eigen=OUT_DIR / "04-globalAncestry" / "ref.eigenvec",
+        projected=OUT_DIR / "04-globalAncestry" / "sampleRefPCscores.sscore",
+        tempDir=temp(directory(OUT_DIR / "04-globalAncestry" / "intermediates")),
     params:
-        method = config['relatedness']["method"],
-        grm = config['relatedness']["method"],
-        out_dir = OUT_DIR / "04-globalAncestry",
-        input_prefix = OUT_DIR / "01-Initialfilter" / "initialFilter",
-        input_dir = OUT_DIR / "01-Initialfilter",
-        ref= REF / "1000G_highcoverage" / "1000G_highCoveragephased"
-    shell: """
+        method=config["relatedness"]["method"],
+        grm=config["relatedness"]["method"],
+        out_dir=OUT_DIR / "04-globalAncestry",
+        input_prefix=OUT_DIR / "01-Initialfilter" / "initialFilter",
+        input_dir=OUT_DIR / "01-Initialfilter",
+        ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased",
+    shell:
+        """
 
     # Since plink denote X chromosome's pseudo-autosomal region as a separate 'XY' chromosome, we want to merge to pass ontto LiftOver/CrossMap. 
     # We also reformat the numeric chromsome {1-26} to {1-22, X, Y, MT} for LiftOver/CrossMap
@@ -43,4 +46,3 @@ rule crossmap:
     plink --bfile result3 --recode --out study.$NAME.lifted
     plink --bfile result3 --recode --make-bed --out study.$NAME.lifted
     """
-

@@ -1,35 +1,42 @@
 rule Standard_QC:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda: "../../envs/ancNreport.yml"
+    log:
+        OUT_DIR / "logs" / "Standard_QC_{subset}.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
     threads: 8
     resources:
         # nodes=1 is usually the default, but can be specified if needed
-        nodes = 1,
+        nodes=1,
         # mem=32GB translated to MB
-        mem_mb = 32000,
-        runtime =60,
+        mem_mb=32000,
+        runtime=60,
     input:
-        pgen = OUT_DIR / "{subset}" / "initialFilter.pgen",
-        pvar = OUT_DIR / "{subset}" / "initialFilter.pvar",
-        psam = OUT_DIR / "{subset}" / "initialFilter.psam",
-        LDpgen = OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
-        LDpvar = OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
-        LDpsam = OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
+        pgen=OUT_DIR / "{subset}" / "initialFilter.pgen",
+        pvar=OUT_DIR / "{subset}" / "initialFilter.pvar",
+        psam=OUT_DIR / "{subset}" / "initialFilter.psam",
+        LDpgen=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
+        LDpvar=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
+        LDpsam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
     output:
-        pgen =   OUT_DIR / "{subset}" / "standardFilter.pgen",
-        pvar =   OUT_DIR / "{subset}" / "standardFilter.pvar",
-        psam =   OUT_DIR / "{subset}" / "standardFilter.psam",
-        LDpgen = OUT_DIR / "{subset}" / "standardFilter.LDpruned.pgen",
-        LDpvar = OUT_DIR / "{subset}" / "standardFilter.LDpruned.pvar",
-        LDpsam = OUT_DIR / "{subset}" / "standardFilter.LDpruned.psam",
-        tempDir  = temp(directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter"))
+        pgen=OUT_DIR / "{subset}" / "standardFilter.pgen",
+        pvar=OUT_DIR / "{subset}" / "standardFilter.pvar",
+        psam=OUT_DIR / "{subset}" / "standardFilter.psam",
+        LDpgen=OUT_DIR / "{subset}" / "standardFilter.LDpruned.pgen",
+        LDpvar=OUT_DIR / "{subset}" / "standardFilter.LDpruned.pvar",
+        LDpsam=OUT_DIR / "{subset}" / "standardFilter.LDpruned.psam",
+        tempDir=temp(
+            directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter")
+        ),
     params:
-        ref= config["REF"],
-        output_dir = lambda wildcards, input: OUT_DIR / wildcards.subset,
-        sex_check = config['SEX_CHECK'],
-        input_prefix = lambda wildcards, input: input.LDpgen[:-5],
-        relatedness = config['relatedness']['method']
-    shell: """
+        ref=config["REF"],
+        output_dir=lambda wildcards, input: OUT_DIR / wildcards.subset,
+        sex_check=config["SEX_CHECK"],
+        input_prefix=lambda wildcards, input: input.LDpgen[:-5],
+        relatedness=config["relatedness"]["method"],
+    shell:
+        """
         echo "Standard QC: Variants and samples filtering"
         echo "Data subset: {wildcards.subset}"
         mkdir -p {output.tempDir}

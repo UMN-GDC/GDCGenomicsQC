@@ -1,6 +1,6 @@
-SIM_CONFIG = config.get('phenotypeSimulation', {})
+SIM_CONFIG = config.get("phenotypeSimulation", {})
 
-sim_ancestries = SIM_CONFIG.get('ancestries', ["AFR", "EUR"])
+sim_ancestries = SIM_CONFIG.get("ancestries", ["AFR", "EUR"])
 if len(sim_ancestries) != 2:
     raise ValueError("phenotypeSimulation.ancestries must be exactly 2 values")
 
@@ -11,40 +11,44 @@ SIM_OUT_DIR = OUT_DIR / "simulations" / f"{ANC1}_{ANC2}"
 
 
 rule simulatePhenotype:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
-    conda: "../../envs/phenotypeSim.yml"
+    log:
+        OUT_DIR / "logs" / "simulatePhenotype.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+    conda:
+        "../../envs/phenotypeSim.yml"
     threads: 8
     resources:
-        nodes = 1,
-        mem_mb = 32000,
-        runtime = 240,
+        nodes=1,
+        mem_mb=32000,
+        runtime=240,
     input:
-        anc1_pgen = OUT_DIR / ANC1 / "initialFilter.pgen",
-        anc1_pvar = OUT_DIR / ANC1 / "initialFilter.pvar",
-        anc1_psam = OUT_DIR / ANC1 / "initialFilter.psam",
-        anc2_pgen = OUT_DIR / ANC2 / "initialFilter.pgen",
-        anc2_pvar = OUT_DIR / ANC2 / "initialFilter.pvar",
-        anc2_psam = OUT_DIR / ANC2 / "initialFilter.psam",
+        anc1_pgen=OUT_DIR / ANC1 / "initialFilter.pgen",
+        anc1_pvar=OUT_DIR / ANC1 / "initialFilter.pvar",
+        anc1_psam=OUT_DIR / ANC1 / "initialFilter.psam",
+        anc2_pgen=OUT_DIR / ANC2 / "initialFilter.pgen",
+        anc2_pvar=OUT_DIR / ANC2 / "initialFilter.pvar",
+        anc2_psam=OUT_DIR / ANC2 / "initialFilter.psam",
     output:
-        sim_dir = directory(SIM_OUT_DIR),
-        anc1_fam = SIM_OUT_DIR / (ANC1 + "_simulation.fam"),
-        anc2_fam = SIM_OUT_DIR / (ANC2 + "_simulation.fam"),
-        anc1_bed = SIM_OUT_DIR / (ANC1 + "_simulation.bed"),
-        anc1_bim = SIM_OUT_DIR / (ANC1 + "_simulation.bim"),
-        anc2_bed = SIM_OUT_DIR / (ANC2 + "_simulation.bed"),
-        anc2_bim = SIM_OUT_DIR / (ANC2 + "_simulation.bim"),
+        sim_dir=directory(SIM_OUT_DIR),
+        anc1_fam=SIM_OUT_DIR / f"{ANC1}_simulation.fam",
+        anc2_fam=SIM_OUT_DIR / f"{ANC2}_simulation.fam",
+        anc1_bed=SIM_OUT_DIR / f"{ANC1}_simulation.bed",
+        anc1_bim=SIM_OUT_DIR / f"{ANC1}_simulation.bim",
+        anc2_bed=SIM_OUT_DIR / f"{ANC2}_simulation.bed",
+        anc2_bim=SIM_OUT_DIR / f"{ANC2}_simulation.bim",
     params:
-        n_sims = SIM_CONFIG.get('n_sims', 10),
-        heritability = SIM_CONFIG.get('heritability', 0.4),
-        rho = SIM_CONFIG.get('rho', 0.8),
-        maf = SIM_CONFIG.get('maf', 0.05),
-        seed = SIM_CONFIG.get('seed', 42),
-        skip_thinning = SIM_CONFIG.get('skip_thinning', True),
-        thin_count_snps = SIM_CONFIG.get('thin_count_snps', 1000000),
-        thin_count_inds = SIM_CONFIG.get('thin_count_inds', 10000),
-        anc1 = ANC1,
-        anc2 = ANC2,
-        script_dir = Path(workflow.basedir) / "scripts",
+        n_sims=SIM_CONFIG.get("n_sims", 10),
+        heritability=SIM_CONFIG.get("heritability", 0.4),
+        rho=SIM_CONFIG.get("rho", 0.8),
+        maf=SIM_CONFIG.get("maf", 0.05),
+        seed=SIM_CONFIG.get("seed", 42),
+        skip_thinning=SIM_CONFIG.get("skip_thinning", True),
+        thin_count_snps=SIM_CONFIG.get("thin_count_snps", 1000000),
+        thin_count_inds=SIM_CONFIG.get("thin_count_inds", 10000),
+        anc1=ANC1,
+        anc2=ANC2,
+        script_dir=Path(workflow.basedir) / "scripts",
     shell:
         """
         set -euo pipefail
