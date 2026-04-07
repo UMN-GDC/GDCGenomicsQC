@@ -207,8 +207,9 @@ Visualizations
 - Y-axis: Stacked posterior probabilities
 - Identifies homogeneous and admixed individuals
 
-**Classification Space**: ``ancestry_classification_space.svg``
+**Classification Space**: ``images/ancestry_classification_space.svg``
 
+- A visualization of classification using PCA
 - Samples in PC space with reference density contours
 - Color indicates predicted ancestry
 
