@@ -96,7 +96,7 @@ We recommend creating a dedicated conda environment for Snakemake (we have a .ya
 
 .. code-block:: bash
 
-    conda create -f envs/snakemake.yml
+    conda env create -f envs/snakemake.yml
 
 .. dropdown:: GDC internal snakemake env
    :open:

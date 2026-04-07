@@ -121,6 +121,17 @@ rule run_initialQC:
         OUT_DIR / "full" / "standardFilter.pgen",
         OUT_DIR / "full" / "initialFilter.pgen",
 
+rule run_pca:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420 # 1 week
+    input:
+        labels = REF / "1000G_highcoverage" / "population.txt",
+        eigen_ref = OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+        eigen_sample = OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+
 
 rule run_estimateAdmixing:
     threads: 1
