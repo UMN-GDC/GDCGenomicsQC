@@ -1,10 +1,10 @@
 rule initialFilter :
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
-    threads: 8
+    threads: 4
     resources:
         nodes = 1,
-        mem_mb = 16000,
+        mem_mb = 32000,
         runtime = 60,
     output:
         pgen = OUT_DIR / "{subset}" / "initialFilter.pgen",

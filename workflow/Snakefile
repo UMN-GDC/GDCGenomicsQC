@@ -24,6 +24,8 @@ CHROMOSOMES = range(1, 23)
 
 OUT_DIR = Path(config['OUT_DIR'])
 REF = Path(config['REF'])
+# Ensure storage prefix is treated as absolute path to satisfy Singularity mounts
+STORAGE_PREFIX = Path(os.path.abspath(config['local-storage-prefix']))
 ANCESTRY_MODEL = config.get('ancestry', {}).get('model', 'pca')
 
 def get_ancestries(wildcards):
@@ -186,6 +188,18 @@ rule run_simulatePhenotype:
             OUT_DIR / "simulations" / f"{config['phenotypeSimulation']['ancestries'][0]}_{config['phenotypeSimulation']['ancestries'][1]}" / "{anc}_simulation_pheno1.estimates",
             anc=config['phenotypeSimulation']['ancestries']
         )
+
+rule run_PCAinternal:
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_mb = 4000,
+        runtime = 420
+    input:
+        pcaobj = OUT_DIR / "full" / "pcair_pcaobj.RDS",
+        pcrelate = OUT_DIR / "full" / "pcrelate_kinship.RDS",
+        plot = OUT_DIR / "full" / "figures" / "pcair_pcs.svg",
+        coords = OUT_DIR / "full" / "pcair_coordinates.tsv",
 ##### GOOD UP TO HERE
 
 

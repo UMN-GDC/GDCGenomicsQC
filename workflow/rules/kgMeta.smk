@@ -24,15 +24,14 @@ checkpoint kgMeta:
         wget -O {output.highcovPop} {params.highcovPop}
         wget -O {output.highcovPed} {params.highcovPed}
         wget -O {output.gr38fastagz} {params.fasta}
-        wget -O {output.map} {params.map}
+        wget -O {output.mapgz} {params.map}
         
         zcat {output.mapgz} \
-        | awk '{OFS="\t"} NR>1 {print $1, $2, $4}' > {output.map}
+        | awk '{{OFS="\t"}} NR>1 {{print $1, $2, $4}}' > {output.map}
 
 
         gunzip -c {output.gr38fastagz} > {output.gr38fasta}
 
 
-        wget -O {output.map} {params.map}
         wget -O {output.crossmap} {params.crossmap}
         """

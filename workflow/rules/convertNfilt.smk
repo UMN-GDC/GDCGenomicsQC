@@ -5,7 +5,7 @@ rule convertNfilt :
     resources:
         nodes = 1,
         mem_mb = 32000,
-        runtime = 60,
+        runtime = 240,
     output:
         pgen = OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen",
         pvar = OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar",
@@ -19,91 +19,49 @@ rule convertNfilt :
         crossmap = REF / "CrossMap" / "hg19ToHg38.over.chain.gz",
         gr38fasta = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
     params:
-        thin = config['thin'],
-        input_prefix = lambda wildcards, input: input.vcf[:-7],
-        output_prefix = lambda wildcards, output: output.pgen[:-5],
-        liftoover = True,
-        info_r2_min = config.get('convertNfilt', {}).get('info_r2_min'),
-        filter_pass = config.get('convertNfilt', {}).get('filter_pass', True),
+        thin = config.get('thin', False),
+        # Parameters for plink2 filtering
+        min_mach_r2 = config.get('convertNfilt', {}).get('info_r2_min'),
+        max_mach_r2 = config.get('convertNfilt', {}).get('info_r2_max'),
         qual_min = config.get('convertNfilt', {}).get('qual_min'),
-        bcftools_filter = (
-            "-i 'FILTER==\"PASS\"'" if config.get('convertNfilt', {}).get('filter_pass', True) else ""
-        ) + (
-            f" -i 'QUAL>={config.get('convertNfilt', {}).get('qual_min')}'" if config.get('convertNfilt', {}).get('qual_min') else ""
-        ) + (
-            f" -i 'INFO/R2>={config.get('convertNfilt', {}).get('info_r2_min')}'" if config.get('convertNfilt', {}).get('info_r2_min') else ""
-        ),
+        output_prefix = lambda wildcards, output: output.pgen.replace(".pgen", ""),
+
     shell: """
-    
     mkdir -p {output.tempDir}
-    
-    BCFTOOLS_FILTER="{params.bcftools_filter}"
-    
-    # if [[ "{params.liftoover}" == "True" ]]; then
-    #     for i in {{1..22}} X Y MT; do echo "$i chr$i"; done > {output.tempDir}/chr_map.txt
-    #     
-    #     # Use it in the command
-    #     bcftools annotate --rename-chrs {output.tempDir}/chr_map.txt {input.vcf} -Ou \
-    #     | bcftools +liftover -- \
-    #       -c {input.crossmap} \
-    #       -f {input.gr38fasta} \
-    #       -o {output.tempDir}/intermediate_00.vcf.gz \
-    #       --reject {output.tempDir}/rejected_variants.vcf.gz
-    # else 
-    #     ln -sf $(realpath {input.vcf}) {output.tempDir}/intermediate_00.vcf.gz
-    # fi
 
-    if [ -n "$BCFTOOLS_FILTER" ]; then
-        echo "Pre-filtering VCF with bcftools: $BCFTOOLS_FILTER"
-        bcftools view {input.vcf} $BCFTOOLS_FILTER -Oz -o {output.tempDir}/filtered.vcf.gz
-        VCF_INPUT={output.tempDir}/filtered.vcf.gz
-    else
-        VCF_INPUT={input.vcf}
+    # Prepare plink2 filtering flags
+    PLINK2_FILTERS=""
+    if [ -n "{params.min_mach_r2}" ] && [ "{params.min_mach_r2}" != "None" ]; then
+        if [ -n "{params.max_mach_r2}" ] && [ "{params.max_mach_r2}" != "None" ]; then
+            PLINK2_FILTERS="$PLINK2_FILTERS --mach-r2-filter {params.min_mach_r2} {params.max_mach_r2}"
+        fi
+    fi
+    if [ -n "{params.qual_min}" ] && [ "{params.qual_min}" != "None" ] && [ "{params.qual_min}" != "0" ]; then
+        PLINK2_FILTERS="$PLINK2_FILTERS --var-min-qual {params.qual_min}"
     fi
 
-    if [[ "{wildcards.subset}" == "full" && "{params.thin}" == "True" ]]; then
-        echo "Processing full dataset without subsetting..."
-        plink2 --vcf $VCF_INPUT \
-               --make-pgen \
-               --rm-dup force-first \
-               --missing \
-               --thin-indiv 0.1 \
-               --thin-count 100000 \
-               --threads {threads} \
-               --seed 1 \
-               --memory {resources.mem_mb} \
-               --out {output.tempDir}/intermediate_0
-    elif [[ "{wildcards.subset}" == "full" && "{params.thin}" != "True" ]]; then
-        plink2 --vcf $VCF_INPUT \
-               --make-pgen \
-               --rm-dup force-first \
-               --threads {threads} \
-               --missing \
-               --memory {resources.mem_mb} \
-               --out {output.tempDir}/intermediate_0
-    elif [[ "{wildcards.subset}" != "full" && "{params.thin}" == "True" ]]; then
-        plink2 --vcf $VCF_INPUT \
-               --make-pgen \
-               --rm-dup force-first \
-               --threads {threads} \
-               --missing \
-               --keep {input.keep} \
-               --thin-indiv-count 10000 \
-               --thin-count 100000 \
-               --seed 1 \
-               --memory {resources.mem_mb} \
-               --out {output.tempDir}/intermediate_0
-    elif [[ "{wildcards.subset}" != "full" && "{params.thin}" != "True" ]]; then
-        plink2 --vcf $VCF_INPUT \
-               --make-pgen \
-               --missing \
-               --threads {threads} \
-               --rm-dup force-first \
-               --memory {resources.mem_mb} \
-               --keep {input.keep} \
-               --out {output.tempDir}/intermediate_0
+    echo "Applying filters: $PLINK2_FILTERS"
+
+    # Base PLINK2 command for conversion and filtering
+    # Start constructing command
+    CMD="plink2 --vcf {input.vcf} --make-pgen --rm-dup force-first --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+
+    if [[ "{wildcards.subset}" != "full" ]]; then
+        CMD="$CMD --keep {input.keep}"
     fi
 
+    if [[ "{params.thin}" == "True" ]]; then
+        if [[ "{wildcards.subset}" == "full" ]]; then
+            CMD="$CMD --thin-indiv 0.1 --thin-count 100000 --seed 1"
+        else
+            CMD="$CMD --thin-indiv-count 10000 --thin-count 100000 --seed 1"
+        fi
+    fi
+
+    # Execute main conversion/filter command
+    $CMD
+
+    # Secondary processing
     plink2 --pfile {output.tempDir}/intermediate_0 \
            --make-pgen \
            --geno 0.1 \
@@ -112,7 +70,6 @@ rule convertNfilt :
            --output-chr 26 \
            --sort-vars \
            --out {params.output_prefix}
-
 
     mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
     mv {output.tempDir}/intermediate_0.smiss {output.smiss}
