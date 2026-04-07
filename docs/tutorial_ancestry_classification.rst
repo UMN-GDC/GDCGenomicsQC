@@ -36,6 +36,20 @@ Verify your installation:
     cd GDCGenomicsQC
     snakemake --version
 
+.. _dag-visualization:
+
+DAG Visualization
+~~~~~~~~~~~~~~~~
+
+The pipeline DAG up to the ``run_pca`` rule shows the workflow for preparing
+the PCA reference and running ancestry classification:
+
+.. mermaid:: dag_pca.mmd
+
+The rule graph provides a cleaner view of rule dependencies:
+
+.. mermaid:: rulegraph_pca.mmd
+
 ----
 
 Lab Exercise: Running Ancestry Classification

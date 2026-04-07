@@ -1,14 +1,15 @@
 # -- Project information -----------------------------------------------------
 
-project = 'GDC'
-copyright = '2026, Michael Anderson'
-author = 'Michael Anderson'
+project = 'GDCgenomicsQC pipeline'
+copyright = '2026, Genomic data commons'
+author = 'Michael Anderson and Christian Coffman'
 
 # -- General configuration ---------------------------------------------------
 
 extensions = [
     'sphinx_rtd_theme',
     'sphinx.ext.mathjax',
+    'sphinxcontrib.mermaid',
 ]
 
 # The master toctree document.

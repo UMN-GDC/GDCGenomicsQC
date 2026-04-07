@@ -1,0 +1,27 @@
+---
+title: DAG
+---
+flowchart TB
+	id0[kgMeta]
+	id1[PCAreference]
+	id2[kgData]
+	id3[convertNfilt]
+	id4[initialFilter]
+	id5[kgAssemble]
+	id6[run_pca]
+	style id0 fill:#57D95F,stroke-width:2px,color:#333333
+	style id1 fill:#D97657,stroke-width:2px,color:#333333
+	style id2 fill:#5FD957,stroke-width:2px,color:#333333
+	style id3 fill:#ADD957,stroke-width:2px,color:#333333
+	style id4 fill:#7ED957,stroke-width:2px,color:#333333
+	style id5 fill:#6ED957,stroke-width:2px,color:#333333
+	style id6 fill:#57C5D9,stroke-width:2px,color:#333333
+	id5 --> id1
+	id4 --> id1
+	id0 --> id3
+	id0 --> id4
+	id3 --> id4
+	id2 --> id5
+	id0 --> id5
+	id1 --> id6
+	id0 --> id6

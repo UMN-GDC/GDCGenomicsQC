@@ -90,6 +90,14 @@ internalPCA:
     plot:
       type: bool
       default: false
+    method:
+      type: str
+      default: "pcair"
+      enum: ["pcair", "plink2"]
+    npc:
+      type: int
+      default: 20
+      description: Number of principal components to compute
     color_by:
       type: str
       nullable: true

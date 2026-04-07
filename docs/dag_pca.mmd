@@ -1,0 +1,174 @@
+---
+title: DAG
+---
+flowchart TB
+	id0[kgMeta]
+	id1[PCAreference]
+	id2[kgData - CHR: 1]
+	id3[kgData - CHR: 2]
+	id4[kgData - CHR: 3]
+	id5[kgData - CHR: 4]
+	id6[kgData - CHR: 5]
+	id7[kgData - CHR: 6]
+	id8[kgData - CHR: 7]
+	id9[kgData - CHR: 8]
+	id10[kgData - CHR: 9]
+	id11[kgData - CHR: 10]
+	id12[kgData - CHR: 11]
+	id13[kgData - CHR: 12]
+	id14[kgData - CHR: 13]
+	id15[kgData - CHR: 14]
+	id16[kgData - CHR: 15]
+	id17[kgData - CHR: 16]
+	id18[kgData - CHR: 17]
+	id19[kgData - CHR: 18]
+	id20[kgData - CHR: 19]
+	id21[kgData - CHR: 20]
+	id22[kgData - CHR: 21]
+	id23[kgData - CHR: 22]
+	id24[convertNfilt - CHR: 1 - subset: full]
+	id25[convertNfilt - CHR: 2 - subset: full]
+	id26[convertNfilt - CHR: 3 - subset: full]
+	id27[convertNfilt - CHR: 4 - subset: full]
+	id28[convertNfilt - CHR: 5 - subset: full]
+	id29[convertNfilt - CHR: 6 - subset: full]
+	id30[convertNfilt - CHR: 7 - subset: full]
+	id31[convertNfilt - CHR: 8 - subset: full]
+	id32[convertNfilt - CHR: 9 - subset: full]
+	id33[convertNfilt - CHR: 10 - subset: full]
+	id34[convertNfilt - CHR: 11 - subset: full]
+	id35[convertNfilt - CHR: 12 - subset: full]
+	id36[convertNfilt - CHR: 13 - subset: full]
+	id37[convertNfilt - CHR: 14 - subset: full]
+	id38[convertNfilt - CHR: 15 - subset: full]
+	id39[convertNfilt - CHR: 16 - subset: full]
+	id40[convertNfilt - CHR: 17 - subset: full]
+	id41[convertNfilt - CHR: 18 - subset: full]
+	id42[convertNfilt - CHR: 19 - subset: full]
+	id43[convertNfilt - CHR: 20 - subset: full]
+	id44[convertNfilt - CHR: 21 - subset: full]
+	id45[convertNfilt - CHR: 22 - subset: full]
+	id46[initialFilter]
+	id47[kgAssemble]
+	id48[run_pca]
+	style id0 fill:#57D95F,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id1 fill:#D97657,stroke-width:2px,color:#333333
+	style id2 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id3 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id4 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id5 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id6 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id7 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id8 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id9 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id10 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id11 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id12 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id13 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id14 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id15 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id16 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id17 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id18 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id19 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id20 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id21 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id22 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id23 fill:#5FD957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id24 fill:#ADD957,stroke-width:2px,color:#333333
+	style id25 fill:#ADD957,stroke-width:2px,color:#333333
+	style id26 fill:#ADD957,stroke-width:2px,color:#333333
+	style id27 fill:#ADD957,stroke-width:2px,color:#333333
+	style id28 fill:#ADD957,stroke-width:2px,color:#333333
+	style id29 fill:#ADD957,stroke-width:2px,color:#333333
+	style id30 fill:#ADD957,stroke-width:2px,color:#333333
+	style id31 fill:#ADD957,stroke-width:2px,color:#333333
+	style id32 fill:#ADD957,stroke-width:2px,color:#333333
+	style id33 fill:#ADD957,stroke-width:2px,color:#333333
+	style id34 fill:#ADD957,stroke-width:2px,color:#333333
+	style id35 fill:#ADD957,stroke-width:2px,color:#333333
+	style id36 fill:#ADD957,stroke-width:2px,color:#333333
+	style id37 fill:#ADD957,stroke-width:2px,color:#333333
+	style id38 fill:#ADD957,stroke-width:2px,color:#333333
+	style id39 fill:#ADD957,stroke-width:2px,color:#333333
+	style id40 fill:#ADD957,stroke-width:2px,color:#333333
+	style id41 fill:#ADD957,stroke-width:2px,color:#333333
+	style id42 fill:#ADD957,stroke-width:2px,color:#333333
+	style id43 fill:#ADD957,stroke-width:2px,color:#333333
+	style id44 fill:#ADD957,stroke-width:2px,color:#333333
+	style id45 fill:#ADD957,stroke-width:2px,color:#333333
+	style id46 fill:#7ED957,stroke-width:2px,color:#333333
+	style id47 fill:#6ED957,stroke-width:2px,color:#333333,stroke-dasharray: 5 5
+	style id48 fill:#57C5D9,stroke-width:2px,color:#333333
+	id46 --> id1
+	id47 --> id1
+	id0 --> id24
+	id0 --> id25
+	id0 --> id26
+	id0 --> id27
+	id0 --> id28
+	id0 --> id29
+	id0 --> id30
+	id0 --> id31
+	id0 --> id32
+	id0 --> id33
+	id0 --> id34
+	id0 --> id35
+	id0 --> id36
+	id0 --> id37
+	id0 --> id38
+	id0 --> id39
+	id0 --> id40
+	id0 --> id41
+	id0 --> id42
+	id0 --> id43
+	id0 --> id44
+	id0 --> id45
+	id0 --> id46
+	id24 --> id46
+	id25 --> id46
+	id26 --> id46
+	id27 --> id46
+	id28 --> id46
+	id29 --> id46
+	id30 --> id46
+	id31 --> id46
+	id32 --> id46
+	id33 --> id46
+	id34 --> id46
+	id35 --> id46
+	id36 --> id46
+	id37 --> id46
+	id38 --> id46
+	id39 --> id46
+	id40 --> id46
+	id41 --> id46
+	id42 --> id46
+	id43 --> id46
+	id44 --> id46
+	id45 --> id46
+	id2 --> id47
+	id3 --> id47
+	id4 --> id47
+	id5 --> id47
+	id6 --> id47
+	id7 --> id47
+	id8 --> id47
+	id9 --> id47
+	id10 --> id47
+	id11 --> id47
+	id12 --> id47
+	id13 --> id47
+	id14 --> id47
+	id15 --> id47
+	id16 --> id47
+	id17 --> id47
+	id18 --> id47
+	id19 --> id47
+	id20 --> id47
+	id21 --> id47
+	id22 --> id47
+	id23 --> id47
+	id0 --> id47
+	id0 --> id48
+	id1 --> id48

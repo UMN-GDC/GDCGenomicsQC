@@ -34,6 +34,19 @@ Verify your installation:
     cd GDCGenomicsQC
     snakemake --version
 
+.. _dag-visualization:
+
+DAG Visualization
+~~~~~~~~~~~~~~~~
+
+The pipeline DAG up to the ``run_initialQC`` rule shows the Initial QC workflow:
+
+.. mermaid:: dag_initialQC.mmd
+
+The rule graph provides a cleaner view of rule dependencies:
+
+.. mermaid:: rulegraph_initialQC.mmd
+
 ----
 
 Lab Exercise: Running QC Pipeline

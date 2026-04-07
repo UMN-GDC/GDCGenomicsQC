@@ -236,6 +236,17 @@ The output directory is organized as follows
     - chr<chr>phased.vcf.gz - the Shapeit4 phased haplotypes
  - 03-snpHeritability - SNP heritability estimates
 
+## Create DAG
+```bash
+# snakemake run_pca --dag --configfile ../config/abcd_config.yaml 2>/dev/null | dot -Tpng > /scratch.global/coffm049/GDCGenomicsQC/dag_run_pca.png
+# snakemake run_pca --rulegraph --configfile ../config/abcd_config.yaml 2>/dev/null | dot -Tpng > /scratch.global/coffm049/GDCGenomicsQC/dag_run_pca.png
+snakemake run_pca --dag mermaid-js --configfile ../config/abcd_config.yaml 2>/dev/null > ../docs/dag_pca.mmd
+snakemake run_pca --rulegraph mermaid-js --configfile ../config/abcd_config.yaml 2>/dev/null > ../docs/rulegraph_pca.mmd
+snakemake run_initialQC --dag mermaid-js --configfile ../config/abcd_config.yaml 2>/dev/null > ../docs/dag_initialQC.mmd
+snakemake run_initialQC --rulegraph mermaid-js --configfile ../config/abcd_config.yaml 2>/dev/null > ../docs/rulegraph_initialQC.mmd
+
+```
+
 ## Contributing
 
 GDCGenomicsQC is built and maintained by a small team – we'd love your help to fix bugs and add features!
