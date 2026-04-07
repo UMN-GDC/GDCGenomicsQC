@@ -1,32 +1,40 @@
-rule convertNfilt :
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda: "../../envs/ancNreport.yml"
+rule convertNfilt:
+    log:
+        OUT_DIR / "logs" / "convertNfilt_{subset}_{CHR}.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
     threads: 4
     resources:
-        nodes = 1,
-        mem_mb = 32000,
-        runtime = 240,
+        nodes=1,
+        mem_mb=32000,
+        runtime=240,
     output:
-        pgen = OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen",
-        pvar = OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar",
-        psam = OUT_DIR / "{subset}" / "initialFilter_{CHR}.psam",
-        tempDir  = temp(directory(OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "initial_filter")),
-        smiss = OUT_DIR / "{subset}" / "initial_{CHR}.smiss",
-        vmiss = OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"
+        pgen=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen",
+        pvar=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar",
+        psam=OUT_DIR / "{subset}" / "initialFilter_{CHR}.psam",
+        tempDir=temp(
+            directory(
+                OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "initial_filter"
+            )
+        ),
+        smiss=OUT_DIR / "{subset}" / "initial_{CHR}.smiss",
+        vmiss=OUT_DIR / "{subset}" / "initial_{CHR}.vmiss",
     input:
-        vcf = config['vcf_template'],
-        keep = get_ancestry_file,
-        crossmap = REF / "CrossMap" / "hg19ToHg38.over.chain.gz",
-        gr38fasta = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
+        vcf=config["vcf_template"],
+        keep=get_ancestry_file,
+        crossmap=REF / "CrossMap" / "hg19ToHg38.over.chain.gz",
+        gr38fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
     params:
-        thin = config.get('thin', False),
+        thin=config.get("thin", False),
         # Parameters for plink2 filtering
-        min_mach_r2 = config.get('convertNfilt', {}).get('info_r2_min'),
-        max_mach_r2 = config.get('convertNfilt', {}).get('info_r2_max'),
-        qual_min = config.get('convertNfilt', {}).get('qual_min'),
-        output_prefix = lambda wildcards, output: output.pgen.replace(".pgen", ""),
-
-    shell: """
+        min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
+        max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
+        qual_min=config.get("convertNfilt", {}).get("qual_min"),
+        output_prefix=lambda wildcards, output: output.pgen.replace(".pgen", ""),
+    shell:
+        """
     mkdir -p {output.tempDir}
 
     # Prepare plink2 filtering flags

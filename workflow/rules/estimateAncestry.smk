@@ -1,25 +1,34 @@
 checkpoint estimateAncestry:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda: "../../envs/ancNreport.yml"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
     resources:
-        nodes = 1,
-        mem_mb = 64000,
-        runtime = 2880,
+        nodes=1,
+        mem_mb=64000,
+        runtime=2880,
     input:
-        labels = REF / "1000G_highcoverage"/ "population.txt",
-        eigen_ref = OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
-        eigen_sample = OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
-        umap_ref = OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
-        umap_sample = OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
+        labels=REF / "1000G_highcoverage" / "population.txt",
+        eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+        eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+        umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+        umap_sample=OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
     output:
-        report(OUT_DIR / "01-globalAncestry" / "PC_referenceSpace.svg", caption = "../../report/PCs.rst", category = "Global ancestry"),
-        report(OUT_DIR / "01-globalAncestry" / "UMAP_referenceSpace.svg", caption = "../../report/PCs.rst", category = "Global ancestry"),
-        ancestry = OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
+        report(
+            OUT_DIR / "01-globalAncestry" / "PC_referenceSpace.svg",
+            caption="../../report/PCs.rst",
+            category="Global ancestry",
+        ),
+        report(
+            OUT_DIR / "01-globalAncestry" / "UMAP_referenceSpace.svg",
+            caption="../../report/PCs.rst",
+            category="Global ancestry",
+        ),
+        ancestry=OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
     params:
-        dir = OUT_DIR / "01-globalAncestry",
-
-
-    shell: """
+        dir=OUT_DIR / "01-globalAncestry",
+    shell:
+        """
     echo "Running ancestry estimation:"
 
     Rscript scripts/classification.R  \
@@ -32,4 +41,3 @@ checkpoint estimateAncestry:
       --rseed $RANDOM
 
     """
-

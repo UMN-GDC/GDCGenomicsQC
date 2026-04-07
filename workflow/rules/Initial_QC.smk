@@ -1,32 +1,53 @@
-rule initialFilter :
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda: "../../envs/ancNreport.yml"
+rule initialFilter:
+    log:
+        OUT_DIR / "logs" / "initialFilter_{subset}.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
     threads: 8
     resources:
-        nodes = 1,
-        mem_mb = 32000,
-        runtime = 240,
+        nodes=1,
+        mem_mb=32000,
+        runtime=240,
     output:
-        pgen = OUT_DIR / "{subset}" / "initialFilter.pgen",
-        pvar = OUT_DIR / "{subset}" / "initialFilter.pvar",
-        psam = OUT_DIR / "{subset}" / "initialFilter.psam",
-        LDbed = OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
-        LDbim = OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
-        LDfam = OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
-        tempDir  = temp(directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter")),
-        smiss = OUT_DIR / "{subset}" / "initial.smiss",
-        vmiss = OUT_DIR / "{subset}" / "initial.vmiss",
-        smissIMG = report(OUT_DIR / "{subset}" / "figures" / "smiss.svg", caption = "../../report/smiss.rst", category = "Quality Control"),
-        vmissIMG = report(OUT_DIR / "{subset}" / "figures" / "vmiss.svg", caption = "../../report/vmiss.rst", category = "Quality Control"),
+        pgen=OUT_DIR / "{subset}" / "initialFilter.pgen",
+        pvar=OUT_DIR / "{subset}" / "initialFilter.pvar",
+        psam=OUT_DIR / "{subset}" / "initialFilter.psam",
+        LDbed=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
+        LDbim=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
+        LDfam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
+        tempDir=temp(
+            directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter")
+        ),
+        smiss=OUT_DIR / "{subset}" / "initial.smiss",
+        vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
+        smissIMG=report(
+            OUT_DIR / "{subset}" / "figures" / "smiss.svg",
+            caption="../../report/smiss.rst",
+            category="Quality Control",
+        ),
+        vmissIMG=report(
+            OUT_DIR / "{subset}" / "figures" / "vmiss.svg",
+            caption="../../report/vmiss.rst",
+            category="Quality Control",
+        ),
     input:
-        fasta = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
-        pgen = expand(OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pgen", CHR = CHROMOSOMES), 
-        psam = expand(OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.psam", CHR = CHROMOSOMES), 
-        pvar = expand(OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pvar", CHR = CHROMOSOMES), 
-        keep = get_ancestry_file # Snakemake evaluates this per wildcard
+        fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
+        pgen=expand(
+            OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES
+        ),
+        psam=expand(
+            OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.psam", CHR=CHROMOSOMES
+        ),
+        pvar=expand(
+            OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pvar", CHR=CHROMOSOMES
+        ),
+        keep=get_ancestry_file,  # Snakemake evaluates this per wildcard
     params:
-        output_prefix = lambda wildcards, output: output.pgen[:-5],
-    shell: """
+        output_prefix=lambda wildcards, output: output.pgen[:-5],
+    shell:
+        """
     
     # MERGE chromosomes
     # 1. Create/Clear the merge list file

@@ -1,26 +1,33 @@
 rule RFMIX:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
-    conda: "../../envs/rfmix.yml"
+    log:
+        OUT_DIR / "logs" / "RFMIX_{CHR}.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
+    conda:
+        "../../envs/rfmix.yml"
     threads: 8
     resources:
-        nodes = 1,
-        mem_mb = 64000,
-        runtime = 1320,
+        nodes=1,
+        mem_mb=64000,
+        runtime=1320,
     input:
-        vcf = OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
-        ref = REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
-        map = REF / "1000G_highcoverage" / "population.txt",
-        gmap = REF / "rfmix_ref" / "genetic_map_hg38.txt"
+        vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
+        ref=REF
+        / "1000G_highcoverage"
+        / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
+        map=REF / "1000G_highcoverage" / "population.txt",
+        gmap=REF / "rfmix_ref" / "genetic_map_hg38.txt",
     output:
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv",
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv",
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.rfmix.Q",
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.sis.tsv",
-        tempDir = temp(directory(OUT_DIR / "02-localAncestry" / "temp{CHR}"))
+        tempDir=temp(directory(OUT_DIR / "02-localAncestry" / "temp{CHR}")),
     params:
-        out_dir = OUT_DIR / "02-localAncestry",
-        test = config["localAncestry"]["test"],
-    shell: """
+        out_dir=OUT_DIR / "02-localAncestry",
+        test=config["localAncestry"]["test"],
+    shell:
+        """
     mkdir -p {output.tempDir}
     cut -f1,7 -d' ' {input.map} > {output.tempDir}/population.txt
     sed -i '1d' {output.tempDir}/population.txt
@@ -59,21 +66,28 @@ rule RFMIX:
 
 
 rule rfmixGlobal:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda: "../../envs/ancNreport.yml"
+    log:
+        OUT_DIR / "logs" / "rfmixGlobal.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
     threads: 4
     resources:
-        nodes = 1,
-        mem_mb = 32000,
-        runtime = 60,
+        nodes=1,
+        mem_mb=32000,
+        runtime=60,
     input:
-        msp = expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR = CHROMOSOMES),
-        fb = expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv", CHR = CHROMOSOMES),
+        msp=expand(
+            OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES
+        ),
+        fb=expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv", CHR=CHROMOSOMES),
     output:
-        mat = OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+        mat=OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
     params:
-        script = workflow.source_path("../scripts/rfmixGlobal.R")
+        script=workflow.source_path("../scripts/rfmixGlobal.R"),
+        out_dir=OUT_DIR,
     shell:
         """
-        Rscript {params.script} {OUT_DIR}
+        Rscript {params.script} {params.out_dir}
         """

@@ -1,21 +1,23 @@
 rule train_gnomix:
-    conda: "../../envs/gnomix.yml"
+    conda:
+        "../../envs/gnomix.yml"
     threads: 2
     resources:
-        nodes = 1,
-        mem_mb = 128000,
-        runtime = 1320,
+        nodes=1,
+        mem_mb=128000,
+        runtime=1320,
     input:
-        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
+        vcf=os.path.join(config["OUT_DIR"], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
     output:
         # List all files that PLINK will actually create
-        vcf = os.path.join(config['OUT_DIR'], "03-localAncestry/chr{CHR}_ancestry_gnomix"),
+        vcf=os.path.join(config["OUT_DIR"], "03-localAncestry/chr{CHR}_ancestry_gnomix"),
     params:
-        out_dir = f"{config['OUT_DIR']}/03-localAncestry",
-        ref= config["REF"],
+        out_dir=f"{config['OUT_DIR']}/03-localAncestry",
+        ref=config["REF"],
         test=config["rfmix_test"],
-        PHASE="False"
-    shell: """
+        PHASE="False",
+    shell:
+        """
 
     # make a quick runs possible
     if [ "{params.test}" = "True" ] ;  then
@@ -41,4 +43,3 @@ rule train_gnomix:
       {params.ref}/1000G_highcoverage/population.txt \
       {params.out_dir}/chr{wildcards.CHR}config.yaml
     """
-
