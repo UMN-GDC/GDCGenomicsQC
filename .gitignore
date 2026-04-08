@@ -18,6 +18,7 @@ AGENTS.md
 !docs/*.mmd
 !config/r25abcd.yaml
 !config/r25toy.yaml
+!config/toy.yaml
 !config/config.schema.yaml
 !config/example_config.yaml
 !envs/*.yml
