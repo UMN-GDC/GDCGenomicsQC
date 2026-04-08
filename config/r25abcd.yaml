@@ -4,6 +4,8 @@ OUT_DIR: "/scratch.global/coffm049/abcdPipeline"
 REF: "/scratch.global/GDC/referenceData"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
 
+chromosomes: [1,2,3,4,5,6,7,8,9,10,11,12,13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
 
 convertNfilt:
     # Minimum R² value from INFO field (set null to skip filter)
