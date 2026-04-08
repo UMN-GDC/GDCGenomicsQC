@@ -27,7 +27,7 @@ rule PCAreference:
         method=config["relatedness"]["method"],
         grm=config["relatedness"]["method"],
         input_prefix=OUT_DIR / "full" / "initialFilter",
-        dir=lambda wildcards, output: str(output.eigen.parent),
+        dir=str(OUT_DIR / "01-globalAncestry"),
         ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
     shell:
         """

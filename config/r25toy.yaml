@@ -1,8 +1,8 @@
 # Project-wide paths
-vcf_template: "/shared/release/abcd/dairc/concat/genetics/genotype_microarray/imputed/chr{CHR}_dose.vcf.gz"
-OUT_DIR: "/scratch.global/coffm049/abcdPipeline"
+vcf_template: "/scratch.global/GDC/referenceData/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
+OUT_DIR: "/scratch.global/coffm049/r25Pipeline"
 REF: "/scratch.global/GDC/referenceData"
-local-storage-prefix: "/scratch.global"
+local-storage-prefix: "/scratch.global/coffm049/tmp"
 
 
 convertNfilt:
@@ -89,4 +89,3 @@ phenotypeSimulation:
     
     # Number of individuals to thin to (if not skipping)
     thin_count_inds: 10000
-

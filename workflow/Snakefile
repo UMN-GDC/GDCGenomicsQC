@@ -33,10 +33,8 @@ ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
 
 include: "rules/common.smk"
-include: "rules/kgMeta.smk"
-include: "rules/kgData.smk"
-include: "rules/kgAssemble.smk"
 include: "rules/Initial_QC.smk"
+include: "rules/plotMissingness.smk"
 include: "rules/convertNfilt.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
@@ -88,9 +86,11 @@ rule all:
         / "01-globalAncestry"
         / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
         lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "pcair_pcaobj.RDS",
+            OUT_DIR / "{ANCESTRY}" / "initialFilter.pgen",
             ANCESTRY=get_ancestries(wildcards),
         ),
+        OUT_DIR / "full" / "figures" / "smiss.svg",
+        OUT_DIR / "full" / "figures" / "vmiss.svg",
         lambda wildcards: expand(
             OUT_DIR / "{ANCESTRY}" / "pcrelate_kinship.RDS",
             ANCESTRY=get_ancestries(wildcards),
@@ -146,7 +146,7 @@ checkpoint assembleRef:
             / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
             CHR=CHROMOSOMES,
         ),
-        REF / "1000G_highcoverage" / "1000G_highCoveragephased.bed",
+        REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
 
 
 rule run_initialQC:
@@ -159,6 +159,8 @@ rule run_initialQC:
         expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES),
         OUT_DIR / "full" / "standardFilter.pgen",
         OUT_DIR / "full" / "initialFilter.pgen",
+        OUT_DIR / "full" / "figures" / "smiss.svg",
+        OUT_DIR / "full" / "figures" / "vmiss.svg",
 
 
 rule run_pca:
