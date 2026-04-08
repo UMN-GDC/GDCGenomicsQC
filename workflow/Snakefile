@@ -8,9 +8,6 @@ from snakemake.utils import validate
 report: "../report/stylesheet.css"
 
 
-configfile: "../config/config.yaml"
-
-
 # Paths in include and configfile are relative to the Snakefile
 # paths inside the rules are relative to where you run the command.
 
@@ -24,10 +21,9 @@ CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 #         "Ancestry Specific QC": "../report/ancestrySpecificqc_intro.rst",
 #     }
 
-OUT_DIR = Path(config["OUT_DIR"])
-REF = Path(config["REF"])
-# Ensure storage prefix is treated as absolute path to satisfy Singularity mounts
-STORAGE_PREFIX = Path(os.path.abspath(config["local-storage-prefix"]))
+OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
+REF = Path(config.get("REF", "/path/to/ref"))
+STORAGE_PREFIX = Path(os.path.abspath(config.get("local-storage-prefix", "/tmp")))
 ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
 
@@ -111,7 +107,7 @@ rule all:
                 OUT_DIR
                 / "{subset}"
                 / "03-snpHeritability"
-                / config["snpHerit"]["out"],
+                / config.get("snpHerit", {}).get("out", "heritability.txt"),
                 subset=["full"] + get_ancestries(wildcards),
             )
             if SNP_HERIT_ACTIVE
@@ -260,9 +256,9 @@ rule run_simulatePhenotype:
         lambda wildcards: expand(
             OUT_DIR
             / "simulations"
-            / f"{config['phenotypeSimulation']['ancestries'][0]}_{config['phenotypeSimulation']['ancestries'][1]}"
+            / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
             / "{anc}_simulation_pheno1.estimates",
-            anc=config["phenotypeSimulation"]["ancestries"],
+            anc=config.get("phenotypeSimulation", {}).get("ancestries", ["AFR", "EUR"]),
         ),
 
 
@@ -290,6 +286,6 @@ rule run_train_gnomix:
         runtime=420,  # 1 week
     input:
         expand(
-            f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}_ancestry_gnomix",
+            f"{config.get('OUT_DIR', '/path/to/out')}/03-localAncestry/chr{{CHR}}_ancestry_gnomix",
             CHR=CHROMOSOMES,
         ),

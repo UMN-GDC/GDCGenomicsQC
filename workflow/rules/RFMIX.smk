@@ -25,7 +25,7 @@ rule RFMIX:
         tempDir=temp(directory(OUT_DIR / "02-localAncestry" / "temp{CHR}")),
     params:
         out_dir=OUT_DIR / "02-localAncestry",
-        test=config["localAncestry"]["test"],
+        test=config.get("localAncestry", {}).get("test", False),
     shell:
         """
     mkdir -p {output.tempDir}

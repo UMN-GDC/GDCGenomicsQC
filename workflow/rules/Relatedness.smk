@@ -21,8 +21,8 @@ rule checkRelatedness:
         grmid=OUT_DIR / "{subset}" / "unrelated.grm.id",
         grmN=OUT_DIR / "{subset}" / "unrelated.grm.N.bin",
     params:
-        king_cutoff=config["relatedness"].get("king_cutoff", 0.0884),
-        method=config["relatedness"]["method"],
+        king_cutoff=config.get("relatedness", {}).get("king_cutoff", 0.0884),
+        method=config.get("relatedness", {}).get("method", "king"),
     shell:
         """
     

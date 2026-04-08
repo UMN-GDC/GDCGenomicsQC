@@ -30,11 +30,11 @@ rule Standard_QC:
             directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter")
         ),
     params:
-        ref=config["REF"],
+        ref=config.get("REF", "/path/to/ref"),
         output_dir=lambda wildcards, input: OUT_DIR / wildcards.subset,
-        sex_check=config["SEX_CHECK"],
+        sex_check=config.get("SEX_CHECK", False),
         input_prefix=lambda wildcards, input: input.LDpgen[:-5],
-        relatedness=config["relatedness"]["method"],
+        relatedness=config.get("relatedness", {}).get("method", "king"),
     shell:
         """
         echo "Standard QC: Variants and samples filtering"

@@ -7,14 +7,13 @@ rule gnomix:
         mem_mb=64000,
         runtime=1320,
     input:
-        vcf=os.path.join(config["OUT_DIR"], "03-localAncestry/chr{CHR}.phased.vcf.gz"),
+        vcf=os.path.join(config.get("OUT_DIR", "/path/to/out"), "03-localAncestry/chr{CHR}.phased.vcf.gz"),
     output:
-        # List all files that PLINK will actually create
-        vcf=os.path.join(config["OUT_DIR"], "03-localAncestry/chr{CHR}_ancestry"),
+        vcf=os.path.join(config.get("OUT_DIR", "/path/to/out"), "03-localAncestry/chr{CHR}_ancestry"),
     params:
-        out_dir=f"{config['OUT_DIR']}/03-localAncestry",
-        ref=config["REF"],
-        test=config["rfmix_test"],
+        out_dir=f"{config.get('OUT_DIR', '/path/to/out')}/03-localAncestry",
+        ref=config.get("REF", "/path/to/ref"),
+        test=config.get("localAncestry", {}).get("test", False),
     shell:
         """
     # get common snps 
