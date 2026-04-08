@@ -22,6 +22,7 @@ high-performance clusters like the UMN MSI Agate cluster.
    tutorial_ancestry_classification
    tutorial_1kg_assembly
    tutorial_heritability
+   tutorial_prs_pipeline
 
 Indices and tables
 ==================
