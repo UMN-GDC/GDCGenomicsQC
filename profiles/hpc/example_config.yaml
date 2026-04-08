@@ -1,9 +1,9 @@
 executor: slurm
 jobs: 25
 use-singularity: true
-singularity-args: "--bind /scratch.global,/projects"
+singularity-args: "--bind /scratch.global,/shared"
 default-resources:
-  - slurm_account=gdc
+  - slurm_account=ood-coffm049
   - mem_mb=4000
   - runtime=60
 latency-wait: 20

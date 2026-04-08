@@ -14,7 +14,8 @@ configfile: "../config/config.yaml"
 # Paths in include and configfile are relative to the Snakefile
 # paths inside the rules are relative to where you run the command.
 
-CHROMOSOMES = range(1, 23)
+CHROMOSOMES = range(13, 23)
+#CHROMOSOMES = range(1, 23)
 # CHROMOSOMES = range(20, 22)
 
 

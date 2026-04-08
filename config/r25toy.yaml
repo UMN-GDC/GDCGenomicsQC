@@ -1,6 +1,6 @@
 # Project-wide paths
-vcf_template: "/scratch.global/GDC/referenceData/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
-OUT_DIR: "/scratch.global/coffm049/r25Pipeline"
+vcf_template: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
+OUT_DIR: "/scratch.global/GDC/r25outputs/toy"
 REF: "/scratch.global/GDC/referenceData"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
 

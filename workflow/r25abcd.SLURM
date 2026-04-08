@@ -4,7 +4,7 @@
 #SBATCH --mem=1G
 #SBATCH --time=72:00:00  # Give the master enough time to finish the whole pipe
 
-source /users/4/coffm049/miniconda3/etc/profile.d/conda.sh
+source /home/ood-coffm049/miniconda3/etc/profile.d/conda.sh
 conda activate snakemake
-snakemake --profile=../profiles/hpc --configfile=../config/abcd_config.yaml --rerun-incomplete run_pca
+snakemake --profile=../profiles/hpc --configfile=../config/r25abcd.yaml --rerun-incomplete run_pca
 
