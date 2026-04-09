@@ -1,4 +1,4 @@
-rule kgMeta:
+checkpoint kgMeta:
     container:
         "docker://debian:stable-slim"
     log:
@@ -41,7 +41,7 @@ rule kgMeta:
         """
 
 
-rule splitMapChr:
+checkpoint splitMapChr:
     container:
         "docker://debian:stable-slim"
     input:

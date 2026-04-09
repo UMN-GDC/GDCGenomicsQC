@@ -7,4 +7,4 @@
 source /home/ood-coffm049/miniconda3/etc/profile.d/conda.sh
 conda activate snakemake
 
-snakemake --profile=../profiles/hpc --rerun-incomplete assembleRef
+snakemake --profile=../profiles/hpc --rerun-incomplete --configfile ../config/r25toy.yaml --force assembleRef
