@@ -1,6 +1,6 @@
-rule convertNfilt:
+rule convertVcfToPlinkPerChromosome:
     log:
-        OUT_DIR / "logs" / "convertNfilt_{subset}_{CHR}.log",
+        OUT_DIR / "logs" / "convertVcfToPlinkPerChromosome_{subset}_{CHR}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

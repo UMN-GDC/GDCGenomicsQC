@@ -1,0 +1,13 @@
+#%Module######################################################################
+#
+#     GDC Genomics QC Pipeline module file
+#     Sets up singularity image cache for offline use
+#
+
+proc ModulesHelp { } {
+    puts stderr "\tThis module points to the shared singularity image cache."
+}
+
+prepend-path SINGULARITY_CACHEDIR /scratch.global/GDC/singularityimages
+setenv SNAKEMAKE_SINGULARITY_PREFIX /scratch.global/GDC/singularityimages
+prepend-path PATH /scratch.global/GDC/GDCGenomicsQC/envs/bin

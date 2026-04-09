@@ -85,17 +85,35 @@ Execute from the ``workflow`` directory:
 
     cd GDCGenomicsQC/workflow
 
-With SLURM (recommended for HPC):
+.. tabs::
+
+   .. tab:: HPC with Module (MSI/UMN)
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/sandbox --configfile ../config/config.yaml
+
+      Or use the wrapper script (if module provides it):
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config/config.yaml
+
+   .. tab:: HPC without Module
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
+
+   .. tab:: Interactive (Local/Testing)
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
 
 .. code-block:: bash
 
-    snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
-
-Interactive (local execution):
-
-.. code-block:: bash
-
-    snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
+    snakemake --profile=../profiles/sandbox --configfile ../config/config.yaml
 
 Running Specific Rules
 ~~~~~~~~~~~~~~~~~~~~

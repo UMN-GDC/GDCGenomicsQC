@@ -1,6 +1,6 @@
-rule PCAreference:
+rule runPcaOnReferencePanel:
     log:
-        OUT_DIR / "logs" / "PCAreference.log",
+        OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

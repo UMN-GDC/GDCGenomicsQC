@@ -1,6 +1,6 @@
-rule UMAP:
+rule applyUmapDimensionalityReduction:
     log:
-        OUT_DIR / "logs" / "UMAP.log",
+        OUT_DIR / "logs" / "applyUmapDimensionalityReduction.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

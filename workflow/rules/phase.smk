@@ -1,6 +1,6 @@
-rule Phase:
+rule phaseChromosomeWithShapeit:
     log:
-        OUT_DIR / "logs" / "Phase_{CHR}.log",
+        OUT_DIR / "logs" / "phaseChromosomeWithShapeit_{CHR}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
     conda:
@@ -14,13 +14,14 @@ rule Phase:
         pgen=OUT_DIR / "full" / "initialFilter.pgen",
         pvar=OUT_DIR / "full" / "initialFilter.pvar",
         psam=OUT_DIR / "full" / "initialFilter.psam",
+        reference=REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
+        gmap=REF / "genetic_map_chr{CHR}_b38.txt",
     output:
         # List all files that PLINK will actually create
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
     params:
         out_dir=OUT_DIR / "02-localAncestry",
         input_prefix=lambda wildcards, input: input.pgen[:-5],
-        ref=config.get("REF", "/path/to/ref"),
         test=config.get("localAncestry", {}).get("test", False),
         thin=config.get("localAncestry", {}).get("thin_subjects", 0.1),
     shell:
@@ -37,8 +38,9 @@ rule Phase:
       echo "{params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz"
       shapeit4 \
           --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
-          --map {params.ref}/ancestry_OG/chr{wildcards.CHR}.b38.gmap.gz \
+          --map {input.gmap} \
           --region {wildcards.CHR} \
+          --reference {input.reference} \
           --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
           --thread {threads} \
           --mcmc-iterations 1b,1p,1m \
@@ -50,8 +52,9 @@ rule Phase:
     else
       shapeit4 \
           --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
-          --map {params.ref}/ancestry_OG/chr{wildcards.CHR}.b38.gmap.gz \
+          --map {input.gmap} \
           --region {wildcards.CHR} \
+          --reference {input.reference} \
           --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
           --thread {threads} \
           --output {params.out_dir}/chr{wildcards.CHR}.phased.vcf

@@ -1,7 +1,7 @@
 
-checkpoint estimateAncestry:
+checkpoint estimateGlobalAncestry:
     log:
-        OUT_DIR / "logs" / "estimateAncestry.log",
+        OUT_DIR / "logs" / "estimateGlobalAncestry.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -46,9 +46,9 @@ checkpoint estimateAncestry:
         """
 
 
-rule classifyAncestry:
+rule classifySamplesByAncestry:
     log:
-        OUT_DIR / "logs" / "classifyAncestry.log",
+        OUT_DIR / "logs" / "classifySamplesByAncestry.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

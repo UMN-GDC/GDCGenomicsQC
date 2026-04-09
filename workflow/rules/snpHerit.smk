@@ -13,7 +13,7 @@ if SNP_HERIT_CONFIG:
 
 if SNP_HERIT_ACTIVE:
 
-    rule snpHerit:
+    rule estimateSnpHeritability:
         container:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:

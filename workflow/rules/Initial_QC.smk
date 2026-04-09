@@ -1,6 +1,6 @@
-rule initialFilter:
+rule mergeChromosomesAndFilter:
     log:
-        OUT_DIR / "logs" / "initialFilter_{subset}.log",
+        OUT_DIR / "logs" / "mergeChromosomesAndFilter_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
