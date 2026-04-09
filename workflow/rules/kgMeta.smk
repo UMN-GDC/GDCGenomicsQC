@@ -1,6 +1,6 @@
-checkpoint kgMeta:
+rule kgMeta:
     container:
-        "docker://alpine:latest"
+        "docker://debian:stable-slim"
     log:
         OUT_DIR / "logs" / "kgMeta.log",
     resources:
@@ -34,9 +34,23 @@ checkpoint kgMeta:
         zcat {output.mapgz} \
         | awk '{{OFS="\t"}} NR>1 {{print $1, $2, $4}}' > {output.map}
 
-
         gunzip -c {output.gr38fastagz} > {output.gr38fasta}
 
 
         wget -O {output.crossmap} {params.crossmap}
+        """
+
+
+rule splitMapChr:
+    container:
+        "docker://debian:stable-slim"
+    input:
+        mapgz=lambda wildcards: checkpoints.kgMeta.get().output.mapgz
+    output:
+        map_chr=protected(REF / "1000G_highcoverage" / "hg38map.chr{chr}.txt.gz")
+    shell:
+        """
+        zcat {input.mapgz} \
+        | awk -v chr={wildcards.chr} '{{OFS="\t"}} $1==chr {{print $1, $2, $4}}' \
+        | gzip -n > {output.map_chr}
         """

@@ -28,7 +28,9 @@ ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
 
 include: "rules/common.smk"
-include: "rules/Initial_QC.smk"
+include: "rules/kgMeta.smk"
+include: "rules/kgAssemble.smk"
+include: "rules/kgData.smk"
 include: "rules/plotMissingness.smk"
 include: "rules/convertNfilt.smk"
 include: "rules/Relatedness.smk"
@@ -62,6 +64,7 @@ checkpoint assembleRef:
             CHR=CHROMOSOMES,
         ),
         REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
+        expand(REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt.gz", CHR=CHROMOSOMES),
 
 
 rule run_initialQC:
