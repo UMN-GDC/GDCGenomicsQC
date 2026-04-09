@@ -12,11 +12,9 @@ rule estimateLocalAncestryPerChromosome:
         runtime=1320,
     input:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
-        ref=REF
-        / "1000G_highcoverage"
-        / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
+        ref=REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
         map=REF / "1000G_highcoverage" / "population.txt",
-        gmap=REF / "rfmix_ref" / "genetic_map_hg38.txt",
+        gmap=REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt.gz",
     output:
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv",
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv",

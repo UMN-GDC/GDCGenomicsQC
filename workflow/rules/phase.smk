@@ -1,10 +1,8 @@
 rule phaseChromosomeWithShapeit:
     log:
-        OUT_DIR / "logs" / "phaseChromosomeWithShapeit_{CHR}.log",
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
-    conda:
-        "../../envs/rfmix.yml"
+        OUT_DIR / "logs" / "Phase_{CHR}.log",
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
+    conda: "../../envs/rfmix.yml"
     threads: 8
     resources:
         nodes=1,

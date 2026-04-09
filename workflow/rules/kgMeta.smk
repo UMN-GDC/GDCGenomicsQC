@@ -1,4 +1,4 @@
-rule download1000GenomesMetadata:
+checkpoint kgMeta:
     container:
         "docker://debian:stable-slim"
     log:
@@ -39,4 +39,16 @@ rule download1000GenomesMetadata:
         """
 
 
-
+checkpoint splitMapChr:
+    container:
+        "docker://debian:stable-slim"
+    input:
+        mapgz=lambda wildcards: checkpoints.kgMeta.get().output.mapgz
+    output:
+        map_chr=protected(REF / "1000G_highcoverage" / "hg38map.chr{chr}.txt.gz")
+    shell:
+        """
+        zcat {input.mapgz} \
+        | awk -v chr={wildcards.chr} '{{OFS="\t"}} $1==chr {{print $1, $2, $4}}' \
+        | gzip -n > {output.map_chr}
+        """

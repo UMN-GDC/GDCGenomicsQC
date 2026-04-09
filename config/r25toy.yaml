@@ -51,7 +51,7 @@ snpHerit:
 localAncestry:
     RFMIX: false
     test: false
-    thin_subjects: 0.1
+    thin_subjects: 1.0
     figures: "figures"
 
 internalPCA:
