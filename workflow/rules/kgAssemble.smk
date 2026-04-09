@@ -1,4 +1,4 @@
-rule kgAssemble:
+rule assemble1000GenomesReference:
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
     threads: 8

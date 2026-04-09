@@ -1,4 +1,4 @@
-checkpoint estimateAncestry:
+checkpoint estimateGlobalAncestry:
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

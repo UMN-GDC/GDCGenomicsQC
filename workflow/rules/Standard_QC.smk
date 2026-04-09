@@ -1,6 +1,6 @@
-rule Standard_QC:
+rule applyStandardQualityControl:
     log:
-        OUT_DIR / "logs" / "Standard_QC_{subset}.log",
+        OUT_DIR / "logs" / "applyStandardQualityControl_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

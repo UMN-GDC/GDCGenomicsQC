@@ -8,9 +8,9 @@ def get_local_ancestry_samples():
 SAMPLES = get_local_ancestry_samples()
 
 
-checkpoint plotKaryotypeAncestry:
+checkpoint generateKaryotypeAncestryPlots:
     log:
-        OUT_DIR / "logs" / "plotKaryotypeAncestry.log",
+        OUT_DIR / "logs" / "generateKaryotypeAncestryPlots.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

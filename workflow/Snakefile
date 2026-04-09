@@ -64,7 +64,7 @@ checkpoint assembleRef:
             CHR=CHROMOSOMES,
         ),
         REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
-        expand(REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt.gz", CHR=CHROMOSOMES),
+        expand(REF / "genetic_map_chr{CHR}_b38.txt", CHR=CHROMOSOMES),
 
 
 rule run_initialQC:

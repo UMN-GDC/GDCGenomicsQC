@@ -1,6 +1,6 @@
-rule PCAinternal_pcair:
+rule runPcairInternalPca:
     log:
-        OUT_DIR / "logs" / "PCAprivate_pcair_{subset}.log",
+        OUT_DIR / "logs" / "runPcairInternalPca_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -54,9 +54,9 @@ rule PCAinternal_pcair:
         """
 
 
-rule PCAinternal_plink2:
+rule runPlink2ApproximatePca:
     log:
-        OUT_DIR / "logs" / "PCAinternal_plink2_{subset}.log",
+        OUT_DIR / "logs" / "runPlink2ApproximatePca_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

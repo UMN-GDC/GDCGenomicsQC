@@ -1,6 +1,6 @@
-rule RFMIX:
+rule estimateLocalAncestryPerChromosome:
     log:
-        OUT_DIR / "logs" / "RFMIX_{CHR}.log",
+        OUT_DIR / "logs" / "estimateLocalAncestryPerChromosome_{CHR}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
     conda:
@@ -62,9 +62,9 @@ rule RFMIX:
 """
 
 
-rule rfmixGlobal:
+rule aggregateLocalAncestryResults:
     log:
-        OUT_DIR / "logs" / "rfmixGlobal.log",
+        OUT_DIR / "logs" / "aggregateLocalAncestryResults.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

@@ -1,6 +1,6 @@
-rule plotMissingness:
+rule plotSampleVariantMissingness:
     log:
-        OUT_DIR / "logs" / "plotMissingness_{subset}.log",
+        OUT_DIR / "logs" / "plotSampleVariantMissingness_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

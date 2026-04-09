@@ -1,4 +1,4 @@
-rule Phase:
+rule phaseChromosomeWithShapeit:
     log:
         OUT_DIR / "logs" / "Phase_{CHR}.log",
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
@@ -12,8 +12,8 @@ rule Phase:
         pgen=OUT_DIR / "full" / "initialFilter.pgen",
         pvar=OUT_DIR / "full" / "initialFilter.pvar",
         psam=OUT_DIR / "full" / "initialFilter.psam",
-        gmap=REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt.gz",
-        reference=REF/ "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"
+        reference=REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
+        gmap=REF / "genetic_map_chr{CHR}_b38.txt",
     output:
         # List all files that PLINK will actually create
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",

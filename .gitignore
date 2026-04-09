@@ -9,7 +9,7 @@
 AGENTS.md
 
 
-
+*/_build/*
 *.yaml
 *.yml
 !docs/images/*.svg

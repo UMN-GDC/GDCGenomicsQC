@@ -1,8 +1,8 @@
-rule kgData:
+rule download1000GenomesVcf:
     container:
         "docker://alpine:latest"
     log:
-        OUT_DIR / "logs" / "kgData_{CHR}.log",
+        OUT_DIR / "logs" / "download1000GenomesVcf_{CHR}.log",
     resources:
         nodes=1,
         mem_mb=32000,

@@ -1,6 +1,6 @@
-rule checkRelatedness:
+rule checkRelatednessExtractUnrelated:
     log:
-        OUT_DIR / "logs" / "checkRelatedness_{subset}.log",
+        OUT_DIR / "logs" / "checkRelatednessExtractUnrelated_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
