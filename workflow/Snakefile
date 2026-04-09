@@ -8,14 +8,10 @@ from snakemake.utils import validate
 report: "../report/stylesheet.css"
 
 
-configfile: "../config/config.yaml"
-
-
 # Paths in include and configfile are relative to the Snakefile
 # paths inside the rules are relative to where you run the command.
 
-CHROMOSOMES = range(1, 23)
-# CHROMOSOMES = range(20, 22)
+CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 
 
 # workflow.report_metadata.category_descriptions= {
@@ -25,18 +21,17 @@ CHROMOSOMES = range(1, 23)
 #         "Ancestry Specific QC": "../report/ancestrySpecificqc_intro.rst",
 #     }
 
-OUT_DIR = Path(config["OUT_DIR"])
-REF = Path(config["REF"])
-# Ensure storage prefix is treated as absolute path to satisfy Singularity mounts
-STORAGE_PREFIX = Path(os.path.abspath(config["local-storage-prefix"]))
+OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
+REF = Path(config.get("REF", "/path/to/ref"))
+STORAGE_PREFIX = Path(os.path.abspath(config.get("local-storage-prefix", "/tmp")))
 ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
 
 include: "rules/common.smk"
 include: "rules/kgMeta.smk"
-include: "rules/kgData.smk"
 include: "rules/kgAssemble.smk"
-include: "rules/Initial_QC.smk"
+include: "rules/kgData.smk"
+include: "rules/plotMissingness.smk"
 include: "rules/convertNfilt.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
@@ -55,85 +50,7 @@ include: "rules/snpHeritSim.smk"
 # include: "rules/trainGnomix.smk"
 
 
-include: "rules/common.smk"
-
-
-rule all:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=1000,
-        runtime=420,
-    input:
-        lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "initialFilter_{CHR}.pgen",
-            ANCESTRY=get_ancestries(wildcards),
-            CHR=CHROMOSOMES,
-        ),
-        lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "initialFilter.pgen",
-            ANCESTRY=get_ancestries(wildcards),
-        ),
-        lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "standardFilter.pgen",
-            ANCESTRY=get_ancestries(wildcards),
-        ),
-        #lambda wildcards: expand(OUT_DIR / "{ANCESTRY}" / "unrelated.pgen", ANCESTRY= get_ancestries(wildcards)),
-        OUT_DIR / "full" / "standardFilter.pgen",
-        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=CHROMOSOMES),
-        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES),
-        OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
-        OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
-        OUT_DIR
-        / "01-globalAncestry"
-        / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
-        lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "pcair_pcaobj.RDS",
-            ANCESTRY=get_ancestries(wildcards),
-        ),
-        lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "pcrelate_kinship.RDS",
-            ANCESTRY=get_ancestries(wildcards),
-        ),
-        lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "figures" / "pcair_pcs.svg",
-            ANCESTRY=get_ancestries(wildcards),
-        ),
-        lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "pcair_coordinates.tsv",
-            ANCESTRY=get_ancestries(wildcards),
-        ),
-        OUT_DIR / "full" / "pcair_pcaobj.RDS",
-        OUT_DIR / "full" / "pcrelate_kinship.RDS",
-        OUT_DIR / "full" / "figures" / "pcair_pcs.svg",
-        OUT_DIR / "full" / "pcair_coordinates.tsv",
-        lambda wildcards: (
-            expand(
-                OUT_DIR
-                / "{subset}"
-                / "03-snpHeritability"
-                / config["snpHerit"]["out"],
-                subset=["full"] + get_ancestries(wildcards),
-            )
-            if SNP_HERIT_ACTIVE
-            else []
-        ),
-        lambda wildcards: (
-            expand(
-                OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
-                subset=["full"] + get_ancestries(wildcards),
-            )
-            if config.get("internalPCA", {}).get("method") == "plink2"
-            else []
-        ),
-        lambda wildcards: (
-            expand(
-                OUT_DIR / "{subset}" / "internal_pca_plink2.eigenval",
-                subset=["full"] + get_ancestries(wildcards),
-            )
-            if config.get("internalPCA", {}).get("method") == "plink2"
-            else []
-        ),
+##### GOOD UP TO HERE
 
 
 checkpoint assembleRef:
@@ -146,7 +63,8 @@ checkpoint assembleRef:
             / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
             CHR=CHROMOSOMES,
         ),
-        REF / "1000G_highcoverage" / "1000G_highCoveragephased.bed",
+        REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
+        expand(REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt.gz", CHR=CHROMOSOMES),
 
 
 rule run_initialQC:
@@ -159,6 +77,8 @@ rule run_initialQC:
         expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES),
         OUT_DIR / "full" / "standardFilter.pgen",
         OUT_DIR / "full" / "initialFilter.pgen",
+        OUT_DIR / "full" / "figures" / "smiss.svg",
+        OUT_DIR / "full" / "figures" / "vmiss.svg",
 
 
 rule run_pca:
@@ -259,9 +179,9 @@ rule run_simulatePhenotype:
         lambda wildcards: expand(
             OUT_DIR
             / "simulations"
-            / f"{config['phenotypeSimulation']['ancestries'][0]}_{config['phenotypeSimulation']['ancestries'][1]}"
+            / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
             / "{anc}_simulation_pheno1.estimates",
-            anc=config["phenotypeSimulation"]["ancestries"],
+            anc=config.get("phenotypeSimulation", {}).get("ancestries", ["AFR", "EUR"]),
         ),
 
 
@@ -289,6 +209,6 @@ rule run_train_gnomix:
         runtime=420,  # 1 week
     input:
         expand(
-            f"{config['OUT_DIR']}/03-localAncestry/chr{{CHR}}_ancestry_gnomix",
+            f"{config.get('OUT_DIR', '/path/to/out')}/03-localAncestry/chr{{CHR}}_ancestry_gnomix",
             CHR=CHROMOSOMES,
         ),

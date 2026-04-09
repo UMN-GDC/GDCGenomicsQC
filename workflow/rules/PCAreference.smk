@@ -24,10 +24,10 @@ rule PCAreference:
         projectedref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         tempDir=temp(directory(OUT_DIR / "01-globalAncestry" / "intermediates")),
     params:
-        method=config["relatedness"]["method"],
-        grm=config["relatedness"]["method"],
+        method=config.get("relatedness", {}).get("method", "king"),
+        grm=config.get("relatedness", {}).get("method", "king"),
         input_prefix=OUT_DIR / "full" / "initialFilter",
-        dir=lambda wildcards, output: str(output.eigen.parent),
+        dir=str(OUT_DIR / "01-globalAncestry"),
         ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
     shell:
         """

@@ -25,7 +25,7 @@ checkpoint plotKaryotypeAncestry:
         expand(
             OUT_DIR
             / "02-localAncestry"
-            / config["localAncestry"].get("figures", "figures")
+            / config.get("localAncestry", {}).get("figures", "figures")
             / "{sample}_karyotype.pdf",
             sample=SAMPLES,
         ),
@@ -33,7 +33,7 @@ checkpoint plotKaryotypeAncestry:
         msp_dir=OUT_DIR / "02-localAncestry",
         figures_dir=lambda wildcards: OUT_DIR
         / "02-localAncestry"
-        / config["localAncestry"].get("figures", "figures"),
+        / config.get("localAncestry", {}).get("figures", "figures"),
         chromosomes="1-22",
     shell:
         """

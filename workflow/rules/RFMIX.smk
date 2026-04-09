@@ -25,9 +25,8 @@ rule RFMIX:
         tempDir=temp(directory(OUT_DIR / "02-localAncestry" / "temp{CHR}")),
     params:
         out_dir=OUT_DIR / "02-localAncestry",
-        test=config["localAncestry"]["test"],
-    shell:
-        """
+        test=config.get("localAncestry", {}).get("test", False),
+    shell: """
     mkdir -p {output.tempDir}
     cut -f1,7 -d' ' {input.map} > {output.tempDir}/population.txt
     sed -i '1d' {output.tempDir}/population.txt
@@ -62,7 +61,7 @@ rule RFMIX:
           -o {params.out_dir}/chr{wildcards.CHR}.lai \
           --chromosome={wildcards.CHR}
     fi
-    """
+"""
 
 
 rule rfmixGlobal:
@@ -87,7 +86,6 @@ rule rfmixGlobal:
     params:
         script=workflow.source_path("../scripts/rfmixGlobal.R"),
         out_dir=OUT_DIR,
-    shell:
-        """
+    shell: """
         Rscript {params.script} {params.out_dir}
-        """
+"""

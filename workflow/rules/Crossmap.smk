@@ -18,8 +18,8 @@ rule crossmap:
         projected=OUT_DIR / "04-globalAncestry" / "sampleRefPCscores.sscore",
         tempDir=temp(directory(OUT_DIR / "04-globalAncestry" / "intermediates")),
     params:
-        method=config["relatedness"]["method"],
-        grm=config["relatedness"]["method"],
+        method=config.get("relatedness", {}).get("method", "king"),
+        grm=config.get("relatedness", {}).get("method", "king"),
         out_dir=OUT_DIR / "04-globalAncestry",
         input_prefix=OUT_DIR / "01-Initialfilter" / "initialFilter",
         input_dir=OUT_DIR / "01-Initialfilter",

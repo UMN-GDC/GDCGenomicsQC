@@ -1,0 +1,93 @@
+# Project-wide paths
+vcf_template: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
+OUT_DIR: "/scratch.global/GDC/r25outputs/toy"
+REF: "/scratch.global/GDC/referenceData"
+local-storage-prefix: "/scratch.global/coffm049/tmp"
+
+chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+
+convertNfilt:
+    # Minimum R² value from INFO field (set null to skip filter)
+    # Only applies to VCF input
+    info_r2_min: 0.9
+    
+    # Only keep variants where FILTER == PASS
+    filter_pass: true
+    
+    # Minimum QUAL value (set null to skip filter)
+    qual_min: null
+
+
+# QC Settings
+relatedness:
+    method: "king"  # "0" = skip (assume unrelated), "king" = KING algorithm
+    king_cutoff: 0.0884
+
+SEX_CHECK: false
+GRM: true
+thin: false
+
+# SNP Heritability Estimation
+snpHerit:
+    pheno: null  # Replace with your phenotype file
+    # Path to covariate file(s)
+    # Can be a single file path or comma-separated list for multiple files
+    # e.g., "/path/to/covariates.csv" or "/path/to/cov1.csv,/path/to/cov2.csv"
+    # Format: CSV with columns: IID, <covariates>
+    covar: null
+    out: null
+    method: "AdjHE"
+    npc: 10
+    # Phenotype column(s) - can be column index(es) or column name(s), single value or list
+    # Examples: 1, [1, 2, 3], "pheno_name", ["pheno1", "pheno2"]
+    mpheno: 1
+    # Covariate specification options for MASH
+    fixed_effects: null  # List of covariate column names to include as fixed effects
+    qcovar: null        # Quantitative covariate column names (for GCTA method)
+    covar_discrete: null  # Discrete/categorical covariate column names (for GCTA method)
+
+# Tool settings
+localAncestry:
+    RFMIX: false
+    test: false
+    thin_subjects: 0.1
+    figures: "figures"
+
+internalPCA:
+    plot: true
+    color_by: null
+    phenotype_file: null
+
+ancestry:
+    threshold: 0.8
+    model: "pca"
+
+conda-frontend: mamba
+phenotypeSimulation:
+    # Ancestries to simulate for
+    ancestries: ["AFR", "EUR"]
+    
+    # Number of simulations
+    n_sims: 10
+    
+    # Target SNP heritability (h²)
+    heritability: 0.4
+    
+    # Genetic correlation between ancestries (-1 to 1)
+    rho: 0.8
+    
+    # Minimum minor allele frequency for causal SNPs
+    maf: 0.05
+    
+    # Random seed for reproducibility
+    seed: 42
+    
+    # Skip thinning of SNPs (faster for small datasets)
+    skip_thinning: true
+    
+    # Number of SNPs to thin to (if not skipping)
+    thin_count_snps: 1000000
+    
+    # Number of individuals to thin to (if not skipping)
+    thin_count_inds: 10000

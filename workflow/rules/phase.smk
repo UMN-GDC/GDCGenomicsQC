@@ -20,9 +20,9 @@ rule Phase:
     params:
         out_dir=OUT_DIR / "02-localAncestry",
         input_prefix=lambda wildcards, input: input.pgen[:-5],
-        ref=config["REF"],
-        test=config["localAncestry"]["test"],
-        thin=config["localAncestry"]["thin_subjects"],
+        ref=config.get("REF", "/path/to/ref"),
+        test=config.get("localAncestry", {}).get("test", False),
+        thin=config.get("localAncestry", {}).get("thin_subjects", 0.1),
     shell:
         """
     echo "Shapeit Phasing"

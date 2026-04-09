@@ -41,6 +41,13 @@ local-storage-prefix:
   description: |
     Path for Snakemake's local storage cache.
 
+chromosomes:
+  type: list
+  required: true
+  description: |
+    List of chromosomes to process.
+    Example: [1, 2, 3] or [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
 SEX_CHECK:
   type: bool
   default: false

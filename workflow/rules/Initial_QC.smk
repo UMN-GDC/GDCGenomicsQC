@@ -22,16 +22,6 @@ rule initialFilter:
         ),
         smiss=OUT_DIR / "{subset}" / "initial.smiss",
         vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
-        smissIMG=report(
-            OUT_DIR / "{subset}" / "figures" / "smiss.svg",
-            caption="../../report/smiss.rst",
-            category="Quality Control",
-        ),
-        vmissIMG=report(
-            OUT_DIR / "{subset}" / "figures" / "vmiss.svg",
-            caption="../../report/vmiss.rst",
-            category="Quality Control",
-        ),
     input:
         fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
         pgen=expand(
@@ -89,6 +79,4 @@ rule initialFilter:
     fi
     mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
     mv {output.tempDir}/intermediate_0.smiss {output.smiss}
-    
-    Rscript scripts/plotMissingness.R {output.smiss} {output.vmiss} {output.smissIMG} {output.vmissIMG} 
     """

@@ -22,7 +22,7 @@ rule convertNfilt:
         smiss=OUT_DIR / "{subset}" / "initial_{CHR}.smiss",
         vmiss=OUT_DIR / "{subset}" / "initial_{CHR}.vmiss",
     input:
-        vcf=config["vcf_template"],
+        vcf=config.get("vcf_template", ""),
         keep=get_ancestry_file,
         crossmap=REF / "CrossMap" / "hg19ToHg38.over.chain.gz",
         gr38fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
