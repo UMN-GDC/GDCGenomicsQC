@@ -5,9 +5,12 @@
 #
 
 proc ModulesHelp { } {
-    puts stderr "\tThis module points to the shared singularity image cache."
+    puts stderr "\tThis module loads the GDC Genomics QC Pipeline.\n\tIt sets up the singularity image cache for offline use."
 }
 
-prepend-path SINGULARITY_CACHEDIR /scratch.global/GDC/singularityimages
+module load singularity
+
+set basedir /scratch.global/coffm049/GDCGenomicsQC/envs/gdcgenomicsqc/1.0.0
+prepend-path PATH $basedir/bin
+setenv SINGULARITY_CACHEDIR /scratch.global/GDC/singularityimages
 setenv SNAKEMAKE_SINGULARITY_PREFIX /scratch.global/GDC/singularityimages
-prepend-path PATH /scratch.global/GDC/GDCGenomicsQC/envs/bin
