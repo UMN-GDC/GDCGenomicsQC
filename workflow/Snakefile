@@ -61,10 +61,10 @@ checkpoint assembleRef:
             REF
             / "1000G_highcoverage"
             / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
-            CHR=CHROMOSOMES,
+            CHR=range(1, 23),
         ),
         REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
-        expand(REF / "genetic_map_chr{CHR}_b38.txt", CHR=CHROMOSOMES),
+        expand(REF / "gmaps" / "chr{CHR}.b38.gmap.gz", CHR=range(1, 23)),
 
 
 rule run_initialQC:

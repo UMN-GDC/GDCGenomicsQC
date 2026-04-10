@@ -1,6 +1,4 @@
 checkpoint kgMeta:
-    container:
-        "docker://debian:stable-slim"
     log:
         OUT_DIR / "logs" / "download1000GenomesMetadata.log",
     resources:
@@ -30,7 +28,8 @@ checkpoint kgMeta:
         wget -O {output.gr38fastagz} {params.fasta}
 
         wget -O {output.shapemap} {params.shapemap}
-        tar -xzf {output.shapemap} -C {REF}
+        mkdir {REF}/gmaps
+        tar -xzf {output.shapemap} -C {REF}/gmaps
 
         gunzip -c {output.gr38fastagz} > {output.gr38fasta}
 
@@ -41,7 +40,7 @@ checkpoint kgMeta:
 
 checkpoint splitMapChr:
     container:
-        "docker://debian:stable-slim"
+        "docker://ubuntu:jammy"
     input:
         mapgz=lambda wildcards: checkpoints.kgMeta.get().output.mapgz
     output:
