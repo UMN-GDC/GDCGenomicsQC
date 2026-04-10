@@ -3,11 +3,10 @@
 # Usage: gdcgenomicsqc [SNAKEMAKE_ARGS...]
 #
 # This wrapper adds:
-#   --profile profiles/sandbox
+#   --profile profiles/hpc
 #   --snakefile workflow/Snakefile
 # Users only need to specify --configfile
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+WORKFLOW_DIR=/scratch.global/coffm049/GDCGenomicsQC
 
-exec snakemake --profile "$PROJECT_DIR/profiles/sandbox" --snakefile "$PROJECT_DIR/workflow/Snakefile" "$@"
+exec snakemake --profile "$WORKFLOW_DIR/profiles/hpc" --snakefile "$WORKFLOW_DIR/workflow/Snakefile" "$@"
