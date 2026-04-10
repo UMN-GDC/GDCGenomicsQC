@@ -1,0 +1,16 @@
+#%Module######################################################################
+#
+#     GDC Genomics QC Pipeline module file
+#     Sets up apptainer image cache for offline use
+#
+
+proc ModulesHelp { } {
+    puts stderr "\tThis module loads the GDC Genomics QC Pipeline.\n\tIt sets up the apptainer image cache for offline use."
+}
+
+module load apptainer
+
+set basedir /scratch.global/coffm049/GDCGenomicsQC/envs/gdcgenomicsqc
+prepend-path PATH $basedir/bin
+setenv APPTAINER_CACHEDIR /scratch.global/GDC/singularityimages
+setenv SNAKEMAKE_APPTAINER_PREFIX /scratch.global/GDC/singularityimages
