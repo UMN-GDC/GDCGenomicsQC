@@ -1,0 +1,13 @@
+#!/bin/bash
+# Wrapper for snakemake that uses GDC Genomics QC defaults
+# Usage: gdcgenomicsqc [SNAKEMAKE_ARGS...]
+#
+# This wrapper adds:
+#   --profile profiles/sandbox
+#   --snakefile workflow/Snakefile
+# Users only need to specify --configfile
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+exec snakemake --profile "$PROJECT_DIR/profiles/sandbox" --snakefile "$PROJECT_DIR/workflow/Snakefile" "$@"
