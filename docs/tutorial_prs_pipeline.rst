@@ -119,34 +119,40 @@ Step 4: Interpret Results
 
 Each method outputs results to ``{output_path}/prs_pipeline/``:
 
-+----------------------+------------------------------------------------+
-| Method               | Key Output File                                |
-+======================+================================================+
-| C+T                  | ``CT/CT_prs_results.txt``                      |
-+----------------------+------------------------------------------------+
-| LDpred2              | ``LDpred2/prs_method_individual_scores.txt``   |
-+----------------------+------------------------------------------------+
-| lassosum2            | ``lassosum2/prs_method_grid_params.csv``        |
-+----------------------+------------------------------------------------+
-| PRSice-2             | ``PRSice2/prs_method/PRSice2_outputs.best``    |
-+----------------------+------------------------------------------------+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Method
+     - Key Output File
+   * - C+T
+     - ``CT/CT_prs_results.txt``
+   * - LDpred2
+     - ``LDpred2/prs_method_individual_scores.txt``
+   * - lassosum2
+     - ``lassosum2/prs_method_grid_params.csv``
+   * - PRSice-2
+     - ``PRSice2/prs_method/PRSice2_outputs.best``
 
 PRS Score Columns
 ~~~~~~~~~~~~~~~~~
 
 The relevant PRS score columns for each method:
 
-+----------------------+----------------------------------------+
-| Method               | Score Column                           |
-+======================+========================================+
-| C+T                  | ``SCORE`` (in ``temp/`` subdirectory) |
-+----------------------+----------------------------------------+
-| LDpred2              | ``PRS_inf`` or ``PRS_grid``            |
-+----------------------+----------------------------------------+
-| lassosum2            | ``score``                              |
-+----------------------+----------------------------------------+
-| PRSice-2             | ``PRS``                                |
-+----------------------+----------------------------------------+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Method
+     - Score Column
+   * - C+T
+     - ``SCORE`` (in ``temp/`` subdirectory)
+   * - LDpred2
+     - ``PRS_inf`` or ``PRS_grid``
+   * - lassosum2
+     - ``score``
+   * - PRSice-2
+     - ``PRS``
 
 ----
 
@@ -221,19 +227,28 @@ PRS-CSx outputs:
 Method Comparison
 ----------------
 
-+--------------+---------------------------+----------------------------------------+
-| Method       | Approach                  | LD Handling                            |
-+==============+===========================+========================================+
-| C+T          | Heuristic                 | Physical/Correlation Clumping          |
-+--------------+---------------------------+----------------------------------------+
-| LDpred2      | Bayesian                  | Gibbs Sampler (MCMC)                   |
-+--------------+---------------------------+----------------------------------------+
-| lassosum2    | Penalized Regression      | Elastic Net / Coordinate Descent        |
-+--------------+---------------------------+----------------------------------------+
-| PRSice-2     | C+T Optimization         | Automated High-Resolution Clumping     |
-+--------------+---------------------------+----------------------------------------+
-| PRS-CSx      | Joint Bayesian            | Cross-ancestry LD reference panels     |
-+--------------+---------------------------+----------------------------------------+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 30 50
+
+   * - Method
+     - Approach
+     - LD Handling
+   * - C+T
+     - Heuristic
+     - Physical/Correlation Clumping
+   * - LDpred2
+     - Bayesian
+     - Gibbs Sampler (MCMC)
+   * - lassosum2
+     - Penalized Regression
+     - Elastic Net / Coordinate Descent
+   * - PRSice-2
+     - C+T Optimization
+     - Automated High-Resolution Clumping
+   * - PRS-CSx
+     - Joint Bayesian
+     - Cross-ancestry LD reference panels
 
 ----
 
