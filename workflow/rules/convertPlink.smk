@@ -207,13 +207,15 @@ if [ "{params.chrom_list}" != "" ]; then
            --threads {threads} \
            --make-pgen \
            --missing \
-           --out {output.tempDir}/intermediate_3
-    plink2 --pfile {output.tempDir}/intermediate_3 \
+           --out {output.tempDir}/intermediate_0
+    plink2 --pfile {output.tempDir}/intermediate_0 \
            --fa {input.fasta} \
            --ref-from-fa force \
            --threads {threads} \
            --out {output.tempDir}/intermediate_2 \
            --make-pgen
+    mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
+    mv {output.tempDir}/intermediate_0.smiss {output.smiss}
 else
     PLINK2_FILTERS=""
     if [ -n "{params.min_mach_r2}" ] && [ "{params.min_mach_r2}" != "None" ]; then
