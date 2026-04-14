@@ -1,0 +1,15 @@
+executor: slurm
+
+slurm-status-command: squeue
+
+jobs: 25
+use-singularity: true
+singularity-prefix: /scratch.global/GDC/singularityimages
+singularity-args: "--bind /scratch.global,/projects,/spaces,/home"
+latency-wait: 60
+
+default-resources:
+  - slurm_account=null
+  - slurm_partition=standard
+  - mem_mb=4000
+  - runtime=60
