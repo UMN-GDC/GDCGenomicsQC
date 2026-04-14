@@ -75,10 +75,9 @@ Create a configuration file for ancestry classification:
         threshold: 0.8
         model: "pca"  # Options: pca, umap, rfmix (vae not yet implemented)
 
-    INPUT_FILE: "/path/to/your/vcf/files"
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
     OUT_DIR: "/path/to/output/directory"
     REF: "/path/to/reference/data"
-    vcf_template: "/path/to/vcf/chr{CHR}.vcf.gz"
 
     relatedness:
         method: "0"

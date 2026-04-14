@@ -7,17 +7,18 @@
 # =============================================================================
 # Required: Project Paths
 # =============================================================================
-# Input PLINK files (prefix without .bed/.bim/.fam extension)
-INPUT_FILE: "/path/to/your/data/prefix"
+# Input genomic data template. Supports:
+# - VCF: "/path/to/vcf/chr{CHR}.vcf.gz"
+# - PLINK BED: "/path/to/data/chr{CHR}.bed"
+# - PLINK PGEN: "/path/to/data/chr{CHR}.pgen"
+# For single merged file, omit {CHR} placeholder
+INPUT: "/path/to/data/chr{CHR}.vcf.gz"
 
 # Output directory for pipeline results
 OUT_DIR: "/path/to/output/directory"
 
 # Reference data directory (required for various operations)
 REF: "/path/to/reference/data"
-
-# Optional: VCF template for chromosome-specific loading (use {CHR} placeholder)
-vcf_template: "/path/to/vcf/chr{CHR}.vcf.gz"
 
 # Local snakemake storage for caching
 local-storage-prefix: "/path/to/.snakemake/storage"

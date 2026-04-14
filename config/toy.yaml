@@ -1,5 +1,5 @@
 # Project-wide paths
-vcf_template: "/projects/standard/gdc/public/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
+INPUT: "/projects/standard/gdc/public/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
 OUT_DIR: "/scratch.global/coffm049/r25Pipeline"
 REF: "/projects/standard/gdc/public/Ref"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
@@ -53,6 +53,7 @@ localAncestry:
     test: false
     thin_subjects: 0.1
     figures: "figures"
+    chromosomes: [20, 21]  # Use pipeline chromosomes if null, or specify list e.g. [13, 14, 15]
 
 internalPCA:
     plot: true
