@@ -52,6 +52,7 @@ localAncestry:
     RFMIX: false
     test: false
     thin_subjects: 1.0
+    chromosomes: [20, 21]  # Use pipeline chromosomes if null, or specify list e.g. [13, 14, 15]
     figures: "figures"
 
 internalPCA:

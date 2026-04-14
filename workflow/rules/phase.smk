@@ -1,3 +1,28 @@
+def get_chrom(wildcards):
+    return wildcards.CHR.replace('.phased', '')
+
+
+def get_input_pgen(wildcards):
+    if "{CHR}" in config.get("INPUT", ""):
+        return OUT_DIR / "full" / f"initialFilter_{get_chrom(wildcards)}.pgen"
+    else:
+        return OUT_DIR / "full" / "initialFilter.pgen"
+
+
+def get_input_pvar(wildcards):
+    if "{CHR}" in config.get("INPUT", ""):
+        return OUT_DIR / "full" / f"initialFilter_{get_chrom(wildcards)}.pvar"
+    else:
+        return OUT_DIR / "full" / "initialFilter.pvar"
+
+
+def get_input_psam(wildcards):
+    if "{CHR}" in config.get("INPUT", ""):
+        return OUT_DIR / "full" / f"initialFilter_{get_chrom(wildcards)}.psam"
+    else:
+        return OUT_DIR / "full" / "initialFilter.psam"
+
+
 rule convertPgenToVcf:
     log:
         OUT_DIR / "logs" / "Convert_{CHR}.log",
@@ -10,30 +35,19 @@ rule convertPgenToVcf:
         runtime=120,
     input:
         std=OUT_DIR / "full" / "standardFilter.pgen",
-        pgen=lambda wildcards: (
-            OUT_DIR / "full" / f"initialFilter_{wildcards.CHR.replace('.phased', '')}.pgen"
-            if "{CHR}" in config.get("INPUT", "")
-            else OUT_DIR / "full" / "initialFilter.pgen"
-        ),
-        pvar=lambda wildcards: (
-            OUT_DIR / "full" / f"initialFilter_{wildcards.CHR.replace('.phased', '')}.pvar"
-            if "{CHR}" in config.get("INPUT", "")
-            else OUT_DIR / "full" / "initialFilter.pvar"
-        ),
-        psam=lambda wildcards: (
-            OUT_DIR / "full" / f"initialFilter_{wildcards.CHR.replace('.phased', '')}.psam"
-            if "{CHR}" in config.get("INPUT", "")
-            else OUT_DIR / "full" / "initialFilter.psam"
-        ),
+        pgen=get_input_pgen,
+        pvar=get_input_pvar,
+        psam=get_input_psam,
     output:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
         csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz.csi",
     params:
         out_dir=OUT_DIR / "02-localAncestry",
         input_prefix=lambda wildcards, input: input.pgen[:-5],
+        chrom=get_chrom,
     shell:
         """
-        plink2 --pfile {params.input_prefix} --chr {wildcards.CHR} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
+        plink2 --pfile {params.input_prefix} --chr {params.chrom} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
         """
 
@@ -57,6 +71,7 @@ rule phaseWithShapeit:
         out_dir=OUT_DIR / "02-localAncestry",
         test=config.get("localAncestry", {}).get("test", False),
         thin=config.get("localAncestry", {}).get("thin_subjects", 0.1),
+        chrom=get_chrom,
     shell:
         """
         echo "Shapeit Phasing"
@@ -69,7 +84,7 @@ rule phaseWithShapeit:
           shapeit4 \
               --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
               --map {input.gmap} \
-              --region {wildcards.CHR} \
+              --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --mcmc-iterations 1b,1p,1m \
@@ -78,7 +93,7 @@ rule phaseWithShapeit:
           shapeit4 \
               --input {input.vcf} \
               --map {input.gmap} \
-              --region {wildcards.CHR} \
+              --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --output {params.out_dir}/chr{wildcards.CHR}.phased.vcf
@@ -103,6 +118,7 @@ rule compressAndIndexVcf:
         csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz.csi",
     params:
         out_dir=OUT_DIR / "02-localAncestry",
+        chrom=get_chrom,
     shell:
         """
         bgzip -c {input.vcf} > {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz
