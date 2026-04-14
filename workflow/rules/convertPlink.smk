@@ -172,7 +172,7 @@ rule convertPlinkSingleFile:
         min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
         max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
         qual_min=config.get("convertNfilt", {}).get("qual_min"),
-        output_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / "initialFilter"),
+        output_prefix=lambda wildcards, output: str(output.pgen)[:-5],
     shell:
         """
 mkdir -p {output.tempDir}
