@@ -89,9 +89,12 @@ rule run_initialQC:
         mem_mb=4000,
         runtime=60,
     input:
-        expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES),
+        lambda wildcards: (
+            expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES)
+            if "{CHR}" in config.get("INPUT", "")
+            else [OUT_DIR / "full" / "initialFilter.pgen"]
+        ),
         OUT_DIR / "full" / "standardFilter.pgen",
-        OUT_DIR / "full" / "initialFilter.pgen",
         OUT_DIR / "full" / "figures" / "smiss.svg",
         OUT_DIR / "full" / "figures" / "vmiss.svg",
 
