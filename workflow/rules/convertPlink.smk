@@ -19,8 +19,8 @@ checkpoint checkInputType:
     output:
         touch(OUT_DIR / ".input_type_detected")
     params:
-        is_per_chr=lambda: "{CHR}" in config.get("INPUT", ""),
-        format=lambda: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+        is_per_chr=lambda wildcards: "{CHR}" in config.get("INPUT", ""),
+        format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
         input_path=config.get("INPUT", "")
     shell:
         """
@@ -58,7 +58,7 @@ rule convertPlinkPerChromosome:
         fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
         keep=get_ancestry_file,
     params:
-        format=lambda: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+        format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
         chrom_input=lambda wc: config.get("INPUT", "").format(CHR=wc.CHR),
         thin=config.get("thin", False),
         min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
@@ -166,8 +166,8 @@ rule convertPlinkSingleFile:
         fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
         keep=get_ancestry_file,
     params:
-        format=lambda: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
-        single_input=config.get("INPUT", ""),
+        format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+        single_input=lambda wildcards: config.get("INPUT", ""),
         thin=config.get("thin", False),
         min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
         max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),

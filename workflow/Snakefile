@@ -16,6 +16,12 @@ CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 def input_is_per_chromosome():
     return "{CHR}" in config.get("INPUT", "")
 
+OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
+REF = Path(config.get("REF", "/path/to/ref"))
+STORAGE_PREFIX = Path(os.path.abspath(config.get("local-storage-prefix", "/tmp")))
+ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
+
+ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 checkpoint detectInputPattern:
     output:
@@ -34,10 +40,6 @@ checkpoint detectInputPattern:
 #         "Ancestry Specific QC": "../report/ancestrySpecificqc_intro.rst",
 #     }
 
-OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
-REF = Path(config.get("REF", "/path/to/ref"))
-STORAGE_PREFIX = Path(os.path.abspath(config.get("local-storage-prefix", "/tmp")))
-ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
 
 include: "rules/common.smk"
