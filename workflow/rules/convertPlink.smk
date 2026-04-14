@@ -4,6 +4,8 @@ import os
 def get_input_is_per_chromosome():
     return "{CHR}" in config.get("INPUT", "")
 
+INPUT_IS_PER_CHROMOSOME = get_input_is_per_chromosome()
+
 def get_input_format():
     inp = config.get("INPUT", "")
     if ".vcf" in inp:
@@ -167,7 +169,7 @@ rule convertPlinkSingleFile:
         keep=get_ancestry_file,
     params:
         format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
-        single_input=lambda wildcards: config.get("INPUT", ""),
+        single_input=lambda wildcards: config.get("INPUT", "").format(CHR=wildcards.subset) if wildcards else config.get("INPUT", ""),
         thin=config.get("thin", False),
         min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
         max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),

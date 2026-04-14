@@ -62,6 +62,8 @@ include: "rules/simulatePhenotype.smk"
 include: "rules/snpHerit.smk"
 include: "rules/snpHeritSim.smk"
 
+ruleorder: convertPlinkPerChromosome > convertPlinkSingleFile
+ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 # include: "rules/trainGnomix.smk"
 

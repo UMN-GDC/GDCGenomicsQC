@@ -9,9 +9,22 @@ rule convertPgenToVcf:
         mem_mb=16000,
         runtime=120,
     input:
-        pgen=OUT_DIR / "full" / "initialFilter.pgen",
-        pvar=OUT_DIR / "full" / "initialFilter.pvar",
-        psam=OUT_DIR / "full" / "initialFilter.psam",
+        std=OUT_DIR / "full" / "standardFilter.pgen",
+        pgen=lambda wildcards: (
+            OUT_DIR / "full" / f"initialFilter_{wildcards.CHR.replace('.phased', '')}.pgen"
+            if "{CHR}" in config.get("INPUT", "")
+            else OUT_DIR / "full" / "initialFilter.pgen"
+        ),
+        pvar=lambda wildcards: (
+            OUT_DIR / "full" / f"initialFilter_{wildcards.CHR.replace('.phased', '')}.pvar"
+            if "{CHR}" in config.get("INPUT", "")
+            else OUT_DIR / "full" / "initialFilter.pvar"
+        ),
+        psam=lambda wildcards: (
+            OUT_DIR / "full" / f"initialFilter_{wildcards.CHR.replace('.phased', '')}.psam"
+            if "{CHR}" in config.get("INPUT", "")
+            else OUT_DIR / "full" / "initialFilter.psam"
+        ),
     output:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
         csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz.csi",

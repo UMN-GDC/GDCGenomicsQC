@@ -1,3 +1,65 @@
+rule mergeChromosomeFilesForPca:
+    log:
+        OUT_DIR / "logs" / "mergeChromosomeFilesForPca.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
+    threads: 8
+    resources:
+        nodes=1,
+        mem_mb=64000,
+        runtime=240,
+    input:
+        lambda wildcards: expand(
+            OUT_DIR / "full" / "initialFilter_{CHR}.pgen",
+            CHR=CHROMOSOMES
+        ),
+        lambda wildcards: expand(
+            OUT_DIR / "full" / "initialFilter_{CHR}.pvar",
+            CHR=CHROMOSOMES
+        ),
+        lambda wildcards: expand(
+            OUT_DIR / "full" / "initialFilter_{CHR}.psam",
+            CHR=CHROMOSOMES
+        ),
+    output:
+        pgen=OUT_DIR / "full" / "initialFilter.pgen",
+        pvar=OUT_DIR / "full" / "initialFilter.pvar",
+        psam=OUT_DIR / "full" / "initialFilter.psam",
+        ld_pgen=OUT_DIR / "full" / "initialFilter.LDpruned.pgen",
+        ld_pvar=OUT_DIR / "full" / "initialFilter.LDpruned.pvar",
+        ld_psam=OUT_DIR / "full" / "initialFilter.LDpruned.psam",
+    params:
+        chrom_list=lambda wildcards: ",".join(str(c) for c in CHROMOSOMES),
+    shell:
+        """
+        echo "Merging chromosomes: {params.chrom_list}"
+        plink2 --pgen {input} \
+               --merge-list <(echo "{params.chrom_list}") \
+               --make-pgen \
+               --out {output.pgen} \
+               --threads {threads} \
+               --memory {resources.mem_mb}
+        
+        plink2 --pfile {output.pgen} \
+               --indep-pairwise 50 5 0.5 \
+               --out {output.ld_pgen} \
+               --threads {threads} \
+               --memory {resources.mem_mb}
+        
+        plink2 --pfile {output.pgen} \
+               --extract {output.ld_pgen}.prune.in \
+               --make-pgen \
+               --out {output.ld_pgen} \
+               --threads {threads} \
+               --memory {resources.mem_mb}
+        
+        mv {output.ld_pgen}.pvar {output.ld_pvar}
+        mv {output.ld_pgen}.psam {output.ld_psam}
+        """
+
+
 rule runPcaOnReferencePanel:
     log:
         OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
@@ -18,7 +80,6 @@ rule runPcaOnReferencePanel:
         ldPvar=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar",
         ldPsam=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam",
     output:
-        # List all files that PLINK will actually create
         eigen=OUT_DIR / "01-globalAncestry" / "ref.eigenvec",
         projected=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         projectedref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
