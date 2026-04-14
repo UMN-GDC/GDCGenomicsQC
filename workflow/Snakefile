@@ -13,6 +13,19 @@ report: "../report/stylesheet.css"
 
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 
+def input_is_per_chromosome():
+    return "{CHR}" in config.get("INPUT", "")
+
+
+checkpoint detectInputPattern:
+    output:
+        touch(OUT_DIR / ".input_pattern_detected")
+    run:
+        if input_is_per_chromosome():
+            print(f"Input is per-chromosome: {config.get('INPUT', '')}")
+        else:
+            print(f"Input is single file: {config.get('INPUT', '')}")
+
 
 # workflow.report_metadata.category_descriptions= {
 #         "Initial QC": "../report/qc_intro.rst",
@@ -29,10 +42,11 @@ ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
 include: "rules/common.smk"
 include: "rules/kgMeta.smk"
+include: "rules/convertGmapRfmix.smk"
 include: "rules/kgAssemble.smk"
 include: "rules/kgData.smk"
 include: "rules/plotMissingness.smk"
-include: "rules/convertNfilt.smk"
+include: "rules/convertPlink.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
@@ -52,7 +66,6 @@ include: "rules/snpHeritSim.smk"
 
 ##### GOOD UP TO HERE
 
-
 checkpoint assembleRef:
     input:
         REF / "1000G_highcoverage" / "population.txt",
@@ -64,7 +77,7 @@ checkpoint assembleRef:
             CHR=range(1, 23),
         ),
         REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
-        expand(REF / "gmaps" / "chr{CHR}.b38.gmap.gz", CHR=range(1, 23)),
+        expand(REF / "gmaps" / "chr{CHR}.b38.gmap.rfmix.gz", CHR=range(1, 23)),
 
 
 rule run_initialQC:
@@ -165,8 +178,8 @@ rule run_rfmix:
         mem_mb=4000,
         runtime=420,  # 1 week
     input:
-        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=CHROMOSOMES),
-        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES),
+        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=LOCAL_ANCESTRY_CHROMOSOMES),
+        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES),
 
 
 rule run_simulatePhenotype:
@@ -210,5 +223,5 @@ rule run_train_gnomix:
     input:
         expand(
             f"{config.get('OUT_DIR', '/path/to/out')}/03-localAncestry/chr{{CHR}}_ancestry_gnomix",
-            CHR=CHROMOSOMES,
+            CHR=LOCAL_ANCESTRY_CHROMOSOMES,
         ),

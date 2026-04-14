@@ -5,6 +5,7 @@ OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
 REF = Path(config.get("REF", "/path/to/ref"))
 ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
+LOCAL_ANCESTRY_CHROMOSOMES = config.get("localAncestry", {}).get("chromosomes") or CHROMOSOMES
 
 
 def get_ancestries(wildcards):

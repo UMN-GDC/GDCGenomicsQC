@@ -40,13 +40,28 @@ the older command-line flag approach.
 Basic Configuration
 ~~~~~~~~~~~~~~~~~~
 
+The ``INPUT`` parameter specifies your input genomic data. The pipeline automatically
+detects the format based on the file extension and whether ``{CHR}`` is present:
+
 .. code-block:: yaml
 
-    # Project-wide paths
-    INPUT_FILE: "/path/to/your/vcf/files"
+    # Per-chromosome VCF files (one per chromosome)
+    INPUT: "/path/to/vcf/chr{CHR}.vcf.gz"
+
+    # Per-chromosome PLINK BED files
+    INPUT: "/path/to/plink/chr{CHR}.bed"
+
+    # Per-chromosome PLINK PGEN files  
+    INPUT: "/path/to/plink/chr{CHR}.pgen"
+
+    # Single merged file (entire genome in one file)
+    INPUT: "/path/to/merged.bed"
+
+    # Output directory for pipeline results
     OUT_DIR: "/path/to/output/directory"
+
+    # Reference data directory
     REF: "/path/to/reference/data"
-    vcf_template: "/path/to/vcf/chr{CHR}.vcf.gz"
 
     # Relatedness estimation
     relatedness:
@@ -134,7 +149,8 @@ Run only specific parts of the pipeline by specifying the rule name:
 Common rule targets include:
 
 - ``initialFilter`` - Initial sample/SNP quality control
-- ``convertNfilt`` - Chromosome-specific filtering
+- ``convertPlinkPerChromosome`` - Per-chromosome conversion and filtering
+- ``convertPlinkSingleFile`` - Single file conversion and filtering
 - ``king`` - Relatedness estimation
 - ``estimateAncestry`` - Global ancestry classification
 - ``classifyAncestry`` - Generate ancestry classifications and plots

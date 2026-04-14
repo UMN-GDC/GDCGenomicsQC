@@ -33,7 +33,7 @@ rule mergeChromosomesAndFilter:
         pvar=expand(
             OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pvar", CHR=CHROMOSOMES
         ),
-        keep=get_ancestry_file,  # Snakemake evaluates this per wildcard
+        keep=get_ancestry_file,
     params:
         output_prefix=lambda wildcards, output: output.pgen[:-5],
     shell:

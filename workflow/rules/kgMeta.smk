@@ -1,4 +1,6 @@
 checkpoint kgMeta:
+    container:
+        "docker://ubuntu:jammy"
     log:
         OUT_DIR / "logs" / "download1000GenomesMetadata.log",
     resources:
@@ -42,12 +44,12 @@ checkpoint splitMapChr:
     container:
         "docker://ubuntu:jammy"
     input:
-        mapgz=lambda wildcards: checkpoints.kgMeta.get().output.mapgz
+        shapemap=lambda wildcards: checkpoints.kgMeta.get().output.shapemap
     output:
-        map_chr=protected(REF / "1000G_highcoverage" / "hg38map.chr{chr}.txt.gz")
+        map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt.gz")
     shell:
         """
-        zcat {input.mapgz} \
-        | awk -v chr={wildcards.chr} '{{OFS="\t"}} $1==chr {{print $1, $2, $4}}' \
-        | gzip -n > {output.map_chr}
+        zcat {input.shapemap} \
+            | awk -v chr={wildcards.chr} '{{OFS="\t"}} $1==chr {{print $1, $2, $4}}' \
+            | gzip -n > {output.map_chr}
         """
