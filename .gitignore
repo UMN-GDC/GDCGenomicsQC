@@ -26,6 +26,7 @@ AGENTS.md
 !config/example.config
 !.readthedocs.yaml
 !profiles/*/example_config.yaml
+!profiles/*/.yaml
 .cache/
 
 # History files
