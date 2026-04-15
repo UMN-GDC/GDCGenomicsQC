@@ -45,7 +45,6 @@ checkpoint detectInputPattern:
 
 include: "rules/common.smk"
 include: "rules/kgMeta.smk"
-include: "rules/convertGmapRfmix.smk"
 include: "rules/kgAssemble.smk"
 include: "rules/kgData.smk"
 include: "rules/plotMissingness.smk"
@@ -103,7 +102,7 @@ checkpoint assembleRef:
             CHR=range(1, 23),
         ),
         REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
-        expand(REF / "gmaps" / "chr{CHR}.b38.gmap.rfmix.gz", CHR=range(1, 23)),
+        expand(REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt", CHR=range(1, 23)),
 
 
 rule run_initialQC:
