@@ -16,8 +16,8 @@ AGENTS.md
 !docs/images/*.mmd
 !docs/*.svg
 !docs/*.mmd
-!config/r25abcd.yaml
-!config/r25toy.yaml
+!config/sandboxABCD.yaml
+!config/sandboxToy.yaml
 !config/toy.yaml
 !config/config.schema.yaml
 !config/example_config.yaml
