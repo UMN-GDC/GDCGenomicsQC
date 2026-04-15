@@ -4,8 +4,7 @@
 #SBATCH --mem=1G
 #SBATCH --time=72:00:00
 
-module purge
-MODULEPATH=/scratch.global/coffm049/GDCGenomicsQC/envs:$MODULEPATH
-module load gdcgenomicsqc
+module use /scratch.global/coffm049/GDCGenomicsQC/envs
+module load gdcgenomicsMSI
 
 gdcgenomicsqc run_classifyAncestry --configfile ../config/msiabcd.yaml

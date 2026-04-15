@@ -4,7 +4,7 @@
 #SBATCH --mem=1G
 #SBATCH --time=72:00:00
 
-module use /scratch.global/coffm049/GDCGenomicsQC
+module use /scratch.global/GDC/GDCGenomicsQC/envs
 module load gdcgenomicsSandbox
 
-gdcgenomicsqc run_classifyAncestry --configfile ../config/r25toy.yaml
+gdcgenomicsqc assembleRef --configfile ../config/r25abcd.yaml --force
