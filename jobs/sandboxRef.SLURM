@@ -7,4 +7,4 @@
 module use /scratch.global/GDC/GDCGenomicsQC/envs
 module load gdcgenomicsSandbox
 
-gdcgenomicsqc assembleRef --configfile ../config/r25abcd.yaml --force
+gdcgenomicsqc assembleRef --configfile ../config/sandboxABCD.yaml --force
