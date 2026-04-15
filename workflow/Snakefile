@@ -21,6 +21,8 @@ REF = Path(config.get("REF", "/path/to/ref"))
 STORAGE_PREFIX = Path(os.path.abspath(config.get("local-storage-prefix", "/tmp")))
 ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
+SCRIPTS_DIR = Path(workflow.basedir) / "scripts"
+
 ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 checkpoint detectInputPattern:
@@ -49,6 +51,7 @@ include: "rules/kgAssemble.smk"
 include: "rules/kgData.smk"
 include: "rules/plotMissingness.smk"
 include: "rules/convertPlink.smk"
+include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
@@ -62,7 +65,7 @@ include: "rules/simulatePhenotype.smk"
 include: "rules/snpHerit.smk"
 include: "rules/snpHeritSim.smk"
 
-ruleorder: convertPlinkPerChromosome > convertPlinkSingleFile
+ruleorder: convertPlinkPerChromosome > mergeChromosomesAndFilter > convertPlinkSingleFile
 ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 # include: "rules/trainGnomix.smk"

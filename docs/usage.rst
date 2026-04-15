@@ -102,29 +102,33 @@ Execute from the ``workflow`` directory:
 
 .. tabs::
 
-   .. tab:: HPC with Module (MSI/UMN)
+    .. tab:: HPC with Module (MSI/UMN)
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-          snakemake --profile=../profiles/sandbox --configfile ../config/config.yaml
+           snakemake --profile=../profiles/sandbox --configfile ../config/config.yaml
 
-      Or use the wrapper script (if module provides it):
+       Or use the wrapper script (if module provides it):
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-          gdcgenomicsqc --configfile ../config/config.yaml
+           gdcgenomicsqc --configfile ../config/config.yaml
 
-   .. tab:: HPC without Module
+       .. note::
+           The module sets up the Apptainer image cache for offline use but does not provide Snakemake.
+           Users must ensure Snakemake is available in their environment (e.g., via ``conda activate snakemake``).
 
-      .. code-block:: bash
+    .. tab:: HPC without Module
 
-          snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
+       .. code-block:: bash
 
-   .. tab:: Interactive (Local/Testing)
+           snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
 
-      .. code-block:: bash
+    .. tab:: Interactive (Local/Testing)
 
-          snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
+       .. code-block:: bash
+
+           snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
 
 .. code-block:: bash
 

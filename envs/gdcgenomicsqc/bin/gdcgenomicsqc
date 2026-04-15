@@ -9,4 +9,4 @@
 
 WORKFLOW_DIR=/scratch.global/coffm049/GDCGenomicsQC
 
-exec snakemake --profile "$WORKFLOW_DIR/profiles/hpc" --snakefile "$WORKFLOW_DIR/workflow/Snakefile" "$@"
+exec snakemake --directory "$WORKFLOW_DIR" --profile "$WORKFLOW_DIR/profiles/hpc" --snakefile "$WORKFLOW_DIR/workflow/Snakefile" --rerun-incomplete "$@"

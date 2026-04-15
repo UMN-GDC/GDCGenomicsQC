@@ -27,7 +27,8 @@ rule plotSampleVariantMissingness:
     params:
         smiss_files=lambda wildcards, input: " ".join(input.smiss),
         vmiss_files=lambda wildcards, input: " ".join(input.vmiss),
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
-    Rscript scripts/plotMissingness.R "{params.smiss_files}" "{params.vmiss_files}" {output.smissIMG} {output.vmissIMG}
+    Rscript {params.scripts_dir}/plotMissingness.R "{params.smiss_files}" "{params.vmiss_files}" {output.smissIMG} {output.vmissIMG}
     """

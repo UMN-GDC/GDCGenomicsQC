@@ -33,6 +33,7 @@ rule applyStandardQualityControl:
         sex_check=config.get("SEX_CHECK", False),
         input_prefix=lambda wildcards, input: input.LDpgen[:-5],
         relatedness=config.get("relatedness", {}).get("method", "king"),
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
         echo "Standard QC: Variants and samples filtering"
@@ -50,5 +51,5 @@ rule applyStandardQualityControl:
           mv {input.LDpvar} {output.tempDir}/pastSex.pvar
           mv {input.LDpsam} {output.tempDir}/pastSex.psam
         fi
-        bash scripts/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
+        bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
         """

@@ -36,6 +36,7 @@ rule mergeChromosomesAndFilter:
         keep=get_ancestry_file,
     params:
         output_prefix=lambda wildcards, output: output.pgen[:-5],
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
     
@@ -70,12 +71,12 @@ rule mergeChromosomesAndFilter:
     if [ "{wildcards.subset}" == "full" ]; then
          echo "Processing full dataset without subsetting..."
          
-         bash scripts/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads}  {output.tempDir}
-                
+         bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads}  {output.tempDir}
+                 
     else
          echo "Subsetting data for ancestry: {wildcards.subset}..."
          
-         bash scripts/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads} {output.tempDir}
+         bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads} {output.tempDir}
     fi
     mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
     mv {output.tempDir}/intermediate_0.smiss {output.smiss}

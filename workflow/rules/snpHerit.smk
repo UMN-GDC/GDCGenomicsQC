@@ -44,11 +44,12 @@ if SNP_HERIT_ACTIVE:
             out_dir=lambda wildcards, output: OUT_DIR
             / wildcards.subset
             / "03-snpHeritability",
+            scripts_dir=SCRIPTS_DIR,
         shell:
             """
             mkdir -p {params.out_dir}
             
-            Rscript scripts/run_snp_herit.R \
+            Rscript {params.scripts_dir}/run_snp_herit.R \
                 "{params.out_dir}" \
                 "{input.pcrelate}" \
                 "{input.pcaobj}" \

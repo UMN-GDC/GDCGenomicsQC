@@ -32,6 +32,7 @@ rule runPcairInternalPca:
         input_prefix=lambda wildcards, input: str(input.pgen)[:-4],
         color_col=config.get("internalPCA", {}).get("color_by", "None"),
         pheno_file=config.get("internalPCA", {}).get("phenotype_file", "None"),
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
         echo "Running PC-AiR internal PCA"
@@ -41,7 +42,7 @@ rule runPcairInternalPca:
         echo "Converting pgen to bed format..."
         plink2 --pfile {params.input_prefix} --export bed --out {params.input_prefix}
         
-        Rscript scripts/run_pcair_pcrelate.R \
+        Rscript {params.scripts_dir}/run_pcair_pcrelate.R \
             "{params.input_prefix}" \
             "{params.out_dir}" \
             "{params.color_col}" \

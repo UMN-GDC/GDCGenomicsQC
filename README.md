@@ -147,7 +147,7 @@ module load gdcgenomicsqc
 echo $SINGULARITY_CACHEDIR
 echo $SNAKEMAKE_SINGULARITY_PREFIX
 
-# From your data directory
+# Run from any directory - --directory is set automatically
 gdcgenomicsqc --configfile /path/to/your/config.yaml
 ```
 

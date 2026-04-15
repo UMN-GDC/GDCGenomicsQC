@@ -60,5 +60,6 @@ When loaded via `module load gdcgenomicsqc/1.0`:
 - Adds `$basedir/bin` to PATH
 - Sets `APPTAINER_CACHEDIR=/scratch.global/GDC/singularityimages`
 - Sets `SNAKEMAKE_APPTAINER_PREFIX=/scratch.global/GDC/singularityimages`
+- The `gdcgenomicsqc` wrapper runs snakemake with `--directory` set, so it works from any directory
 
 These env vars allow snakemake to use cached apptainer images for offline execution.

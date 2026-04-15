@@ -27,11 +27,12 @@ checkpoint estimateGlobalAncestry:
         ancestry=OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
     params:
         dir=OUT_DIR / "01-globalAncestry",
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
     echo "Running ancestry estimation:"
 
-    Rscript scripts/classification.R  \
+    Rscript {params.scripts_dir}/classification.R  \
       --eigen_ref {input.eigen_ref} \
       --eigen_sample {input.eigen_sample} \
       --umap_ref {input.umap_ref} \
