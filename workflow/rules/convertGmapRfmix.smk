@@ -8,6 +8,6 @@ rule convertGmapToRfmix:
     shell:
         """
         zcat {input.map_chr} \
-            | awk -F'\\t' 'NR>1 {{print $1, $2, $4}}' \
+            | awk -v OFS='\\t'  -F'\\t' 'NR>1 {{print $2, $1, $3}}' \
             | gzip -n > {output.rfmix}
         """

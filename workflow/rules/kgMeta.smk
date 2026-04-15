@@ -46,10 +46,9 @@ checkpoint splitMapChr:
     input:
         shapemap=lambda wildcards: checkpoints.kgMeta.get().output.shapemap
     output:
-        map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt.gz")
+        map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt")
     shell:
         """
         zcat {input.shapemap} \
-            | awk -v chr={wildcards.chr} '{{OFS="\t"}} $1==chr {{print $1, $2, $4}}' \
-            | gzip -n > {output.map_chr}
+            | awk -v chr={wildcards.chr} 'NR>1 {{OFS="\t"}} {{print $2, $1, $3}}' > {output.map_chr}
         """
