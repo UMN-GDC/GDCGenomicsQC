@@ -89,20 +89,20 @@ ruleorder: convertPgenToVcf > compressAndIndexVcf
 ##### GOOD UP TO HERE
 rule assembleRef2:
     input:
-        expand(REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt", CHR=range(1, 23)),
+        ancient(expand(REF / "gmaps" / "hg38map.chr{CHR}.txt", CHR=range(1, 23))),
 
 checkpoint assembleRef:
     input:
-        REF / "1000G_highcoverage" / "population.txt",
-        REF / "1000G_highcoverage" / "pedigree.txt",
-        expand(
+        ancient(REF / "1000G_highcoverage" / "population.txt"),
+        ancient(REF / "1000G_highcoverage" / "pedigree.txt"),
+        ancient(expand(
             REF
             / "1000G_highcoverage"
             / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
             CHR=range(1, 23),
-        ),
-        REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
-        expand(REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt", CHR=range(1, 23)),
+        )),
+        ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen"),
+        ancient(expand(REF / "gmaps" / "hg38map.chr{CHR}.txt", CHR=range(1, 23))),
 
 
 rule run_initialQC:
@@ -129,7 +129,7 @@ rule run_pca:
         mem_mb=4000,
         runtime=420,  # 1 week
     input:
-        labels=REF / "1000G_highcoverage" / "population.txt",
+        labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
         eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
 
@@ -141,7 +141,7 @@ rule run_estimateAdmixing:
         mem_mb=4000,
         runtime=420,  # 1 week
     input:
-        labels=REF / "1000G_highcoverage" / "population.txt",
+        labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
         eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",

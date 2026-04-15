@@ -14,9 +14,9 @@ rule runPcaOnReferencePanel:
         pgen=OUT_DIR / "full" / "initialFilter.pgen",
         pvar=OUT_DIR / "full" / "initialFilter.pvar",
         psam=OUT_DIR / "full" / "initialFilter.psam",
-        ldPgen=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen",
-        ldPvar=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar",
-        ldPsam=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam",
+        ldPgen=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
+        ldPvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
+        ldPsam=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
     output:
         eigen=OUT_DIR / "01-globalAncestry" / "ref.eigenvec",
         projected=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
