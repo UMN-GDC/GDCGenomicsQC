@@ -18,7 +18,7 @@ proc ModulesHelp { } {
 }
 
 
-set basedir /scratch.global/coffm049/GDCGenomicsQC/envs/gdcgenomicsSandbox
+set basedir [file dirname [file dirname [info script]]]
 prepend-path PATH $basedir/bin
 setenv APPTAINER_CACHEDIR /scratch.global/GDC/singularityimages
 setenv SNAKEMAKE_APPTAINER_PREFIX /scratch.global/GDC/singularityimages
