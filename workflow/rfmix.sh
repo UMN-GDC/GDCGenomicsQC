@@ -1,0 +1,11 @@
+rfmix  \
+  -f /scratch.global/coffm049/r25Pipeline2/02-localAncestry/chr21.phased.vcf.gz \
+  -r /projects/standard/gdc/public/Ref/1000G_highcoverage/1kGP_high_coverage_Illumina.chr21.filtered.SNV_INDEL_SV_phased_panel.vcf.gz \
+  -m /projects/standard/gdc/public/Ref/1000G_highcoverage/population.txt \
+  -g /projects/standard/gdc/public/Ref/1000G_highcoverage/hg38map.chr21.txt\
+  --crf-weight=3.0 \
+  -e 1 \
+  -t 10 \
+  -s 100 \
+  -o test \
+  --chromosome=21

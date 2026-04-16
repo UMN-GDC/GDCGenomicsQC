@@ -9,6 +9,99 @@ It integrates standard QC procedures with ancestry estimation and optional advan
    :depth: 2
    :local:
 
+Software Environment Setup
+-------------------------
+
+Before running the pipeline, you need to set up your software environment.
+Choose the method that matches your HPC setup:
+
+.. tabs::
+
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      If your HPC has the GDC module pre-configured:
+
+      **Step 1: Add module path and load the GDC module**
+
+      .. code-block:: bash
+
+          # Add the GDC module path (do this once per session or add to ~/.bashrc)
+          module use /path/to/GDCGenomicsQC/envs
+
+          # Load the GDC Genomics QC module
+          module load gdcgenomicsqc
+
+      **Step 2: Activate snakemake environment**
+
+      .. code-block:: bash
+
+          # Activate the snakemake conda environment
+          conda activate snakemake
+
+      **Step 3: Verify installation**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+      **What the module provides:**
+
+      +--------------------------------+------------------------------------------------+
+      | Setting                        | Value                                           |
+      +================================+================================================+
+      | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+      +--------------------------------+------------------------------------------------+
+      | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+      +--------------------------------+------------------------------------------------+
+      | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+      +--------------------------------+------------------------------------------------+
+
+      **Running the pipeline:**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config/config.yaml
+
+      Or with snakemake directly:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
+
+   .. tab:: Local Snakemake (Conda)
+
+      If you're using your own Snakemake installation:
+
+      **Step 1: Create the conda environment**
+
+      .. code-block:: bash
+
+          # Clone the repository
+          git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+          cd GDCGenomicsQC
+
+          # Create the snakemake environment
+          conda env create -f envs/snakemake.yml
+          conda activate snakemake
+
+      **Step 2: Verify installation**
+
+      .. code-block:: bash
+
+          snakemake --version
+
+      **Running the pipeline:**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
+
+**See also:** :doc:`installation` for detailed setup options including Singularity-only environments.
+
 Workflow Overview
 -----------------
 
@@ -40,13 +133,28 @@ the older command-line flag approach.
 Basic Configuration
 ~~~~~~~~~~~~~~~~~~
 
+The ``INPUT`` parameter specifies your input genomic data. The pipeline automatically
+detects the format based on the file extension and whether ``{CHR}`` is present:
+
 .. code-block:: yaml
 
-    # Project-wide paths
-    INPUT_FILE: "/path/to/your/vcf/files"
+    # Per-chromosome VCF files (one per chromosome)
+    INPUT: "/path/to/vcf/chr{CHR}.vcf.gz"
+
+    # Per-chromosome PLINK BED files
+    INPUT: "/path/to/plink/chr{CHR}.bed"
+
+    # Per-chromosome PLINK PGEN files  
+    INPUT: "/path/to/plink/chr{CHR}.pgen"
+
+    # Single merged file (entire genome in one file)
+    INPUT: "/path/to/merged.bed"
+
+    # Output directory for pipeline results
     OUT_DIR: "/path/to/output/directory"
+
+    # Reference data directory
     REF: "/path/to/reference/data"
-    vcf_template: "/path/to/vcf/chr{CHR}.vcf.gz"
 
     # Relatedness estimation
     relatedness:
@@ -79,23 +187,41 @@ See :doc:`genomics` for detailed descriptions of all configuration options.
 Running the Pipeline
 -------------------
 
-Execute from the ``workflow`` directory:
+Choose your execution method based on your setup:
 
-.. code-block:: bash
+.. tabs::
 
-    cd GDCGenomicsQC/workflow
+   .. tab:: Module Load (MSI/UMN HPC)
 
-With SLURM (recommended for HPC):
+      Use the ``gdcgenomicsqc`` wrapper script:
 
-.. code-block:: bash
+      .. code-block:: bash
 
-    snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config/config.yaml
 
-Interactive (local execution):
+      Or use snakemake directly with the sandbox profile:
 
-.. code-block:: bash
+      .. code-block:: bash
 
-    snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/sandbox --configfile ../config/config.yaml
+
+   .. tab:: Local Snakemake
+
+      **HPC execution:**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
+
+      **Interactive/Testing:**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
 
 Running Specific Rules
 ~~~~~~~~~~~~~~~~~~~~
@@ -116,7 +242,8 @@ Run only specific parts of the pipeline by specifying the rule name:
 Common rule targets include:
 
 - ``initialFilter`` - Initial sample/SNP quality control
-- ``convertNfilt`` - Chromosome-specific filtering
+- ``convertPlinkPerChromosome`` - Per-chromosome conversion and filtering
+- ``convertPlinkSingleFile`` - Single file conversion and filtering
 - ``king`` - Relatedness estimation
 - ``estimateAncestry`` - Global ancestry classification
 - ``classifyAncestry`` - Generate ancestry classifications and plots

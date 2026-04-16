@@ -5,10 +5,11 @@ OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
 REF = Path(config.get("REF", "/path/to/ref"))
 ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
+LOCAL_ANCESTRY_CHROMOSOMES = config.get("localAncestry", {}).get("chromosomes") or CHROMOSOMES
 
 
 def get_ancestries(wildcards):
-    ancestry_file = rules.classifyAncestry.output.classifications
+    ancestry_file = rules.classifySamplesByAncestry.output.classifications
     predicted_col = f"{ANCESTRY_MODEL}_predicted"
     ancestries = (
         pd.read_csv(ancestry_file, sep="\t")[predicted_col].dropna().unique().tolist()
@@ -27,7 +28,7 @@ def get_ancestry_file(wildcards):
 
 
 def get_posterior_probs(wildcards):
-    checkpoint_output = checkpoints.estimateAncestry.get(**wildcards).output.pos_prob
+    checkpoint_output = checkpoints.estimateGlobalAncestry.get(**wildcards).output.pos_prob
     return checkpoint_output
 
 

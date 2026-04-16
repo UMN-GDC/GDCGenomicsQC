@@ -1,0 +1,10 @@
+executor: slurm
+jobs: 25
+use-singularity: true
+singularity-args: "--bind /scratch.global,/projects,/spaces,/home"
+default-resources:
+  - slurm_account=gdc
+  - mem_mb=4000
+  - runtime=60
+latency-wait: 20
+# Removed shared-fs-usage that was causing auto-mount issues

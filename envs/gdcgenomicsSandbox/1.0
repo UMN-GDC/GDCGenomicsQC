@@ -1,0 +1,24 @@
+#%Module######################################################################
+#
+#     GDC Genomics QC Pipeline module file
+#     Sets up apptainer image cache for offline use
+#
+
+proc ModulesHelp { } {
+    puts stderr "\tThis module loads the GDC Genomics QC Pipeline."
+    puts stderr "\tIt sets up the apptainer image cache for offline use."
+    puts stderr "\tUsers must have Snakemake available in their environment."
+    puts stderr "\tWhen using the HPC profile, Snakemake is provided via the snakemake conda environment."
+    puts stderr "\t"
+    puts stderr "\tUsage: gdcgenomicsqc --configfile <config.yaml> [other snakemake options]"
+    puts stderr "\t"
+    puts stderr "\tThe gdcgenomicsqc command automatically adds --profile hpc"
+    puts stderr "\tand --snakefile workflow/Snakefile, so users only need to specify"
+    puts stderr "\tthe --configfile option."
+}
+
+
+set basedir [file dirname [file dirname [info script]]]
+prepend-path PATH $basedir/bin
+setenv APPTAINER_CACHEDIR /scratch.global/GDC/singularityimages
+setenv SNAKEMAKE_APPTAINER_PREFIX /scratch.global/GDC/singularityimages

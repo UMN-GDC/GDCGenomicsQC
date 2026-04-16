@@ -1,6 +1,6 @@
-rule initialFilter:
+rule mergeChromosomesAndFilter:
     log:
-        OUT_DIR / "logs" / "initialFilter_{subset}.log",
+        OUT_DIR / "logs" / "mergeChromosomesAndFilter_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -33,9 +33,10 @@ rule initialFilter:
         pvar=expand(
             OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pvar", CHR=CHROMOSOMES
         ),
-        keep=get_ancestry_file,  # Snakemake evaluates this per wildcard
+        keep=get_ancestry_file,
     params:
         output_prefix=lambda wildcards, output: output.pgen[:-5],
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
     
@@ -70,12 +71,12 @@ rule initialFilter:
     if [ "{wildcards.subset}" == "full" ]; then
          echo "Processing full dataset without subsetting..."
          
-         bash scripts/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads}  {output.tempDir}
-                
+         bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads}  {output.tempDir}
+                 
     else
          echo "Subsetting data for ancestry: {wildcards.subset}..."
          
-         bash scripts/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads} {output.tempDir}
+         bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads} {output.tempDir}
     fi
     mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
     mv {output.tempDir}/intermediate_0.smiss {output.smiss}

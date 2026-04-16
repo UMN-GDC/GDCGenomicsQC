@@ -27,13 +27,17 @@ REF:
     - CrossMap/ (liftover chain files)
     - rfmix_ref/ (RFMIX genetic maps)
 
-vcf_template:
+INPUT:
   type: str
-  nullable: true
+  required: true
   description: |
-    Template for VCF input files with {CHR} placeholder.
-    Used when input is in VCF format - will be expanded for each chromosome.
-    Set to null if input is already in PLINK format.
+    Path template for input genomic data. Supports two patterns:
+    - Per-chromosome files: Use {CHR} placeholder (e.g., "/path/to/chr{CHR}.vcf.gz")
+    - Single merged file: Full path without {CHR} placeholder
+    Detected by extension:
+    - .vcf or .vcf.gz -> VCF format (converted to PLINK)
+    - .bed -> PLINK bed/bim/fam format
+    - .pgen -> PLINK pgen/pvar/psam format (used as-is)
 
 local-storage-prefix:
   type: str

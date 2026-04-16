@@ -1,166 +1,379 @@
 .. highlight:: shell
 
-============
+==============
 Installation
-============
+==============
 
 This guide covers installing and configuring the GDCGenomicsQC pipeline.
 
-Requirements
-------------
+.. contents:: Table of Contents
+   :depth: 2
+   :local:
 
-- Access to HPC computing resources with SLURM scheduler (recommended)
-- Snakemake
-- Git
+Software Loading Methods
+-----------------------
 
-.. dropdown:: Setting up Conda and Git for a Sandbox
-   :color: primary
-   :icon: gear
+The pipeline supports multiple ways to access its dependencies. Choose the method that matches your HPC environment:
 
-   This section covers installing a local Miniconda instance and configuring Git within a "sandbox" environment, particularly optimized for HPC clusters like MSI.
+.. list-table:: Software Loading Methods
+   :widths: 25 25 50
+   :header-rows: 1
 
-   **1. Download and Prepare the Installer**
+   * - Method
+     - Best For
+     - Setup Required
+   * - **Module System**
+     - HPC clusters (MSI/UMN)
+     - ``module load gdcgenomicsqc``
+   * - **Conda Environment**
+     - Custom HPC or local
+     - ``conda env create``
+   * - **Singularity/Apptainer**
+     - Container-based HPC
+     - Pull images manually
+   * - **System-wide Install**
+     - Local development
+     - ``pip install`` / ``conda install``
 
-   First, download the latest Miniconda installer for Linux and set the execution permissions. We recommend creating a temporary directory for the installation process to keep your home directory clean.
+Prerequisite Software
+---------------------
 
-   .. code-block:: bash
+Regardless of loading method, the following software is required:
 
-      mkdir -p ~/conda_install_tmp
-      export TMPDIR=$HOME/conda_install_tmp
-      curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-      chmod u+x Miniconda3-latest-Linux-x86_64.sh
+.. list-table:: Prerequisite Software
+   :widths: 30 20 50
+   :header-rows: 1
 
-   **2. Run the Installer**
+   * - Software
+     - Required By
+     - Notes
+   * - **Snakemake** (8+)
+     - Pipeline execution
+     - Conda recipe provided in ``envs/snakemake.yml``
+   * - **snakemake-executor-plugin-slurm**
+     - HPC job submission
+     - Required for SLURM profiles
+   * - **Singularity/Apptainer**
+     - Containerized tools
+     - MSI module: ``module load apptainer``
+   * - **SLURM scheduler**
+     - HPC job scheduling
+     - For profiles/hpc and profiles/sandbox
+   * - **Conda or Mamba**
+     - Environment management
+     - Mamba recommended for faster solving
+   * - **Git**
+     - Repository access
+     - For cloning the repository
 
-   Execute the script and follow the prompts to accept the license.
+Automatic Software Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   .. code-block:: bash
+The pipeline uses Snakemake's built-in conda support to automatically install
+software dependencies defined in rule-level ``conda:`` directives. This means:
 
-      ./Miniconda3-latest-Linux-x86_64.sh
+- No manual installation of PLINK, bcftools, GATK, shapeit4, rfmix, etc.
+- Each rule can specify its own conda environment
+- Singularity containers are pulled automatically when using ``--use-singularity``
 
-   **3. Managing Disk Space (Storage Optimization)**
+.. tabs::
 
-   If you have limited space in your home directory, you can redirect your environments and package caches to a scratch space.
+   .. tab:: HPC with Module (MSI/UMN)
 
-   .. note::
-      Scratch spaces are often world-readable and subject to periodic deletion. Ensure you keep your environment definitions in a ``.yaml`` file so you can recreate them if they are wiped.
+      This scenario uses pre-installed modules and pre-cached Singularity images.
+      Ideal for standard HPC environments like MSI at UMN.
 
-   To specify alternative destinations, edit your ``~/.condarc`` file:
+      **Prerequisites:**
 
-   .. code-block:: yaml
+      - Access to MSI HPC with SLURM scheduler
+      - Module system available
 
-      envs_dirs:
-        - /scratch/username/conda/envs
-      pkgs_dirs:
-        - /scratch/username/conda/pkgs
-      channel_priority: strict
+      **Setup:**
 
-   **4. Install Git in the Base Environment**
+      .. code-block:: bash
 
-   To ensure Git is always available, we install it into the ``base`` conda environment and create a shell alias for global access.
+          # Load the module
+          module use /path/to/GDCGenomicsQC/envs
+          module load gdcgenomicsqc
 
-   .. code-block:: bash
+          # Verify environment is set up
+          echo $SINGULARITY_CACHEDIR
+          echo $SNAKEMAKE_SINGULARITY_PREFIX
 
-      # Initialize conda session
-      source ~/miniconda3/etc/profile.d/conda.sh
-      conda activate base
+      **What the module provides:**
 
-      # Install Git
-      conda install git
+      The ``gdcgenomicsqc`` module sets up:
 
-      # Add alias and source to ~/.bashrc for persistence
-      echo "alias git='~/miniconda3/bin/git'" >> ~/.bashrc
-      echo "source ~/miniconda3/etc/profile.d/conda.sh" >> ~/.bashrc
-      source ~/.bashrc
+      +--------------------------------+------------------------------------------------+
+      | Setting                        | Value                                           |
+      +================================+================================================+
+      | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+      +--------------------------------+------------------------------------------------+
+      | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+      +--------------------------------+------------------------------------------------+
+      | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+      +--------------------------------+------------------------------------------------+
 
-   **5. Configure Best Practices for Clusters**
+      **Snakemake availability:**
 
-   To prevent Conda from interfering with system-level cluster tools or causing inconsistent behavior in SLURM jobs, disable the automatic activation of the base environment.
+      The module does NOT provide Snakemake. You must have Snakemake available
+      through one of these methods:
 
-   .. code-block:: bash
+      .. dropdown:: Method 1: Conda Environment (Recommended)
 
-      conda config --set auto_activate_base false
+         .. code-block:: bash
 
-Clone the Repository
--------------------
+             # Create the snakemake environment (one-time)
+             conda env create -n snakemake -f /path/to/GDCGenomicsQC/envs/snakemake.yml
 
-.. code-block:: bash
+             # Activate when starting a session
+             conda activate snakemake
 
-    git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
-    cd GDCGenomicsQC
+      .. dropdown:: Method 2: Existing MSI Snakemake Environment
 
-Set Up Snakemake
-----------------
+         If your HPC already has a snakemake environment:
 
-We recommend creating a dedicated conda environment for Snakemake (we have a .yaml file in the envs/ directory for this use):
+         .. code-block:: bash
 
-.. code-block:: bash
+             conda config --add envs_dirs /projects/standard/gdc/public/envs
+             conda activate snakemake
 
-    conda env create -f envs/snakemake.yml
+      .. dropdown:: Method 3: MSI Conda Modules
 
-.. dropdown:: GDC internal snakemake env
-   :open:
+         MSI may provide conda through modules:
 
-   If you are running at MSI at UMN, this environment may already exist. 
-   You can also add the GDC conda environments:
+         .. code-block:: bash
 
-   .. code-block:: bash
+             module load miniconda
+             conda activate snakemake
 
-      conda config --add envs_dirs /projects/standard/gdc/public/envs
+      **Clone the repository (if not already available):**
 
-Activate the environment:
+      .. code-block:: bash
 
-.. code-block:: bash
+          git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+          cd GDCGenomicsQC
 
-    conda activate snakemake
+      **Run:**
 
-.. note::
-   The pipeline can also be run interactively without SLURM using the ``interactive``
-   profile. However, most production runs should use the SLURM scheduler for
-   reliability.
+      .. code-block:: bash
 
-Configure Your Run
-------------------
+          cd GDCGenomicsQC/workflow
+          snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
 
-Edit the configuration file at ``config/config.yaml`` to specify:
+      Or using the wrapper script (after loading the module):
 
-- Input and output paths
-- Reference data locations
-- Pipeline options (relatedness, ancestry methods, etc.)
+      .. code-block:: bash
 
-Example configuration:
+          gdcgenomicsqc --configfile /path/to/your/config.yaml
 
-.. code-block:: yaml
+      :doc:`Skip to Usage <usage>`
 
-    INPUT_FILE: "/path/to/your/vcf/files"
-    OUT_DIR: "/path/to/output/directory"
-    REF: "/path/to/reference/data"
+   .. tab:: HPC without Module
 
-    relatedness:
-        method: "king"
+      If you're on an HPC system without the GDCGenomicsQC module, set up manually.
 
-    localAncestry:
-        RFMIX: true
-        test: true
+      **Prerequisites:**
 
-    thin: true
+      - Access to HPC with SLURM scheduler
+      - Git
+      - Conda or Mamba
+      - Singularity/Apptainer (check with ``which apptainer`` or ``which singularity``)
 
-Running the Pipeline
--------------------
+      **1. Clone the Repository**
 
-Execute from the ``workflow`` directory:
+      .. code-block:: bash
 
-.. code-block:: bash
+          git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+          cd GDCGenomicsQC
 
-    cd GDCGenomicsQC/workflow
+      **2. Set Up Snakemake Environment**
 
-    # With SLURM (recommended)
-    snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
+      .. code-block:: bash
 
-    # Interactive (local)
-    snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
+          # Create a conda/mamba environment
+          conda env create -n snakemake -f envs/snakemake.yml
+          conda activate snakemake
 
-For more detailed usage instructions, see :doc:`usage`.
+      **3. Configure Apptainer/Cachedir (Optional)**
+
+      If you want to pre-pull container images for offline use:
+
+      .. code-block:: bash
+
+          export APPTAINER_CACHEDIR=/path/to/container/cache
+          export SNAKEMAKE_APPTAINER_PREFIX=/path/to/container/cache
+
+      **4. Configure Your Run**
+
+      Edit the configuration file at ``config/config.yaml`` to specify:
+
+      - Input and output paths
+      - Reference data locations
+      - Pipeline options (relatedness, ancestry methods, etc.)
+
+      Example configuration:
+
+      .. code-block:: yaml
+
+          INPUT_FILE: "/path/to/your/vcf/files"
+          OUT_DIR: "/path/to/output/directory"
+          REF: "/path/to/reference/data"
+
+          relatedness:
+              method: "king"
+
+          localAncestry:
+              RFMIX: true
+              test: true
+
+          thin: true
+
+      **5. Run**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+
+      **Requesting module installation:** Contact your HPC administrators with:
+
+      - The path to the repository: ``/path/to/GDCGenomicsQC``
+      - The module location: ``/path/to/GDCGenomicsQC/envs/gdcgenomicsMSI``
+      - The wrapper script: ``/path/to/GDCGenomicsQC/envs/gdcgenomicsMSI/bin/gdcgenomicsqc``
+
+      :doc:`Skip to Usage <usage>`
+
+   .. tab:: Interactive (Local/Testing)
+
+      For local execution without SLURM. Useful for testing and small datasets.
+
+      **Prerequisites:**
+
+      - Git
+      - Conda or Mamba
+      - 4+ CPU cores recommended
+      - 16GB+ RAM for typical analyses
+
+      **1. Clone the Repository**
+
+      .. code-block:: bash
+
+          git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+          cd GDCGenomicsQC
+
+      **2. Set Up Snakemake Environment**
+
+      .. code-block:: bash
+
+          # Create a conda/mamba environment
+          conda env create -n snakemake -f envs/snakemake.yml
+          conda activate snakemake
+
+      **3. Configure Your Run**
+
+      Edit the configuration file at ``config/config.yaml`` to specify:
+
+      - Input and output paths
+      - Reference data locations
+      - Pipeline options (relatedness, ancestry methods, etc.)
+
+      Example configuration:
+
+      .. code-block:: yaml
+
+          INPUT_FILE: "/path/to/your/vcf/files"
+          OUT_DIR: "/path/to/output/directory"
+          REF: "/path/to/reference/data"
+
+          relatedness:
+              method: "king"
+
+          localAncestry:
+              RFMIX: true
+              test: true
+
+          thin: true
+
+      **4. Run**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile ../profiles/interactive --configfile /path/to/your/config.yaml
+
+      Or for simple local execution (no profile):
+
+      .. code-block:: bash
+
+          snakemake --cores=4 --use-conda \
+              --configfile /path/to/config.yaml \
+              --directory /path/to/GDCGenomicsQC/workflow \
+              --snakefile /path/to/GDCGenomicsQC/workflow/Snakefile
+
+      :doc:`Skip to Usage <usage>`
+
+   .. tab:: Singularity/Apptainer Only
+
+      If your HPC provides Singularity/Apptainer but you prefer not to use conda
+      for Snakemake, you can install Snakemake via pip:
+
+      **Prerequisites:**
+
+      - Singularity/Apptainer
+      - Python 3.8+
+      - pip
+
+      **1. Install Snakemake via pip**
+
+      .. code-block:: bash
+
+          pip install snakemake snakemake-executor-plugin-slurm
+
+      **2. Clone the Repository**
+
+      .. code-block:: bash
+
+          git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+          cd GDCGenomicsQC
+
+      **3. Configure Container Cachedir**
+
+      .. code-block:: bash
+
+          export SINGULARITY_CACHEDIR=/path/to/container/cache
+          export APPTAINER_CACHEDIR=/path/to/container/cache
+
+      **4. Run with Singularity**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --use-singularity --profile ../profiles/hpc \
+              --configfile /path/to/your/config.yaml
+
+Software Environment Summary
+---------------------------
+
+.. list-table:: Quick Reference: How to Load Software
+   :widths: 30 35 35
+   :header-rows: 1
+
+   * - Software
+     - Conda Command
+     - Module Command (MSI)
+   * - Snakemake
+     - ``conda activate snakemake``
+     - ``module load miniconda && conda activate snakemake``
+   * - GDC Pipeline
+     - (via containers)
+     - ``module load gdcgenomicsqc``
+   * - Apptainer
+     - N/A
+     - ``module load apptainer``
+   * - SLURM
+     - N/A
+     - (Usually default on HPC)
 
 External Dependencies
 ---------------------
@@ -175,13 +388,71 @@ and Singularity containers. The pipeline is entirely self-contained—you only n
 
 No manual installation of external tools (PLINK, bcftools, GATK, etc.) is required.
 
-Troubleshooting
+Software Environment Files
+--------------------------
+
+The pipeline includes the following environment definitions in ``envs/``:
+
+.. list-table:: Environment Files
+   :widths: 30 70
+   :header-rows: 1
+
+   * - File
+     - Purpose
+   * - ``snakemake.yml``
+     - Snakemake and SLURM executor plugin
+   * - ``genomeUtils.yml``
+     - General genomic utilities (PLINK, bcftools, etc.)
+   * - ``rfmix.yml``
+     - RFMix for local ancestry inference
+   * - ``phenotypeSim.yml``
+     - Phenotype simulation tools
+   * - ``ancNreport.yml``
+     - Ancestry reporting and visualization
+   * - ``mash.yml``
+     - Mash distance estimation
+   * - ``karyoploteR.yml``
+     - Karyotype visualization
+
+Container Images
 ---------------
 
-If jobs fail to start:
+The pipeline uses Singularity/Apptainer containers for reproducibility. Images
+are automatically pulled based on rule-level ``container:`` directives.
+
+.. list-table:: Container Images
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Image
+     - Contains
+   * - ``oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest``
+     - Ancestry reporting environment
+   * - ``oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest``
+     - RFMix local ancestry inference
+   * - ``oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest``
+     - Mash distance estimation
+   * - ``oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest``
+     - Phenotype simulation tools
+
+Troubleshooting
+--------------
+
+**If jobs fail to start:**
 
 - Verify SLURM is available: ``sbatch --version``
+- Verify Snakemake is available: ``snakemake --version``
 - Check that your config paths are correct
 - Ensure output directories are writable
+
+**If conda environments fail to resolve:**
+
+- Use ``mamba`` instead of ``conda`` for faster solving
+- Set in config: ``conda-frontend: mamba``
+
+**If containers fail to pull:**
+
+- Check network connectivity
+- Configure cachedir: ``export SINGULARITY_CACHEDIR=/path/to/large/disk``
 
 For additional help, see the :doc:`usage` guide or open an issue on GitHub.

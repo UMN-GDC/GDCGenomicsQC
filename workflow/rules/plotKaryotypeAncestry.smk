@@ -8,9 +8,9 @@ def get_local_ancestry_samples():
 SAMPLES = get_local_ancestry_samples()
 
 
-checkpoint plotKaryotypeAncestry:
+checkpoint generateKaryotypeAncestryPlots:
     log:
-        OUT_DIR / "logs" / "plotKaryotypeAncestry.log",
+        OUT_DIR / "logs" / "generateKaryotypeAncestryPlots.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -35,11 +35,12 @@ checkpoint plotKaryotypeAncestry:
         / "02-localAncestry"
         / config.get("localAncestry", {}).get("figures", "figures"),
         chromosomes="1-22",
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
         mkdir -p {params.figures_dir}
         for SAMPLE in {" ".join(SAMPLES)}; do
-            Rscript ../../scripts/plotKaryotypeAncestry.R \
+            Rscript {params.scripts_dir}/plotKaryotypeAncestry.R \
                 --msp-dir {params.msp_dir} \
                 --sample $SAMPLE \
                 --chromosomes {params.chromosomes} \

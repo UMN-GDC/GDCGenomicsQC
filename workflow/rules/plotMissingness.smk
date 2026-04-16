@@ -1,6 +1,6 @@
-rule plotMissingness:
+rule plotSampleVariantMissingness:
     log:
-        OUT_DIR / "logs" / "plotMissingness_{subset}.log",
+        OUT_DIR / "logs" / "plotSampleVariantMissingness_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -27,7 +27,8 @@ rule plotMissingness:
     params:
         smiss_files=lambda wildcards, input: " ".join(input.smiss),
         vmiss_files=lambda wildcards, input: " ".join(input.vmiss),
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
-    Rscript scripts/plotMissingness.R "{params.smiss_files}" "{params.vmiss_files}" {output.smissIMG} {output.vmissIMG}
+    Rscript {params.scripts_dir}/plotMissingness.R "{params.smiss_files}" "{params.vmiss_files}" {output.smissIMG} {output.vmissIMG}
     """

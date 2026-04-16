@@ -8,16 +8,18 @@
 *.tex
 AGENTS.md
 
-
-
+*/.wget-hsts
+*/_build/*
 *.yaml
 *.yml
 !docs/images/*.svg
 !docs/images/*.mmd
 !docs/*.svg
 !docs/*.mmd
-!config/r25abcd.yaml
-!config/r25toy.yaml
+!config/sandboxABCD.yaml
+!config/sandboxToy.yaml
+!config/msiABCD.yaml
+!config/msiToy.yaml
 !config/toy.yaml
 !config/config.schema.yaml
 !config/example_config.yaml
@@ -26,6 +28,7 @@ AGENTS.md
 !config/example.config
 !.readthedocs.yaml
 !profiles/*/example_config.yaml
+!profiles/*/*.yaml
 .cache/
 
 # History files

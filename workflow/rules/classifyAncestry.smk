@@ -1,7 +1,7 @@
 
-checkpoint estimateAncestry:
+checkpoint estimateGlobalAncestry:
     log:
-        OUT_DIR / "logs" / "estimateAncestry.log",
+        OUT_DIR / "logs" / "estimateGlobalAncestry.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -12,7 +12,7 @@ checkpoint estimateAncestry:
         mem_mb=64000,
         runtime=240,
     input:
-        labels=REF / "1000G_highcoverage" / "population.txt",
+        labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
         eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
@@ -46,9 +46,9 @@ checkpoint estimateAncestry:
         """
 
 
-rule classifyAncestry:
+rule classifySamplesByAncestry:
     log:
-        OUT_DIR / "logs" / "classifyAncestry.log",
+        OUT_DIR / "logs" / "classifySamplesByAncestry.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:

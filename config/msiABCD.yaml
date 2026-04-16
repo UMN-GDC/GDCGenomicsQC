@@ -1,10 +1,8 @@
 # Project-wide paths
-vcf_template: "/projects/standard/gdc/public/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
-OUT_DIR: "/scratch.global/coffm049/r25Pipeline"
+vcf_template: "/spaces/regulated/abcd-ref-data/dairc/concat/genetics/genotype_microarray/imputed/chr{CHR}_dose.vcf.gz"
+OUT_DIR: "/scratch.global/coffm049/abcdPipeline"
 REF: "/projects/standard/gdc/public/Ref"
-local-storage-prefix: "/scratch.global/coffm049/tmp"
-
-chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+local-storage-prefix: "/scratch.global/coffm049/GDCGenomicsQC/workflow/.snakemake/storage"
 
 
 convertNfilt:
@@ -91,3 +89,4 @@ phenotypeSimulation:
     
     # Number of individuals to thin to (if not skipping)
     thin_count_inds: 10000
+

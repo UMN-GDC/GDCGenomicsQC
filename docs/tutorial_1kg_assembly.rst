@@ -22,21 +22,133 @@ classification and genetic quality control pipelines.
 Prerequisites
 -------------
 
-- Access to an HPC cluster with SLURM scheduler
-- GDCGenomicsQC pipeline installed
-- Working Snakemake profile (e.g., ``profiles/hpc``)
+**Setup:**
+
+Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
+For detailed installation instructions, see:
+
+- :doc:`installation` - Software setup (module, conda, or other methods)
+- :doc:`usage` - Running the pipeline
+
+.. tabs::
+
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      If your HPC has the GDC module pre-configured:
+
+      .. code-block:: bash
+
+          module use /path/to/GDCGenomicsQC/envs
+          module load gdcgenomicsqc
+          conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Local Snakemake
+
+      If you're using your own Snakemake installation:
+
+      .. code-block:: bash
+
+          conda activate snakemake
+          cd GDCGenomicsQC
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          snakemake --version
+
+**Data Requirements:**
+
 - Sufficient storage (approximately 100GB for reference data)
-
-For installation instructions, see :doc:`installation`.
-
-Verify your installation:
-
-.. code-block:: bash
-
-    cd GDCGenomicsQC
-    snakemake --version
+- Network access to 1000 Genomes FTP server
 
 ----
+
+Required Input Files
+~~~~~~~~~~~~~~~~~~~~
+
+This step downloads data from external sources:
+
+.. list-table:: 1kG Assembly Input Files
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Input Source
+     - Description
+   * - ``https://ftp.1000genomes.ebi.ac.uk/``
+     - 1000 Genomes FTP server (downloaded by pipeline)
+   * - ``https://ftp.ncbi.nlm.nih.gov/genomes/all/``
+     - NCBI reference genome repository
+   * - ``REF/`` (output directory)
+     - Local storage for downloaded reference data
+
+**Downloaded Files:**
+
+The ``kgMeta`` checkpoint downloads:
+
+.. list-table:: Metadata Files (kgMeta)
+   :widths: 40 60
+   :header-rows: 1
+
+   * - File
+     - Description
+   * - ``population.txt``
+     - Sample population assignments (2504 samples)
+   * - ``pedigree.txt``
+     - Family relationships and phasing information
+   * - ``hg38map.txt``
+     - Genetic map for Eagle phasing
+   * - ``hg19ToHg38.over.chain.gz``
+     - Chain file for coordinate liftover
+   * - ``Homo_sapiens.GRCh38.dna.primary_assembly.fa``
+     - Reference genome FASTA
+
+The ``kgData`` rule downloads:
+
+.. list-table:: VCF Files (kgData)
+   :widths: 40 60
+   :header-rows: 1
+
+   * - File Pattern
+     - Description
+   * - ``1kGP_high_coverage_Illumina.chr{1-22}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz``
+     - High-coverage phased VCF per chromosome
+   * - ``.vcf.gz.tbi``
+     - Tabix index files
+
+**Config Parameters:**
+
+.. code-block:: yaml
+
+    REF: "/path/to/reference/storage"  # Output directory for reference data
+    OUT_DIR: "/path/to/output"
+    CHROMOSOMES: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+**Output Files:**
+
+After assembly, these files are used by other tutorials:
+
+.. list-table:: Assembly Output Files
+   :widths: 40 60
+   :header-rows: 1
+
+   * - File
+     - Used By
+   * - ``1000G_highCoveragephased.pgen``
+     - Ancestry classification, all tutorials
+   * - ``1000G_highCoveragephased.pruned.pgen``
+     - PCA projection, ancestry classification
+   * - ``population.txt``
+     - All ancestry analysis steps
+
+**See also:** :doc:`tutorial_ancestry_classification` for using reference data.
 
 Lab Exercise: Assembling 1kG Reference Panel
 ---------------------------------------------
@@ -76,13 +188,24 @@ The ``kgMeta`` checkpoint downloads essential reference files:
 - ``hg19ToHg38.over.chain.gz``: Chain file for coordinate liftover
 - ``Homo_sapiens.GRCh38.dna.primary_assembly.fa``: Reference genome FASTA
 
-.. code-block:: bash
+.. tabs::
 
-    cd GDCGenomicsQC/workflow
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_reference.yaml \
-        kgMeta \
-        -j 4
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_reference.yaml kgMeta -j 4
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_reference.yaml \
+              kgMeta \
+              -j 4
 
 This checkpoint only needs to run once. The output files are cached for
 subsequent runs.
@@ -97,12 +220,22 @@ the 1000 Genomes FTP server:
 - Files: ``1kGP_high_coverage_Illumina.chr{1-22}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz``
 - Index: ``.vcf.gz.tbi`` files
 
-.. code-block:: bash
+.. tabs::
 
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_reference.yaml \
-        kgData \
-        -j 22
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_reference.yaml kgData -j 22
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_reference.yaml \
+              kgData \
+              -j 22
 
 This rule is parallelized by chromosome. Using ``-j 22`` allows downloading
 all chromosomes concurrently.
@@ -123,12 +256,22 @@ The ``kgAssemble`` rule performs the core processing:
 5. **LD pruning**: Removes linked variants (window: 1000kb, step: 1, r²: 0.1)
 6. **Relatedness filtering**: Removes related samples (KING cutoff: 0.0884)
 
-.. code-block:: bash
+.. tabs::
 
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_reference.yaml \
-        kgAssemble \
-        -j 8
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_reference.yaml kgAssemble -j 8
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_reference.yaml \
+              kgAssemble \
+              -j 8
 
 Output files:
 
@@ -242,3 +385,25 @@ Discussion Points
 
 For more information on using this reference data for ancestry classification,
 see :doc:`tutorial_ancestry_classification`.
+
+----
+
+Next Steps
+---------
+
+After completing this tutorial, proceed to:
+
+- :doc:`tutorial_qc_pipeline` - Run QC on your samples (uses REF for ancestry QC)
+- :doc:`tutorial_ancestry_classification` - Classify ancestry using the reference panel
+
+**The reference panel enables:**
+
+- PCA projection of study samples onto reference space
+- Random Forest ancestry classification
+- Ancestry-specific QC filtering
+
+**See also:**
+
+- :doc:`installation` - Software setup (if not already done)
+- :doc:`usage` - Running the full pipeline
+- :doc:`genomics` - Technical details on reference-based methods

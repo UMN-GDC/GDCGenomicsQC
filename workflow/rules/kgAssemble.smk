@@ -1,4 +1,4 @@
-rule kgAssemble:
+rule assemble1000GenomesReference:
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
     threads: 8
@@ -8,15 +8,15 @@ rule kgAssemble:
         runtime = 180,
     output:
         tempDir = temp(directory(REF / "intermediates")),
-        highcovPgen = REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
-        highcovPvar = REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar",
-        highcovPsam = REF / "1000G_highcoverage" / "1000G_highCoveragephased.psam",
-        ldPgen = REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen",
-        ldPvar = REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar",
-        ldPsam = REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam",
-        fastafai = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa.fai",
+        highcovPgen = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen"),
+        highcovPvar = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar"),
+        highcovPsam = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.psam"),
+        ldPgen = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
+        ldPvar = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
+        ldPsam = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
+        fastafai = protected(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa.fai"),
     input:
-        vcf = expand(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz", CHR = CHROMOSOMES),
+        vcf = expand(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz", CHR = range(1, 23)),
         fasta = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
     params:
         highcovPgen = REF / "1000G_highcoverage" / "1000G_highCoveragephased",

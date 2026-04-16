@@ -6,5 +6,5 @@
 
 source /home/ood-coffm049/miniconda3/etc/profile.d/conda.sh
 conda activate snakemake
-snakemake --profile=../profiles/hpc --configfile=../config/r25abcd.yaml --rerun-incomplete run_pca
+snakemake --profile=../profiles/sandbox --configfile=../config/r25abcd.yaml --rerun-incomplete run_pca
 

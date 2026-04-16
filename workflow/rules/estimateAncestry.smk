@@ -1,4 +1,4 @@
-checkpoint estimateAncestry:
+checkpoint estimateGlobalAncestry:
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -8,7 +8,7 @@ checkpoint estimateAncestry:
         mem_mb=64000,
         runtime=2880,
     input:
-        labels=REF / "1000G_highcoverage" / "population.txt",
+        labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
         eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
@@ -27,11 +27,12 @@ checkpoint estimateAncestry:
         ancestry=OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
     params:
         dir=OUT_DIR / "01-globalAncestry",
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
     echo "Running ancestry estimation:"
 
-    Rscript scripts/classification.R  \
+    Rscript {params.scripts_dir}/classification.R  \
       --eigen_ref {input.eigen_ref} \
       --eigen_sample {input.eigen_sample} \
       --umap_ref {input.umap_ref} \

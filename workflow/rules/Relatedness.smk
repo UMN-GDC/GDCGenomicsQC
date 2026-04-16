@@ -1,6 +1,6 @@
-rule checkRelatedness:
+rule checkRelatednessExtractUnrelated:
     log:
-        OUT_DIR / "logs" / "checkRelatedness_{subset}.log",
+        OUT_DIR / "logs" / "checkRelatednessExtractUnrelated_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -23,6 +23,7 @@ rule checkRelatedness:
     params:
         king_cutoff=config.get("relatedness", {}).get("king_cutoff", 0.0884),
         method=config.get("relatedness", {}).get("method", "king"),
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
     
@@ -41,7 +42,7 @@ rule checkRelatedness:
         mv {output.bed[:-4]}.grm.N.bin {output.grmN}
     elif [[ "{params.method}" == "primus" || "{params.method}" == "2" ]]; then
         echo "PRIMUS ESTIMATION"
-        bash scripts/run_primus.sh {input.bed[:-4]} {output.bed[:-4]}
+        bash {params.scripts_dir}/run_primus.sh {input.bed[:-4]} {output.bed[:-4]}
         plink2 --bfile {output.bed[:-4]} --make-grm-bin --out {output.bed[:-4]}
         mv {output.bed[:-4]}.grm.bin {output.grm}
         mv {output.bed[:-4]}.grm.id {output.grmid}

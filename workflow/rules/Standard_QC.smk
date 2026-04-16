@@ -1,15 +1,13 @@
-rule Standard_QC:
+rule applyStandardQualityControl:
     log:
-        OUT_DIR / "logs" / "Standard_QC_{subset}.log",
+        OUT_DIR / "logs" / "applyStandardQualityControl_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
     threads: 8
     resources:
-        # nodes=1 is usually the default, but can be specified if needed
         nodes=1,
-        # mem=32GB translated to MB
         mem_mb=32000,
         runtime=60,
     input:
@@ -35,6 +33,7 @@ rule Standard_QC:
         sex_check=config.get("SEX_CHECK", False),
         input_prefix=lambda wildcards, input: input.LDpgen[:-5],
         relatedness=config.get("relatedness", {}).get("method", "king"),
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
         echo "Standard QC: Variants and samples filtering"
@@ -52,5 +51,5 @@ rule Standard_QC:
           mv {input.LDpvar} {output.tempDir}/pastSex.pvar
           mv {input.LDpsam} {output.tempDir}/pastSex.psam
         fi
-        bash scripts/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
+        bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
         """

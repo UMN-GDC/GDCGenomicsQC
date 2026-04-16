@@ -7,11 +7,31 @@ from snakemake.utils import validate
 
 report: "../report/stylesheet.css"
 
-
 # Paths in include and configfile are relative to the Snakefile
 # paths inside the rules are relative to where you run the command.
 
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
+
+def input_is_per_chromosome():
+    return "{CHR}" in config.get("INPUT", "")
+
+OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
+REF = Path(config.get("REF", "/path/to/ref"))
+STORAGE_PREFIX = Path(os.path.abspath(config.get("local-storage-prefix", "/tmp")))
+ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
+
+SCRIPTS_DIR = Path(workflow.basedir) / "scripts"
+
+ruleorder: convertPgenToVcf > compressAndIndexVcf
+
+checkpoint detectInputPattern:
+    output:
+        touch(OUT_DIR / ".input_pattern_detected")
+    run:
+        if input_is_per_chromosome():
+            print(f"Input is per-chromosome: {config.get('INPUT', '')}")
+        else:
+            print(f"Input is single file: {config.get('INPUT', '')}")
 
 
 # workflow.report_metadata.category_descriptions= {
@@ -21,10 +41,6 @@ CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 #         "Ancestry Specific QC": "../report/ancestrySpecificqc_intro.rst",
 #     }
 
-OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
-REF = Path(config.get("REF", "/path/to/ref"))
-STORAGE_PREFIX = Path(os.path.abspath(config.get("local-storage-prefix", "/tmp")))
-ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
 
 include: "rules/common.smk"
@@ -32,7 +48,8 @@ include: "rules/kgMeta.smk"
 include: "rules/kgAssemble.smk"
 include: "rules/kgData.smk"
 include: "rules/plotMissingness.smk"
-include: "rules/convertNfilt.smk"
+include: "rules/convertPlink.smk"
+include: "rules/Initial_QC.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
@@ -47,24 +64,41 @@ include: "rules/snpHerit.smk"
 include: "rules/snpHeritSim.smk"
 
 
+rule all:
+    input:
+        OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+        OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+        OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
+        OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+        OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
+        lambda wildcards: (
+            expand(OUT_DIR / "{ANC}" / "initialFilter_{CHR}.pgen", ANC=get_ancestries(wildcards), CHR=CHROMOSOMES)
+            if "{CHR}" in config.get("INPUT", "")
+            else expand(OUT_DIR / "{ANC}" / "initialFilter.pgen", ANC=get_ancestries(wildcards))
+        ),
+        OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES),
+
+
+ruleorder: convertPlinkPerChromosome > mergeChromosomesAndFilter > convertPlinkSingleFile
+ruleorder: convertPgenToVcf > compressAndIndexVcf
+
 # include: "rules/trainGnomix.smk"
 
 
 ##### GOOD UP TO HERE
-
-
-checkpoint assembleRef:
+rule assembleRef:
     input:
-        REF / "1000G_highcoverage" / "population.txt",
-        REF / "1000G_highcoverage" / "pedigree.txt",
-        expand(
+        ancient(REF / "1000G_highcoverage" / "population.txt"),
+        ancient(REF / "1000G_highcoverage" / "pedigree.txt"),
+        ancient(expand(
             REF
             / "1000G_highcoverage"
             / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
-            CHR=CHROMOSOMES,
-        ),
-        REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen",
-        expand(REF / "1000G_highcoverage" / "hg38map.chr{CHR}.txt.gz", CHR=CHROMOSOMES),
+            CHR=range(1, 23),
+        )),
+        ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen"),
+        ancient(expand(REF / "gmaps" / "hg38map.chr{CHR}.txt", CHR=range(1, 23))),
 
 
 rule run_initialQC:
@@ -74,9 +108,12 @@ rule run_initialQC:
         mem_mb=4000,
         runtime=60,
     input:
-        expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES),
+        lambda wildcards: (
+            expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES)
+            if "{CHR}" in config.get("INPUT", "")
+            else [OUT_DIR / "full" / "initialFilter.pgen"]
+        ),
         OUT_DIR / "full" / "standardFilter.pgen",
-        OUT_DIR / "full" / "initialFilter.pgen",
         OUT_DIR / "full" / "figures" / "smiss.svg",
         OUT_DIR / "full" / "figures" / "vmiss.svg",
 
@@ -88,7 +125,7 @@ rule run_pca:
         mem_mb=4000,
         runtime=420,  # 1 week
     input:
-        labels=REF / "1000G_highcoverage" / "population.txt",
+        labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
         eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
 
@@ -100,7 +137,7 @@ rule run_estimateAdmixing:
         mem_mb=4000,
         runtime=420,  # 1 week
     input:
-        labels=REF / "1000G_highcoverage" / "population.txt",
+        labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
         eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
@@ -165,8 +202,8 @@ rule run_rfmix:
         mem_mb=4000,
         runtime=420,  # 1 week
     input:
-        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=CHROMOSOMES),
-        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES),
+        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=LOCAL_ANCESTRY_CHROMOSOMES),
+        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES),
 
 
 rule run_simulatePhenotype:
@@ -210,5 +247,5 @@ rule run_train_gnomix:
     input:
         expand(
             f"{config.get('OUT_DIR', '/path/to/out')}/03-localAncestry/chr{{CHR}}_ancestry_gnomix",
-            CHR=CHROMOSOMES,
+            CHR=LOCAL_ANCESTRY_CHROMOSOMES,
         ),

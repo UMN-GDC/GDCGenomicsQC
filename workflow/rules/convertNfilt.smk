@@ -1,6 +1,6 @@
-rule convertNfilt:
+rule convertVcfToPlinkPerChromosome:
     log:
-        OUT_DIR / "logs" / "convertNfilt_{subset}_{CHR}.log",
+        OUT_DIR / "logs" / "convertVcfToPlinkPerChromosome_{subset}_{CHR}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -28,7 +28,6 @@ rule convertNfilt:
         gr38fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
     params:
         thin=config.get("thin", False),
-        # Parameters for plink2 filtering
         min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
         max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
         qual_min=config.get("convertNfilt", {}).get("qual_min"),

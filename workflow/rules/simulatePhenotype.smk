@@ -10,9 +10,9 @@ ANC2 = sim_ancestries[1]
 SIM_OUT_DIR = OUT_DIR / "simulations" / f"{ANC1}_{ANC2}"
 
 
-rule simulatePhenotype:
+rule simulateBivariatePhenotypes:
     log:
-        OUT_DIR / "logs" / "simulatePhenotype.log",
+        OUT_DIR / "logs" / "simulateBivariatePhenotypes.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
     conda:
