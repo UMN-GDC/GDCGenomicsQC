@@ -93,7 +93,7 @@ software dependencies defined in rule-level ``conda:`` directives. This means:
       .. code-block:: bash
 
           # Load the module
-          module use /path/to/GDCGenomicsQC/envs
+          module use /projects/standard/gdc/public/envs/GDCGenomicsQC/envs
           module load gdcgenomicsqc
 
           # Verify environment is set up
@@ -129,14 +129,23 @@ software dependencies defined in rule-level ``conda:`` directives. This means:
              # Activate when starting a session
              conda activate snakemake
 
-      .. dropdown:: Method 2: Existing MSI Snakemake Environment
+       .. dropdown:: Method 2: Existing MSI Snakemake Environment
 
-         If your HPC already has a snakemake environment:
+          If your HPC already has a snakemake environment:
 
-         .. code-block:: bash
+          .. code-block:: bash
 
-             conda config --add envs_dirs /projects/standard/gdc/public/envs
-             conda activate snakemake
+              conda config --add envs_dirs /projects/standard/gdc/public/envs
+              conda activate snakemake
+
+       .. dropdown:: Method 2b: Sandbox Snakemake Environment
+
+          For sandbox/testing environments:
+
+          .. code-block:: bash
+
+              conda config --add envs_dirs /scratch.global/coffm049/GDC/envs
+              conda activate snakemake
 
       .. dropdown:: Method 3: MSI Conda Modules
 
@@ -456,3 +465,23 @@ Troubleshooting
 - Configure cachedir: ``export SINGULARITY_CACHEDIR=/path/to/large/disk``
 
 For additional help, see the :doc:`usage` guide or open an issue on GitHub.
+
+.. important::
+
+   **Every time you start a new session**, you must rerun the environment setup steps:
+
+   - Load the GDC module (if using module system)
+   - Activate the snakemake conda environment
+
+   Example for a new session:
+
+   .. code-block:: bash
+
+       # For MSI HPC
+       module use /path/to/GDCGenomicsQC/envs
+       module load gdcgenomicsqc
+       conda activate snakemake
+
+       # For Sandbox
+       conda config --add envs_dirs /scratch.global/coffm049/GDC/envs
+       conda activate snakemake
