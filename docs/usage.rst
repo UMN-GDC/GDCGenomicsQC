@@ -17,64 +17,105 @@ Choose the method that matches your HPC setup:
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
 
-      If your HPC has the GDC module pre-configured:
+       If your HPC has the GDC module pre-configured:
 
-      **Step 1: Add module path and load the GDC module**
+       **Step 1: Add module path and load the GDC module**
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-          # Add the GDC module path (choose the path for your HPC)
-          # For MSI HPC:
-          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-          # For Sandbox:
-          module use /scratch.global/GDC/GDCGenomicsQC/envs
-          # For other HPCs, use your module path:
-          # module use /path/to/GDCGenomicsQC/envs
+           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+           module load gdcgenomicsqc
 
-          # Load the GDC Genomics QC module
-          module load gdcgenomicsqc
+       **Step 2: Activate snakemake environment**
 
-      **Step 2: Activate snakemake environment**
+       .. code-block:: bash
 
-      .. code-block:: bash
+           conda activate snakemake
 
-          # Activate the snakemake conda environment
-          conda activate snakemake
+       **Step 3: Verify installation**
 
-      **Step 3: Verify installation**
+       .. code-block:: bash
 
-      .. code-block:: bash
+           cd GDCGenomicsQC
+           snakemake --version
 
-          cd GDCGenomicsQC
-          snakemake --version
+       **What the module provides:**
 
-      **What the module provides:**
+       +--------------------------------+------------------------------------------------+
+       | Setting                        | Value                                           |
+       +================================+================================================+
+       | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+       +--------------------------------+------------------------------------------------+
+       | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+       +--------------------------------+------------------------------------------------+
+       | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+       +--------------------------------+------------------------------------------------+
 
-      +--------------------------------+------------------------------------------------+
-      | Setting                        | Value                                           |
-      +================================+================================================+
-      | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
-      +--------------------------------+------------------------------------------------+
-      | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
-      +--------------------------------+------------------------------------------------+
-      | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
-      +--------------------------------+------------------------------------------------+
+       **Running the pipeline:**
 
-      **Running the pipeline:**
+       .. code-block:: bash
 
-      .. code-block:: bash
+           cd GDCGenomicsQC/workflow
+           gdcgenomicsqc --configfile ../config/config.yaml
 
-          cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config/config.yaml
+       Or with snakemake directly:
 
-      Or with snakemake directly:
+       .. code-block:: bash
 
-      .. code-block:: bash
+           cd GDCGenomicsQC/workflow
+           snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
 
-          cd GDCGenomicsQC/workflow
-          snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
+   .. tab:: Sandbox
+
+       If your sandbox environment has the GDC module pre-configured:
+
+       **Step 1: Add module path and load the GDC module**
+
+       .. code-block:: bash
+
+           module use /scratch.global/GDC/GDCGenomicsQC/envs
+           module load gdcgenomicsqc
+
+       **Step 2: Activate snakemake environment**
+
+       .. code-block:: bash
+
+           conda activate snakemake
+
+       **Step 3: Verify installation**
+
+       .. code-block:: bash
+
+           cd GDCGenomicsQC
+           snakemake --version
+
+       **What the module provides:**
+
+       +--------------------------------+------------------------------------------------+
+       | Setting                        | Value                                           |
+       +================================+================================================+
+       | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+       +--------------------------------+------------------------------------------------+
+       | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+       +--------------------------------+------------------------------------------------+
+       | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+       +--------------------------------+------------------------------------------------+
+
+       **Running the pipeline:**
+
+       .. code-block:: bash
+
+           cd GDCGenomicsQC/workflow
+           gdcgenomicsqc --configfile ../config/config.yaml
+
+       Or with snakemake directly:
+
+       .. code-block:: bash
+
+           cd GDCGenomicsQC/workflow
+           snakemake --profile ../profiles/sandbox --configfile ../config/config.yaml
 
    .. tab:: Local Snakemake (Conda)
 
@@ -201,7 +242,23 @@ Choose your execution method based on your setup:
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
+
+      Use the ``gdcgenomicsqc`` wrapper script:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config/config.yaml
+
+      Or use snakemake directly with the HPC profile:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
+
+   .. tab:: Sandbox
 
       Use the ``gdcgenomicsqc`` wrapper script:
 
@@ -383,7 +440,8 @@ Submit with:
        conda activate snakemake
 
        # For Sandbox:
-       conda config --add envs_dirs /scratch.global/GDC/GDCGenomicsQC/envs
+       module use /scratch.global/GDC/GDCGenomicsQC/envs
+       module load gdcgenomicsqc
        conda activate snakemake
 
        # For other HPCs:
