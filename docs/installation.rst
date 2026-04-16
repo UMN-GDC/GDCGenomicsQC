@@ -10,64 +10,8 @@ This guide covers installing and configuring the GDCGenomicsQC pipeline.
    :depth: 2
    :local:
 
-Software Loading Methods
------------------------
-
-The pipeline supports multiple ways to access its dependencies. Choose the method that matches your HPC environment:
-
-.. list-table:: Software Loading Methods
-   :widths: 25 25 50
-   :header-rows: 1
-
-   * - Method
-     - Best For
-     - Setup Required
-   * - **Module System**
-     - HPC clusters (MSI/UMN)
-     - ``module load gdcgenomicsqc``
-   * - **Conda Environment**
-     - Custom HPC or local
-     - ``conda env create``
-   * - **Singularity/Apptainer**
-     - Container-based HPC
-     - Pull images manually
-   * - **System-wide Install**
-     - Local development
-     - ``pip install`` / ``conda install``
-
-Prerequisite Software
----------------------
-
-Regardless of loading method, the following software is required:
-
-.. list-table:: Prerequisite Software
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Software
-     - Required By
-     - Notes
-   * - **Snakemake** (8+)
-     - Pipeline execution
-     - Conda recipe provided in ``envs/snakemake.yml``
-   * - **snakemake-executor-plugin-slurm**
-     - HPC job submission
-     - Required for SLURM profiles
-   * - **Singularity/Apptainer**
-     - Containerized tools
-     - MSI module: ``module load apptainer``
-   * - **SLURM scheduler**
-     - HPC job scheduling
-     - For profiles/hpc and profiles/sandbox
-   * - **Conda or Mamba**
-     - Environment management
-     - Mamba recommended for faster solving
-   * - **Git**
-     - Repository access
-     - For cloning the repository
-
 Automatic Software Installation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------
 
 The pipeline uses Snakemake's built-in conda support to automatically install
 software dependencies defined in rule-level ``conda:`` directives. This means:
@@ -75,6 +19,8 @@ software dependencies defined in rule-level ``conda:`` directives. This means:
 - No manual installation of PLINK, bcftools, GATK, shapeit4, rfmix, etc.
 - Each rule can specify its own conda environment
 - Singularity containers are pulled automatically when using ``--use-singularity``
+
+Choose the installation method that matches your environment:
 
 .. tabs::
 
@@ -357,9 +303,65 @@ software dependencies defined in rule-level ``conda:`` directives. This means:
 
       .. code-block:: bash
 
-          cd GDCGenomicsQC/workflow
-          snakemake --use-singularity --profile ../profiles/hpc \
-              --configfile /path/to/your/config.yaml
+           cd GDCGenomicsQC/workflow
+           snakemake --use-singularity --profile ../profiles/hpc \
+               --configfile /path/to/your/config.yaml
+
+Prerequisite Software
+---------------------
+
+Regardless of loading method, the following software is required:
+
+.. list-table:: Prerequisite Software
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Software
+     - Required By
+     - Notes
+   * - **Snakemake** (8+)
+     - Pipeline execution
+     - Conda recipe provided in ``envs/snakemake.yml``
+   * - **snakemake-executor-plugin-slurm**
+     - HPC job submission
+     - Required for SLURM profiles
+   * - **Singularity/Apptainer**
+     - Containerized tools
+     - MSI module: ``module load apptainer``
+   * - **SLURM scheduler**
+     - HPC job scheduling
+     - For profiles/hpc and profiles/sandbox
+   * - **Conda or Mamba**
+     - Environment management
+     - Mamba recommended for faster solving
+   * - **Git**
+     - Repository access
+     - For cloning the repository
+
+Software Loading Methods
+------------------------
+
+The pipeline supports multiple ways to access its dependencies. Choose the method that matches your HPC environment:
+
+.. list-table:: Software Loading Methods
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Method
+     - Best For
+     - Setup Required
+   * - **Module System**
+     - HPC clusters (MSI/UMN)
+     - ``module load gdcgenomicsqc``
+   * - **Conda Environment**
+     - Custom HPC or local
+     - ``conda env create``
+   * - **Singularity/Apptainer**
+     - Container-based HPC
+     - Pull images manually
+   * - **System-wide Install**
+     - Local development
+     - ``pip install`` / ``conda install``
 
 Software Environment Summary
 ---------------------------
