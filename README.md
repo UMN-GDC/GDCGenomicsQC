@@ -9,7 +9,83 @@
 
 A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing [Plink](https://www.cog-genomics.org/plink/), [Liftover](https://genome.ucsc.edu/cgi-bin/hgLiftOver), [R-language](https://www.r-project.org/), [Python](https://www.python.org/), and [bash](https://www.gnu.org/software/bash/), and  housed in a [Docker image](https://hub.docker.com/_/docker). The steps in the pipeline are detailed [here](https://gdcgenomicsqc.readthedocs.io/en/latest/)
 
+## Quick Start
 
+Choose the installation method that matches your environment:
+
+<details>
+<summary><b>HPC with Module (MSI/UMN) - Recommended</b></summary>
+
+```bash
+# Load the module
+module use /projects/standard/gdc/public/envs/GDCGenomicsQC/envs
+module load gdcgenomicsqc
+
+# Set up Snakemake (if not already available)
+conda config --add envs_dirs /projects/standard/gdc/public/envs
+conda activate snakemake
+
+# Clone and run
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC/workflow
+snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
+```
+</details>
+
+<details>
+<summary><b>HPC without Module</b></summary>
+
+```bash
+# Clone the repository
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC
+
+# Set up Snakemake environment
+conda env create -n snakemake -f envs/snakemake.yml
+conda activate snakemake
+
+# Run with HPC profile
+cd workflow
+snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+```
+</details>
+
+<details>
+<summary><b>Interactive/Local</b></summary>
+
+```bash
+# Clone the repository
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC
+
+# Set up Snakemake environment
+conda env create -n snakemake -f envs/snakemake.yml
+conda activate snakemake
+
+# Run interactively
+cd workflow
+snakemake --cores=4 --use-conda --configfile /path/to/your/config.yaml
+```
+</details>
+
+<details>
+<summary><b>Singularity/Apptainer Only</b></summary>
+
+```bash
+# Install Snakemake via pip
+pip install snakemake snakemake-executor-plugin-slurm
+
+# Clone the repository
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC
+
+# Run with Singularity
+cd workflow
+snakemake --use-singularity --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+```
+</details>
+
+---
 
 ## Features
 - State-of-the-art genomics quality control pipeline

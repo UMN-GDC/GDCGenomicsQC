@@ -64,7 +64,6 @@ ancestry:
     threshold: 0.8
     model: "pca"
 
-conda-frontend: mamba
 phenotypeSimulation:
     # Ancestries to simulate for
     ancestries: ["AFR", "EUR"]

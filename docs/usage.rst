@@ -355,3 +355,23 @@ Submit with:
 .. code-block:: bash
 
     sbatch run_pipeline.sh
+
+.. important::
+
+   **Every time you start a new session**, you must rerun the environment setup steps:
+
+   - Load the GDC module (if using module system)
+   - Activate the snakemake conda environment
+
+   Example for a new session:
+
+   .. code-block:: bash
+
+       # For MSI HPC
+       module use /path/to/GDCGenomicsQC/envs
+       module load gdcgenomicsqc
+       conda activate snakemake
+
+       # For Sandbox
+       conda config --add envs_dirs /scratch.global/coffm049/GDC/envs
+       conda activate snakemake

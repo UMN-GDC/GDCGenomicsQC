@@ -218,8 +218,3 @@ convertNfilt:
       type: float
       nullable: true
       default: null
-
-conda-frontend:
-  type: str
-  default: "mamba"
-  enum: ["conda", "mamba"]
