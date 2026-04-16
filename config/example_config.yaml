@@ -181,6 +181,3 @@ convertNfilt:
 # =============================================================================
 # Use thin subset for testing (reduces runtime)
 thin: false
-
-# Conda environment solver
-conda-frontend: mamba
