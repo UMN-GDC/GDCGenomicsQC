@@ -16,7 +16,7 @@ rule assemble1000GenomesReference:
         ldPsam = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
         fastafai = protected(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa.fai"),
     input:
-        vcf = expand(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz", CHR = CHROMOSOMES),
+        vcf = expand(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz", CHR = range(1, 23)),
         fasta = REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
     params:
         highcovPgen = REF / "1000G_highcoverage" / "1000G_highCoveragephased",
