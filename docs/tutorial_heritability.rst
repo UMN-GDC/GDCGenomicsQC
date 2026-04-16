@@ -20,18 +20,124 @@ estimating SNP heritability using the GDCGenomicsQC pipeline.
 Prerequisites
 -------------
 
+**Setup:**
+
+Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
+For detailed installation instructions, see:
+
+- :doc:`installation` - Software setup (module, conda, or other methods)
+- :doc:`usage` - Running the pipeline
+
+.. tabs::
+
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      If your HPC has the GDC module pre-configured:
+
+      .. code-block:: bash
+
+          module use /path/to/GDCGenomicsQC/envs
+          module load gdcgenomicsqc
+          conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Local Snakemake
+
+      If you're using your own Snakemake installation:
+
+      .. code-block:: bash
+
+          conda activate snakemake
+          cd GDCGenomicsQC
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          snakemake --version
+
+**Data Requirements:**
+
 - Completed :doc:`tutorial_1kg_assembly` (reference data assembled)
 - Completed :doc:`tutorial_ancestry_classification` (samples classified)
-- Access to an HPC cluster with sufficient memory (32GB+)
-- Working Snakemake profile (e.g., ``profiles/hpc``)
-
-Verify your reference data:
-
-.. code-block:: bash
-
-    ls {REF}/1000G_highcoverage/*.pgen
+- Access to an HPC cluster with sufficient memory (32GB+ recommended)
 
 ----
+
+Required Input Files
+~~~~~~~~~~~~~~~~~~~~
+
+This step requires the following input files:
+
+.. list-table:: Heritability Estimation Input Files
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Input File
+     - Description
+   * - ``REF/1000G_highcoverage/1000G_highCoveragephased.pruned.pgen``
+     - Reference panel genotypes (from :doc:`tutorial_1kg_assembly`)
+   * - ``REF/1000G_highcoverage/population.txt``
+     - Reference population labels
+   * - ``OUT_DIR/{ANC}/initialFilter.pgen``
+     - Sample genotypes per ancestry (from :doc:`tutorial_qc_pipeline`)
+   * - ``phenotype.tsv`` (user-provided)
+     - Phenotype values (format: IID, pheno1, pheno2...)
+   * - ``covariates.tsv`` (user-provided, optional)
+     - Covariates (format: IID, cov1, cov2...)
+
+**Input from Previous Tutorials:**
+
+1. **tutorial_1kg_assembly**: Provides reference panel genotypes
+2. **tutorial_qc_pipeline**: Provides QC-filtered sample genotypes
+3. **tutorial_ancestry_classification**: Provides ancestry labels for samples
+
+**Simulation Input Parameters:**
+
+.. code-block:: yaml
+
+    phenotypeSimulation:
+        ancestries: ["AFR", "EUR"]  # Two ancestry groups to simulate
+        n_sims: 10                  # Number of phenotype simulations
+        heritability: 0.4           # SNP heritability (h²)
+        rho: 0.8                    # Cross-ancestry genetic correlation
+        maf: 0.05                   # Minor allele frequency threshold
+        seed: 42                    # Random seed for reproducibility
+        skip_thinning: true         # Skip SNP thinning
+        thin_count_snps: 1000000    # SNPs to thin to
+        thin_count_inds: 10000      # Individuals to thin to
+
+**Heritability Estimation Config:**
+
+.. code-block:: yaml
+
+    snpHerit:
+        pheno: "/path/to/phenotype.tsv"  # Phenotype file (IID, pheno)
+        covar: "/path/to/covariates.tsv" # Optional covariates
+        method: "REML"                    # REML or MOM
+        npc: 10                           # Number of PCs to include
+        out: "heritability_estimates.txt" # Output file
+
+**Output Files:**
+
+.. list-table:: Heritability Output Files
+   :widths: 40 60
+   :header-rows: 1
+
+   * - File
+     - Description
+   * - ``03-snpHeritability/heritability_estimates.txt``
+     - Heritability estimates per ancestry
+   * - ``simulations/{ANC1}_{ANC2}/{anc}_simulation_pheno1.estimates``
+     - Simulation results per ancestry
+
+**See also:** :doc:`genomics` for heritability methodology, :doc:`tutorial_qc_pipeline` for QC pipeline.
 
 Lab Exercise: Multi-Ancestry Heritability Estimation
 ------------------------------------------------------
@@ -103,13 +209,24 @@ The simulation rule:
 3. Generates phenotypes with specified heritability
 4. Creates PLINK .bed/.bim/.fam files for each ancestry
 
-.. code-block:: bash
+.. tabs::
 
-    cd GDCGenomicsQC/workflow
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_heritability.yaml \
-        simulatePhenotype \
-        -j 4
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_heritability.yaml simulatePhenotype -j 4
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_heritability.yaml \
+              simulatePhenotype \
+              -j 4
 
 Output directory structure:
 
@@ -132,12 +249,22 @@ The ``snpHerit`` rule uses PC-relate to estimate SNP heritability:
 2. Estimate kinship matrix using PC-relate
 3. Fit mixed model using REML or method of moments
 
-.. code-block:: bash
+.. tabs::
 
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_heritability.yaml \
-        snpHerit \
-        -j 4
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_heritability.yaml snpHerit -j 4
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_heritability.yaml \
+              snpHerit \
+              -j 4
 
 Heritability Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -249,3 +376,27 @@ For the theoretical foundations of SNP heritability estimation—including
 PC-relate methodology, REML estimation, and genetic correlation—refer to
 the accompanying lecture materials. For using the reference panel, see
 :doc:`tutorial_1kg_assembly`.
+
+----
+
+Next Steps
+---------
+
+After completing this tutorial, you have explored:
+
+- Phenotype simulation with controlled heritability
+- SNP heritability estimation using PC-relate
+- Cross-ancestry genetic correlation
+
+**Further analyses to consider:**
+
+- GWAS on simulated phenotypes with known true effects
+- Compare heritability estimates across different ancestry groups
+- Test different REML/MOM methods and PC covariates
+
+**See also:**
+
+- :doc:`installation` - Software setup (if not already done)
+- :doc:`tutorial_qc_pipeline` - QC pipeline
+- :doc:`tutorial_ancestry_classification` - Ancestry classification
+- :doc:`genomics` - Technical details on heritability methods

@@ -1,6 +1,4 @@
 checkpoint kgMeta:
-    container:
-        "docker://biocontainers/biocontainers:v1.2.0_cv1"
     log:
         OUT_DIR / "logs" / "download1000GenomesMetadata.log",
     resources:

@@ -9,6 +9,99 @@ It integrates standard QC procedures with ancestry estimation and optional advan
    :depth: 2
    :local:
 
+Software Environment Setup
+-------------------------
+
+Before running the pipeline, you need to set up your software environment.
+Choose the method that matches your HPC setup:
+
+.. tabs::
+
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      If your HPC has the GDC module pre-configured:
+
+      **Step 1: Add module path and load the GDC module**
+
+      .. code-block:: bash
+
+          # Add the GDC module path (do this once per session or add to ~/.bashrc)
+          module use /path/to/GDCGenomicsQC/envs
+
+          # Load the GDC Genomics QC module
+          module load gdcgenomicsqc
+
+      **Step 2: Activate snakemake environment**
+
+      .. code-block:: bash
+
+          # Activate the snakemake conda environment
+          conda activate snakemake
+
+      **Step 3: Verify installation**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+      **What the module provides:**
+
+      +--------------------------------+------------------------------------------------+
+      | Setting                        | Value                                           |
+      +================================+================================================+
+      | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+      +--------------------------------+------------------------------------------------+
+      | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+      +--------------------------------+------------------------------------------------+
+      | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+      +--------------------------------+------------------------------------------------+
+
+      **Running the pipeline:**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config/config.yaml
+
+      Or with snakemake directly:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
+
+   .. tab:: Local Snakemake (Conda)
+
+      If you're using your own Snakemake installation:
+
+      **Step 1: Create the conda environment**
+
+      .. code-block:: bash
+
+          # Clone the repository
+          git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+          cd GDCGenomicsQC
+
+          # Create the snakemake environment
+          conda env create -f envs/snakemake.yml
+          conda activate snakemake
+
+      **Step 2: Verify installation**
+
+      .. code-block:: bash
+
+          snakemake --version
+
+      **Running the pipeline:**
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
+
+**See also:** :doc:`installation` for detailed setup options including Singularity-only environments.
+
 Workflow Overview
 -----------------
 
@@ -94,45 +187,41 @@ See :doc:`genomics` for detailed descriptions of all configuration options.
 Running the Pipeline
 -------------------
 
-Execute from the ``workflow`` directory:
-
-.. code-block:: bash
-
-    cd GDCGenomicsQC/workflow
+Choose your execution method based on your setup:
 
 .. tabs::
 
-    .. tab:: HPC with Module (MSI/UMN)
+   .. tab:: Module Load (MSI/UMN HPC)
 
-       .. code-block:: bash
+      Use the ``gdcgenomicsqc`` wrapper script:
 
-           snakemake --profile=../profiles/sandbox --configfile ../config/config.yaml
+      .. code-block:: bash
 
-       Or use the wrapper script (if module provides it):
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config/config.yaml
 
-       .. code-block:: bash
+      Or use snakemake directly with the sandbox profile:
 
-           gdcgenomicsqc --configfile ../config/config.yaml
+      .. code-block:: bash
 
-       .. note::
-           The module sets up the Apptainer image cache for offline use but does not provide Snakemake.
-           Users must ensure Snakemake is available in their environment (e.g., via ``conda activate snakemake``).
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/sandbox --configfile ../config/config.yaml
 
-    .. tab:: HPC without Module
+   .. tab:: Local Snakemake
 
-       .. code-block:: bash
+      **HPC execution:**
 
-           snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
+      .. code-block:: bash
 
-    .. tab:: Interactive (Local/Testing)
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/hpc --configfile ../config/config.yaml
 
-       .. code-block:: bash
+      **Interactive/Testing:**
 
-           snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
+      .. code-block:: bash
 
-.. code-block:: bash
-
-    snakemake --profile=../profiles/sandbox --configfile ../config/config.yaml
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/interactive --configfile ../config/config.yaml
 
 Running Specific Rules
 ~~~~~~~~~~~~~~~~~~~~

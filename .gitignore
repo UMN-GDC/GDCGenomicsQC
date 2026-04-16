@@ -18,6 +18,8 @@ AGENTS.md
 !docs/*.mmd
 !config/sandboxABCD.yaml
 !config/sandboxToy.yaml
+!config/msiABCD.yaml
+!config/msiToy.yaml
 !config/toy.yaml
 !config/config.schema.yaml
 !config/example_config.yaml

@@ -22,17 +22,52 @@ Initial QC (sample and variant missingness filtering) followed by Standard QC
 Prerequisites
 -------------
 
-- Access to an HPC cluster with SLURM scheduler
-- GDCGenomicsQC pipeline installed
-- Reference data configured
-- Working Snakemake profile (e.g., ``profiles/hpc``)
+**Setup:**
 
-Verify your installation:
+Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
+For detailed installation instructions, see:
 
-.. code-block:: bash
+- :doc:`installation` - Software setup (module, conda, or other methods)
+- :doc:`usage` - Running the pipeline
 
-    cd GDCGenomicsQC
-    snakemake --version
+.. tabs::
+
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      If your HPC has the GDC module pre-configured:
+
+      .. code-block:: bash
+
+          module use /path/to/GDCGenomicsQC/envs
+          module load gdcgenomicsqc
+          conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Local Snakemake
+
+      If you're using your own Snakemake installation:
+
+      .. code-block:: bash
+
+          conda activate snakemake
+          cd GDCGenomicsQC
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          snakemake --version
+
+**Data Requirements:**
+
+- Reference data configured (see :doc:`tutorial_1kg_assembly`)
+- Genotype data in VCF, BED, or PGEN format
 
 .. _dag-visualization:
 
@@ -46,6 +81,56 @@ The pipeline DAG up to the ``run_initialQC`` rule shows the Initial QC workflow:
 The rule graph provides a cleaner view of rule dependencies:
 
 .. mermaid:: rulegraph_initialQC.mmd
+
+----
+
+Required Input Files
+~~~~~~~~~~~~~~~~~~~~
+
+This step requires the following input files:
+
+.. list-table:: QC Pipeline Input Files
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Input File
+     - Description
+   * - ``INPUT: "chr{CHR}.vcf.gz"`` (or .bed/.pgen)
+     - Per-chromosome VCF, BED, or PGEN files with genotype data
+   * - ``REF/1000G_highcoverage/population.txt``
+     - Reference panel population labels (for ancestry QC subsets)
+   * - ``REF/Homo_sapiens.GRCh38.dna.primary_assembly.fa``
+     - Reference genome FASTA (if using reference allele correction)
+
+**Input Formats Supported:**
+
+The pipeline automatically detects format based on file extension:
+
++----------+------------------------------------------+
+| Format   | Example Path                             |
++==========+==========================================+
+| VCF      | ``/data/chr{CHR}.vcf.gz``                |
+| PLINK BED| ``/data/chr{CHR}.bed``                  |
+| PLINK PGEN| ``/data/chr{CHR}.pgen``                |
+| Single file| ``/data/merged.bed`` (no ``{CHR}``)   |
++----------+------------------------------------------+
+
+**Config Parameters for QC:**
+
+.. code-block:: yaml
+
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"  # Per-chromosome VCF
+    OUT_DIR: "/path/to/output"
+    REF: "/path/to/reference"
+
+    # QC thresholds
+    relatedness:
+        method: "king"  # "0" for none, "king" for removal
+
+    SEX_CHECK: true  # Enable/disable sex verification
+    GRM: true  # Compute genetic relationship matrix
+
+**See also:** :doc:`usage` for configuration options, :doc:`installation` for software setup.
 
 ----
 
@@ -81,13 +166,24 @@ Key parameters:
 Step 2: Run Initial QC
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: bash
+.. tabs::
 
-    cd GDCGenomicsQC/workflow
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_qc.yaml \
-        full/initialFilter.pgen \
-        -j 10
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_qc.yaml full/initialFilter.pgen -j 10
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_qc.yaml \
+              full/initialFilter.pgen \
+              -j 10
 
 The Initial QC stage performs:
 
@@ -99,12 +195,22 @@ The Initial QC stage performs:
 Step 3: Run Standard QC
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: bash
+.. tabs::
 
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_qc.yaml \
-        full/standardFilter.pgen \
-        -j 10
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_qc.yaml full/standardFilter.pgen -j 10
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_qc.yaml \
+              full/standardFilter.pgen \
+              -j 10
 
 The Standard QC stage applies additional filters:
 
@@ -118,12 +224,22 @@ Step 4: Run Ancestry-Specific QC
 
 After ancestry classification, run QC on specific ancestry groups:
 
-.. code-block:: bash
+.. tabs::
 
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_qc.yaml \
-        EUR/standardFilter.pgen \
-        -j 10
+   .. tab:: Module Load (MSI/UMN HPC)
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_qc.yaml EUR/standardFilter.pgen -j 10
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_qc.yaml \
+              EUR/standardFilter.pgen \
+              -j 10
 
 Available subsets are dynamically determined from classification results.
 
@@ -296,3 +412,19 @@ These questions explore QC considerations for diverse and admixed populations:
 For theoretical foundations—including population genetics principles, statistical
 tests for QC metrics, and best practices for diverse populations—refer to the
 accompanying lecture materials.
+
+----
+
+Next Steps
+---------
+
+After completing this tutorial, proceed to:
+
+- :doc:`tutorial_ancestry_classification` - Classify ancestry using the QC-filtered data
+- :doc:`tutorial_heritability` - Estimate heritability using QC-filtered genotypes
+
+**See also:**
+
+- :doc:`installation` - Software setup (if not already done)
+- :doc:`usage` - Running the full pipeline
+- :doc:`genomics` - Technical details on QC methods
