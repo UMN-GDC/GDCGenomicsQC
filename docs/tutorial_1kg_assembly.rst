@@ -38,7 +38,14 @@ For detailed installation instructions, see:
 
       .. code-block:: bash
 
-          module use /path/to/GDCGenomicsQC/envs
+          # Choose the module path for your HPC:
+          # For MSI HPC:
+          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+          # For Sandbox:
+          module use /scratch.global/GDC/GDCGenomicsQC/envs
+          # For other HPCs, use your module path:
+          # module use /path/to/GDCGenomicsQC/envs
+
           module load gdcgenomicsqc
           conda activate snakemake
 
@@ -129,7 +136,9 @@ The ``kgData`` rule downloads:
 
     REF: "/path/to/reference/storage"  # Output directory for reference data
     OUT_DIR: "/path/to/output"
-    CHROMOSOMES: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
 **Output Files:**
 
@@ -166,8 +175,9 @@ in your configuration file:
     cat > config_reference.yaml << 'EOF'
     REF: "/path/to/reference/storage"
     OUT_DIR: "/path/to/output/directory"
+    local-storage-prefix: "/path/to/.snakemake/storage"
 
-    CHROMOSOMES: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
     conda-frontend: mamba
     EOF

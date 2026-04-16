@@ -38,7 +38,14 @@ For detailed installation instructions, see:
 
       .. code-block:: bash
 
-          module use /path/to/GDCGenomicsQC/envs
+          # Choose the module path for your HPC:
+          # For MSI HPC:
+          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+          # For Sandbox:
+          module use /scratch.global/GDC/GDCGenomicsQC/envs
+          # For other HPCs, use your module path:
+          # module use /path/to/GDCGenomicsQC/envs
+
           module load gdcgenomicsqc
           conda activate snakemake
 
@@ -122,13 +129,18 @@ The pipeline automatically detects format based on file extension:
     INPUT: "/path/to/data/chr{CHR}.vcf.gz"  # Per-chromosome VCF
     OUT_DIR: "/path/to/output"
     REF: "/path/to/reference"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
     # QC thresholds
     relatedness:
         method: "king"  # "0" for none, "king" for removal
+        king_cutoff: 0.0884
 
     SEX_CHECK: true  # Enable/disable sex verification
     GRM: true  # Compute genetic relationship matrix
+    thin: false
 
 **See also:** :doc:`usage` for configuration options, :doc:`installation` for software setup.
 
@@ -149,12 +161,16 @@ Create a configuration file for QC:
     INPUT: "/path/to/data/chr{CHR}.vcf.gz"
     OUT_DIR: "/path/to/output/directory"
     REF: "/path/to/reference/data"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
     relatedness:
         method: "0"
+        king_cutoff: 0.0884
 
     SEX_CHECK: true
-    thin: true
+    thin: false
     conda-frontend: mamba
     EOF
 

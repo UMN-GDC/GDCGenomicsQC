@@ -8,11 +8,15 @@
 # Required: Project Paths
 # =============================================================================
 # Input genomic data template. Supports:
-# - VCF: "/path/to/vcf/chr{CHR}.vcf.gz"
-# - PLINK BED: "/path/to/data/chr{CHR}.bed"
-# - PLINK PGEN: "/path/to/data/chr{CHR}.pgen"
-# For single merged file, omit {CHR} placeholder
+# - Per-chromosome VCF: Use {CHR} placeholder (e.g., "/path/to/vcf/chr{CHR}.vcf.gz")
+# - Whole genome PLINK BED: "/path/to/data/merged.bed" (omit {CHR})
+# - Whole genome PLINK PGEN: "/path/to/data/merged.pgen" (omit {CHR})
 INPUT: "/path/to/data/chr{CHR}.vcf.gz"
+
+# Alternative VCF template for ABCD-style paths (optional)
+# Use for paths like: /spaces/.../chr{CHR}_dose.vcf.gz
+# Leave null to use INPUT path
+vcf_template: null
 
 # Output directory for pipeline results
 OUT_DIR: "/path/to/output/directory"
@@ -87,6 +91,9 @@ localAncestry:
     
     # Output directory for figures
     figures: "figures"
+    
+    # Chromosomes for local ancestry (uses pipeline chromosomes if null)
+    chromosomes: null
 
 
 # =============================================================================
@@ -97,32 +104,39 @@ snpHerit:
     # Path to phenotype file
     # CSV format with columns: IID, <trait>
     # Or FAM format (.fam) with phenotype in 6th column
-    pheno: "/path/to/phenotype.csv"
+    pheno: null  # Replace with your phenotype file
     
     # Path to covariate file(s)
     # Can be a single file path or comma-separated list for multiple files
     # e.g., "/path/to/covariates.csv" or "/path/to/cov1.csv,/path/to/cov2.csv"
     # Format: CSV with columns: IID, <covariates>
-    covar: "/path/to/covariates.csv"
+    covar: null
     
     # Output filename for heritability estimates
-    out: "phenoEsts.csv"
+    out: null
     
     # Estimation method: "AdjHE" (Haseman-Elston regression)
-    # Other methods (not yet implemented): "GCTA", "PredLMM", "SWD", "COMBAT"
+    # Other methods: "GCTA", "PredLMM", "SWD", "COMBAT"
     method: "AdjHE"
     
     # Number of principal components to include as covariates
     npc: 10
     
-    # Phenotype column number in FAM file (if using FAM format)
+    # Phenotype column(s) - can be column index(es) or column name(s), single value or list
+    # Examples: 1, [1, 2, 3], "pheno_name", ["pheno1", "pheno2"]
     mpheno: 1
     
     # Loop through all covariate combinations (for model selection)
     loop_covs: false
     
-    # Fixed effect covariates to include
-    fixed_effects: []
+    # Fixed effect covariates to include (for MASH method)
+    fixed_effects: null
+    
+    # Quantitative covariate column names (for GCTA method)
+    qcovar: null
+    
+    # Discrete/categorical covariate column names (for GCTA method)
+    covar_discrete: null
     
     # Use random grouping for heritability estimation
     random_groups: false
