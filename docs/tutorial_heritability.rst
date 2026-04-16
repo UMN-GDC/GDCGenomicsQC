@@ -30,20 +30,48 @@ For detailed installation instructions, see:
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
+
+      If you're using the MSI HPC cluster:
+
+      .. code-block:: bash
+
+          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+          module load gdcgenomicsqc
+          conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Sandbox
+
+      If you're using the Sandbox environment:
+
+      .. code-block:: bash
+
+          module use /scratch.global/GDC/GDCGenomicsQC/envs
+          module load gdcgenomicsqc
+          conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Other HPCs
 
       If your HPC has the GDC module pre-configured:
 
       .. code-block:: bash
 
-          # Choose the module path for your HPC:
-          # For MSI HPC:
-          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-          # For Sandbox:
-          module use /scratch.global/GDC/GDCGenomicsQC/envs
-          # For other HPCs, use your module path:
-          # module use /path/to/GDCGenomicsQC/envs
-
+          # Replace with your HPC's module path:
+          module use /path/to/GDCGenomicsQC/envs
           module load gdcgenomicsqc
           conda activate snakemake
 
@@ -229,7 +257,21 @@ The simulation rule:
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_heritability.yaml simulatePhenotype -j 4
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_heritability.yaml simulatePhenotype -j 4
+
+   .. tab:: Other HPCs
 
       .. code-block:: bash
 
@@ -269,7 +311,19 @@ The ``snpHerit`` rule uses PC-relate to estimate SNP heritability:
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_heritability.yaml snpHerit -j 4
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_heritability.yaml snpHerit -j 4
+
+   .. tab:: Other HPCs
 
       .. code-block:: bash
 
