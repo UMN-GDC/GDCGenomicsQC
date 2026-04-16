@@ -14,7 +14,7 @@ rule estimateLocalAncestryPerChromosome:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
         ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
         map=ancient(REF / "1000G_highcoverage" / "population.txt"),
-        gmap=ancient(REF / "gmaps" / "chr{CHR}.b38.gmap.txt"),
+        gmap=ancient(REF / "gmaps" / "chr{CHR}.b38.gmap.rfmix.txt"),
     output:
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv",
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv",
