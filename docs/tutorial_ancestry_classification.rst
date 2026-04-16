@@ -32,20 +32,48 @@ For detailed installation instructions, see:
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
+
+      If you're using the MSI HPC cluster:
+
+      .. code-block:: bash
+
+          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+          module load gdcgenomicsqc
+          conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Sandbox
+
+      If you're using the Sandbox environment:
+
+      .. code-block:: bash
+
+          module use /scratch.global/GDC/GDCGenomicsQC/envs
+          module load gdcgenomicsqc
+          conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Other HPCs
 
       If your HPC has the GDC module pre-configured:
 
       .. code-block:: bash
 
-          # Choose the module path for your HPC:
-          # For MSI HPC:
-          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-          # For Sandbox:
-          module use /scratch.global/GDC/GDCGenomicsQC/envs
-          # For other HPCs, use your module path:
-          # module use /path/to/GDCGenomicsQC/envs
-
+          # Replace with your HPC's module path:
+          module use /path/to/GDCGenomicsQC/envs
           module load gdcgenomicsqc
           conda activate snakemake
 
@@ -198,7 +226,21 @@ check that the simulated data is properly independent.
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry -j 10
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry -j 10
+
+   .. tab:: Other HPCs
 
       .. code-block:: bash
 
@@ -229,7 +271,23 @@ Modify ``model`` in your config to compare embeddings:
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
+
+      First edit your config to set ``model: "umap"``, then:
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry
+
+   .. tab:: Sandbox
+
+      First edit your config to set ``model: "umap"``, then:
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry
+
+   .. tab:: Other HPCs
 
       First edit your config to set ``model: "umap"``, then:
 
@@ -254,7 +312,19 @@ The pipeline creates keep files for each predicted ancestry:
 
 .. tabs::
 
-   .. tab:: Module Load (MSI/UMN HPC)
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+
+   .. tab:: Other HPCs
 
       .. code-block:: bash
 
