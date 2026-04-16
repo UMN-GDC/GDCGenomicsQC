@@ -38,7 +38,14 @@ For detailed installation instructions, see:
 
       .. code-block:: bash
 
-          module use /path/to/GDCGenomicsQC/envs
+          # Choose the module path for your HPC:
+          # For MSI HPC:
+          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+          # For Sandbox:
+          module use /scratch.global/GDC/GDCGenomicsQC/envs
+          # For other HPCs, use your module path:
+          # module use /path/to/GDCGenomicsQC/envs
+
           module load gdcgenomicsqc
           conda activate snakemake
 
@@ -124,6 +131,9 @@ The ancestry classification pipeline depends on:
     INPUT: "/path/to/data/chr{CHR}.vcf.gz"
     OUT_DIR: "/path/to/output"
     REF: "/path/to/reference"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
 **See also:** :doc:`tutorial_qc_pipeline` for QC preprocessing, :doc:`tutorial_1kg_assembly` for reference data.
 
@@ -146,23 +156,29 @@ Create a configuration file for ancestry classification:
     mkdir -p ~/ancestry_lab
     cd ~/ancestry_lab
     cat > config_ancestry.yaml << 'EOF'
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
+    OUT_DIR: "/path/to/output/directory"
+    REF: "/path/to/reference/data"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
     ancestry:
         threshold: 0.8
         model: "pca"  # Options: pca, umap, rfmix (vae not yet implemented)
 
-    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
-    OUT_DIR: "/path/to/output/directory"
-    REF: "/path/to/reference/data"
-
     relatedness:
         method: "0"
+        king_cutoff: 0.0884
 
     localAncestry:
         RFMIX: true
         test: true
         thin_subjects: 0.1
+        figures: "figures"
+        chromosomes: null
 
-    thin: true
+    thin: false
     conda-frontend: mamba
     EOF
 

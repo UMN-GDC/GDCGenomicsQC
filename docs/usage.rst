@@ -25,8 +25,13 @@ Choose the method that matches your HPC setup:
 
       .. code-block:: bash
 
-          # Add the GDC module path (do this once per session or add to ~/.bashrc)
-          module use /path/to/GDCGenomicsQC/envs
+          # Add the GDC module path (choose the path for your HPC)
+          # For MSI HPC:
+          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+          # For Sandbox:
+          module use /scratch.global/GDC/GDCGenomicsQC/envs
+          # For other HPCs, use your module path:
+          # module use /path/to/GDCGenomicsQC/envs
 
           # Load the GDC Genomics QC module
           module load gdcgenomicsqc
@@ -138,17 +143,14 @@ detects the format based on the file extension and whether ``{CHR}`` is present:
 
 .. code-block:: yaml
 
-    # Per-chromosome VCF files (one per chromosome)
+    # Input genomic data template. Supports:
+    # - Per-chromosome VCF: "/path/to/vcf/chr{CHR}.vcf.gz" (use {CHR} placeholder)
+    # - Whole genome BED: "/path/to/data/merged.bed"
+    # - Whole genome PGEN: "/path/to/data/merged.pgen"
     INPUT: "/path/to/vcf/chr{CHR}.vcf.gz"
 
-    # Per-chromosome PLINK BED files
-    INPUT: "/path/to/plink/chr{CHR}.bed"
-
-    # Per-chromosome PLINK PGEN files  
-    INPUT: "/path/to/plink/chr{CHR}.pgen"
-
-    # Single merged file (entire genome in one file)
-    INPUT: "/path/to/merged.bed"
+    # Alternative VCF template for ABCD-style paths (optional)
+    vcf_template: null
 
     # Output directory for pipeline results
     OUT_DIR: "/path/to/output/directory"
@@ -156,12 +158,20 @@ detects the format based on the file extension and whether ``{CHR}`` is present:
     # Reference data directory
     REF: "/path/to/reference/data"
 
+    # Local snakemake storage cache
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    # Chromosomes to process
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
     # Relatedness estimation
     relatedness:
-        method: "0"  # Options: "0" (KING), "pcair", "pcrelate"
+        method: "king"  # Options: "0", "king"
+        king_cutoff: 0.0884
 
     SEX_CHECK: false
     GRM: true
+    thin: false
 
     # Ancestry analysis
     ancestry:
@@ -170,17 +180,17 @@ detects the format based on the file extension and whether ``{CHR}`` is present:
 
     # Local ancestry (RFMix)
     localAncestry:
-        RFMIX: true
-        test: true
+        RFMIX: false
+        test: false
         thin_subjects: 0.1
+        figures: "figures"
+        chromosomes: null
 
-    # Data processing (not yet implemented)
-    # liftover: true    # Convert genome build (e.g., GRCh37 to GRCh38)
-    # harmonize: true   # Align strand to reference panel
-
-    # Development options
-    thin: true
-    conda-frontend: mamba
+    # Internal PCA
+    internalPCA:
+        plot: true
+        color_by: null
+        phenotype_file: null
 
 See :doc:`genomics` for detailed descriptions of all configuration options.
 
@@ -367,11 +377,16 @@ Submit with:
 
    .. code-block:: bash
 
-       # For MSI HPC
-       module use /path/to/GDCGenomicsQC/envs
+       # For MSI HPC:
+       module use /projects/standard/gdc/public/GDCGenomicsQC/envs
        module load gdcgenomicsqc
        conda activate snakemake
 
-       # For Sandbox
-       conda config --add envs_dirs /scratch.global/coffm049/GDC/envs
+       # For Sandbox:
+       conda config --add envs_dirs /scratch.global/GDC/GDCGenomicsQC/envs
+       conda activate snakemake
+
+       # For other HPCs:
+       module use /path/to/GDCGenomicsQC/envs
+       module load gdcgenomicsqc
        conda activate snakemake

@@ -36,7 +36,14 @@ For detailed installation instructions, see:
 
       .. code-block:: bash
 
-          module use /path/to/GDCGenomicsQC/envs
+          # Choose the module path for your HPC:
+          # For MSI HPC:
+          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+          # For Sandbox:
+          module use /scratch.global/GDC/GDCGenomicsQC/envs
+          # For other HPCs, use your module path:
+          # module use /path/to/GDCGenomicsQC/envs
+
           module load gdcgenomicsqc
           conda activate snakemake
 
@@ -120,9 +127,13 @@ This step requires the following input files:
     snpHerit:
         pheno: "/path/to/phenotype.tsv"  # Phenotype file (IID, pheno)
         covar: "/path/to/covariates.tsv" # Optional covariates
-        method: "REML"                    # REML or MOM
+        method: "AdjHE"                    # Estimation method
         npc: 10                           # Number of PCs to include
         out: "heritability_estimates.txt" # Output file
+        mpheno: 1                         # Phenotype column number or name
+        fixed_effects: null              # List of fixed effect covariate names
+        qcovar: null                     # Quantitative covariate names (for GCTA)
+        covar_discrete: null             # Discrete covariate names (for GCTA)
 
 **Output Files:**
 
@@ -158,8 +169,12 @@ The simulation uses the ``phenotypeSimulation`` config section to define:
     mkdir -p ~/heritability_lab
     cd ~/heritability_lab
     cat > config_heritability.yaml << 'EOF'
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
     REF: "/path/to/reference/storage"
     OUT_DIR: "/path/to/output/directory"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
     phenotypeSimulation:
         ancestries: ["AFR", "EUR"]
@@ -175,11 +190,14 @@ The simulation uses the ``phenotypeSimulation`` config section to define:
     snpHerit:
         pheno: "/path/to/phenotype.tsv"
         covar: "/path/to/covariates.tsv"
-        method: "REML"
+        method: "AdjHE"
         npc: 10
         out: "heritability_estimates.txt"
+        mpheno: 1
+        fixed_effects: null
+        qcovar: null
+        covar_discrete: null
 
-    CHROMOSOMES: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
     conda-frontend: mamba
     EOF
 

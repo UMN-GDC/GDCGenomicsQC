@@ -38,8 +38,14 @@ Choose the installation method that matches your environment:
 
       .. code-block:: bash
 
-          # Load the module
-          module use /projects/standard/gdc/public/envs/GDCGenomicsQC/envs
+          # Load the module (choose the path for your HPC)
+          # For MSI HPC:
+          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+          # For Sandbox:
+          module use /scratch.global/GDC/GDCGenomicsQC/envs
+          # For other HPCs, use your module path:
+          # module use /path/to/GDCGenomicsQC/envs
+
           module load gdcgenomicsqc
 
           # Verify environment is set up
@@ -67,13 +73,19 @@ Choose the installation method that matches your environment:
 
       .. dropdown:: Method 1: Conda Environment (Recommended)
 
-         .. code-block:: bash
+          .. code-block:: bash
 
-             # Create the snakemake environment (one-time)
-             conda env create -n snakemake -f /path/to/GDCGenomicsQC/envs/snakemake.yml
+              # Create the snakemake environment (one-time)
+              # Choose the path for your HPC:
+              # For MSI HPC:
+              conda env create -n snakemake -f /projects/standard/gdc/public/GDCGenomicsQC/envs/snakemake.yml
+              # For Sandbox:
+              conda env create -n snakemake -f /scratch.global/GDC/GDCGenomicsQC/envs/snakemake.yml
+              # For other HPCs, use your module path:
+              # conda env create -n snakemake -f /path/to/GDCGenomicsQC/envs/snakemake.yml
 
-             # Activate when starting a session
-             conda activate snakemake
+              # Activate when starting a session
+              conda activate snakemake
 
        .. dropdown:: Method 2: Existing MSI Snakemake Environment
 
@@ -84,14 +96,14 @@ Choose the installation method that matches your environment:
               conda config --add envs_dirs /projects/standard/gdc/public/envs
               conda activate snakemake
 
-       .. dropdown:: Method 2b: Sandbox Snakemake Environment
+        .. dropdown:: Method 2b: Sandbox Snakemake Environment
 
-          For sandbox/testing environments:
+           For sandbox/testing environments:
 
-          .. code-block:: bash
+           .. code-block:: bash
 
-              conda config --add envs_dirs /scratch.global/coffm049/GDC/envs
-              conda activate snakemake
+               conda config --add envs_dirs /scratch.global/GDC/GDCGenomicsQC/envs
+               conda activate snakemake
 
       .. dropdown:: Method 3: MSI Conda Modules
 
@@ -167,39 +179,45 @@ Choose the installation method that matches your environment:
       - Reference data locations
       - Pipeline options (relatedness, ancestry methods, etc.)
 
-      Example configuration:
+       Example configuration:
 
-      .. code-block:: yaml
+       .. code-block:: yaml
 
-          INPUT_FILE: "/path/to/your/vcf/files"
-          OUT_DIR: "/path/to/output/directory"
-          REF: "/path/to/reference/data"
+           INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
+           OUT_DIR: "/path/to/output/directory"
+           REF: "/path/to/reference/data"
+           local-storage-prefix: "/path/to/.snakemake/storage"
 
-          relatedness:
-              method: "king"
+           chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-          localAncestry:
-              RFMIX: true
-              test: true
+           relatedness:
+               method: "king"
+               king_cutoff: 0.0884
 
-          thin: true
+           localAncestry:
+               RFMIX: true
+               test: true
+               thin_subjects: 0.1
+               figures: "figures"
 
-      **5. Run**
+           thin: false
 
-      .. code-block:: bash
+       **5. Run**
 
-          cd GDCGenomicsQC/workflow
-          snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+       .. code-block:: bash
 
-      **Requesting module installation:** Contact your HPC administrators with:
+           cd GDCGenomicsQC/workflow
+           snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
 
-      - The path to the repository: ``/path/to/GDCGenomicsQC``
-      - The module location: ``/path/to/GDCGenomicsQC/envs/gdcgenomicsMSI``
-      - The wrapper script: ``/path/to/GDCGenomicsQC/envs/gdcgenomicsMSI/bin/gdcgenomicsqc``
+       **Requesting module installation:** Contact your HPC administrators with:
 
-      :doc:`Skip to Usage <usage>`
+       - The path to the repository: ``/path/to/GDCGenomicsQC``
+       - The module location: ``/path/to/GDCGenomicsQC/envs/gdcgenomicsMSI``
+       - The wrapper script: ``/path/to/GDCGenomicsQC/envs/gdcgenomicsMSI/bin/gdcgenomicsqc``
 
-   .. tab:: Interactive (Local/Testing)
+       :doc:`Skip to Usage <usage>`
+
+    .. tab:: Interactive (Local/Testing)
 
       For local execution without SLURM. Useful for testing and small datasets.
 
@@ -233,42 +251,48 @@ Choose the installation method that matches your environment:
       - Reference data locations
       - Pipeline options (relatedness, ancestry methods, etc.)
 
-      Example configuration:
+       Example configuration:
 
-      .. code-block:: yaml
+       .. code-block:: yaml
 
-          INPUT_FILE: "/path/to/your/vcf/files"
-          OUT_DIR: "/path/to/output/directory"
-          REF: "/path/to/reference/data"
+           INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
+           OUT_DIR: "/path/to/output/directory"
+           REF: "/path/to/reference/data"
+           local-storage-prefix: "/path/to/.snakemake/storage"
 
-          relatedness:
-              method: "king"
+           chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-          localAncestry:
-              RFMIX: true
-              test: true
+           relatedness:
+               method: "king"
+               king_cutoff: 0.0884
 
-          thin: true
+           localAncestry:
+               RFMIX: true
+               test: true
+               thin_subjects: 0.1
+               figures: "figures"
 
-      **4. Run**
+           thin: false
 
-      .. code-block:: bash
+       **4. Run**
 
-          cd GDCGenomicsQC/workflow
-          snakemake --profile ../profiles/interactive --configfile /path/to/your/config.yaml
+       .. code-block:: bash
 
-      Or for simple local execution (no profile):
+           cd GDCGenomicsQC/workflow
+           snakemake --profile ../profiles/interactive --configfile /path/to/your/config.yaml
 
-      .. code-block:: bash
+       Or for simple local execution (no profile):
 
-          snakemake --cores=4 --use-conda \
-              --configfile /path/to/config.yaml \
-              --directory /path/to/GDCGenomicsQC/workflow \
-              --snakefile /path/to/GDCGenomicsQC/workflow/Snakefile
+       .. code-block:: bash
 
-      :doc:`Skip to Usage <usage>`
+           snakemake --cores=4 --use-conda \
+               --configfile /path/to/config.yaml \
+               --directory /path/to/GDCGenomicsQC/workflow \
+               --snakefile /path/to/GDCGenomicsQC/workflow/Snakefile
 
-   .. tab:: Singularity/Apptainer Only
+       :doc:`Skip to Usage <usage>`
+
+    .. tab:: Singularity/Apptainer Only
 
       If your HPC provides Singularity/Apptainer but you prefer not to use conda
       for Snakemake, you can install Snakemake via pip:
@@ -479,11 +503,16 @@ For additional help, see the :doc:`usage` guide or open an issue on GitHub.
 
    .. code-block:: bash
 
-       # For MSI HPC
-       module use /path/to/GDCGenomicsQC/envs
+       # For MSI HPC:
+       module use /projects/standard/gdc/public/GDCGenomicsQC/envs
        module load gdcgenomicsqc
        conda activate snakemake
 
-       # For Sandbox
-       conda config --add envs_dirs /scratch.global/coffm049/GDC/envs
+       # For Sandbox:
+       conda config --add envs_dirs /scratch.global/GDC/GDCGenomicsQC/envs
+       conda activate snakemake
+
+       # For other HPCs:
+       module use /path/to/GDCGenomicsQC/envs
+       module load gdcgenomicsqc
        conda activate snakemake
