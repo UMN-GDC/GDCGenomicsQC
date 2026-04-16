@@ -5,7 +5,7 @@ slurm-status-command: squeue
 jobs: 25
 use-singularity: true
 singularity-prefix: /scratch.global/GDC/singularityimages
-singularity-args: "--bind /scratch.global,/projects,/spaces,/home"
+singularity-args: "--bind /scratch.global,/home"
 latency-wait: 60
 
 default-resources:

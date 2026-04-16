@@ -9,5 +9,3 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate snakemake
 module use /scratch.global/GDC/GDCGenomicsQC/envs
 module load gdcgenomicsSandbox
-
-gdcgenomicsqc assembleRef --configfile ../config/sandboxABCD.yaml --force

@@ -1,4 +1,6 @@
 rule download1000GenomesVcf:
+    container:
+        "docker://biocontainers/biocontainers:v1.2.0_cv1"
     log:
         OUT_DIR / "logs" / "download1000GenomesVcf_{CHR}.log",
     resources:

@@ -8,7 +8,7 @@
 *.tex
 AGENTS.md
 
-
+*/.wget-hsts
 */_build/*
 *.yaml
 *.yml

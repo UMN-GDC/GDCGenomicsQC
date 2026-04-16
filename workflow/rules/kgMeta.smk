@@ -1,6 +1,6 @@
 checkpoint kgMeta:
     container:
-        "docker://ubuntu:jammy"
+        "docker://biocontainers/biocontainers:v1.2.0_cv1"
     log:
         OUT_DIR / "logs" / "download1000GenomesMetadata.log",
     resources:
@@ -42,7 +42,7 @@ checkpoint kgMeta:
 
 checkpoint splitMapChr:
     container:
-        "docker://ubuntu:jammy"
+        "docker://biocontainers/biocontainers:v1.2.0_cv1"
     input:
         shapemap=ancient(lambda wildcards: checkpoints.kgMeta.get().output.shapemap)
     output:

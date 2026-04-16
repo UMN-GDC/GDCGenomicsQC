@@ -1,6 +1,6 @@
 rule convertGmapToRfmix:
     container:
-        "docker://ubuntu:jammy"
+        "docker://biocontainers/biocontainers:v1.2.0_cv1"
     input:
         map_chr=ancient(REF / "gmaps" / "hg38map.chr{chr}.txt")
     output:
