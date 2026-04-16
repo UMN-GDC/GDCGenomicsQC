@@ -57,7 +57,6 @@ include: "rules/PCAreference.smk"
 include: "rules/PCAinternal.smk"
 include: "rules/umap.smk"
 include: "rules/classifyAncestry.smk"
-include: "rules/convertGmapRfmix.smk"
 include: "rules/RFMIX.smk"
 include: "rules/plotKaryotypeAncestry.smk"
 include: "rules/simulatePhenotype.smk"
@@ -88,11 +87,7 @@ ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 
 ##### GOOD UP TO HERE
-rule assembleRef2:
-    input:
-        ancient(expand(REF / "gmaps" / "hg38map.chr{CHR}.txt", CHR=range(1, 23))),
-
-checkpoint assembleRef:
+rule assembleRef:
     input:
         ancient(REF / "1000G_highcoverage" / "population.txt"),
         ancient(REF / "1000G_highcoverage" / "pedigree.txt"),

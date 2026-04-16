@@ -41,8 +41,6 @@ checkpoint kgMeta:
 
 
 checkpoint splitMapChr:
-    container:
-        "docker://biocontainers/biocontainers:v1.2.0_cv1"
     input:
         shapemap=ancient(lambda wildcards: checkpoints.kgMeta.get().output.shapemap)
     output:
