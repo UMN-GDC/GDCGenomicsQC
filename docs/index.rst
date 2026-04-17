@@ -14,6 +14,7 @@ high-performance clusters like the UMN MSI Agate cluster.
    :caption: Contents:
 
    installation
+   new_hpc_setup
    genomics
    usage
    api

@@ -42,31 +42,39 @@ For detailed installation instructions, see:
           module load gdcgenomicsqc
           conda activate snakemake
 
-      Verify installation:
+Verify installation:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-          cd GDCGenomicsQC
-          snakemake --version
+           snakemake --version
 
-   .. tab:: Sandbox
+       .. note::
 
-      If you're using the Sandbox environment:
+           **You do NOT need to clone the repository.** The pipeline is pre-installed
+           via the ``gdcgenomicsqc`` module. Just create your config file and run.
 
-      .. code-block:: bash
+    .. tab:: Sandbox
 
-          module use /scratch.global/GDC/GDCGenomicsQC/envs
-          module load gdcgenomicsqc
-          conda activate snakemake
+       If you're using the Sandbox environment:
 
-      Verify installation:
+       .. code-block:: bash
 
-      .. code-block:: bash
+           module use /scratch.global/GDC/GDCGenomicsQC/envs
+           module load gdcgenomicsqc
+           conda activate snakemake
 
-          cd GDCGenomicsQC
-          snakemake --version
+       Verify installation:
 
-   .. tab:: Other HPCs
+       .. code-block:: bash
+
+           snakemake --version
+
+       .. note::
+
+           **You do NOT need to clone the repository.** The pipeline is pre-installed
+           via the ``gdcgenomicsqc`` module. Just create your config file and run.
+
+    .. tab:: Other HPCs
 
       If your HPC has the GDC module pre-configured:
 
