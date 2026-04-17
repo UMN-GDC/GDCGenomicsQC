@@ -19,6 +19,69 @@ lassosum2, and PRSice-2.
 
 ----
 
+Basic Workflow Diagram
+----------------
+
+There are two approaches for data splitting:
+
+**Option 1: Internal Splitting (run_single_ancestry_PRS_pipeline.sh)**
+  Provides one full study sample; pipeline internally splits into train/val/test.
+
+::
+
+    ┌─────────────────────┐
+    │ Full Study Sample │──► (PLINK .bed/.bim/.fam)
+    └────────┬──────────┘
+             │
+             ▼
+    ┌──────────────────────────────┐
+    │ run_single_ancestry_PRS_pipeline│
+    │ (LDpred2/lassosum2 internally │
+    │ split: n_val=49 default)    │
+    └────────┬──────────────┬───────┘
+             │            │
+       ┌─────┴────┐  ┌───┴───┐
+       ▼         ▼  ▼       ▼
+    ┌────────┐ ┌────┐ ┌────┐
+    │ Train  │ │Val │ │Test│
+    │ rest  │ │49  │ │rest│
+    └────────┘ └────┘ └────┘
+                        │
+                        ▼
+                 ┌───────────┐
+                 │ R² Eval  │
+                 └─────────┘
+
+
+**Option 2: Explicit Splitting (run_split_plink_data.sh)**
+  Pre-split data into separate PLINK files before running PRS methods.
+
+::
+
+    ┌─────────────────┐
+    │ Input Genotypes │──► (PLINK .bed/.bim/.fam)
+    └────────┬────────┘
+             │
+             ▼
+    ┌─────────────────────────────┐
+    │ run_split_plink_data.sh     │──► Split into Train/Validation/Test
+    │ -t 50 -v 20 -T 30           │
+    └────────┬────────────────────┘
+             │
+       ┌─────┴─────┬───────────┐
+       ▼           ▼           ▼
+    ┌──────┐  ┌────────┐  ┌────────┐
+    │Train │  │Valid   │  │Test   │
+    │ 50%  │  │ 20%   │  │ 30%   │
+    └──────┘  └────────┘  └────────┘
+                        │
+                        ▼
+                 ┌───────────┐
+                 │ R² Eval  │
+                 └─────────┘
+
+----
+
 Prerequisites
 -------------
 
@@ -153,6 +216,150 @@ The relevant PRS score columns for each method:
      - ``score``
    * - PRSice-2
      - ``PRS``
+
+----
+
+Splitting Genomic Data with run_split_plink_data.sh
+----------------------------------------------
+
+The ``run_split_plink_data.sh`` script splits PLINK genotype files into
+training, validation, and testing sets for PRS modeling. This is a critical
+step because many PRS methods require held-out data for hyperparameter
+tuning or final evaluation.
+
+Data Split Types
+~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Split Type
+     - Purpose
+   * - Training
+     - Used to train/fit the PRS model
+   * - Validation
+     - Used to tune hyperparameters (e.g., LDpred2 weight parameters)
+   * - Testing
+     - Used for final performance evaluation (R², AUC)
+
+Split Percentages
+~~~~~~~~~~~~~~~
+
+The script accepts three percentage arguments:
+
+- ``-t``: Training percentage (default: 50)
+- ``-v``: Validation percentage (default: 20)
+- ``-T``: Testing percentage (default: 30)
+
+**Two-way split**: Set ``-v 0`` to create only training and testing
+splits (no validation set):
+
+.. code-block:: bash
+
+    bash prs_pipeline/src/run_split_plink_data.sh \
+        -1 /path/to/anc1_plink \
+        -2 /path/to/anc2_plink \
+        -t 70 \
+        -v 0 \
+        -T 30 \
+        -S 42
+
+This creates a 70/0/30 split (training/testing only).
+
+**Three-way split**: Use the default or specify all three percentages:
+
+.. code-block:: bash
+
+    bash prs_pipeline/src/run_split_plink_data.sh \
+        -1 /path/to/anc1_plink \
+        -2 /path/to/anc2_plink \
+        -t 50 \
+        -v 20 \
+        -T 30 \
+        -S 42
+
+This creates a 50/20/30 split (training/validation/testing).
+
+When Three Splits Are Required
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some PRS methods require three distinct data splits:
+
+- **LDpred2**: Requires a validation set to select the optimal
+  hyperparameter (shrinkage factor or number of effective SNPs)
+- **VIPRS**: Uses validation data for variational inference
+- **lassosum2**: May use validation for lambda selection
+
+Simpler methods (C+T, PRSice-2) can work with just training and testing
+splits, using internal cross-validation.
+
+
+
+Internal Splitting in run_single_ancestry_PRS_pipeline.sh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Important**: When using ``run_single_ancestry_PRS_pipeline.sh`` to run
+LDpred2 or lassosum2, you provide a **single full study sample**.
+The pipeline internally performs the train/validation/test split for you
+using random sampling:
+
+- Default: ``n_val=49`` samples for validation, remainder for testing
+- Configurable via ``--n_val`` argument in the underlying R scripts
+
+This means you typically **do not need to pre-split your data** when using
+run_single_ancestry_PRS_pipeline.sh. The data flow is:
+
+::
+
+    Your Full Study Sample (PLINK)
+           │
+           ▼
+    run_single_ancestry_PRS_pipeline.sh
+           │
+    ┌────────┴────────────┐
+    │ LDpred2.R /       │
+    │ lassosum2.R       │
+    │ internal split:    │
+    │ ind.val = sample   │
+    │ (nrow(G), 49)   │
+    └────────┬────────────┘
+             │
+        ┌────┴────┐
+        ▼         ▼
+    validation  test
+      (49)    (rest)
+
+Use ``run_split_plink_data.sh`` only if you need:
+- Explicit control over the exact splits
+- Different validation set sizes
+- To use different data splits across multiple method runs
+
+Basic Usage
+~~~~~~~~~~
+
+.. code-block:: bash
+
+    bash prs_pipeline/src/run_split_plink_data.sh \
+        -1 /path/to/AFR_genotypes \
+        -2 /path/to/EUR_genotypes \
+        -t 50 \
+        -v 20 \
+        -T 30 \
+        -S 42
+
+Key parameters:
+
+- ``-1``: Target ancestry PLINK prefix
+- ``-2``: Training ancestry PLINK prefix
+- ``-t``: Training percentage
+- ``-v``: Validation percentage (set to 0 for two-way split)
+- ``-T``: Testing percentage
+- ``-S``: Random seed for reproducibility
+- ``-N``: Skip generating split PLINK files (only create sample lists)
+
+The script creates sample ID files in ``randomization_ids_anc1/`` and
+``randomization_ids_anc2/`` subdirectories.
 
 ----
 
