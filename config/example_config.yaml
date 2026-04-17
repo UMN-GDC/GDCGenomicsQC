@@ -79,6 +79,15 @@ ancestry:
     # Ancestry inference method: "pca", "umap", "vae", or "rfmix"
     model: "pca"
 
+    # Bypass mode: Provide your own ancestry labels instead of running prediction
+    # Format: Tab-separated file with two columns (IID, ancestry), no header
+    # Example:
+    #   sample1  AFR
+    #   sample2  EUR
+    # When set, pipeline skips ancestry prediction and uses these labels directly.
+    # Set to null (or omit) to run standard ancestry prediction.
+    ancestry_file: null
+
 localAncestry:
     # Run RFMix for local ancestry inference
     RFMIX: false

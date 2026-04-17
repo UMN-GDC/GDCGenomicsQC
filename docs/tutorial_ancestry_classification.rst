@@ -451,6 +451,80 @@ The pipeline will output:
 - Discrepancies can reveal both classification errors and limitations of
   self-reported labels
 
+Using a Provided Ancestry Classification File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you already have ancestry labels for your samples (e.g., from a previous
+analysis, clinical database, or external classifier), you can bypass the
+pipeline's ancestry prediction entirely by providing a tab-separated file.
+
+**When to use this:**
+
+- You have existing ancestry labels you trust
+- You want faster pipeline execution (skips PCA/UMAP/RFMix)
+- You need specific ancestry labels not supported by the default classifier
+
+**Input format** (``ancestry_labels.tsv``):
+
++----------+-----------+
+| IID      | ancestry  |
++==========+===========+
+| Sample1  | AFR       |
++----------+-----------+
+| Sample2  | EUR       |
++----------+-----------+
+| Sample3  | EUR       |
++----------+-----------+
+
+The file should be:
+
+- Tab-separated
+- Two columns: IID (sample ID), ancestry label
+- No header row
+- One line per sample
+
+To use your labels, add to your config:
+
+.. code-block:: bash
+
+    ancestry:
+        threshold: 0.8
+        model: "pca"
+        ancestry_file: "/path/to/ancestry_labels.tsv"
+
+**How the bypass works:**
+
+1. The pipeline reads your file and extracts unique ancestry labels
+2. Creates ``keep_{ancestry}.txt`` files in ``01-globalAncestry/`` (same as predicted)
+3. Skips ancestry prediction rules (PCA, UMAP, RFMix outputs are not required)
+4. Branches ancestry-specific QC using your provided labels
+
+**Behavior:**
+
+- Samples NOT in your file are excluded from ancestry-specific QC
+- They remain in the "full" dataset for non-stratified analyses
+- The ``phenotypeSimulation.ancestries`` config must match labels in your file
+
+**Example complete config:**
+
+.. code-block:: bash
+
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
+    OUT_DIR: "/path/to/output/directory"
+    REF: "/path/to/reference/data"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+    ancestry:
+        model: "pca"
+        ancestry_file: "/path/to/ancestry_labels.tsv"
+
+    phenotypeSimulation:
+        ancestries: ["AFR", "EUR"]  # Must match labels in your file
+
+This enables rapid iteration when you already have ancestry assignments.
+
 ----
 
 Discussion Points
