@@ -6,7 +6,5 @@
 
 module use /scratch.global/GDC/GDCGenomicsQC/envs
 module load gdcgenomicsSandbox
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate snakemake
 
-gdcgenomicsqc run_classifyAncestry --configfile ../config/sandboxABCD.yaml 
+gdcgenomicsqc run_classifyAncestry --configfile ../config/sandboxToy.yaml

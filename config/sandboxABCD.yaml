@@ -1,6 +1,6 @@
 # Project-wide paths
 INPUT: "/shared/release/abcd/dairc/concat/genetics/genotype_microarray/imputed/chr{CHR}_dose.vcf.gz"
-OUT_DIR: "/scratch.global/coffm049/abcdPipeline"
+OUT_DIR: "/scratch.global/GDC/r25outputs/ABCD"
 REF: "/scratch.global/GDC/referenceData"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
 
@@ -64,6 +64,7 @@ ancestry:
     threshold: 0.8
     model: "pca"
 
+conda-frontend: mamba
 phenotypeSimulation:
     # Ancestries to simulate for
     ancestries: ["AFR", "EUR"]

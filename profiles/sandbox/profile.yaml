@@ -2,7 +2,7 @@ executor: slurm
 
 slurm-status-command: squeue
 
-jobs: 25
+jobs: 15
 use-singularity: true
 singularity-prefix: /scratch.global/GDC/singularityimages
 singularity-args: "--bind /scratch.global,/home"
