@@ -177,6 +177,36 @@ For binary phenotypes, add the ``-B`` flag:
         -C config_prs.conf \
         -c -l -s -P -B
 
+Setting Train/Test Split Percentages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, the pipeline uses an 80% training / 20% testing split (with remaining samples used for validation). You can customize these percentages using the ``-t`` and ``-T`` flags:
+
+.. code-block:: bash
+
+    sbatch prs_pipeline/run_single_ancestry_PRS_pipeline.sh \
+        -C config_prs.conf \
+        -c -l -s \
+        -t 70 -T 30
+
+This sets:
+
+- ``-t 70``: 70% of data for training
+- ``-T 30``: 30% of data for testing
+
+The validation set will use the remaining samples (in this example, 0% since 70 + 30 = 100). For a three-way split, you can use values that don't add up to 100:
+
+.. code-block:: bash
+
+    sbatch prs_pipeline/run_single_ancestry_PRS_pipeline.sh \
+        -C config_prs.conf \
+        -c -l \
+        -t 60 -T 20
+
+This creates a 60% training / 20% testing / 20% validation split.
+
+**Note**: The train and test percentages must add up to 100 or less. Any remaining samples are used for validation.
+
 Step 4: Interpret Results
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -302,10 +332,11 @@ Internal Splitting in run_single_ancestry_PRS_pipeline.sh
 **Important**: When using ``run_single_ancestry_PRS_pipeline.sh`` to run
 LDpred2 or lassosum2, you provide a **single full study sample**.
 The pipeline internally performs the train/validation/test split for you
-using random sampling:
+using random sampling.
 
-- Default: ``n_val=49`` samples for validation, remainder for testing
-- Configurable via ``--n_val`` argument in the underlying R scripts
+- Default: 80% training / 20% testing (remaining samples for validation)
+- Configurable via ``-t`` and ``-T`` flags (see above)
+- Uses random seed 123 for reproducibility
 
 This means you typically **do not need to pre-split your data** when using
 run_single_ancestry_PRS_pipeline.sh. The data flow is:
@@ -318,17 +349,16 @@ run_single_ancestry_PRS_pipeline.sh. The data flow is:
     run_single_ancestry_PRS_pipeline.sh
            │
     ┌────────┴────────────┐
-    │ LDpred2.R /       │
-    │ lassosum2.R       │
-    │ internal split:    │
-    │ ind.val = sample   │
-    │ (nrow(G), 49)   │
+    │ LDpred2.R /         │
+    │ lassosum2.R         │
+    │ internal split:      │
+    │ train_pct/test_pct  │
     └────────┬────────────┘
              │
         ┌────┴────┐
         ▼         ▼
     validation  test
-      (49)    (rest)
+      (remain)  (test_pct)
 
 Use ``run_split_plink_data.sh`` only if you need:
 - Explicit control over the exact splits
