@@ -23,6 +23,7 @@ ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 SCRIPTS_DIR = Path(workflow.basedir) / "scripts"
 
 ruleorder: convertPgenToVcf > compressAndIndexVcf
+ruleorder: createProvidedAncestryKeepFiles > classifySamplesByAncestry
 
 checkpoint detectInputPattern:
     output:
