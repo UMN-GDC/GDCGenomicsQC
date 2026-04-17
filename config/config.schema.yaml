@@ -93,6 +93,19 @@ ancestry:
       type: str
       default: "pca"
       enum: ["pca", "umap", "vae", "rfmix"]
+    ancestry_file:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Path to a user-provided ancestry labels file (bypass mode).
+        Format: Tab-separated, two columns (IID, ancestry_label), no header.
+        Example:
+          sample1  AFR
+          sample2  EUR
+        When provided, the pipeline skips ancestry prediction and uses these
+        labels directly for ancestry-specific QC branching. Samples not in this
+        file are excluded from ancestry-specific analysis but remain in the full dataset.
 
 internalPCA:
   type: dict

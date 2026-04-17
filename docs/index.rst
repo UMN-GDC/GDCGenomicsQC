@@ -23,6 +23,7 @@ high-performance clusters like the UMN MSI Agate cluster.
    tutorial_ancestry_classification
    tutorial_1kg_assembly
    tutorial_heritability
+   tutorial_phenotype_simulation
 
 Getting Started
 ---------------
@@ -34,7 +35,8 @@ Getting Started
 3. :doc:`tutorial_1kg_assembly` - Download reference data
 4. :doc:`tutorial_qc_pipeline` - Run quality control
 5. :doc:`tutorial_ancestry_classification` - Classify ancestry
-6. :doc:`tutorial_heritability` - Estimate heritability (optional)
+6. :doc:`tutorial_phenotype_simulation` - Simulate phenotypes for method testing
+7. :doc:`tutorial_heritability` - Estimate heritability (with real phenotypes)
 
 **Quick Setup (MSI/UMN HPC):**
 

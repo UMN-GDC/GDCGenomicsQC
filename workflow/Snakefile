@@ -66,18 +66,27 @@ include: "rules/snpHeritSim.smk"
 
 rule all:
     input:
-        OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
-        OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
-        OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
-        OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
-        OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
+        ancient(
+            expand(OUT_DIR / "01-globalAncestry" / "keep_{ANC}.txt", ANC=get_provided_ancestries())
+        ) if has_provided_ancestry() else [],
+        lambda wildcards: (
+            [OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+             OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+             OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
+             OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+             OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv"]
+            if not has_provided_ancestry() else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+             expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES)]
+            if not has_provided_ancestry() else []
+        ),
         lambda wildcards: (
             expand(OUT_DIR / "{ANC}" / "initialFilter_{CHR}.pgen", ANC=get_ancestries(wildcards), CHR=CHROMOSOMES)
             if "{CHR}" in config.get("INPUT", "")
             else expand(OUT_DIR / "{ANC}" / "initialFilter.pgen", ANC=get_ancestries(wildcards))
         ),
-        OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
-        expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES),
 
 
 ruleorder: convertPlinkPerChromosome > mergeChromosomesAndFilter > convertPlinkSingleFile

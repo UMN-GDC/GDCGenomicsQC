@@ -8,7 +8,41 @@ CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 LOCAL_ANCESTRY_CHROMOSOMES = config.get("localAncestry", {}).get("chromosomes") or CHROMOSOMES
 
 
+def has_provided_ancestry():
+    ancestry_file = config.get("ancestry", {}).get("ancestry_file")
+    return ancestry_file and Path(ancestry_file).exists()
+
+
+def get_provided_ancestries():
+    ancestry_file = config.get("ancestry", {}).get("ancestry_file")
+    if ancestry_file and Path(ancestry_file).exists():
+        df = pd.read_csv(ancestry_file, sep="\t", header=None, names=["IID", "ancestry"])
+        return sorted(df["ancestry"].unique().tolist())
+    return []
+
+
+def get_provided_ancestry_file_path():
+    return config.get("ancestry", {}).get("ancestry_file")
+
+
+checkpoint createProvidedAncestryKeepFiles:
+    output:
+        expand(OUT_DIR / "01-globalAncestry" / "keep_{ANC}.txt", ANC=get_provided_ancestries())
+    run:
+        ancestry_file = get_provided_ancestry_file_path()
+        if ancestry_file and Path(ancestry_file).exists():
+            df = pd.read_csv(ancestry_file, sep="\t", header=None, names=["IID", "ancestry"])
+            for anc in df["ancestry"].unique():
+                keep_file = OUT_DIR / "01-globalAncestry" / f"keep_{anc}.txt"
+                df[df["ancestry"] == anc]["IID"].to_csv(keep_file, index=False, header=False)
+
+
 def get_ancestries(wildcards):
+    provided = get_provided_ancestries()
+    if provided:
+        return provided
+    if "classifySamplesByAncestry" not in dir(rules):
+        return []
     ancestry_file = rules.classifySamplesByAncestry.output.classifications
     predicted_col = f"{ANCESTRY_MODEL}_predicted"
     ancestries = (
@@ -20,6 +54,8 @@ def get_ancestries(wildcards):
 def get_ancestry_file(wildcards):
     if wildcards.subset == "full":
         return []
+    if has_provided_ancestry():
+        return ancient(OUT_DIR / "01-globalAncestry" / f"keep_{wildcards.subset}.txt")
     subset_map = {
         "uncertain": "Other",
     }
@@ -28,6 +64,8 @@ def get_ancestry_file(wildcards):
 
 
 def get_posterior_probs(wildcards):
+    if has_provided_ancestry():
+        return []
     checkpoint_output = checkpoints.estimateGlobalAncestry.get(**wildcards).output.pos_prob
     return checkpoint_output
 
