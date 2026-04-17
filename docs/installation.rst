@@ -10,6 +10,62 @@ This guide covers installing and configuring the GDCGenomicsQC pipeline.
    :depth: 2
    :local:
 
+Quick Start (MSI HPC or Sandbox)
+------------------------------
+
+**You do NOT need to clone the repository** if you're on MSI HPC or the Sandbox.
+The pipeline is pre-installed via the ``gdcgenomicsqc`` module.
+
+**All you need:**
+
+1. **Create a config file:**
+
+   .. code-block:: yaml
+
+       INPUT: "/path/to/your/chr{CHR}.vcf.gz"
+       OUT_DIR: "/path/to/output/directory"
+       REF: "/path/to/reference/data"
+       local-storage-prefix: "/path/to/.snakemake/storage"
+
+       chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+       relatedness:
+           method: "king"
+           king_cutoff: 0.0884
+
+       SEX_CHECK: false
+       thin: false
+
+2. **Create a SLURM script** (optional - can also run interactively):
+
+   .. code-block:: bash
+
+       #!/bin/bash
+       #SBATCH --job-name=gdc_qc
+       #SBATCH --output=logs/%x_%j.log
+       #SBATCH --error=logs/%x_%j.err
+       #SBATCH --time=7-00:00
+       #SBATCH --mem=64G
+       #SBATCH --cpus-per-task=8
+
+       # For MSI HPC use: /projects/standard/gdc/public/GDCGenomicsQC/envs
+       # For Sandbox use: /scratch.global/GDC/GDCGenomicsQC/envs
+       module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+       module load gdcgenomicsqc
+       conda activate snakemake
+
+       gdcgenomicsqc --configfile /path/to/your/config.yaml
+
+3. **Submit:**
+
+   .. code-block:: bash
+
+       sbatch run_pipeline.sh
+
+That's it! See :doc:`usage` for more options.
+
+---
+
 Automatic Software Installation
 -------------------------------
 
@@ -89,29 +145,27 @@ Choose the installation method that matches your environment:
               module load miniconda
               conda activate snakemake
 
-       **Clone the repository (if not already available):**
+.. note::
 
-       .. code-block:: bash
+        **For MSI HPC and Sandbox**: You do NOT need to clone the repository.
+        The pipeline is pre-installed via the ``gdcgenomicsqc`` module.
+        Simply create your config file and run using the wrapper script below.
 
-           git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
-           cd GDCGenomicsQC
+        **Run (MSI HPC):**
 
-       **Run:**
+        .. code-block:: bash
 
-       .. code-block:: bash
+            gdcgenomicsqc --configfile /path/to/your/config.yaml
 
-           cd GDCGenomicsQC/workflow
-           snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
+        Or using Snakemake directly:
 
-       Or using the wrapper script (after loading the module):
+        .. code-block:: bash
 
-       .. code-block:: bash
+            snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
 
-           gdcgenomicsqc --configfile /path/to/your/config.yaml
+        :doc:`Skip to Usage <usage>`
 
-       :doc:`Skip to Usage <usage>`
-
-   .. tab:: Sandbox
+    .. tab:: Sandbox
 
        This scenario uses pre-installed modules and pre-cached Singularity images.
        Ideal for sandbox or testing environments.
@@ -175,31 +229,21 @@ Choose the installation method that matches your environment:
 
               conda activate snakemake
 
-       **Clone the repository (if not already available):**
+**Run (Sandbox):**
 
-       .. code-block:: bash
+        .. code-block:: bash
 
-           git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
-           cd GDCGenomicsQC
+            gdcgenomicsqc --configfile /path/to/your/config.yaml
 
-       **Run:**
+        Or using Snakemake directly:
 
-       .. code-block:: bash
+        .. code-block:: bash
 
-           cd GDCGenomicsQC/workflow
-           snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
+            snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
 
-       Or using the wrapper script (after loading the module):
+        :doc:`Skip to Usage <usage>`
 
-       .. code-block:: bash
-
-           gdcgenomicsqc --configfile /path/to/your/config.yaml
-
-       :doc:`Skip to Usage <usage>`
-
-   .. tab:: HPC without Module
-
-      If you're on an HPC system without the GDCGenomicsQC module, set up manually.
+    .. tab:: New HPC (Clone)
 
       **Prerequisites:**
 

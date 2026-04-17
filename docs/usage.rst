@@ -34,40 +34,42 @@ Choose the method that matches your HPC setup:
 
            conda activate snakemake
 
-       **Step 3: Verify installation**
+**Step 3: Verify installation**
 
-       .. code-block:: bash
+        .. code-block:: bash
 
-           cd GDCGenomicsQC
-           snakemake --version
+            snakemake --version
 
-       **What the module provides:**
+        .. note::
 
-       +--------------------------------+------------------------------------------------+
-       | Setting                        | Value                                           |
-       +================================+================================================+
-       | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
-       +--------------------------------+------------------------------------------------+
-       | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
-       +--------------------------------+------------------------------------------------+
-       | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
-       +--------------------------------+------------------------------------------------+
+            **You do NOT need to clone the repository.** The pipeline is pre-installed
+            via the ``gdcgenomicsqc`` module. Just create your config file and run.
 
-       **Running the pipeline:**
+        **What the module provides:**
 
-       .. code-block:: bash
+        +--------------------------------+------------------------------------------------+
+        | Setting                        | Value                                           |
+        +================================+================================================+
+        | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+        +--------------------------------+------------------------------------------------+
+        | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+        +--------------------------------+------------------------------------------------+
+        | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+        +--------------------------------+------------------------------------------------+
 
-           cd GDCGenomicsQC/workflow
-           gdcgenomicsqc --configfile ../config/config.yaml
+        **Running the pipeline:**
 
-       Or with snakemake directly:
+        .. code-block:: bash
 
-       .. code-block:: bash
+            gdcgenomicsqc --configfile /path/to/your/config.yaml
 
-           cd GDCGenomicsQC/workflow
-           snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
+        Or with snakemake directly:
 
-   .. tab:: Sandbox
+        .. code-block:: bash
+
+            snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+
+    .. tab:: Sandbox
 
        If your sandbox environment has the GDC module pre-configured:
 
@@ -84,69 +86,46 @@ Choose the method that matches your HPC setup:
 
            conda activate snakemake
 
-       **Step 3: Verify installation**
+**Step 3: Verify installation**
 
-       .. code-block:: bash
+        .. code-block:: bash
 
-           cd GDCGenomicsQC
-           snakemake --version
+            snakemake --version
 
-       **What the module provides:**
+        .. note::
 
-       +--------------------------------+------------------------------------------------+
-       | Setting                        | Value                                           |
-       +================================+================================================+
-       | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
-       +--------------------------------+------------------------------------------------+
-       | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
-       +--------------------------------+------------------------------------------------+
-       | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
-       +--------------------------------+------------------------------------------------+
+            **You do NOT need to clone the repository.** The pipeline is pre-installed
+            via the ``gdcgenomicsqc`` module. Just create your config file and run.
 
-       **Running the pipeline:**
+        **What the module provides:**
 
-       .. code-block:: bash
+        +--------------------------------+------------------------------------------------+
+        | Setting                        | Value                                           |
+        +================================+================================================+
+        | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+        +--------------------------------+------------------------------------------------+
+        | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+        +--------------------------------+------------------------------------------------+
+        | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+        +--------------------------------+------------------------------------------------+
 
-           cd GDCGenomicsQC/workflow
-           gdcgenomicsqc --configfile ../config/config.yaml
+        **Running the pipeline:**
 
-       Or with snakemake directly:
+        .. code-block:: bash
 
-       .. code-block:: bash
+            gdcgenomicsqc --configfile /path/to/your/config.yaml
 
-           cd GDCGenomicsQC/workflow
-           snakemake --profile ../profiles/sandbox --configfile ../config/config.yaml
+        Or with snakemake directly:
 
-   .. tab:: Local Snakemake (Conda)
+        .. code-block:: bash
 
-      If you're using your own Snakemake installation:
+            snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
 
-      **Step 1: Create the conda environment**
+    .. tab:: Local Snakemake (Conda)
 
-      .. code-block:: bash
+If you're setting up on a new HPC without the module, see the :doc:`new_hpc_setup` guide.
 
-          # Clone the repository
-          git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
-          cd GDCGenomicsQC
-
-          # Create the snakemake environment
-          conda env create -f envs/snakemake.yml
-          conda activate snakemake
-
-      **Step 2: Verify installation**
-
-      .. code-block:: bash
-
-          snakemake --version
-
-      **Running the pipeline:**
-
-      .. code-block:: bash
-
-          cd GDCGenomicsQC/workflow
-          snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
-
-**See also:** :doc:`installation` for detailed setup options including Singularity-only environments.
+**See also:** :doc:`installation` for MSI HPC or Sandbox, :doc:`new_hpc_setup` for new HPC setup.
 
 Workflow Overview
 -----------------
