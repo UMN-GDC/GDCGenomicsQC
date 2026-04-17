@@ -63,6 +63,7 @@ internalPCA:
 ancestry:
     threshold: 0.8
     model: "pca"
+    ancestry_file: null
 
 conda-frontend: mamba
 phenotypeSimulation:
