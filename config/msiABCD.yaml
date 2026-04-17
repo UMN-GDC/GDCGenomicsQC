@@ -60,6 +60,7 @@ internalPCA:
 ancestry:
     threshold: 0.8
     model: "pca"
+    ancestry_file: null
 
 phenotypeSimulation:
     # Ancestries to simulate for
