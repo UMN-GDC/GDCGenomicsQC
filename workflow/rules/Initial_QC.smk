@@ -23,7 +23,7 @@ rule mergeChromosomesAndFilter:
         smiss=OUT_DIR / "{subset}" / "initial.smiss",
         vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
     input:
-        fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
+        fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         pgen=expand(
             OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES
         ),

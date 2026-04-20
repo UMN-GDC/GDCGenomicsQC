@@ -12,6 +12,7 @@ rule crossmap:
         bed=OUT_DIR / "01-Initialfilter" / "initialFilter.bed",
         bim=OUT_DIR / "01-Initialfilter" / "initialFilter.bim",
         fam=OUT_DIR / "01-Initialfilter" / "initialFilter.fam",
+        chain=ancient(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
     output:
         # List all files that PLINK will actually create
         eigen=OUT_DIR / "04-globalAncestry" / "ref.eigenvec",
@@ -23,7 +24,7 @@ rule crossmap:
         out_dir=OUT_DIR / "04-globalAncestry",
         input_prefix=OUT_DIR / "01-Initialfilter" / "initialFilter",
         input_dir=OUT_DIR / "01-Initialfilter",
-        ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased",
+        ref=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased"),
     shell:
         """
 
@@ -35,7 +36,7 @@ rule crossmap:
     rm prep.bed updated.snp updated.position updated.chr
     awk '{print $1, $4-1, $4, $2}' prep2.map > prep.bed
     
-    python ${REF}/CrossMap/CrossMap.py bed ${REF}/CrossMap/GRCh37_to_GRCh38.chain.gz prep.bed study.${NAME}.lifted.bed3
+    python ${REF}/CrossMap/CrossMap.py bed {input.chain} prep.bed study.${NAME}.lifted.bed3
     
     awk '{print $4}' study.$NAME.lifted.bed3 > updated.snp
     awk '{print $4, $3}' study.$NAME.lifted.bed3 > updated.position

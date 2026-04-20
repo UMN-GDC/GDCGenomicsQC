@@ -24,8 +24,8 @@ rule convertVcfToPlinkPerChromosome:
     input:
         vcf=config.get("vcf_template", ""),
         keep=get_ancestry_file,
-        crossmap=REF / "CrossMap" / "hg19ToHg38.over.chain.gz",
-        gr38fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
+        crossmap=ancient(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
+        gr38fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
     params:
         thin=config.get("thin", False),
         min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
