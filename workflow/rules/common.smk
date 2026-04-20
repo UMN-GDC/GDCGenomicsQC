@@ -41,13 +41,12 @@ def get_ancestries(wildcards):
     provided = get_provided_ancestries()
     if provided:
         return provided
-    if "classifySamplesByAncestry" not in dir(rules):
+    if "classifySamplesByAncestry" not in dir(checkpoints):
         return []
-    ancestry_file = rules.classifySamplesByAncestry.output.classifications
+    ckpt = checkpoints.classifySamplesByAncestry.get()
+    df = pd.read_csv(ckpt.output.classifications, sep="\t")
     predicted_col = f"{ANCESTRY_MODEL}_predicted"
-    ancestries = (
-        pd.read_csv(ancestry_file, sep="\t")[predicted_col].dropna().unique().tolist()
-    )
+    ancestries = df[predicted_col].dropna().unique().tolist()
     return [a for a in ancestries if a != "uncertain"]
 
 

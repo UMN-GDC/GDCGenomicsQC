@@ -46,7 +46,7 @@ checkpoint estimateGlobalAncestry:
         """
 
 
-rule classifySamplesByAncestry:
+checkpoint classifySamplesByAncestry:
     log:
         OUT_DIR / "logs" / "classifySamplesByAncestry.log",
     container:
