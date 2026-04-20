@@ -67,6 +67,7 @@ include: "rules/snpHeritSim.smk"
 
 rule all:
     input:
+        ancient(OUT_DIR / ".input_pattern_detected"),
         ancient(
             expand(OUT_DIR / "01-globalAncestry" / "keep_{ANC}.txt", ANC=get_provided_ancestries())
         ) if has_provided_ancestry() else [],
@@ -162,6 +163,7 @@ rule run_classifyAncestry:
         mem_mb=4000,
         runtime=420,  # 1 week
     input:
+        ancient(OUT_DIR / ".input_pattern_detected"),
         OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
         OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
         OUT_DIR
