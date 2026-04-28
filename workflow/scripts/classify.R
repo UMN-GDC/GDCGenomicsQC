@@ -50,17 +50,13 @@ for (anc in unique_ancestries) {
     result |>
         filter(.data[[predicted_col]] == anc, .data[[confidence_col]] >= args$threshold) |>
         select(IID) |>
-        mutate(FID = 0) |>
-        relocate(FID, IID) |>
-        write_delim(file.path(args$out, paste0("keep_", anc, ".txt")), delim = "\t")
+        write_delim(file.path(args$out, paste0("keep_", anc, ".txt")), delim = "\t", col_names = FALSE)
 }
 
 result |>
     filter(.data[[confidence_col]] < args$threshold | .data[[predicted_col]] == "uncertain" | is.na(.data[[confidence_col]])) |>
     select(IID) |>
-    mutate(FID = 0) |>
-    relocate(FID, IID) |>
-    write_delim(file.path(args$out, "keep_Other.txt"), delim = "\t")
+    write_delim(file.path(args$out, "keep_Other.txt"), delim = "\t", col_names = FALSE)
 
 classification_df <- result
 sample_coords <- read_delim(file.path(args$out, "sample_coords.tsv"), delim = "\t")

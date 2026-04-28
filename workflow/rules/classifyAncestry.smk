@@ -17,7 +17,7 @@ checkpoint estimateGlobalAncestry:
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
         umap_sample=OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
-        rfmix_global=OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
+        rfmix_global=lambda wildcards: OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
     output:
         pos_prob=OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
         sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
@@ -32,15 +32,21 @@ checkpoint estimateGlobalAncestry:
     params:
         dir=OUT_DIR / "01-globalAncestry",
         script=workflow.source_path("../scripts/trainPredict.R"),
+        use_rfmix=uses_rfmix(),
     shell:
         """
+        if [ "{params.use_rfmix}" = "True" ]; then
+          rfmix_arg="--rfmix_global {input.rfmix_global}"
+        else
+          rfmix_arg=""
+        fi
         Rscript {params.script} \
           --eigen_ref {input.eigen_ref} \
           --eigen_sample {input.eigen_sample} \
           --umap_ref {input.umap_ref} \
           --umap_sample {input.umap_sample} \
           --labels {input.labels} \
-          --rfmix_global {input.rfmix_global} \
+          $rfmix_arg \
           --out {params.dir} \
           --rseed $RANDOM
         """

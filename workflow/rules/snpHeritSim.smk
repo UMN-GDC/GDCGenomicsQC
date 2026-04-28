@@ -21,6 +21,9 @@ rule generateSimPCA:
         fam=SIM_OUT_DIR / "{anc}_simulation.fam",
     output:
         eigenvec=SIM_OUT_DIR / "{anc}_simulation.eigenvec",
+        grm_bin=SIM_OUT_DIR / "{anc}_simulation.grm.bin",
+        grm_id=SIM_OUT_DIR / "{anc}_simulation.grm.id",
+        grm_n=SIM_OUT_DIR / "{anc}_simulation.grm.N.bin",
     params:
         prefix=lambda wildcards, input: input.bed[:-4],
         npc=config.get("snpHerit", {}).get("npc", 10),

@@ -1,24 +1,19 @@
-name: ancNreport
+name: classifyNreport
 channels:
+  - conda-forge
   - bioconda
   - r
-  - dranew
-  - conda-forge
   - nodefaults
 dependencies:
-  - python=3.10
-  - git
-  - r-base
-  - r-tidyverse
   - r-uwot
+  - r-svglite
+  - r-hdpca
   - r-randomforest
+  - r-tidyverse
   - r-data.table
   - r-argparse
   - r-mvtnorm
-  - r-gt
-  - r-svglite
-  - r-hdpca
-  - perl
+  - bioconductor-gviz
   - bioconductor-gdsfmt
   - bioconductor-snprelate
   - bioconductor-seqarray
@@ -28,15 +23,4 @@ dependencies:
   - bioconductor-genesis
   - bioconductor-xvector
   - bioconductor-biostrings
-  - bcftools
-  - bcftools-liftover-plugin
-  - samtools>=1.17
-  - pandas-plink
-  - scikit-learn
-  - seaborn
-  - xarray
-  - crossmap
-  - fraposa-pgsc
-  - plink
-  - plink2
-prefix: /projects/standard/gdc/public/envs/ancNreport
+prefix: /projects/standard/gdc/public/envs/classifyNreport

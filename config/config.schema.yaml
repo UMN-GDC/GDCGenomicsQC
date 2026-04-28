@@ -99,13 +99,31 @@ ancestry:
       default: null
       description: |
         Path to a user-provided ancestry labels file (bypass mode).
-        Format: Tab-separated, two columns (IID, ancestry_label), no header.
+        See also: ancestry_file_sep and ancestry_file_col for flexible column mapping.
+        Default format: Tab-separated, two columns (IID, ancestry_label), no header.
         Example:
           sample1  AFR
           sample2  EUR
         When provided, the pipeline skips ancestry prediction and uses these
         labels directly for ancestry-specific QC branching. Samples not in this
         file are excluded from ancestry-specific analysis but remain in the full dataset.
+    ancestry_file_sep:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Field separator for ancestry_file. Defaults to tab.
+        Set to " " (space), ",", or any other delimiter as needed.
+        Example: For "/projects/standard/gdc/public/Ref/1000G_highcoverage/population.txt"
+        which is space-separated, use " ".
+    ancestry_file_col:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Column name (or 0-based index) containing ancestry labels in ancestry_file.
+        If null, uses second column (index 1) as ancestry labels.
+        Example: For 1000G population.txt with header "Superpopulation", use "Superpopulation".
 
 internalPCA:
   type: dict
