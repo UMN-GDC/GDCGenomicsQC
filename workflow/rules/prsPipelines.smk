@@ -37,6 +37,8 @@ def prs_method_extra_args(method):
 
 
 rule preparePRSMethodResources:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "preparePRSMethodResources.log",
     threads: 1
@@ -67,6 +69,8 @@ rule preparePRSMethodResources:
 
 
 rule runSingleAncestryCT:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runSingleAncestryCT.log",
     threads: 4
@@ -104,6 +108,8 @@ rule runSingleAncestryCT:
 
 
 rule runSingleAncestryPRSice:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runSingleAncestryPRSice.log",
     threads: 4
@@ -141,6 +147,8 @@ rule runSingleAncestryPRSice:
 
 
 rule runSingleAncestryPRSCS:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runSingleAncestryPRSCS.log",
     threads: 4
@@ -176,6 +184,8 @@ rule runSingleAncestryPRSCS:
 
 
 rule runSingleAncestryLDpred2:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runSingleAncestryLDpred2.log",
     threads: 4
@@ -213,6 +223,8 @@ rule runSingleAncestryLDpred2:
 
 
 rule runSingleAncestryLassosum2:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runSingleAncestryLassosum2.log",
     threads: 4
@@ -250,6 +262,8 @@ rule runSingleAncestryLassosum2:
 
 
 rule runMultiAncestryCTSLEB:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runMultiAncestryCTSLEB.log",
     threads: 4
@@ -288,6 +302,8 @@ rule runMultiAncestryCTSLEB:
 
 
 rule runMultiAncestryPRSCSx:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runMultiAncestryPRSCSx.log",
     threads: 4
@@ -325,6 +341,8 @@ rule runMultiAncestryPRSCSx:
 
 
 rule runMultiAncestryLDpred2:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runMultiAncestryLDpred2.log",
     threads: 4
@@ -363,6 +381,8 @@ rule runMultiAncestryLDpred2:
 
 
 rule runMultiAncestryPROSPER:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runMultiAncestryPROSPER.log",
     threads: 4
@@ -399,6 +419,8 @@ rule runMultiAncestryPROSPER:
 
 
 rule runMultiAncestrySDPRS:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / "runMultiAncestrySDPRS.log",
     threads: 4

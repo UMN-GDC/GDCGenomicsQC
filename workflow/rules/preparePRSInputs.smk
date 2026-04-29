@@ -17,6 +17,8 @@ rule preparePRSInputs:
         OUT_DIR / "logs" / "preparePRSInputs.log",
     conda:
         "../../envs/phenotypeSim.yml"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     threads: 4
     resources:
         nodes=1,
@@ -73,6 +75,8 @@ rule preparePRSInputs:
 
 
 rule runSingleAncestryPRS:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
     log:
         OUT_DIR / "logs" / f"runSingleAncestryPRS_{PRS_ANC1}.log",
     threads: 4
