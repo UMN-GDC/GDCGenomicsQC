@@ -16,9 +16,9 @@ rule preparePRSInputs:
     log:
         OUT_DIR / "logs" / "preparePRSInputs.log",
     conda:
-        "../../envs/phenotypeSim.yml"
+        "../../envs/ancNreport.yml"
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     threads: 4
     resources:
         nodes=1,
@@ -57,7 +57,6 @@ rule preparePRSInputs:
         phenotype_index=PRS_CONFIG.get("phenotype_index", 1),
         gwas_fraction=PRS_CONFIG.get("gwas_fraction", 0.5),
         seed=PRS_CONFIG.get("seed", 42),
-        plink2=PRS_CONFIG.get("path_plink2", "plink2"),
         script=Path(workflow.basedir) / "scripts" / "prepare_prs_inputs.sh",
     shell:
         """
@@ -69,7 +68,6 @@ rule preparePRSInputs:
             --phenotype-index {params.phenotype_index} \
             --gwas-fraction {params.gwas_fraction} \
             --seed {params.seed} \
-            --plink2-bin {params.plink2} \
             > {log} 2>&1
         """
 

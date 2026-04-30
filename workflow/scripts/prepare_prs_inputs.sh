@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  prepare_prs_inputs.sh --sim-dir DIR --out-dir DIR --anc1 AFR --anc2 EUR [--phenotype-index 1] [--gwas-fraction 0.5] [--seed 42] [--plink2-bin plink2]
+  prepare_prs_inputs.sh --sim-dir DIR --out-dir DIR --anc1 AFR --anc2 EUR [--phenotype-index 1] [--gwas-fraction 0.5] [--seed 42]
 
 Creates PRS pipeline inputs from simulated ancestry-specific PLINK files:
   - gwas/target_sumstats.txt and gwas/training_sumstats.txt for PRS-CSx
@@ -24,56 +24,34 @@ ANC2="EUR"
 PHENO_INDEX="1"
 GWAS_FRACTION="0.5"
 SEED="42"
-PLINK2_BIN="plink2"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --sim-dir) SIM_DIR="$2"; shift 2 ;;
-    --out-dir) OUT_DIR="$2"; shift 2 ;;
-    --anc1) ANC1="$2"; shift 2 ;;
-    --anc2) ANC2="$2"; shift 2 ;;
-    --phenotype-index) PHENO_INDEX="$2"; shift 2 ;;
-    --gwas-fraction) GWAS_FRACTION="$2"; shift 2 ;;
-    --seed) SEED="$2"; shift 2 ;;
-    --plink2-bin) PLINK2_BIN="$2"; shift 2 ;;
+    --sim-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      SIM_DIR="$2"; shift 2 ;;
+    --out-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      OUT_DIR="$2"; shift 2 ;;
+    --anc1)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      ANC1="$2"; shift 2 ;;
+    --anc2)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      ANC2="$2"; shift 2 ;;
+    --phenotype-index)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      PHENO_INDEX="$2"; shift 2 ;;
+    --gwas-fraction)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      GWAS_FRACTION="$2"; shift 2 ;;
+    --seed)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      SEED="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
-
-if [[ -z "$SIM_DIR" || -z "$OUT_DIR" ]]; then
-  usage >&2
-  exit 2
-fi
-
-resolve_plink2_bin() {
-  local candidate="$1"
-
-  if command -v "$candidate" >/dev/null 2>&1; then
-    command -v "$candidate"
-    return 0
-  fi
-
-  if [[ -x "$candidate" && ! -d "$candidate" ]]; then
-    printf '%s\n' "$candidate"
-    return 0
-  fi
-
-  if [[ -d "$candidate" && -x "$candidate/plink2" ]]; then
-    printf '%s\n' "$candidate/plink2"
-    return 0
-  fi
-
-  return 1
-}
-
-PLINK2_BIN_RESOLVED=$(resolve_plink2_bin "$PLINK2_BIN") || {
-  echo "plink2 not found. Tried: $PLINK2_BIN" >&2
-  echo "Set prsPipeline.path_plink2 in the config, e.g. /projects/standard/gdc/public/plink2" >&2
-  exit 127
-}
-
-echo "Using PLINK2: $PLINK2_BIN_RESOLVED"
 
 mkdir -p "$OUT_DIR"/{gwas,anc1_plink_files,anc2_plink_files,metadata,logs,tmp}
 
@@ -110,7 +88,7 @@ run_glm() {
   local pheno="$2"
   local out_prefix="$3"
 
-  "$PLINK2_BIN_RESOLVED" \
+  plink2 \
     --bfile "$bfile" \
     --pheno "$pheno" \
     --pheno-name PHENO \
@@ -183,8 +161,8 @@ process_ancestry() {
 
   make_split_files "${out_prefix}.fam" "$anc"
 
-  "$PLINK2_BIN_RESOLVED" --bfile "$out_prefix" --keep "$OUT_DIR/metadata/${anc}_gwas.keep" --make-bed --out "$gwas_prefix"
-  "$PLINK2_BIN_RESOLVED" --bfile "$out_prefix" --keep "$OUT_DIR/metadata/${anc}_study.keep" --make-bed --out "$study_prefix"
+  plink2 --bfile "$out_prefix" --keep "$OUT_DIR/metadata/${anc}_gwas.keep" --make-bed --out "$gwas_prefix"
+  plink2 --bfile "$out_prefix" --keep "$OUT_DIR/metadata/${anc}_study.keep" --make-bed --out "$study_prefix"
 
   make_pheno_file "${gwas_prefix}.fam" "$gwas_pheno"
   make_pheno_file "${study_prefix}.fam" "$study_pheno"
@@ -220,7 +198,7 @@ cat > "$OUT_DIR/prs_prscsx_generated.conf" <<EOF
 path_code="/projects/standard/gdc/public/prs_methods/scripts/PRScsx"
 path_data_root="$OUT_DIR"
 path_ref_dir="/projects/standard/gdc/public/prs_methods/ref/ref_PRScsx/1kg_ref"
-path_plink2="/projects/standard/gdc/public/plink2"
+path_plink2="plink2"
 
 anc1="$ANC1"
 anc2="$ANC2"
@@ -239,7 +217,7 @@ EOF
 cat > "$OUT_DIR/prs_single_ancestry_${ANC1}_generated.conf" <<EOF
 path_data="$OUT_DIR"
 path_repo="/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
-path_plink2="/projects/standard/gdc/public/plink2"
+path_plink2="plink2"
 
 summary_stats_file="\${path_data}/gwas/target_sumstats_singlePRS.txt"
 bim_file_path="\${path_data}/anc1_plink_files/${ANC1}_simulation_study_sample.bim"

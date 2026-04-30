@@ -35,7 +35,7 @@ rule generateSimPCA:
 
 rule prepareSimPheno:
     container:
-        "docker://alpine:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
     log:
         OUT_DIR / "logs" / "prepareSimPheno_{anc}.log",
     input:

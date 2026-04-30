@@ -51,7 +51,7 @@ include: "rules/umap.smk"
 include: "rules/classifyAncestry.smk"
 include: "rules/RFMIX.smk"
 include: "rules/plotKaryotypeAncestry.smk"
-include: "rules/simulatePhenotype.smk"
+# include: "rules/simulatePhenotype.smk"
 include: "rules/simulatePhenotype2.smk"
 include: "rules/snpHerit.smk"
 include: "rules/snpHeritSim.smk"
@@ -88,7 +88,7 @@ rule all:
         ),
 
 
-ruleorder: convertPlinkPerChromosome > mergeChromosomesAndFilter > convertPlinkSingleFile
+ruleorder: convertPlinkPerChromosome > convertPlinkSingleFile > mergeChromosomesAndFilter
 ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 # include: "rules/trainGnomix.smk"

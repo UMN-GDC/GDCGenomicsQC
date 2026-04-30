@@ -51,6 +51,8 @@ AGENTS.md
 
 # Output files from R CMD check
 /*.Rcheck/
+/*tmp*/
+/*temp*/
 
 # RStudio files
 .Rproj.user/

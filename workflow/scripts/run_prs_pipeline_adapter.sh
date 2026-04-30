@@ -25,15 +25,33 @@ USAGE
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --method) METHOD="$2"; shift 2 ;;
-    --prs-inputs-env) PRS_INPUTS_ENV="$2"; shift 2 ;;
-    --resource-dir) RESOURCE_DIR="$2"; shift 2 ;;
-    --out-dir) OUT_DIR="$2"; shift 2 ;;
-    --done) DONE="$2"; shift 2 ;;
-    --ld-ref-dir) LD_REF_DIR="$2"; shift 2 ;;
-    --ld-ref-prefix) LD_REF_PREFIX="$2"; shift 2 ;;
-    --ld-matrix-dir) LD_MATRIX_DIR="$2"; shift 2 ;;
-    --software-dir) SOFTWARE_DIR="$2"; shift 2 ;;
+    --method)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      METHOD="$2"; shift 2 ;;
+    --prs-inputs-env)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      PRS_INPUTS_ENV="$2"; shift 2 ;;
+    --resource-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      RESOURCE_DIR="$2"; shift 2 ;;
+    --out-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      OUT_DIR="$2"; shift 2 ;;
+    --done)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      DONE="$2"; shift 2 ;;
+    --ld-ref-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      LD_REF_DIR="$2"; shift 2 ;;
+    --ld-ref-prefix)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      LD_REF_PREFIX="$2"; shift 2 ;;
+    --ld-matrix-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      LD_MATRIX_DIR="$2"; shift 2 ;;
+    --software-dir)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      SOFTWARE_DIR="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac

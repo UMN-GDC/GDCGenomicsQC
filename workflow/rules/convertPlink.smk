@@ -196,7 +196,7 @@ rule convertPlinkSingleFile:
         """
         if [ "{params.is_per_chr}" == "True" ]; then
             echo "ERROR: convertPlinkSingleFile should not be used when INPUT has {{CHR}}. Use convertPlinkPerChromosome instead."
-            echo "INPUT: {config.get('INPUT', '')}"
+            echo "INPUT: {params.single_input}"
             exit 1
         fi
 

@@ -92,3 +92,32 @@ phenotypeSimulation:
     
     # Number of individuals to thin to (if not skipping)
     thin_count_inds: 10000
+
+# PRS Methods Configuration
+# Set enabled: true for methods you want to run
+# Commands are defined in workflow/rules/prsPipelines.smk (software is in container)
+prsMethods:
+  # Single ancestry methods
+  single_ct:
+    enabled: false
+  single_prsice:
+    enabled: false
+  single_prscs:
+    enabled: false
+  single_ldpred2:
+    enabled: false
+  single_lassosum2:
+    enabled: false
+  
+  # Multi ancestry methods
+  multi_ctsleb:
+    enabled: false
+  multi_prscsx:
+    enabled: false
+    ld_ref_dir: ""  # Optional: path to LD reference directory
+  multi_ldpred2:
+    enabled: false
+  multi_prosper:
+    enabled: false
+  multi_sdprs:
+    enabled: false

@@ -24,6 +24,8 @@ high-performance clusters like the UMN MSI Agate cluster.
    tutorial_1kg_assembly
    tutorial_heritability
    tutorial_phenotype_simulation
+   tutorial_prs
+   tutorial_prs_multi
 
 Getting Started
 ---------------
@@ -37,14 +39,16 @@ Getting Started
 5. :doc:`tutorial_ancestry_classification` - Classify ancestry
 6. :doc:`tutorial_phenotype_simulation` - Simulate phenotypes for method testing
 7. :doc:`tutorial_heritability` - Estimate heritability (with real phenotypes)
+8. :doc:`tutorial_prs` - Run single-ancestry PRS methods
+9. :doc:`tutorial_prs_multi` - Run multi-ancestry PRS methods
 
 **Quick Setup (MSI/UMN HPC):**
 
 .. code-block:: bash
 
-    module use /path/to/GDCGenomicsQC/envs
-    module load gdcgenomicsqc
-    conda activate snakemake
+     module use /path/to/GDCGenomicsQC/envs
+     module load gdcgenomicsMSI
+     conda activate snakemake
     cd GDCGenomicsQC
     snakemake --version
 
