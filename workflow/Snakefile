@@ -54,7 +54,6 @@ include: "rules/plotKaryotypeAncestry.smk"
 # include: "rules/simulatePhenotype.smk"
 include: "rules/simulatePhenotype2.smk"
 include: "rules/snpHerit.smk"
-include: "rules/snpHeritSim.smk"
 include: "rules/preparePRSInputs.smk"
 include: "rules/prsPipelines.smk"
 
@@ -85,6 +84,15 @@ rule all:
             OUT_DIR / "{ANC}" / "standardFilter.pgen", ANC=get_provided_ancestries()
         ) if has_provided_ancestry() else (
             expand(OUT_DIR / "full" / "standardFilter.pgen")
+        ),
+        # snpHeritability estimates
+        lambda wildcards: (
+            expand(
+                OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
+                subset=get_ancestries(wildcards),
+            )
+            if config.get("snpHerit", {}).get("pheno") and config.get("snpHerit", {}).get("covar")
+            else []
         ),
 
 
@@ -261,21 +269,6 @@ rule run_simulatePhenotype:
         ),
 
 
-rule run_snpHeritSim:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
-    input:
-        lambda wildcards: expand(
-            OUT_DIR
-            / "simulations"
-            / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
-            / "{anc}_simulation_pheno1.estimates",
-            anc=config.get("phenotypeSimulation", {}).get("ancestries", ["AFR", "EUR"]),
-        ),
-
 
 rule run_snpHerit:
     threads: 1
@@ -289,8 +282,8 @@ rule run_snpHerit:
                 OUT_DIR
                 / "{subset}"
                 / "03-snpHeritability"
-                / config.get("snpHerit", {}).get("out", "heritability.txt"),
-                subset=["full"] + get_ancestries(wildcards),
+                / "mash_output.csv",
+                subset=get_ancestries(wildcards),
             )
             if config.get("snpHerit", {}).get("pheno") and config.get("snpHerit", {}).get("covar")
             else []
