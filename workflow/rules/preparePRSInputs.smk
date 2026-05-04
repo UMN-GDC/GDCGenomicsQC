@@ -1,9 +1,10 @@
 PRS_CONFIG = config.get("prsPipeline", {})
 PRS_SIM_CONFIG = config.get("phenotypeSimulation", {})
 
+# Allow pointing to pre-computed simulation files (for real data or external simulations)
+PRS_SIM_DIR = Path(PRS_SIM_CONFIG.get("simulations_dir", str(OUT_DIR / "simulations" / f"{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[0]}_{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[1]}")))
 PRS_ANC1 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[0]
 PRS_ANC2 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[1]
-PRS_SIM_DIR = OUT_DIR / "simulations" / f"{PRS_ANC1}_{PRS_ANC2}"
 PRS_OUT_DIR = Path(
     PRS_CONFIG.get(
         "generated_input_dir",
