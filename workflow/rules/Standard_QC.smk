@@ -47,7 +47,11 @@ if INPUT_IS_PER_CHROMOSOME:
               cp {input.pvar} {output.tempDir}/pastSex.pvar
               cp {input.psam} {output.tempDir}/pastSex.psam
             fi
-            bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir}_{wildcards.CHR} {threads}
+            bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
+
+            mv {params.output_dir}/standardFilter.pgen {output.pgen}
+            mv {params.output_dir}/standardFilter.pvar {output.pvar}
+            mv {params.output_dir}/standardFilter.psam {output.psam}
             """
 
 else:
