@@ -203,9 +203,17 @@ rule run_ancestryQC:
                 ANCESTRY=get_ancestries(wildcards),
             )
         ),
-        lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "standardFilter.pgen",
-            ANCESTRY=get_ancestries(wildcards),
+        lambda wildcards: (
+            expand(
+                OUT_DIR / "{ANCESTRY}" / "standardFilter_{CHR}.pgen",
+                ANCESTRY=get_ancestries(wildcards),
+                CHR=CHROMOSOMES,
+            )
+            if INPUT_IS_PER_CHROMOSOME
+            else expand(
+                OUT_DIR / "{ANCESTRY}" / "standardFilter.pgen",
+                ANCESTRY=get_ancestries(wildcards),
+            )
         ),
 
 
