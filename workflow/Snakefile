@@ -11,6 +11,10 @@ report: "../report/stylesheet.css"
 # paths inside the rules are relative to where you run the command.
 
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
+CHR_REGEX = "|".join(str(c) for c in CHROMOSOMES)
+
+wildcard_constraints:
+    CHR=CHR_REGEX
 
 def input_is_per_chromosome():
     return "{CHR}" in config.get("INPUT", "")
