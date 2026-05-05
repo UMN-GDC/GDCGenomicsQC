@@ -1,24 +1,3 @@
-def get_standard_qc_input(wildcards):
-    if INPUT_IS_PER_CHROMOSOME:
-        return dict(
-            pgen=OUT_DIR / wildcards.subset / f"initialFilter_{wildcards.CHR}.pgen",
-            pvar=OUT_DIR / wildcards.subset / f"initialFilter_{wildcards.CHR}.pvar",
-            psam=OUT_DIR / wildcards.subset / f"initialFilter_{wildcards.CHR}.psam",
-            LDpgen=OUT_DIR / wildcards.subset / f"initialFilter_{wildcards.CHR}.LDpruned.pgen",
-            LDpvar=OUT_DIR / wildcards.subset / f"initialFilter_{wildcards.CHR}.LDpruned.pvar",
-            LDpsam=OUT_DIR / wildcards.subset / f"initialFilter_{wildcards.CHR}.LDpruned.psam",
-        )
-    else:
-        return dict(
-            pgen=OUT_DIR / wildcards.subset / "initialFilter.pgen",
-            pvar=OUT_DIR / wildcards.subset / "initialFilter.pvar",
-            psam=OUT_DIR / wildcards.subset / "initialFilter.psam",
-            LDpgen=OUT_DIR / wildcards.subset / "initialFilter.LDpruned.pgen",
-            LDpvar=OUT_DIR / wildcards.subset / "initialFilter.LDpruned.pvar",
-            LDpsam=OUT_DIR / wildcards.subset / "initialFilter.LDpruned.psam",
-        )
-
-
 if INPUT_IS_PER_CHROMOSOME:
     rule applyStandardQualityControl:
         log:
@@ -33,7 +12,12 @@ if INPUT_IS_PER_CHROMOSOME:
             mem_mb=32000,
             runtime=60,
         input:
-            get_standard_qc_input,
+            pgen=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen",
+            pvar=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar",
+            psam=OUT_DIR / "{subset}" / "initialFilter_{CHR}.psam",
+            LDpgen=OUT_DIR / "{subset}" / "initialFilter_{CHR}.LDpruned.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "initialFilter_{CHR}.LDpruned.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "initialFilter_{CHR}.LDpruned.psam",
         output:
             pgen=OUT_DIR / "{subset}" / "standardFilter_{CHR}.pgen",
             pvar=OUT_DIR / "{subset}" / "standardFilter_{CHR}.pvar",
@@ -86,7 +70,12 @@ else:
             mem_mb=32000,
             runtime=60,
         input:
-            get_standard_qc_input,
+            pgen=OUT_DIR / "{subset}" / "initialFilter.pgen",
+            pvar=OUT_DIR / "{subset}" / "initialFilter.pvar",
+            psam=OUT_DIR / "{subset}" / "initialFilter.psam",
+            LDpgen=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
         output:
             pgen=OUT_DIR / "{subset}" / "standardFilter.pgen",
             pvar=OUT_DIR / "{subset}" / "standardFilter.pvar",
