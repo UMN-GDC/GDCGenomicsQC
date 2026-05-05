@@ -15,16 +15,10 @@ if INPUT_IS_PER_CHROMOSOME:
             pgen=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen",
             pvar=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar",
             psam=OUT_DIR / "{subset}" / "initialFilter_{CHR}.psam",
-            LDpgen=OUT_DIR / "{subset}" / "initialFilter_{CHR}.LDpruned.pgen",
-            LDpvar=OUT_DIR / "{subset}" / "initialFilter_{CHR}.LDpruned.pvar",
-            LDpsam=OUT_DIR / "{subset}" / "initialFilter_{CHR}.LDpruned.psam",
         output:
             pgen=OUT_DIR / "{subset}" / "standardFilter_{CHR}.pgen",
             pvar=OUT_DIR / "{subset}" / "standardFilter_{CHR}.pvar",
             psam=OUT_DIR / "{subset}" / "standardFilter_{CHR}.psam",
-            LDpgen=OUT_DIR / "{subset}" / "standardFilter_{CHR}.LDpruned.pgen",
-            LDpvar=OUT_DIR / "{subset}" / "standardFilter_{CHR}.LDpruned.pvar",
-            LDpsam=OUT_DIR / "{subset}" / "standardFilter_{CHR}.LDpruned.psam",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter_{CHR}")
             ),
@@ -32,7 +26,7 @@ if INPUT_IS_PER_CHROMOSOME:
             ref=config.get("REF", "/path/to/ref"),
             output_dir=lambda wildcards, input: OUT_DIR / wildcards.subset,
             sex_check=config.get("SEX_CHECK", False),
-            input_prefix=lambda wildcards, input: input.LDpgen[:-5],
+            input_prefix=lambda wildcards, input: input.pgen[:-5],
             relatedness=config.get("relatedness", {}).get("method", "king"),
             scripts_dir=SCRIPTS_DIR,
         shell:
@@ -49,9 +43,9 @@ if INPUT_IS_PER_CHROMOSOME:
               plink2 --pfile {params.input_prefix} --remove {params.output_dir}/sex_discrepancy_{wildcards.CHR}.txt --make-pgen --out {output.tempDir}/pastSex --threads {threads}
             else
               echo "Ignoring Sex check"
-              cp {input.LDpgen} {output.tempDir}/pastSex.pgen
-              cp {input.LDpvar} {output.tempDir}/pastSex.pvar
-              cp {input.LDpsam} {output.tempDir}/pastSex.psam
+              cp {input.pgen} {output.tempDir}/pastSex.pgen
+              cp {input.pvar} {output.tempDir}/pastSex.pvar
+              cp {input.psam} {output.tempDir}/pastSex.psam
             fi
             bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir}_{wildcards.CHR} {threads}
             """
