@@ -50,11 +50,11 @@ The pipeline is pre-installed via the ``gdcgenomicsqc`` module.
 
        # For MSI HPC use: /projects/standard/gdc/public/GDCGenomicsQC/envs
        # For Sandbox use: /scratch.global/GDC/GDCGenomicsQC/envs
-       module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-       module load gdcgenomicsqc
-       conda activate snakemake
+        module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+        module load gdcgenomicsMSI
+        conda activate snakemake
 
-       gdcgenomicsqc --configfile /path/to/your/config.yaml
+        gdcgenomicsqc --configfile /path/to/your/config.yaml
 
 3. **Submit:**
 
@@ -94,10 +94,10 @@ Choose the installation method that matches your environment:
 
        .. code-block:: bash
 
-           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-           module load gdcgenomicsqc
+            module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
 
-           # Verify environment is set up
+            # Verify environment is set up
            echo $SINGULARITY_CACHEDIR
            echo $SNAKEMAKE_SINGULARITY_PREFIX
 
@@ -179,10 +179,10 @@ Choose the installation method that matches your environment:
 
        .. code-block:: bash
 
-           module use /scratch.global/GDC/GDCGenomicsQC/envs
-           module load gdcgenomicsqc
+            module use /scratch.global/GDC/GDCGenomicsQC/envs
+            module load gdcgenomicsSandbox
 
-           # Verify environment is set up
+            # Verify environment is set up
            echo $SINGULARITY_CACHEDIR
            echo $SNAKEMAKE_SINGULARITY_PREFIX
 
@@ -479,12 +479,12 @@ The pipeline supports multiple ways to access its dependencies. Choose the metho
    * - Method
      - Best For
      - Setup Required
-   * - **Module System (MSI)**
-     - MSI HPC clusters
-     - ``module load gdcgenomicsqc``
-   * - **Module System (Sandbox)**
-     - Sandbox environments
-     - ``module load gdcgenomicsqc``
+    * - **Module System (MSI)**
+      - MSI HPC clusters
+      - ``module load gdcgenomicsMSI``
+    * - **Module System (Sandbox)**
+      - Sandbox environments
+      - ``module load gdcgenomicsSandbox``
    * - **Conda Environment**
      - Custom HPC or local
      - ``conda env create``
@@ -510,10 +510,10 @@ Software Environment Summary
      - ``conda activate snakemake``
      - ``module load miniconda && conda activate snakemake``
      - ``module load miniconda && conda activate snakemake``
-   * - GDC Pipeline
-     - (via containers)
-     - ``module load gdcgenomicsqc``
-     - ``module load gdcgenomicsqc``
+    * - GDC Pipeline
+      - (via containers)
+      - ``module load gdcgenomicsMSI``
+      - ``module load gdcgenomicsSandbox``
    * - Apptainer
      - N/A
      - ``module load apptainer``
@@ -616,17 +616,17 @@ For additional help, see the :doc:`usage` guide or open an issue on GitHub.
 
    .. code-block:: bash
 
-       # For MSI HPC:
-       module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-       module load gdcgenomicsqc
-       conda activate snakemake
+        # For MSI HPC:
+        module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+        module load gdcgenomicsMSI
+        conda activate snakemake
 
-       # For Sandbox:
-       module use /scratch.global/GDC/GDCGenomicsQC/envs
-       module load gdcgenomicsqc
-       conda activate snakemake
+        # For Sandbox:
+        module use /scratch.global/GDC/GDCGenomicsQC/envs
+        module load gdcgenomicsSandbox
+        conda activate snakemake
 
-       # For other HPCs:
-       module use /path/to/GDCGenomicsQC/envs
-       module load gdcgenomicsqc
-       conda activate snakemake
+        # For other HPCs:
+        module use /path/to/GDCGenomicsQC/envs
+        module load gdcgenomicsMSI
+        conda activate snakemake

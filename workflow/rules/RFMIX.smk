@@ -5,7 +5,7 @@ rule estimateLocalAncestryPerChromosome:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
     conda:
         "../../envs/rfmix.yml"
-    threads: 8
+    threads: 4
     resources:
         nodes=1,
         mem_mb=64000,

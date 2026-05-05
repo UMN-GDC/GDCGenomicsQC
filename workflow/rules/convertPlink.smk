@@ -57,7 +57,7 @@ rule convertPlinkPerChromosome:
         smiss=OUT_DIR / "{subset}" / "initial_{CHR}.smiss",
         vmiss=OUT_DIR / "{subset}" / "initial_{CHR}.vmiss",
     input:
-        fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
+        fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
     params:
         format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
@@ -176,7 +176,7 @@ rule convertPlinkSingleFile:
         smiss=OUT_DIR / "{subset}" / "initial.smiss",
         vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
     input:
-        fasta=REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa",
+        fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
         merge_pgen=lambda wc: get_merge_input_files(wc).get("pgen", []),
         merge_pvar=lambda wc: get_merge_input_files(wc).get("pvar", []),
@@ -196,7 +196,7 @@ rule convertPlinkSingleFile:
         """
         if [ "{params.is_per_chr}" == "True" ]; then
             echo "ERROR: convertPlinkSingleFile should not be used when INPUT has {{CHR}}. Use convertPlinkPerChromosome instead."
-            echo "INPUT: {config.get('INPUT', '')}"
+            echo "INPUT: {params.single_input}"
             exit 1
         fi
 

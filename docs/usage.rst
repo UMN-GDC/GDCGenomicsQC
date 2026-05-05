@@ -25,8 +25,8 @@ Choose the method that matches your HPC setup:
 
        .. code-block:: bash
 
-           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-           module load gdcgenomicsqc
+            module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
 
        **Step 2: Activate snakemake environment**
 
@@ -77,8 +77,8 @@ Choose the method that matches your HPC setup:
 
        .. code-block:: bash
 
-           module use /scratch.global/GDC/GDCGenomicsQC/envs
-           module load gdcgenomicsqc
+            module use /scratch.global/GDC/GDCGenomicsQC/envs
+            module load gdcgenomicsSandbox
 
        **Step 2: Activate snakemake environment**
 
@@ -413,17 +413,17 @@ Submit with:
 
    .. code-block:: bash
 
-       # For MSI HPC:
-       module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-       module load gdcgenomicsqc
-       conda activate snakemake
+        # For MSI HPC:
+        module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+        module load gdcgenomicsMSI
+        conda activate snakemake
 
-       # For Sandbox:
-       module use /scratch.global/GDC/GDCGenomicsQC/envs
-       module load gdcgenomicsqc
-       conda activate snakemake
+        # For Sandbox:
+        module use /scratch.global/GDC/GDCGenomicsQC/envs
+        module load gdcgenomicsSandbox
+        conda activate snakemake
 
-       # For other HPCs:
-       module use /path/to/GDCGenomicsQC/envs
-       module load gdcgenomicsqc
-       conda activate snakemake
+        # For other HPCs:
+        module use /path/to/GDCGenomicsQC/envs
+        module load gdcgenomicsMSI
+        conda activate snakemake

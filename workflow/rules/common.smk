@@ -13,12 +13,44 @@ def has_provided_ancestry():
     return ancestry_file and Path(ancestry_file).exists()
 
 
-def get_provided_ancestries():
+def _get_ancestry_file_params():
+    sep = config.get("ancestry", {}).get("ancestry_file_sep", "\t")
+    col = config.get("ancestry", {}).get("ancestry_file_col", None)
+    return sep, col
+
+
+def _read_ancestry_file():
     ancestry_file = config.get("ancestry", {}).get("ancestry_file")
-    if ancestry_file and Path(ancestry_file).exists():
-        df = pd.read_csv(ancestry_file, sep="\t", header=None, names=["IID", "ancestry"])
-        return sorted(df["ancestry"].unique().tolist())
-    return []
+    if not ancestry_file or not Path(ancestry_file).exists():
+        return None
+    sep, col = _get_ancestry_file_params()
+    sep = sep if sep else "\t"
+    # Auto-detect header: if first row contains non-string values or looks like data, don't use header
+    header_arg = 0 if config.get("ancestry", {}).get("ancestry_file_header", True) else None
+    df = pd.read_csv(ancestry_file, sep=sep, header=header_arg)
+    if col is not None:
+        if str(col).isdigit():
+            col = int(col)
+        cols = df.columns.tolist()
+        iid_col = cols[0]
+        anc_col = col
+    else:
+        cols = df.columns.tolist()
+        iid_col = cols[0]
+        anc_col = cols[1] if len(cols) > 1 else 1
+    return df, iid_col, anc_col
+
+
+def uses_rfmix():
+    return config.get("localAncestry", {}).get("RFMIX", False)
+
+
+def get_provided_ancestries():
+    result = _read_ancestry_file()
+    if result is None:
+        return []
+    df, iid_col, anc_col = result
+    return sorted(df[anc_col].unique().tolist())
 
 
 def get_provided_ancestry_file_path():
@@ -29,25 +61,26 @@ checkpoint createProvidedAncestryKeepFiles:
     output:
         expand(OUT_DIR / "01-globalAncestry" / "keep_{ANC}.txt", ANC=get_provided_ancestries())
     run:
-        ancestry_file = get_provided_ancestry_file_path()
-        if ancestry_file and Path(ancestry_file).exists():
-            df = pd.read_csv(ancestry_file, sep="\t", header=None, names=["IID", "ancestry"])
-            for anc in df["ancestry"].unique():
+        result = _read_ancestry_file()
+        if result is not None:
+            df, iid_col, anc_col = result
+            for anc in df[anc_col].unique():
                 keep_file = OUT_DIR / "01-globalAncestry" / f"keep_{anc}.txt"
-                df[df["ancestry"] == anc]["IID"].to_csv(keep_file, index=False, header=False)
+                subset = df[df[anc_col] == anc][iid_col]
+                # Write just IID (one column) as required by plink2 --keep
+                subset.to_csv(keep_file, sep="\t", index=False, header=False)
 
 
 def get_ancestries(wildcards):
     provided = get_provided_ancestries()
     if provided:
         return provided
-    if "classifySamplesByAncestry" not in dir(rules):
+    if "classifySamplesByAncestry" not in dir(checkpoints):
         return []
-    ancestry_file = rules.classifySamplesByAncestry.output.classifications
+    ckpt = checkpoints.classifySamplesByAncestry.get()
+    df = pd.read_csv(ckpt.output.classifications, sep="\t")
     predicted_col = f"{ANCESTRY_MODEL}_predicted"
-    ancestries = (
-        pd.read_csv(ancestry_file, sep="\t")[predicted_col].dropna().unique().tolist()
-    )
+    ancestries = df[predicted_col].dropna().unique().tolist()
     return [a for a in ancestries if a != "uncertain"]
 
 

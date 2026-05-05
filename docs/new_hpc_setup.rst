@@ -181,9 +181,9 @@ Make it executable:
 
 .. code-block:: bash
 
-    module use /path/to/your/modules
-    module load gdcgenomicsqc
-    conda activate snakemake
+     module use /path/to/your/modules
+     module load gdcgenomicsMSI
+     conda activate snakemake
 
     snakemake --version
 
@@ -226,9 +226,9 @@ If you want to submit the pipeline via SLURM, create a script:
     #SBATCH --mem=64G
     #SBATCH --cpus-per-task=8
 
-    # Load modules (adjust path for your HPC)
-    module use /path/to/GDCGenomicsQC/envs
-    module load gdcgenomicsqc
+     # Load modules (adjust path for your HPC)
+     module use /path/to/GDCGenomicsQC/envs
+     module load gdcgenomicsMSI
 
     # Activate snakemake
     conda activate snakemake

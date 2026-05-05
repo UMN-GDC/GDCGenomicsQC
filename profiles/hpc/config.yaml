@@ -1,6 +1,7 @@
 executor: slurm
 jobs: 25
 use-apptainer: true
+apptainer-prefix: /scratch.global/GDC/singularityimages
 apptainer-args: "--bind /scratch.global,/projects,/spaces,/home"
 default-resources:
   - slurm_account=gdc

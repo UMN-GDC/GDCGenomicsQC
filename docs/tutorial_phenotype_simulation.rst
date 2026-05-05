@@ -36,29 +36,29 @@ For detailed installation instructions, see:
 
       .. code-block:: bash
 
-          module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-          module load gdcgenomicsqc
-          conda activate snakemake
+           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+           module load gdcgenomicsMSI
+           conda activate snakemake
 
-   .. tab:: Sandbox
+    .. tab:: Sandbox
 
-      If you're using the Sandbox environment:
+       If you're using the Sandbox environment:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-          module use /scratch.global/GDC/GDCGenomicsQC/envs
-          module load gdcgenomicsqc
-          conda activate snakemake
+           module use /scratch.global/GDC/GDCGenomicsQC/envs
+           module load gdcgenomicsSandbox
+           conda activate snakemake
 
-   .. tab:: Other HPCs
+    .. tab:: Other HPCs
 
-      If your HPC has the GDC module pre-configured:
+       If your HPC has the GDC module pre-configured:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-          module use /path/to/GDCGenomicsQC/envs
-          module load gdcgenomicsqc
-          conda activate snakemake
+           module use /path/to/GDCGenomicsQC/envs
+           module load gdcgenomicsMSI
+           conda activate snakemake
 
    .. tab:: Local Snakemake
 

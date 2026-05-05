@@ -64,7 +64,7 @@ rule phaseWithShapeit:
         runtime=1320,
     input:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
-        gmap=ancient(REF / "gmaps" / "chr{CHR}.b38.gmap.gz"),
+        gmap=ancient(REF / "gmaps" / "hg38map.chr{CHR}.txt"),
     output:
         vcf=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf"),
     params:
