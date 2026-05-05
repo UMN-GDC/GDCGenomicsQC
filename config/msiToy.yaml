@@ -30,22 +30,61 @@ thin: false
 
 # SNP Heritability Estimation
 snpHerit:
-    pheno: null  # Replace with your phenotype file
-    # Path to covariate file(s)
-    # Can be a single file path or comma-separated list for multiple files
-    # e.g., "/path/to/covariates.csv" or "/path/to/cov1.csv,/path/to/cov2.csv"
-    # Format: CSV with columns: IID, <covariates>
+    # Prefix for GRM files (prefix.grm.bin, prefix.grm.N.bin, prefix.grm.id)
+    # Used by MASH for heritability estimation
+    # Use {subset} placeholder for subset (e.g., AFR, EUR)
+    # If null, auto-derived as: OUT_DIR/{subset}/03-snpHeritability/{subset}_grm
+    prefix: null
+
+    # Path to phenotype file (required to activate snpHerit)
+    # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
+    # First two columns must be FID, IID
+    pheno: null
+
+    # Path to covariate file(s) (required when pheno is specified)
+    # Can be a single file path or list for multiple files
+    # Format: CSV/TSV with columns: FID, IID, <covariates>
     covar: null
+
+    # Output filename for heritability estimates (CSV format)
     out: null
+
+    # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE"
+
+    # Number of principal components to use as covariates
+    # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
     npc: 10
-    # Phenotype column(s) - can be column index(es) or column name(s), single value or list
-    # Examples: 1, [1, 2, 3], "pheno_name", ["pheno1", "pheno2"]
+
+    # Phenotype column(s) to analyze
+    # Integer or array: 1 = third column (after FID, IID)
     mpheno: 1
-    # Covariate specification options for MASH
-    fixed_effects: null  # List of covariate column names to include as fixed effects
-    qcovar: null        # Quantitative covariate column names (for GCTA method)
-    covar_discrete: null  # Discrete/categorical covariate column names (for GCTA method)
+
+    # Quantitative covariate column names (passed via --qcovar to GCTA)
+    # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
+    qcovar: null
+
+    # Discrete/categorical covariate column names (passed via --covar to GCTA)
+    # If null and covar provided, MASH auto-detects (columns with <35 unique values)
+    covar_discrete: null
+
+    # Column name to use as random effect (for AdjHE with site effects)
+    RV: null
+
+    # Loop through covariates, including all previous covariates in each iteration
+    loop_covs: false
+
+    # Run SAdj-HE (standardized) instead of UAdj-HE (unstandardized)
+    std: false
+
+    # Rows to process at once when restoring GCTA GRM binary file
+    k: null
+
+    # Filter phenotype data (e.g., "age>30", "sex==1")
+    pheno_filter: null
+
+    # Filter covariate data (e.g., "site==1", "age>=18")
+    covar_filter: null
 
 # Tool settings
 localAncestry:
@@ -68,6 +107,15 @@ ancestry:
 phenotypeSimulation:
     # Ancestries to simulate for
     ancestries: ["AFR", "EUR"]
+    
+    # Directory containing simulation output (used by PRS pipeline)
+    # Set this when using pre-computed simulation files instead of running simulation
+    simulations_dir: null
+    
+    # GRM prefix template for snpHeritSim (MASH heritability estimation on simulated data)
+    # Use {anc} placeholder for ancestry (e.g., AFR_simulation, EUR_simulation)
+    # The full path will be: simulations_dir/{anc}_simulation
+    prefix: null
     
     # Number of simulations
     n_sims: 10
@@ -101,11 +149,11 @@ prsMethods:
   single_ct:
     enabled: false
   single_prsice:
-    enabled: false
+    enabled: true
   single_prscs:
     enabled: false
   single_ldpred2:
-    enabled: false
+    enabled: true
   single_lassosum2:
     enabled: false
   

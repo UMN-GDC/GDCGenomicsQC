@@ -7,8 +7,7 @@
 proc ModulesHelp { } {
     puts stderr "\tThis module loads the GDC Genomics QC Pipeline."
     puts stderr "\tIt sets up the apptainer image cache for offline use."
-    puts stderr "\tUsers must have Snakemake available in their environment."
-    puts stderr "\tWhen using the HPC profile, Snakemake is provided via the snakemake conda environment."
+    puts stderr "\tIt also loads Snakemake for running the pipeline."
     puts stderr "\t"
     puts stderr "\tUsage: gdcgenomicsqc --configfile <config.yaml> [other snakemake options]"
     puts stderr "\t"
@@ -17,6 +16,10 @@ proc ModulesHelp { } {
     puts stderr "\tthe --configfile option."
 }
 
+# Load Snakemake module
+if { ! [module-info mode remove] } {
+    module load snakemake
+}
 
 set basedir /scratch.global/coffm049/GDCGenomicsQC/envs/gdcgenomicsMSI
 prepend-path PATH $basedir/bin

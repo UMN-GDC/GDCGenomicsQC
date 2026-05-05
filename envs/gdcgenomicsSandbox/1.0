@@ -2,13 +2,13 @@
 #
 #     GDC Genomics QC Pipeline module file
 #     Sets up apptainer image cache for offline use
+#     Activates conda environment with Snakemake
 #
 
 proc ModulesHelp { } {
     puts stderr "\tThis module loads the GDC Genomics QC Pipeline."
     puts stderr "\tIt sets up the apptainer image cache for offline use."
-    puts stderr "\tUsers must have Snakemake available in their environment."
-    puts stderr "\tWhen using the HPC profile, Snakemake is provided via the snakemake conda environment."
+    puts stderr "\tIt activates the snakemake conda environment."
     puts stderr "\t"
     puts stderr "\tUsage: gdcgenomicsqc --configfile <config.yaml> [other snakemake options]"
     puts stderr "\t"
@@ -17,6 +17,13 @@ proc ModulesHelp { } {
     puts stderr "\tthe --configfile option."
 }
 
+# Activate conda and snakemake environment
+set conda_base /scratch.global/baron063/miniconda3
+set snakemake_env /scratch.global/baron063/miniconda3/envs/snakemake
+
+# Add conda base and snakemake env to PATH
+prepend-path PATH $snakemake_env/bin
+prepend-path PATH $conda_base/condabin
 
 set basedir [file dirname [file dirname [info script]]]
 prepend-path PATH $basedir/bin
