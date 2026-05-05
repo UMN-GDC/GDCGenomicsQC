@@ -78,6 +78,143 @@ rule simulateBivariatePhenotypes:
             --rho {params.rho} \
             --maf {params.maf} \
             --skip_thinning {params.skip_thinning} \
-            --thin_count_snps {params.thin_count_snps} \
-            --thin_count_inds {params.thin_count_inds}
+        --thin_count_snps {params.thin_count_snps} \
+        --thin_count_inds {params.thin_count_inds}
+        """
+
+
+rule computeSimGRM:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+    conda:
+        "../../envs/phenotypeSim.yml"
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=120,
+    input:
+        bed=SIM_OUT_DIR / f"{ANC1}_simulation.bed",
+        bim=SIM_OUT_DIR / f"{ANC1}_simulation.bim",
+        fam=SIM_OUT_DIR / f"{ANC1}_simulation.fam",
+    output:
+        grm_bin=SIM_OUT_DIR / f"{ANC1}_simulation.grm.bin",
+        grm_id=SIM_OUT_DIR / f"{ANC1}_simulation.grm.id",
+        grm_nbin=SIM_OUT_DIR / f"{ANC1}_simulation.grm.N.bin",
+    params:
+        prefix=lambda wildcards, input: str(input.bed)[:-4],
+    shell:
+        """
+        plink2 --bfile {params.prefix} --make-grm --out {params.prefix}
+        """
+
+rule computeSimGRM_anc2:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+    conda:
+        "../../envs/phenotypeSim.yml"
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=120,
+    input:
+        bed=SIM_OUT_DIR / f"{ANC2}_simulation.bed",
+        bim=SIM_OUT_DIR / f"{ANC2}_simulation.bim",
+        fam=SIM_OUT_DIR / f"{ANC2}_simulation.fam",
+    output:
+        grm_bin=SIM_OUT_DIR / f"{ANC2}_simulation.grm.bin",
+        grm_id=SIM_OUT_DIR / f"{ANC2}_simulation.grm.id",
+        grm_nbin=SIM_OUT_DIR / f"{ANC2}_simulation.grm.N.bin",
+    params:
+        prefix=lambda wildcards, input: str(input.bed)[:-4],
+    shell:
+        """
+        plink2 --bfile {params.prefix} --make-grm --out {params.prefix}
+        """
+
+
+rule computeSimPCA:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+    conda:
+        "../../envs/phenotypeSim.yml"
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=120,
+    input:
+        bed=SIM_OUT_DIR / f"{ANC1}_simulation.bed",
+        bim=SIM_OUT_DIR / f"{ANC1}_simulation.bim",
+        fam=SIM_OUT_DIR / f"{ANC1}_simulation.fam",
+    output:
+        eigenvec=SIM_OUT_DIR / f"{ANC1}_simulation.eigenvec",
+    params:
+        prefix=lambda wildcards, input: str(input.bed)[:-4],
+    shell:
+        """
+        plink2 --bfile {params.prefix} --pca --out {params.prefix}
+        """
+
+rule computeSimPCA_anc2:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+    conda:
+        "../../envs/phenotypeSim.yml"
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=120,
+    input:
+        bed=SIM_OUT_DIR / f"{ANC2}_simulation.bed",
+        bim=SIM_OUT_DIR / f"{ANC2}_simulation.bim",
+        fam=SIM_OUT_DIR / f"{ANC2}_simulation.fam",
+    output:
+        eigenvec=SIM_OUT_DIR / f"{ANC2}_simulation.eigenvec",
+    params:
+        prefix=lambda wildcards, input: str(input.bed)[:-4],
+    shell:
+        """
+        plink2 --bfile {params.prefix} --pca --out {params.prefix}
+        """
+
+
+rule extractSimPheno:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+    conda:
+        "../../envs/phenotypeSim.yml"
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=60,
+    input:
+        fam=SIM_OUT_DIR / f"{ANC1}_simulation.fam",
+    output:
+        pheno=SIM_OUT_DIR / f"{ANC1}_simulation_pheno1.pheno",
+    shell:
+        """
+        awk 'BEGIN{{OFS=" "}}{{print $1, $2, $6}}' {input.fam} > {output.pheno}
+        """
+
+rule extractSimPheno_anc2:
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+    conda:
+        "../../envs/phenotypeSim.yml"
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=60,
+    input:
+        fam=SIM_OUT_DIR / f"{ANC2}_simulation.fam",
+    output:
+        pheno=SIM_OUT_DIR / f"{ANC2}_simulation_pheno1.pheno",
+    shell:
+        """
+        awk 'BEGIN{{OFS=" "}}{{print $1, $2, $6}}' {input.fam} > {output.pheno}
         """
