@@ -1,0 +1,175 @@
+# Project-wide paths
+INPUT: "/projects/standard/gdc/public/toyData/allSubjects_hg38.bed"
+OUT_DIR: "/scratch.global/coffm049/simulated/output"
+REF: "/projects/standard/gdc/public/Ref"
+local-storage-prefix: "/scratch.global/coffm049/tmp"
+
+chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+
+convertNfilt:
+    # Minimum R² value from INFO field (set null to skip filter)
+    # Only applies to VCF input
+    info_r2_min: 0.9
+    
+    # Only keep variants where FILTER == PASS
+    filter_pass: true
+    
+    # Minimum QUAL value (set null to skip filter)
+    qual_min: null
+
+
+# QC Settings
+relatedness:
+    method: "king"  # "0" = skip (assume unrelated), "king" = KING algorithm
+    king_cutoff: 0.0884
+
+SEX_CHECK: false
+GRM: true
+thin: false
+
+# SNP Heritability Estimation
+snpHerit:
+    # Prefix for GRM files (prefix.grm.bin, prefix.grm.N.bin, prefix.grm.id)
+    # Used by MASH for heritability estimation
+    # Use {subset} placeholder for subset (e.g., AFR, EUR)
+    # If null, auto-derived as: OUT_DIR/{subset}/03-snpHeritability/{subset}_grm
+    prefix: "/scratch.global/coffm049/simulated/{subset}"
+
+    # Path to phenotype file (required to activate snpHerit)
+    # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
+    # First two columns must be FID, IID
+    pheno: "/scratch.global/coffm049/simulated/AFR_simulation_pheno1.pheno"
+
+    # Path to covariate file(s) (required when pheno is specified)
+    # Can be a single file path or list for multiple files
+    # Format: CSV/TSV with columns: FID, IID, <covariates>
+    covar: "/scratch.global/coffm049/simulated/AFR_simulation.fam"
+
+    # Output filename for heritability estimates (CSV format)
+    out: null
+
+    # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
+    method: "AdjHE"
+
+    # Number of principal components to use as covariates
+    # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
+    npc: 10
+
+    # Phenotype column(s) to analyze
+    # Integer or array: 1 = third column (after FID, IID)
+    mpheno: 1
+
+    # Quantitative covariate column names (passed via --qcovar to GCTA)
+    # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
+    qcovar: null
+
+    # Discrete/categorical covariate column names (passed via --covar to GCTA)
+    # If null and covar provided, MASH auto-detects (columns with <35 unique values)
+    covar_discrete: null
+
+    # Column name to use as random effect (for AdjHE with site effects)
+    RV: null
+
+    # Loop through covariates, including all previous covariates in each iteration
+    loop_covs: false
+
+    # Run SAdj-HE (standardized) instead of UAdj-HE (unstandardized)
+    std: false
+
+    # Rows to process at once when restoring GCTA GRM binary file
+    k: null
+
+    # Filter phenotype data (e.g., "age>30", "sex==1")
+    pheno_filter: null
+
+    # Filter covariate data (e.g., "site==1", "age>=18")
+    covar_filter: null
+
+# Tool settings
+localAncestry:
+    RFMIX: false
+    test: false
+    thin_subjects: 0.1
+    figures: "figures"
+    chromosomes: [20, 21]  # Use pipeline chromosomes if null, or specify list e.g. [13, 14, 15]
+
+internalPCA:
+    plot: true
+    color_by: null
+    phenotype_file: null
+
+ancestry:
+    threshold: 0.8
+    model: "pca"
+    ancestry_file: "/projects/standard/gdc/public/toyData/allSubjects_hg38.popu"
+    ancestry_file_header: false                                                                                                                                  
+
+phenotypeSimulation:
+    # Set to true to run phenotype simulation
+    enabled: false
+    
+    # Ancestries to simulate for
+    ancestries: ["AFR", "EUR"]
+    
+    # Directory containing simulation output (used by PRS pipeline)
+    # Set this when using pre-computed simulation files instead of running simulation
+    simulations_dir: "/scratch.global/coffm049/simulated"
+    
+    # GRM prefix template for snpHeritSim (MASH heritability estimation on simulated data)
+    # Use {anc} placeholder for ancestry (e.g., AFR_simulation, EUR_simulation)
+    # The full path will be: simulations_dir/{anc}_simulation
+    prefix: "/scratch.global/coffm049/r25Pipeline/simulations/AFR_EUR/{anc}_simulation"
+    
+    # Number of simulations
+    n_sims: 10
+    
+    # Target SNP heritability (h²)
+    heritability: 0.4
+    
+    # Genetic correlation between ancestries (-1 to 1)
+    rho: 0.8
+    
+    # Minimum minor allele frequency for causal SNPs
+    maf: 0.05
+    
+    # Random seed for reproducibility
+    seed: 42
+    
+    # Skip thinning of SNPs (faster for small datasets)
+    skip_thinning: true
+    
+    # Number of SNPs to thin to (if not skipping)
+    thin_count_snps: 1000000
+    
+    # Number of individuals to thin to (if not skipping)
+    thin_count_inds: 10000
+
+# PRS Methods Configuration
+# Set enabled: true for methods you want to run
+# Commands are defined in workflow/rules/prsPipelines.smk (software is in container)
+prsMethods:
+  # Single ancestry methods
+  single_ct:
+    enabled: false
+  single_prsice:
+    enabled: true
+  single_prscs:
+    enabled: false
+  single_ldpred2:
+    enabled: true
+  single_lassosum2:
+    enabled: false
+  
+  # Multi ancestry methods
+  multi_ctsleb:
+    enabled: false
+  multi_prscsx:
+    enabled: false
+    ld_ref_dir: ""  # Optional: path to LD reference directory
+  multi_ldpred2:
+    enabled: false
+  multi_prosper:
+    enabled: false
+  multi_sdprs:
+    enabled: false
