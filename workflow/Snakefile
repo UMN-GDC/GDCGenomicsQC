@@ -107,7 +107,7 @@ rule all:
         ),
 
 
-ruleorder: convertPlinkPerChromosome > convertPlinkSingleFile > mergeChromosomesAndFilter
+ruleorder: convertPlinkPerChromosome > mergeChromosomesAndFilter
 ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 # include: "rules/trainGnomix.smk"
