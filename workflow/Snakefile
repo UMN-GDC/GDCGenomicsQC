@@ -80,10 +80,16 @@ rule all:
              expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES)]
             if (not has_provided_ancestry() and uses_rfmix()) else []
         ),
-        expand(
-            OUT_DIR / "{ANC}" / "initialFilter.pgen", ANC=get_provided_ancestries()
-        ) if has_provided_ancestry() else (
-            expand(OUT_DIR / "full" / "initialFilter.pgen")
+        lambda wildcards: (
+            expand(
+                OUT_DIR / "{ANC}" / ("initialFilter_{CHR}.pgen" if INPUT_IS_PER_CHROMOSOME else "initialFilter.pgen"),
+                ANC=get_provided_ancestries(), CHR=CHROMOSOMES,
+            )
+            if has_provided_ancestry() else 
+            expand(
+                OUT_DIR / "full" / ("initialFilter_{CHR}.pgen" if INPUT_IS_PER_CHROMOSOME else "initialFilter.pgen"),
+                CHR=CHROMOSOMES,
+            )
         ),
         expand(
             OUT_DIR / "{ANC}" / "standardFilter.pgen", ANC=get_provided_ancestries()

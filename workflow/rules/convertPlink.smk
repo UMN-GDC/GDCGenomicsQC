@@ -151,49 +151,61 @@ def get_merge_input_files(wildcards):
         return dict()
 
 
-rule convertPlinkSingleFile:
-    log:
-        OUT_DIR / "logs" / "convertPlinkSingleFile_{subset}.log",
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda:
-        "../../envs/ancNreport.yml"
-    threads: 8
-    resources:
-        nodes=1,
-        mem_mb=64000,
-        runtime=480,
-    output:
-        pgen=OUT_DIR / "{subset}" / "initialFilter.pgen",
-        pvar=OUT_DIR / "{subset}" / "initialFilter.pvar",
-        psam=OUT_DIR / "{subset}" / "initialFilter.psam",
-        LDbed=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
-        LDbim=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
-        LDfam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
-        tempDir=temp(
-            directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter_single")
-        ),
-        smiss=OUT_DIR / "{subset}" / "initial.smiss",
-        vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
-    input:
-        fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
-        keep=get_ancestry_file,
-        merge_pgen=lambda wc: get_merge_input_files(wc).get("pgen", []),
-        merge_pvar=lambda wc: get_merge_input_files(wc).get("pvar", []),
-        merge_psam=lambda wc: get_merge_input_files(wc).get("psam", []),
-    params:
-        format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
-        single_input=lambda wildcards: config.get("INPUT", "").format(CHR=wildcards.subset) if wildcards else config.get("INPUT", ""),
-        thin=config.get("thin", False),
-        min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
-        max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
-        qual_min=config.get("convertNfilt", {}).get("qual_min"),
-        output_prefix=lambda wildcards, output: str(output.pgen)[:-5],
-        chrom_list=lambda wildcards: ",".join(str(c) for c in CHROMOSOMES) if INPUT_IS_PER_CHROMOSOME else "",
-        is_per_chr=lambda wildcards: "{CHR}" in config.get("INPUT", ""),
-        scripts_dir=SCRIPTS_DIR,
-    shell:
-        """
+if not INPUT_IS_PER_CHROMOSOME:
+    rule convertPlinkSingleFile:
+        log:
+            OUT_DIR / "logs" / "convertPlinkSingleFile_{subset}.log",
+        container:
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        conda:
+            "../../envs/ancNreport.yml"
+        threads: 8
+        resources:
+            nodes=1,
+            mem_mb=64000,
+            runtime=480,
+        output:
+            pgen=OUT_DIR / "{subset}" / "initialFilter.pgen",
+            pvar=OUT_DIR / "{subset}" / "initialFilter.pvar",
+            psam=OUT_DIR / "{subset}" / "initialFilter.psam",
+            LDbed=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
+            LDbim=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
+            LDfam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
+            tempDir=temp(
+                directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter_single")
+            ),
+            smiss=OUT_DIR / "{subset}" / "initial.smiss",
+            vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
+        input:
+            fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
+            keep=get_ancestry_file,
+        params:
+            format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+            single_input=lambda wildcards: config.get("INPUT", ""),
+            thin=config.get("thin", False),
+            min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
+            max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
+            qual_min=config.get("convertNfilt", {}).get("qual_min"),
+            output_prefix=lambda wildcards, output: str(output.pgen)[:-5],
+            scripts_dir=SCRIPTS_DIR,
+        shell:
+            """
+            mkdir -p {output.tempDir}
+
+            FORMAT="{params.format}"
+            SINGLE_INPUT="{params.single_input}"
+
+            echo "Input is a single file: $SINGLE_INPUT"
+            plink2 --$FORMAT $SINGLE_INPUT --make-pgen --rm-dup force-first --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+
+            plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta} --ref-from-fa force --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
+            plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_2
+
+            bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads} {output.tempDir}
+
+            mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
+            mv {output.tempDir}/intermediate_0.smiss {output.smiss}
+            """
         if [ "{params.is_per_chr}" == "True" ]; then
             echo "ERROR: convertPlinkSingleFile should not be used when INPUT has {{CHR}}. Use convertPlinkPerChromosome instead."
             echo "INPUT: {params.single_input}"
