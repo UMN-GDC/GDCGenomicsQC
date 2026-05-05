@@ -4,9 +4,7 @@
 #SBATCH --mem=1G
 #SBATCH --time=72:00:00
 
-module use /scratch.global/GDC/GDCGenomicsQC/envs
+module use /scratch.global/coffm049/GDCGenomicsQC/envs
 module load gdcgenomicsSandbox
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate snakemake
 
 gdcgenomicsqc run_classifyAncestry --configfile ../config/sandboxABCD.yaml 

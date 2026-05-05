@@ -4,8 +4,6 @@
 #SBATCH --mem=1G
 #SBATCH --time=72:00:00
 
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate snakemake
 module use /scratch.global/coffm049/GDCGenomicsQC/envs
 module load gdcgenomicsMSI
 

@@ -4,7 +4,7 @@
 #SBATCH --mem=1G
 #SBATCH --time=72:00:00
 
-module use /scratch.global/GDC/GDCGenomicsQC/envs
+module use /scratch.global/coffm049/GDCGenomicsQC/envs
 module load gdcgenomicsMSI
 
 gdcgenomicsqc assembleRef --configfile ../config/msiabcd.yaml --force
