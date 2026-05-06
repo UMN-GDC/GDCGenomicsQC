@@ -22,38 +22,7 @@ lassosum2, and PRSice-2.
 Basic Workflow Diagram
 ----------------
 
-There are two approaches for data splitting:
-
-**Option 1: Internal Splitting (run_single_ancestry_PRS_pipeline.sh)**
-  Provides one full study sample; pipeline internally splits into train/val/test.
-
-::
-
-    ┌───────────────────┐
-    │ Full Study Sample │──► (PLINK .bed/.bim/.fam)
-    └────────┬──────────┘
-             │
-             ▼
-    ┌─────────────────────────────────┐
-    │ run_single_ancestry_PRS_pipeline│
-    │ (LDpred2/lassosum2 internally.  │
-    │ split: n_val=49 default)        │
-    └────────┬──────────┬─────────────┘
-             │          │
-       ┌─────┴───┐  ┌───┴─┐
-       ▼         ▼  ▼     ▼
-    ┌────────┐ ┌────┐ ┌────┐
-    │ Train  │ │Val │ │Test│
-    │ rest   │ │49  │ │rest│
-    └────────┘ └────┘ └────┘
-                        │
-                        ▼
-                 ┌─────────┐
-                 │ R² Eval │
-                 └─────────┘
-
-
-**Option 2: Explicit Splitting (run_split_plink_data.sh)**
+**Explicit Splitting (run_split_plink_data.sh)**
   Pre-split data into separate PLINK files before running PRS methods.
 
 ::
@@ -74,11 +43,11 @@ There are two approaches for data splitting:
     │Train │  │Valid   │  │Test  │
     │ 50%  │  │ 20%    │  │ 30%  │
     └──────┘  └────────┘  └──────┘
-                        │
-                        ▼
-                 ┌─────────┐
-                 │ R² Eval │
-                 └─────────┘
+                             │
+                             ▼
+                      ┌─────────┐
+                      │ R² Eval │
+                      └─────────┘
 
 ----
 
@@ -176,36 +145,6 @@ For binary phenotypes, add the ``-B`` flag:
     sbatch prs_pipeline/run_single_ancestry_PRS_pipeline.sh \
         -C config_prs.conf \
         -c -l -s -P -B
-
-Setting Train/Test Split Percentages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default, the pipeline uses an 80% training / 20% testing split (with remaining samples used for validation). You can customize these percentages using the ``-t`` and ``-T`` flags:
-
-.. code-block:: bash
-
-    sbatch prs_pipeline/run_single_ancestry_PRS_pipeline.sh \
-        -C config_prs.conf \
-        -c -l -s \
-        -t 70 -T 30
-
-This sets:
-
-- ``-t 70``: 70% of data for training
-- ``-T 30``: 30% of data for testing
-
-The validation set will use the remaining samples (in this example, 0% since 70 + 30 = 100). For a three-way split, you can use values that don't add up to 100:
-
-.. code-block:: bash
-
-    sbatch prs_pipeline/run_single_ancestry_PRS_pipeline.sh \
-        -C config_prs.conf \
-        -c -l \
-        -t 60 -T 20
-
-This creates a 60% training / 20% testing / 20% validation split.
-
-**Note**: The train and test percentages must add up to 100 or less. Any remaining samples are used for validation.
 
 Step 4: Interpret Results
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -324,43 +263,7 @@ Some PRS methods require three distinct data splits:
 Simpler methods (C+T, PRSice-2) can work with just training and testing
 splits, using internal cross-validation.
 
-
-
-Internal Splitting in run_single_ancestry_PRS_pipeline.sh
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Important**: When using ``run_single_ancestry_PRS_pipeline.sh`` to run
-LDpred2 or lassosum2, you provide a **single full study sample**.
-The pipeline internally performs the train/validation/test split for you
-using random sampling.
-
-- Default: 80% training / 20% testing (remaining samples for validation)
-- Configurable via ``-t`` and ``-T`` flags (see above)
-- Uses random seed 123 for reproducibility
-
-This means you typically **do not need to pre-split your data** when using
-run_single_ancestry_PRS_pipeline.sh. The data flow is:
-
-::
-
-    Your Full Study Sample (PLINK)
-           │
-           ▼
-    run_single_ancestry_PRS_pipeline.sh
-           │
-    ┌────────┴────────────┐
-    │ LDpred2.R /         │
-    │ lassosum2.R         │
-    │ internal split:      │
-    │ train_pct/test_pct  │
-    └────────┬────────────┘
-             │
-        ┌────┴────┐
-        ▼         ▼
-    validation  test
-      (remain)  (test_pct)
-
-Use ``run_split_plink_data.sh`` only if you need:
+Use ``run_split_plink_data.sh`` if you need:
 - Explicit control over the exact splits
 - Different validation set sizes
 - To use different data splits across multiple method runs
