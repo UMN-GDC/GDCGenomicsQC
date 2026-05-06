@@ -27,6 +27,7 @@ if INPUT_IS_PER_CHROMOSOME:
             output_dir=lambda wildcards, input: OUT_DIR / wildcards.subset,
             sex_check=config.get("SEX_CHECK", False),
             input_prefix=lambda wildcards, input: input.pgen[:-5],
+            output_prefix=lambda wildcards, output: str(output.pgen)[:-5],
             relatedness=config.get("relatedness", {}).get("method", "king"),
             scripts_dir=SCRIPTS_DIR,
         shell:
@@ -66,7 +67,7 @@ if INPUT_IS_PER_CHROMOSOME:
                 cp {output.tempDir}/step3.psam {output.tempDir}/step4.psam
             fi
 
-            plink2 --pfile {output.tempDir}/step4 --make-pgen --out {output.pgen%.pgen} --threads {threads}
+            plink2 --pfile {output.tempDir}/step4 --make-pgen --out {params.output_prefix} --threads {threads}
             """
 
 else:
