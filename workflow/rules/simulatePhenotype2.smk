@@ -105,7 +105,7 @@ rule computeSimGRM:
         prefix=lambda wildcards, input: str(input.bed)[:-4],
     shell:
         """
-        plink2 --bfile {params.prefix} --make-grm --out {params.prefix}
+        plink2 --bfile {params.prefix} --make-grm-bin --out {params.prefix}
         """
 
 rule computeSimGRM_anc2:
@@ -130,7 +130,7 @@ rule computeSimGRM_anc2:
         prefix=lambda wildcards, input: str(input.bed)[:-4],
     shell:
         """
-        plink2 --bfile {params.prefix} --make-grm --out {params.prefix}
+        plink2 --bfile {params.prefix} --make-grm-bin --out {params.prefix}
         """
 
 
