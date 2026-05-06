@@ -58,7 +58,7 @@ if INPUT_IS_PER_CHROMOSOME:
 
             Rscript --no-save scripts/heterozygosity_outliers_list.R
             if [ -f {params.output_dir}/het_fail_ind.txt ]; then
-                sed 's/"//g' {params.output_dir}/het_fail_ind.txt | awk '{print $1, $2}' > {output.tempDir}/het_fail.txt
+                sed 's/"//g' {params.output_dir}/het_fail_ind.txt | awk '{print $$1, $$2}' > {output.tempDir}/het_fail.txt
                 plink2 --pfile {output.tempDir}/step3 --remove {output.tempDir}/het_fail.txt --make-pgen --out {output.tempDir}/step4 --threads {threads}
             else
                 cp {output.tempDir}/step3.pgen {output.tempDir}/step4.pgen
