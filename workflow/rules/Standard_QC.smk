@@ -53,7 +53,7 @@ if INPUT_IS_PER_CHROMOSOME:
             plink2 --pfile {output.tempDir}/step2 --hwe 1e-6 --make-pgen --out {output.tempDir}/step3a --threads {threads}
             plink2 --pfile {output.tempDir}/step3a --hwe 1e-10 --make-pgen --out {output.tempDir}/step3 --threads {threads}
 
-            plink2 --pfile {output.tempDir}/step3 --exclude scripts/inversion.txt --range --indep-pairwise 50 5 0.2 --out {output.tempDir}/indepSNP --threads {threads}
+            plink2 --pfile {output.tempDir}/step3 --exclude scripts/inversion.txt --indep-pairwise 50 5 0.2 --out {output.tempDir}/indepSNP --threads {threads}
             plink2 --pfile {output.tempDir}/step3 --extract {output.tempDir}/indepSNP.prune.in --het --out {output.tempDir}/hetcheck --threads {threads}
 
             Rscript --no-save scripts/heterozygosity_outliers_list.R
