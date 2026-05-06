@@ -183,7 +183,7 @@ Make it executable:
 
      module use /path/to/your/modules
      module load gdcgenomicsMSI
-     conda activate snakemake
+     # Snakemake is automatically loaded by the module
 
     snakemake --version
 
@@ -229,9 +229,7 @@ If you want to submit the pipeline via SLURM, create a script:
      # Load modules (adjust path for your HPC)
      module use /path/to/GDCGenomicsQC/envs
      module load gdcgenomicsMSI
-
-    # Activate snakemake
-    conda activate snakemake
+     # Snakemake is automatically loaded by the module
 
     # Run pipeline
     cd $SLURM_SUBMIT_DIR/GDCGenomicsQC/workflow

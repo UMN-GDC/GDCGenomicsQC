@@ -8,20 +8,23 @@ This lab covers interacting with output files from the **Single-Ancestry PRS Pip
 **Estimated time**: 1 hour
 
 **Prerequisites**:
-- Completed :doc:`tutorial_prs` (outputs in ``PRS_OUT_DIR/method_runs/``)
+- Completed :doc:`tutorial_prs` (outputs in ``OUT_DIR/prs_inputs/{ANC1}_{ANC2}/``)
 - R (≥4.0) with tidyverse installed
-- Set ``PRS_OUT_DIR`` to your PRS output directory
+- Set ``OUT_DIR`` to your pipeline output directory
 
 ----
 
 Setup: Load Libraries and Set Paths
-----------------------------------
+------------------------------------
 
 .. code-block:: r
 
     library(tidyverse)
-    PRS_OUT_DIR <- "/path/to/your/prs/output"
-    method_runs_dir <- file.path(PRS_OUT_DIR, "method_runs")
+    OUT_DIR <- "/path/to/your/pipeline/output"
+    # PRS outputs are in OUT_DIR/prs_inputs/{ANC1}_{ANC2}/
+    anc1 <- "AFR"  # First ancestry
+    anc2 <- "EUR"  # Second ancestry
+    prs_out_dir <- file.path(OUT_DIR, "prs_inputs", paste0(anc1, "_", anc2))
 
 ----
 
@@ -34,14 +37,14 @@ Section 1: Single-Ancestry PRS Output Files Reference
 
    * - File Path
      - Description
-   * - ``single_prsice/prsice_summary.csv``
-     - PRSice2 summary (R², AUC, p-value)
-   * - ``single_ldpred2/prs_scores.tsv``
-     - LDPred2 PRS scores per sample
-   * - ``single_ct/performance_metrics.txt``
-     - CT-SLeB performance metrics
-   * - ``method_runs/*/performance_metrics.txt``
-     - Per-method performance (R², AUC, p-value)
+   * - ``single_prsice/``
+     - PRSice2 output (best_pRS.prs, summary.csv)
+   * - ``single_ldpred2/``
+     - LDPred2 output (prs_scores.tsv)
+   * - ``method_runs/{method}/``
+     - Per-method output directories
+   * - ``*.done``
+     - Completion markers for each method
 
 ----
 
@@ -50,28 +53,25 @@ Section 2: Load and Inspect PRS Data
 
 .. code-block:: r
 
-    # Load performance metrics for all single-ancestry methods
-    load_perf <- function(method) {
-      path <- file.path(method_runs_dir, method, "performance_metrics.txt")
-      if (file.exists(path)) {
-        read_tsv(path, col_names = c("Method", "R2", "AUC", "p_value")) %>%
-          mutate(method = method)
-      } else {
-        NULL
-      }
-    }
-    
-    methods <- c("single_ct", "single_prsice", "single_ldpred2", "single_prscs", "single_lassosum2")
-    perf_list <- lapply(methods, load_perf)
-    perf <- bind_rows(perf_list) %>%
-      filter(!is.na(R2))  # Remove methods with no output
-    glimpse(perf)
-
-    # Load PRS scores for PRSice2 (example)
-    prsice_score_path <- file.path(method_runs_dir, "single_prsice", "best_prs.prs")
+    # Load PRS scores for PRSice2
+    prsice_score_path <- file.path(prs_out_dir, "single_prsice", "best_pRS.prs")
     if (file.exists(prsice_score_path)) {
-      prs_scores <- read_tsv(prsice_score_path, col_names = c("IID", "PRS"))
+      prs_scores <- read_tsv(prsice_score_path, col_names = c("FID", "IID", "PRS"))
       glimpse(prs_scores)
+    }
+
+    # Load PRSice2 summary
+    prsice_summary_path <- file.path(prs_out_dir, "single_prsice", "summary.csv")
+    if (file.exists(prsice_summary_path)) {
+      prsice_summary <- read_csv(prsice_summary_path)
+      glimpse(prsice_summary)
+    }
+
+    # Load LDPred2 scores
+    ldpred2_path <- file.path(prs_out_dir, "single_ldpred2", "prs_scores.tsv")
+    if (file.exists(ldpred2_path)) {
+      ldpred2_scores <- read_tsv(ldpred2_path)
+      glimpse(ldpred2_scores)
     }
 
 ----

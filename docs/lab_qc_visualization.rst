@@ -43,13 +43,13 @@ The Basic QC pipeline generates the following tab-separated text files (all read
      - Sample missingness (pre-filter)
    * - ``{subset}/initial.vmiss``
      - Variant missingness (pre-filter)
-   * - ``{subset}/MAF_check.afreq``
-     - Allele frequencies post-MAF filter
-   * - ``{subset}/R_check.het``
+   * - ``{subset}/initial.afreq``
+     - Allele frequencies (from PLINK --freq)
+   * - ``{subset}/intermediates/standard_filter_{CHR}/hetcheck.het`` (per-chromosome)
      - Sample heterozygosity rates
-   * - ``{subset}/fail-het-qc.txt``
+   * - ``{subset}/het_fail_ind.txt``
      - Samples failing heterozygosity filter
-   * - ``{subset}/sex_discrepancy.txt``
+   * - ``{subset}/sex_discrepancy_{CHR}.txt`` (per-chromosome) or ``{subset}/sex_discrepancy.txt``
      - Samples with sex check discrepancies
 
 All files are tab-separated with PLINK-style columns (no header row unless noted).
@@ -74,9 +74,9 @@ Section 2: Load and Inspect QC Data
     vmiss <- read_tsv(vmiss_path, col_names = c("CHR", "ID", "F_MISS", "N_MISS"))
     glimpse(vmiss)
 
-    # Load heterozygosity rates and calculate heterozygosity rate
-    het_path <- file.path(OUT_DIR, subset, "R_check.het")
-    het <- read_tsv(het_path, col_names = c("IID", "FID", "O_HOM", "N_NM")) %>%
+    # Load heterozygosity rates (from PLINK2 --het output, no header)
+    het_path <- file.path(OUT_DIR, subset, "intermediates/standard_filter_1/hetcheck.het")
+    het <- read_tsv(het_path, col_names = c("FID", "IID", "O_HOM", "E_HOM", "N_NM")) %>%
       mutate(het_rate = (N_NM - O_HOM) / N_NM)
     glimpse(het)
 
@@ -147,9 +147,14 @@ Section 4: Interactive Filtering and Analysis
     print(het_failures)
 
     # Load and inspect sex discrepancies (if available)
+    # Note: file may have _CHR suffix if per-chromosome processing
     sex_path <- file.path(OUT_DIR, subset, "sex_discrepancy.txt")
+    if (!file.exists(sex_path)) {
+      # Try with chromosome suffix
+      sex_path <- file.path(OUT_DIR, subset, "sex_discrepancy_1.txt")
+    }
     if (file.exists(sex_path)) {
-      sex_disc <- read_tsv(sex_path, col_names = c("IID", "FID", "reported_sex", "genetic_sex"))
+      sex_disc <- read_tsv(sex_path, col_names = c("FID", "IID"))
       print(sex_disc)
     }
 

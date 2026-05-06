@@ -16,13 +16,14 @@ This lab covers interacting with output files from the **Local Ancestry Pipeline
 ----
 
 Setup: Load Libraries and Set Paths
-----------------------------------
+------------------------------------
 
 .. code-block:: r
 
     library(tidyverse)
     OUT_DIR <- "/path/to/your/pipeline/output"
     local_anc_dir <- file.path(OUT_DIR, "02-localAncestry")
+    chr <- 20  # Example chromosome
 
 ----
 
@@ -35,14 +36,14 @@ Section 1: Local Ancestry Output Files Reference
 
    * - File Path
      - Description
-   * - ``local_ancestry_tracts.tsv``
-     - Per-sample local ancestry tracts (chr, start, end, ancestry)
-   * - ``per_snp_local_ancestry.tsv``
-     - Per-SNP local ancestry posterior probabilities
-   * - ``rfmix_posterior.tsv``
-     - RFMix posterior probabilities (samples × SNPs)
-   * - ``figures/local_ancestry_manhattan.svg``
-     - Pre-rendered Manhattan plot of local ancestry
+   * - ``02-localAncestry/ancestry_full.txt``
+     - Global ancestry per sample (from RFMix)
+   * - ``02-localAncestry/chr{CHR}.lai.msp.tsv``
+     - Per-chromosome MSP (marginal success probability) files
+   * - ``02-localAncestry/chr{CHR}.lai.fb.tsv``
+     - Per-chromosome fragment files (ancestry tracts)
+   * - ``02-localAncestry/``
+     - Contains all per-chromosome ancestry outputs
 
 ----
 
@@ -51,12 +52,25 @@ Section 2: Load and Inspect Local Ancestry Data
 
 .. code-block:: r
 
-    # Load local ancestry tracts
-    tracts_path <- file.path(local_anc_dir, "local_ancestry_tracts.tsv")
-    if (file.exists(tracts_path)) {
-      tracts <- read_tsv(tracts_path, 
-                         col_names = c("IID", "CHR", "start", "end", "ancestry", "posterior_prob"))
-      glimpse(tracts)
+    # Load RFMix global ancestry (from MSP files)
+    anc_full_path <- file.path(local_anc_dir, "ancestry_full.txt")
+    if (file.exists(anc_full_path)) {
+      anc_full <- read_tsv(anc_full_path)
+      glimpse(anc_full)
+    }
+
+    # Load per-chromosome MSP file (marginal success probability)
+    msp_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.msp.tsv"))
+    if (file.exists(msp_path)) {
+      msp <- read_tsv(msp_path)
+      glimpse(msp)
+    }
+
+    # Load per-chromosome fragment file (ancestry tracts)
+    fb_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.fb.tsv"))
+    if (file.exists(fb_path)) {
+      fb <- read_tsv(fb_path)
+      glimpse(fb)
     }
 
     # Load per-SNP local ancestry

@@ -30,15 +30,14 @@ For detailed installation instructions, see:
 
 .. tabs::
 
-   .. tab:: MSI HPC
+.. tab:: MSI HPC
 
-      If you're using the MSI HPC cluster:
+       If you're using the MSI HPC cluster:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-           module load gdcgenomicsMSI
-           conda activate snakemake
+            module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
 
     .. tab:: Sandbox
 
@@ -46,9 +45,8 @@ For detailed installation instructions, see:
 
        .. code-block:: bash
 
-           module use /scratch.global/GDC/GDCGenomicsQC/envs
-           module load gdcgenomicsSandbox
-           conda activate snakemake
+            module use /scratch.global/GDC/GDCGenomicsQC/envs
+            module load gdcgenomicsSandbox
 
     .. tab:: Other HPCs
 
@@ -56,18 +54,17 @@ For detailed installation instructions, see:
 
        .. code-block:: bash
 
-           module use /path/to/GDCGenomicsQC/envs
-           module load gdcgenomicsMSI
-           conda activate snakemake
+            module use /path/to/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
 
    .. tab:: Local Snakemake
 
-      If you're using your own Snakemake installation:
+       If you're using your own Snakemake installation:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-          conda activate snakemake
-          cd GDCGenomicsQC
+           conda activate snakemake
+           cd GDCGenomicsQC
 
 **Data Requirements:**
 
@@ -118,15 +115,17 @@ This step requires the following input files:
 .. code-block:: yaml
 
     phenotypeSimulation:
-        ancestries: ["AFR", "EUR"]  # Two ancestry groups to simulate
-        n_sims: 10                  # Number of phenotype simulations
-        heritability: 0.4           # SNP heritability (h²)
-        rho: 0.8                    # Cross-ancestry genetic correlation
-        maf: 0.05                   # Minor allele frequency threshold
-        seed: 42                    # Random seed for reproducibility
-        skip_thinning: true         # Skip SNP thinning
-        thin_count_snps: 1000000    # SNPs to thin to
-        thin_count_inds: 10000      # Individuals to thin to
+        enabled: true              # Set to true to run simulation
+        ancestries: ["AFR", "EUR"] # Two ancestry groups to simulate
+        simulations_dir: "/path/to/simulations"  # Output directory
+        n_sims: 10                 # Number of phenotype simulations
+        heritability: 0.4          # SNP heritability (h²)
+        rho: 0.8                   # Cross-ancestry genetic correlation
+        maf: 0.05                  # Minor allele frequency threshold
+        seed: 42                   # Random seed for reproducibility
+        skip_thinning: true        # Skip SNP thinning
+        thin_count_snps: 1000000   # SNPs to thin to (if not skipping)
+        thin_count_inds: 10000     # Individuals to thin to (if not skipping)
 
 **Heritability Estimation Config:**
 
@@ -197,7 +196,9 @@ Step 2: Create configuration file
         ancestry_file: "/path/to/ancestry_labels.tsv"
 
     phenotypeSimulation:
+        enabled: true
         ancestries: ["AFR", "EUR"]
+        simulations_dir: "/path/to/simulations"
         n_sims: 10
         heritability: 0.4
         rho: 0.8
@@ -208,7 +209,6 @@ Step 2: Create configuration file
     snpHerit:
         method: "AdjHE"
         npc: 10
-        out: "heritability_estimates.txt"
 
     conda-frontend: mamba
     EOF

@@ -31,15 +31,14 @@ For detailed installation instructions, see:
 
 .. tabs::
 
-   .. tab:: MSI HPC
+.. tab:: MSI HPC
 
-      If you're using the MSI HPC cluster:
+       If you're using the MSI HPC cluster:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-           module load gdcgenomicsMSI
-           conda activate snakemake
+            module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
 
     .. tab:: Sandbox
 
@@ -47,9 +46,8 @@ For detailed installation instructions, see:
 
        .. code-block:: bash
 
-           module use /scratch.global/GDC/GDCGenomicsQC/envs
-           module load gdcgenomicsSandbox
-           conda activate snakemake
+            module use /scratch.global/GDC/GDCGenomicsQC/envs
+            module load gdcgenomicsSandbox
 
     .. tab:: Other HPCs
 
@@ -57,19 +55,18 @@ For detailed installation instructions, see:
 
        .. code-block:: bash
 
-           # Replace with your HPC's module path:
-           module use /path/to/GDCGenomicsQC/envs
-           module load gdcgenomicsMSI
-           conda activate snakemake
+            # Replace with your HPC's module path:
+            module use /path/to/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
 
    .. tab:: Local Snakemake
 
-      If you're using your own Snakemake installation:
+       If you're using your own Snakemake installation:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-          conda activate snakemake
-          cd GDCGenomicsQC
+           conda activate snakemake
+           cd GDCGenomicsQC
 
 **Data Requirements:**
 
@@ -138,21 +135,21 @@ Required Input Files
 
 .. code-block:: yaml
 
+    # PRS output goes to OUT_DIR/prs/ by default
     prsMethods:
       resource_dir: "/path/to/prs_resources"  # Optional, defaults to ../prs_resources
       # Single ancestry methods
       single_ct:
-        enabled: true
+        enabled: false
       single_prsice:
         enabled: true
       single_prscs:
         enabled: false
       single_ldpred2:
-        enabled: false
+        enabled: true
       single_lassosum2:
         enabled: false
 
-    PRS_OUT_DIR: "/path/to/prs/output"
     conda-frontend: mamba
 
 **See also:** :doc:`tutorial_qc_pipeline` for genotype prep, :doc:`tutorial_ancestry_classification` for ancestry labels.
@@ -171,36 +168,34 @@ Create a config that enables multiple PRS methods:
 
     mkdir -p ~/prs_lab
     cd ~/prs_lab
-    cat > config_prs.yaml << 'EOF'
+cat > config_prs.yaml << 'EOF'
     INPUT: "/path/to/data/chr{CHR}.vcf.gz"
     REF: "/path/to/reference/storage"
     OUT_DIR: "/path/to/output/directory"
-    PRS_OUT_DIR: "/path/to/prs/output"
     local-storage-prefix: "/path/to/.snakemake/storage"
 
     chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
     ancestry:
-        model: "pca"
-        threshold: 0.8
+        ancestry_file: "/path/to/ancestry_labels.tsv"  # Or use model: "pca" for classification
 
-     prsMethods:
-         resource_dir: "/path/to/prs_resources"
-         # Enable single-ancestry methods
-         single_ct:
-           enabled: true
-         single_prsice:
-           enabled: true
-         # Disable unused methods
-         single_prscs:
-           enabled: false
-         single_ldpred2:
-           enabled: false
-         single_lassosum2:
-           enabled: false
+    prsMethods:
+        resource_dir: "/path/to/prs_resources"
+        # Enable single-ancestry methods
+        single_prsice:
+          enabled: true
+        single_ldpred2:
+          enabled: true
+        # Disable unused methods
+        single_ct:
+          enabled: false
+        single_prscs:
+          enabled: false
+        single_lassosum2:
+          enabled: false
 
-     conda-frontend: mamba
-     EOF
+    conda-frontend: mamba
+    EOF
 
 Key parameters:
 - ``prsMethods.<method>.enabled``: Set to ``true`` to run that method

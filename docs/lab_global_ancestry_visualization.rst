@@ -34,14 +34,18 @@ Section 1: Global Ancestry Output Files Reference
 
    * - File Path
      - Description
-   * - ``posterior_probabilities.tsv``
-     - Per-sample posterior probabilities for each ancestry (PCA/UMAP/RFMix)
-   * - ``ancestry_classifications.tsv``
+   * - ``01-globalAncestry/posterior_probabilities.tsv``
+     - Per-sample posterior probabilities for each ancestry
+   * - ``01-globalAncestry/sample_coords.tsv``
+     - Sample coordinates in PCA/UMAP space
+   * - ``01-globalAncestry/ref_coords.tsv``
+     - Reference coordinates in PCA/UMAP space
+   * - ``01-globalAncestry/ancestry_classifications.tsv``
      - Predicted ancestry and confidence per sample
-   * - ``ancestry_confusion_matrix.tsv``
-     - Confusion matrix (if reported race provided)
-   * - ``posterior_probability_stacked_pca.svg``
-     - Pre-rendered stacked posterior probability plot
+   * - ``01-globalAncestry/keep_{ANC}.txt``
+     - Sample IDs passing ancestry threshold for each ancestry
+   * - ``01-globalAncestry/posterior_probability_stacked_{model}.svg``
+     - Pre-rendered stacked posterior probability plot (model = pca/umap)
 
 ----
 

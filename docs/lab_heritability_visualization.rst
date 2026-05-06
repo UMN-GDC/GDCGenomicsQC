@@ -34,12 +34,12 @@ Section 1: Heritability Output Files Reference
 
    * - File Path
      - Description
-   * - ``heritability_estimates.txt``
-     - Per-ancestry heritability (h²), standard error (SE), p-value
-   * - ``method_comparison.tsv``
-     - Comparison of heritability across methods (AdjHE, GCTA, etc.)
-   * - ``per_ancestry_h2.tsv``
-     - Per-ancestry h² with confidence intervals
+   * - ``{subset}/03-snpHeritability/mash_output.csv``
+     - Per-ancestry heritability estimates (from MASH)
+   * - ``{subset}/03-snpHeritability/mash_config.json``
+     - Configuration used for MASH run
+   * - ``{subset}/03-snpHeritability/mash.log``
+     - MASH execution log
 
 ----
 
@@ -48,16 +48,17 @@ Section 2: Load and Inspect Heritability Data
 
 .. code-block:: r
 
-    # Load heritability estimates
-    herit_path <- file.path(herit_dir, "heritability_estimates.txt")
+    # Load heritability estimates (MASH output - CSV format with header)
+    subset <- "AFR"  # or EUR, etc.
+    herit_path <- file.path(herit_dir, subset, "03-snpHeritability", "mash_output.csv")
     if (file.exists(herit_path)) {
-      herit <- read_tsv(herit_path, col_names = c("Ancestry", "h2", "SE", "p_value", "method"))
+      herit <- read_csv(herit_path)
       glimpse(herit)
     }
 
-    # Load method comparison (if available)
-    comp_path <- file.path(herit_dir, "method_comparison.tsv")
-    if (file.exists(comp_path)) {
+    # Load configuration (for reference)
+    config_path <- file.path(herit_dir, subset, "03-snpHeritability", "mash_config.json")
+    if (file.exists(config_path)) {
       comp <- read_tsv(comp_path)
       glimpse(comp)
     }

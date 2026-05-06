@@ -28,17 +28,16 @@ For detailed installation instructions, see:
 
 .. tabs::
 
-   .. tab:: MSI HPC
+.. tab:: MSI HPC
 
-      If you're using the MSI HPC cluster:
+       If you're using the MSI HPC cluster:
 
-      .. code-block:: bash
+       .. code-block:: bash
 
-           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-           module load gdcgenomicsMSI
-           conda activate snakemake
+            module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
 
-Verify installation:
+        Verify installation:
 
         .. code-block:: bash
 
@@ -57,7 +56,6 @@ Verify installation:
 
             module use /scratch.global/GDC/GDCGenomicsQC/envs
             module load gdcgenomicsSandbox
-            conda activate snakemake
 
         Verify installation:
 
@@ -76,16 +74,14 @@ Verify installation:
 
        .. code-block:: bash
 
-           # Replace with your HPC's module path:
-           module use /path/to/GDCGenomicsQC/envs
-           module load gdcgenomicsMSI
-           conda activate snakemake
+            # Replace with your HPC's module path:
+            module use /path/to/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
 
       Verify installation:
 
       .. code-block:: bash
 
-          cd GDCGenomicsQC
           snakemake --version
 
    .. tab:: Local Snakemake
@@ -140,15 +136,15 @@ This step requires the following input files:
 .. code-block:: yaml
 
     snpHerit:
-        pheno: "/path/to/phenotype.tsv"  # Phenotype file (IID, pheno)
-        covar: "/path/to/covariates.tsv" # Optional covariates
-        method: "AdjHE"                   # Estimation method
-        npc: 10                          # Number of PCs to include
-        out: "heritability_estimates.txt" # Output file
-        mpheno: 1                        # Phenotype column number or name
-        fixed_effects: null              # List of fixed effect covariate names
-        qcovar: null                     # Quantitative covariate names (for GCTA)
-        covar_discrete: null             # Discrete covariate names (for GCTA)
+        pheno: "/path/to/phenotype.tsv"    # Phenotype file (IID, pheno) - required
+        covar: "/path/to/covariates.tsv"   # Covariate file (optional)
+        method: "AdjHE"                    # Estimation method: AdjHE, GCTA, PredLMM, SWD
+        npc: 10                            # Number of PCs to include (or array [3, 5, 10])
+        mpheno: 1                          # Phenotype column number
+        qcovar: null                       # Quantitative covariate names (for GCTA)
+        covar_discrete: null               # Discrete covariate names (for GCTA)
+        std: false                          # Run SAdj-HE (standardized) vs UAdj-HE
+        prefix: "/path/to/{subset}_grm"     # GRM prefix for MASH (optional)
 
 **Output Files:**
 
@@ -183,25 +179,21 @@ Create a configuration file with your phenotype and covariate paths:
 
     chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-    # Option 1: Use predicted ancestry (from classification)
+    # Option 1: Use provided ancestry file (faster)
     ancestry:
-        model: "pca"
-        threshold: 0.8
+        ancestry_file: "/path/to/ancestry_labels.tsv"
 
-    # Option 2: Use provided ancestry file (faster)
+    # Option 2: Use predicted ancestry (from classification)
     # ancestry:
-    #     ancestry_file: "/path/to/ancestry_labels.tsv"
+    #     model: "pca"
+    #     threshold: 0.8
 
     snpHerit:
         pheno: "/path/to/phenotype.tsv"
         covar: "/path/to/covariates.tsv"
         method: "AdjHE"
         npc: 10
-        out: "heritability_estimates.txt"
         mpheno: 1
-        fixed_effects: null
-        qcovar: null
-        covar_discrete: null
 
     conda-frontend: mamba
     EOF
@@ -353,34 +345,8 @@ Discussion Points
 
 5. **Covariate adjustment**: How do covariates affect heritability estimates?
 
-For the theoretical foundations of SNP heritability estimation—including
-PC-relate methodology and REML estimation—refer to the accompanying lecture
-materials.
-
-5. **MAF threshold**: Test maf = 0.01, 0.05, 0.10
+6. **MAF threshold**: Test maf = 0.01, 0.05, 0.10
    - Impact of rare variant inclusion
-
-----
-
-Discussion Points
------------------
-
-1. **Estimation bias**: How close are the estimated h² values to the true
-   simulated value (0.4)? What factors contribute to bias?
-
-2. **Method comparison**: Compare REML vs. method of moments estimates.
-   Which is more accurate? More precise?
-
-3. **Cross-ancestry correlation**: When ρ < 1, what does this imply about
-   genetic architecture differences? How does this affect meta-analysis?
-
-4. **Sample size effects**: How do standard errors change with sample size?
-   Is there a point of diminishing returns?
-
-5. **PC correction**: How many PCs are optimal for controlling population
-   structure? What happens with too few or too many?
-
-6. **Heritability heterogeneity**: Why might h² differ between AFR and EUR?
 
 For the theoretical foundations of SNP heritability estimation—including
 PC-relate methodology and REML estimation—refer to the accompanying lecture

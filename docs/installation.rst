@@ -22,37 +22,41 @@ The pipeline is pre-installed via the ``gdcgenomicsqc`` module.
 
    .. code-block:: yaml
 
-       INPUT: "/path/to/your/chr{CHR}.vcf.gz"
-       OUT_DIR: "/path/to/output/directory"
-       REF: "/path/to/reference/data"
-       local-storage-prefix: "/path/to/.snakemake/storage"
+        INPUT: "/path/to/your/chr{CHR}.vcf.gz"
+        OUT_DIR: "/path/to/output/directory"
+        REF: "/path/to/reference/data"
+        local-storage-prefix: "/path/to/.snakemake/storage"
 
-       chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+        chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-       relatedness:
-           method: "king"
-           king_cutoff: 0.0884
+        relatedness:
+            method: "king"
+            king_cutoff: 0.0884
 
-       SEX_CHECK: false
-       thin: false
+        SEX_CHECK: false
+        thin: false
+        GRM: true
+
+        ancestry:
+            ancestry_file: "/path/to/ancestry_labels.tsv"
 
 2. **Create a SLURM script** (optional - can also run interactively):
 
    .. code-block:: bash
 
-       #!/bin/bash
-       #SBATCH --job-name=gdc_qc
-       #SBATCH --output=logs/%x_%j.log
-       #SBATCH --error=logs/%x_%j.err
-       #SBATCH --time=7-00:00
-       #SBATCH --mem=64G
-       #SBATCH --cpus-per-task=8
+        #!/bin/bash
+        #SBATCH --job-name=gdc_qc
+        #SBATCH --output=logs/%x_%j.log
+        #SBATCH --error=logs/%x_%j.err
+        #SBATCH --time=7-00:00
+        #SBATCH --mem=64G
+        #SBATCH --cpus-per-task=8
 
-       # For MSI HPC use: /projects/standard/gdc/public/GDCGenomicsQC/envs
-       # For Sandbox use: /scratch.global/GDC/GDCGenomicsQC/envs
-        module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-        module load gdcgenomicsMSI
-        conda activate snakemake
+        # For MSI HPC use: /projects/standard/gdc/public/GDCGenomicsQC/envs
+        # For Sandbox use: /scratch.global/GDC/GDCGenomicsQC/envs
+         module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+         module load gdcgenomicsMSI
+         # Snakemake is automatically loaded by the module - no separate activation needed
 
         gdcgenomicsqc --configfile /path/to/your/config.yaml
 
@@ -101,55 +105,34 @@ Choose the installation method that matches your environment:
            echo $SINGULARITY_CACHEDIR
            echo $SNAKEMAKE_SINGULARITY_PREFIX
 
-       **What the module provides:**
+**What the module provides:**
 
-       The ``gdcgenomicsqc`` module sets up:
+        The ``gdcgenomicsMSI`` module sets up:
 
-       +--------------------------------+------------------------------------------------+
-       | Setting                        | Value                                           |
-       +================================+================================================+
-       | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
-       +--------------------------------+------------------------------------------------+
-       | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
-       +--------------------------------+------------------------------------------------+
-       | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
-       +--------------------------------+------------------------------------------------+
+        +--------------------------------+------------------------------------------------+
+        | Setting                        | Value                                           |
+        +================================+================================================+
+        | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+        +--------------------------------+------------------------------------------------+
+        | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+        +--------------------------------+------------------------------------------------+
+        | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+        +--------------------------------+------------------------------------------------+
+        | **Snakemake**                   | Loaded via MSI module system (older version)   |
+        +--------------------------------+------------------------------------------------+
 
-       **Snakemake availability:**
+        **Snakemake handling:**
 
-       The module does NOT provide Snakemake. You must have Snakemake available
-       through one of these methods:
+        The ``gdcgenomicsMSI`` module automatically loads Snakemake via the module
+        system. This uses the older Snakemake version available through MSI's
+        module infrastructure. No additional Snakemake setup is required.
 
-       .. dropdown:: Method 1: Conda Environment (Recommended)
-
-           .. code-block:: bash
-
-               conda env create -n snakemake -f /projects/standard/gdc/public/GDCGenomicsQC/envs/snakemake.yml
-               conda activate snakemake
-
-        .. dropdown:: Method 2: Existing MSI Snakemake Environment
-
-           If your HPC already has a snakemake environment:
-
-           .. code-block:: bash
-
-               conda config --add envs_dirs /projects/standard/gdc/public/envs
-               conda activate snakemake
-
-       .. dropdown:: Method 3: MSI Conda Modules
-
-          MSI may provide conda through modules:
-
-          .. code-block:: bash
-
-              module load miniconda
-              conda activate snakemake
-
-.. note::
+        .. note::
 
         **For MSI HPC and Sandbox**: You do NOT need to clone the repository.
-        The pipeline is pre-installed via the ``gdcgenomicsqc`` module.
-        Simply create your config file and run using the wrapper script below.
+        The pipeline is pre-installed via the ``gdcgenomicsMSI`` (or ``gdcgenomicsSandbox``)
+        module. The module automatically handles Snakemake loading - no separate
+        ``conda activate snakemake`` needed.
 
         **Run (MSI HPC):**
 
@@ -165,7 +148,7 @@ Choose the installation method that matches your environment:
 
         :doc:`Skip to Usage <usage>`
 
-    .. tab:: Sandbox
+.. tab:: Sandbox
 
        This scenario uses pre-installed modules and pre-cached Singularity images.
        Ideal for sandbox or testing environments.
@@ -181,6 +164,7 @@ Choose the installation method that matches your environment:
 
             module use /scratch.global/GDC/GDCGenomicsQC/envs
             module load gdcgenomicsSandbox
+            # Snakemake is automatically loaded by the module via common conda env
 
             # Verify environment is set up
            echo $SINGULARITY_CACHEDIR
@@ -188,48 +172,26 @@ Choose the installation method that matches your environment:
 
        **What the module provides:**
 
-       The ``gdcgenomicsqc`` module sets up:
+       The ``gdcgenomicsSandbox`` module sets up:
 
        +--------------------------------+------------------------------------------------+
        | Setting                        | Value                                           |
        +================================+================================================+
-       | ``PATH``                        | Adds ``gdcgenomicsMSI/bin`` to PATH            |
+       | ``PATH``                        | Adds ``gdcgenomicsSandbox/bin`` to PATH        |
        +--------------------------------+------------------------------------------------+
        | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
        +--------------------------------+------------------------------------------------+
        | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
        +--------------------------------+------------------------------------------------+
+       | **Snakemake**                   | Loaded via common conda environment            |
+       +--------------------------------+------------------------------------------------+
 
-       **Snakemake availability:**
+       **Snakemake handling:**
 
-       The module does NOT provide Snakemake. You must have Snakemake available
-       through one of these methods:
+       The ``gdcgenomicsSandbox`` module automatically loads Snakemake through a
+       common conda environment. No additional Snakemake setup is required.
 
-       .. dropdown:: Method 1: Conda Environment (Recommended)
-
-           .. code-block:: bash
-
-               conda env create -n snakemake -f /scratch.global/GDC/GDCGenomicsQC/envs/snakemake.yml
-               conda activate snakemake
-
-        .. dropdown:: Method 2: Sandbox Snakemake Environment
-
-           If your sandbox already has a snakemake environment:
-
-           .. code-block:: bash
-
-               conda config --add envs_dirs /scratch.global/GDC/GDCGenomicsQC/envs
-               conda activate snakemake
-
-       .. dropdown:: Method 3: System Conda
-
-          If conda is available on the system:
-
-          .. code-block:: bash
-
-              conda activate snakemake
-
-**Run (Sandbox):**
+       **Run (Sandbox):**
 
         .. code-block:: bash
 
@@ -284,28 +246,32 @@ Choose the installation method that matches your environment:
       - Reference data locations
       - Pipeline options (relatedness, ancestry methods, etc.)
 
-       Example configuration:
+Example configuration:
 
        .. code-block:: yaml
 
-           INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
-           OUT_DIR: "/path/to/output/directory"
-           REF: "/path/to/reference/data"
-           local-storage-prefix: "/path/to/.snakemake/storage"
+            INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
+            OUT_DIR: "/path/to/output/directory"
+            REF: "/path/to/reference/data"
+            local-storage-prefix: "/path/to/.snakemake/storage"
 
-           chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+            chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-           relatedness:
-               method: "king"
-               king_cutoff: 0.0884
+            relatedness:
+                method: "king"
+                king_cutoff: 0.0884
 
-           localAncestry:
-               RFMIX: true
-               test: true
-               thin_subjects: 0.1
-               figures: "figures"
+            GRM: true
 
-           thin: false
+            ancestry:
+                ancestry_file: "/path/to/ancestry_labels.tsv"
+                threshold: 0.8
+
+            localAncestry:
+                RFMIX: false
+                test: false
+
+            thin: false
 
        **5. Run**
 
@@ -356,7 +322,7 @@ Choose the installation method that matches your environment:
       - Reference data locations
       - Pipeline options (relatedness, ancestry methods, etc.)
 
-       Example configuration:
+Example configuration:
 
        .. code-block:: yaml
 
@@ -371,15 +337,19 @@ Choose the installation method that matches your environment:
                method: "king"
                king_cutoff: 0.0884
 
+           GRM: true
+
+           ancestry:
+               ancestry_file: "/path/to/ancestry_labels.tsv"
+               threshold: 0.8
+
            localAncestry:
-               RFMIX: true
-               test: true
-               thin_subjects: 0.1
-               figures: "figures"
+               RFMIX: false
+               test: false
 
            thin: false
 
-       **4. Run**
+   **4. Run**
 
        .. code-block:: bash
 
@@ -508,20 +478,20 @@ Software Environment Summary
      - Module Command (Sandbox)
    * - Snakemake
      - ``conda activate snakemake``
-     - ``module load miniconda && conda activate snakemake``
-     - ``module load miniconda && conda activate snakemake``
+     - (auto-loaded by ``gdcgenomicsMSI``)
+     - (auto-loaded by ``gdcgenomicsSandbox``)
     * - GDC Pipeline
-      - (via containers)
-      - ``module load gdcgenomicsMSI``
-      - ``module load gdcgenomicsSandbox``
-   * - Apptainer
-     - N/A
-     - ``module load apptainer``
-     - ``module load apptainer``
-   * - SLURM
-     - N/A
-     - (Usually default on HPC)
-     - (Usually default on HPC)
+       - (via containers)
+       - ``module load gdcgenomicsMSI``
+       - ``module load gdcgenomicsSandbox``
+    * - Apptainer
+      - N/A
+      - ``module load apptainer`` (auto-loaded)
+      - ``module load apptainer`` (auto-loaded)
+    * - SLURM
+      - N/A
+      - (Usually default on HPC)
+      - (Usually default on HPC)
 
 External Dependencies
 ---------------------
@@ -600,17 +570,16 @@ Troubleshooting
 
 **If containers fail to pull:**
 
-- Check network connectivity
+- Check network connectivity: ``nc -zv ghcr.io 443``
 - Configure cachedir: ``export SINGULARITY_CACHEDIR=/path/to/large/disk``
+- If you get "denied" error: the image may not exist or requires authentication. Try using ``--use-conda`` instead of containers, or verify the image exists on GHCR.
 
 For additional help, see the :doc:`usage` guide or open an issue on GitHub.
 
 .. important::
 
-   **Every time you start a new session**, you must rerun the environment setup steps:
-
-   - Load the GDC module (if using module system)
-   - Activate the snakemake conda environment
+   **Every time you start a new session**, you only need to load the GDC module -
+   it automatically handles Snakemake and Apptainer.
 
    Example for a new session:
 
@@ -619,14 +588,10 @@ For additional help, see the :doc:`usage` guide or open an issue on GitHub.
         # For MSI HPC:
         module use /projects/standard/gdc/public/GDCGenomicsQC/envs
         module load gdcgenomicsMSI
-        conda activate snakemake
 
         # For Sandbox:
         module use /scratch.global/GDC/GDCGenomicsQC/envs
         module load gdcgenomicsSandbox
-        conda activate snakemake
 
-        # For other HPCs:
-        module use /path/to/GDCGenomicsQC/envs
-        module load gdcgenomicsMSI
-        conda activate snakemake
+        # Verify Snakemake is available (auto-loaded by module):
+        snakemake --version
