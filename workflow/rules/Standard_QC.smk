@@ -56,7 +56,7 @@ if INPUT_IS_PER_CHROMOSOME:
             plink2 --pfile {output.tempDir}/step3 --indep-pairwise 50 5 0.2 --out {output.tempDir}/indepSNP --threads {threads}
             plink2 --pfile {output.tempDir}/step3 --extract {output.tempDir}/indepSNP.prune.in --het --out {output.tempDir}/hetcheck --threads {threads}
 
-            Rscript --no-save {params.scripts_dir}/heterozygosity_outliers_list.R
+            Rscript --no-save {params.scripts_dir}/heterozygosity_outliers_list.R {output.tempDir}/hetcheck.het {params.output_dir}
             if [ -f {params.output_dir}/het_fail_ind.txt ]; then
                 sed 's/"//g' {params.output_dir}/het_fail_ind.txt | awk '{{print $1, $2}}' > {output.tempDir}/het_fail.txt
                 plink2 --pfile {output.tempDir}/step3 --remove {output.tempDir}/het_fail.txt --make-pgen --out {output.tempDir}/step4 --threads {threads}
