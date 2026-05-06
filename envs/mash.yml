@@ -20,4 +20,8 @@ dependencies:
   - pyarrow    # This is the "engine"
   - fastparquet # Optional: an alternative engine often used with Dask
   - dask
+  - pip
+  - git
+  - pip:
+    - git+https://github.com/UMN-GDC/MASH.git
 prefix: /projects/standard/gdc/public/envs/MASH

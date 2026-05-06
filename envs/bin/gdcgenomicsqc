@@ -1,0 +1,9 @@
+#!/bin/bash
+# GDC Genomics QC Pipeline wrapper script
+
+PIPELINE_DIR="/scratch.global/GDC/GDCGenomicsQC"
+
+exec snakemake \
+    --snakefile "$PIPELINE_DIR/workflow/Snakefile" \
+    --profile "$PIPELINE_DIR/profiles/sandbox" \
+    "$@"

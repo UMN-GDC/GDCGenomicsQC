@@ -22,17 +22,95 @@ Initial QC (sample and variant missingness filtering) followed by Standard QC
 Prerequisites
 -------------
 
-- Access to an HPC cluster with SLURM scheduler
-- GDCGenomicsQC pipeline installed
-- Reference data configured
-- Working Snakemake profile (e.g., ``profiles/hpc``)
+**Setup:**
 
-Verify your installation:
+Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
+For detailed installation instructions, see:
 
-.. code-block:: bash
+- :doc:`installation` - Software setup (module, conda, or other methods)
+- :doc:`usage` - Running the pipeline
 
-    cd GDCGenomicsQC
-    snakemake --version
+.. tabs::
+
+   .. tab:: MSI HPC
+
+      If you're using the MSI HPC cluster:
+
+      .. code-block:: bash
+
+           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+           module load gdcgenomicsMSI
+           conda activate snakemake
+
+Verify installation:
+
+        .. code-block:: bash
+
+            snakemake --version
+
+        .. note::
+
+            **You do NOT need to clone the repository.** The pipeline is pre-installed
+            via the ``gdcgenomicsMSI`` module. Just create your config file and run.
+
+     .. tab:: Sandbox
+
+        If you're using the Sandbox environment:
+
+        .. code-block:: bash
+
+            module use /scratch.global/GDC/GDCGenomicsQC/envs
+            module load gdcgenomicsSandbox
+            conda activate snakemake
+
+        Verify installation:
+
+        .. code-block:: bash
+
+            snakemake --version
+
+        .. note::
+
+            **You do NOT need to clone the repository.** The pipeline is pre-installed
+            via the ``gdcgenomicsSandbox`` module. Just create your config file and run.
+
+     .. tab:: Other HPCs
+
+       If your HPC has the GDC module pre-configured:
+
+       .. code-block:: bash
+
+           # Replace with your HPC's module path:
+           module use /path/to/GDCGenomicsQC/envs
+           module load gdcgenomicsMSI
+           conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Local Snakemake
+
+      If you're using your own Snakemake installation:
+
+      .. code-block:: bash
+
+          conda activate snakemake
+          cd GDCGenomicsQC
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          snakemake --version
+
+**Data Requirements:**
+
+- Reference data configured (see :doc:`tutorial_1kg_assembly`)
+- Genotype data in VCF, BED, or PGEN format
 
 .. _dag-visualization:
 
@@ -49,6 +127,61 @@ The rule graph provides a cleaner view of rule dependencies:
 
 ----
 
+Required Input Files
+~~~~~~~~~~~~~~~~~~~~
+
+This step requires the following input files:
+
+.. list-table:: QC Pipeline Input Files
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Input File
+     - Description
+   * - ``INPUT: "chr{CHR}.vcf.gz"`` (or .bed/.pgen)
+     - Per-chromosome VCF, BED, or PGEN files with genotype data
+   * - ``REF/1000G_highcoverage/population.txt``
+     - Reference panel population labels (for ancestry QC subsets)
+   * - ``REF/Homo_sapiens.GRCh38.dna.primary_assembly.fa``
+     - Reference genome FASTA (if using reference allele correction)
+
+**Input Formats Supported:**
+
+The pipeline automatically detects format based on file extension:
+
++----------+------------------------------------------+
+| Format   | Example Path                             |
++==========+==========================================+
+| VCF      | ``/data/chr{CHR}.vcf.gz``                |
+| PLINK BED| ``/data/chr{CHR}.bed``                  |
+| PLINK PGEN| ``/data/chr{CHR}.pgen``                |
+| Single file| ``/data/merged.bed`` (no ``{CHR}``)   |
++----------+------------------------------------------+
+
+**Config Parameters for QC:**
+
+.. code-block:: yaml
+
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"  # Per-chromosome VCF
+    OUT_DIR: "/path/to/output"
+    REF: "/path/to/reference"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+    # QC thresholds
+    relatedness:
+        method: "king"  # "0" for none, "king" for removal
+        king_cutoff: 0.0884
+
+    SEX_CHECK: true  # Enable/disable sex verification
+    GRM: true  # Compute genetic relationship matrix
+    thin: false
+
+**See also:** :doc:`usage` for configuration options, :doc:`installation` for software setup.
+
+----
+
 Lab Exercise: Running QC Pipeline
 
 Step 1: Create Configuration File
@@ -61,16 +194,19 @@ Create a configuration file for QC:
     mkdir -p ~/qc_lab
     cd ~/qc_lab
     cat > config_qc.yaml << 'EOF'
-    INPUT_FILE: "/path/to/your/vcf/files"
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
     OUT_DIR: "/path/to/output/directory"
     REF: "/path/to/reference/data"
-    vcf_template: "/path/to/vcf/chr{CHR}.vcf.gz"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
     relatedness:
         method: "0"
+        king_cutoff: 0.0884
 
     SEX_CHECK: true
-    thin: true
+    thin: false
     conda-frontend: mamba
     EOF
 
@@ -82,13 +218,38 @@ Key parameters:
 Step 2: Run Initial QC
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: bash
+.. tabs::
 
-    cd GDCGenomicsQC/workflow
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_qc.yaml \
-        full/initialFilter.pgen \
-        -j 10
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_qc.yaml full/initialFilter.pgen -j 10
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_qc.yaml full/initialFilter.pgen -j 10
+
+   .. tab:: Other HPCs
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_qc.yaml full/initialFilter.pgen -j 10
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_qc.yaml \
+              full/initialFilter.pgen \
+              -j 10
 
 The Initial QC stage performs:
 
@@ -100,12 +261,34 @@ The Initial QC stage performs:
 Step 3: Run Standard QC
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: bash
+.. tabs::
 
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_qc.yaml \
-        full/standardFilter.pgen \
-        -j 10
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_qc.yaml full/standardFilter.pgen -j 10
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_qc.yaml full/standardFilter.pgen -j 10
+
+   .. tab:: Other HPCs
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_qc.yaml full/standardFilter.pgen -j 10
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_qc.yaml \
+              full/standardFilter.pgen \
+              -j 10
 
 The Standard QC stage applies additional filters:
 
@@ -119,12 +302,34 @@ Step 4: Run Ancestry-Specific QC
 
 After ancestry classification, run QC on specific ancestry groups:
 
-.. code-block:: bash
+.. tabs::
 
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_qc.yaml \
-        EUR/standardFilter.pgen \
-        -j 10
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_qc.yaml EUR/standardFilter.pgen -j 10
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_qc.yaml EUR/standardFilter.pgen -j 10
+
+   .. tab:: Other HPCs
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_qc.yaml EUR/standardFilter.pgen -j 10
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_qc.yaml \
+              EUR/standardFilter.pgen \
+              -j 10
 
 Available subsets are dynamically determined from classification results.
 
@@ -297,3 +502,19 @@ These questions explore QC considerations for diverse and admixed populations:
 For theoretical foundations—including population genetics principles, statistical
 tests for QC metrics, and best practices for diverse populations—refer to the
 accompanying lecture materials.
+
+----
+
+Next Steps
+---------
+
+After completing this tutorial, proceed to:
+
+- :doc:`tutorial_ancestry_classification` - Classify ancestry using the QC-filtered data
+- :doc:`tutorial_heritability` - Estimate heritability using QC-filtered genotypes
+
+**See also:**
+
+- :doc:`installation` - Software setup (if not already done)
+- :doc:`usage` - Running the full pipeline
+- :doc:`genomics` - Technical details on QC methods

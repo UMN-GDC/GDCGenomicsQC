@@ -4,7 +4,7 @@ workdir=$1
 mkdir temp
 
 # 1. Find all _aligned.log files
-# 	* copy them to a temp folder
+# * copy them to a temp folder
 cd ${workdir}
 cp *aligned.log temp/
 cd ./temp/
@@ -31,7 +31,7 @@ rm *aligned.log
 
 # 3. For each _trimmed.log Read the starting number of SNPs and which chromosome it is
 # 4. Find out how many swapped SNPs 
-# 	* Will need to sum this for convenience in reporting
+# * Will need to sum this for convenience in reporting
 # 5. Find the number of variants excluded during alignment phase
 
 # Find all _trimmed.log files in the current directory

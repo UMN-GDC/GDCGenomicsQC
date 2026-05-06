@@ -178,10 +178,10 @@ haplotypes in the estimated sequence:
      - **shapeit4.2**: A fast and accurate method for estimation of haplotypes.
    * - **Reference Map**
      - ``chr${CHR}.b38.gmap.gz``: Genetic map used to model recombination.
-   * - **Input Format**
-     - VCF/BCF: Requires high-quality, QC-filtered genotypes from Module 5.
-   * - **Output Format**
-     - Phased VCF: Necessary for local ancestry inference in Module 7.
+     * - **Input Format**
+      - VCF/BCF: Requires high-quality, QC-filtered genotypes from Module 6.
+    * - **Output Format**
+      - Phased VCF: Necessary for local ancestry inference in Module 7.
 
 
 

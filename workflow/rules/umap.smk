@@ -1,6 +1,6 @@
-rule UMAP:
+rule applyUmapDimensionalityReduction:
     log:
-        OUT_DIR / "logs" / "UMAP.log",
+        OUT_DIR / "logs" / "applyUmapDimensionalityReduction.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -21,11 +21,12 @@ rule UMAP:
         neighbors=50,
         ncoords=2,
         outputPrefix=OUT_DIR / "01-globalAncestry" / "umap",
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
     echo "Running UMAP:"
 
-    Rscript scripts/Umap.R --eigens {input.eigen} --out {params.outputPrefix} \
+    Rscript {params.scripts_dir}/Umap.R --eigens {input.eigen} --out {params.outputPrefix} \
       --npc {params.npc} --neighbors {params.neighbors} \
       --sample {input.sample} \
       --threads {threads} \

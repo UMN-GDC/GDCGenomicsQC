@@ -9,7 +9,83 @@
 
 A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing [Plink](https://www.cog-genomics.org/plink/), [Liftover](https://genome.ucsc.edu/cgi-bin/hgLiftOver), [R-language](https://www.r-project.org/), [Python](https://www.python.org/), and [bash](https://www.gnu.org/software/bash/), and  housed in a [Docker image](https://hub.docker.com/_/docker). The steps in the pipeline are detailed [here](https://gdcgenomicsqc.readthedocs.io/en/latest/)
 
+## Quick Start
 
+Choose the installation method that matches your environment:
+
+<details>
+<summary><b>HPC with Module (MSI/UMN) - Recommended</b></summary>
+
+```bash
+# Load the module
+module use /projects/standard/gdc/public/envs/GDCGenomicsQC/envs
+module load gdcgenomicsqc
+
+# Set up Snakemake (if not already available)
+conda config --add envs_dirs /projects/standard/gdc/public/envs
+conda activate snakemake
+
+# Clone and run
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC/workflow
+snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
+```
+</details>
+
+<details>
+<summary><b>HPC without Module</b></summary>
+
+```bash
+# Clone the repository
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC
+
+# Set up Snakemake environment
+conda env create -n snakemake -f envs/snakemake.yml
+conda activate snakemake
+
+# Run with HPC profile
+cd workflow
+snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+```
+</details>
+
+<details>
+<summary><b>Interactive/Local</b></summary>
+
+```bash
+# Clone the repository
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC
+
+# Set up Snakemake environment
+conda env create -n snakemake -f envs/snakemake.yml
+conda activate snakemake
+
+# Run interactively
+cd workflow
+snakemake --cores=4 --use-conda --configfile /path/to/your/config.yaml
+```
+</details>
+
+<details>
+<summary><b>Singularity/Apptainer Only</b></summary>
+
+```bash
+# Install Snakemake via pip
+pip install snakemake snakemake-executor-plugin-slurm
+
+# Clone the repository
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC
+
+# Run with Singularity
+cd workflow
+snakemake --use-singularity --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+```
+</details>
+
+---
 
 ## Features
 - State-of-the-art genomics quality control pipeline
@@ -61,12 +137,130 @@ conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
 To have SLURM dispatch it without dependency on your terminal being open these snakemake calls can be called in a SLURM script.
  An example is stored at workflow/example.SLURM
 
+### Running on a New HPC (No Module Available)
+
+If you're on an HPC system that doesn't have the GDCGenomicsQC module installed, you'll need to set it up manually:
+
+#### 1. Clone the Repository
+```bash
+git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+cd GDCGenomicsQC
+```
+
+#### 2. Set Up Snakemake Environment
+```bash
+# Option A: Create a conda/mamba environment
+conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
+conda activate snakemake
+
+# Option B: Use existing snakemake if available
+module load snakemake
+```
+
+#### 3. Configure and Run
+
+**Option A: Standard HPC profile (requires internet):**
+```bash
+cd GDCGenomicsQC/workflow
+snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+```
+
+**Option B: Sandbox profile (if pre-cached images available):**
+```bash
+cd GDCGenomicsQC/workflow
+snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
+```
+
+**Option C: Interactive profile (for testing):**
+```bash
+cd GDCGenomicsQC/workflow
+snakemake --profile ../profiles/interactive --configfile /path/to/your/config.yaml
+```
+
+#### Requesting Module Installation
+
+If you'd like the module installed system-wide, contact your HPC administrators with:
+- The path to the repository: `/path/to/GDCGenomicsQC`
+- The module location: `/path/to/GDCGenomicsQC/envs/gdcgenomicsqc`
+- The wrapper script: `/path/to/GDCGenomicsQC/envs/bin/gdcgenomicsqc`
+
 ## Detailed usage 
 After cloning this repository the steps to run this pipeline are as follows:
 1.	To run pipeline with SLURM scheduler (reccomended): `snakemake --profile=../profiles/hpc`
 2.	To run pipeline interactively: `snakemake --profile=../profiles/interactive`
 
 These profiles specify using the singularity images (`--use-singularity`), but if desired you can run them with the `--use-conda` flag, which will construct and cache the conda envs locally. Just note that this does not work well with SLURM schedulers (`--executor slurm`), but will work fine when running interactively.
+
+### Sandbox Profile (Offline/Isolated Environment)
+
+The `sandbox` profile is designed for environments with limited or no internet access. It uses a pre-cached set of Singularity images stored in a shared location.
+
+#### Installation
+
+1. **First-time setup** (requires internet to cache images):
+   ```bash
+   cd GDCGenomicsQC/workflow
+   snakemake --profile ../profiles/sandbox -n
+   ```
+
+   This will pull all required Singularity images to the cache at `/scratch.global/GDC/singularityimages/`.
+
+2. **Configure module** (optional, for easier access):
+   ```bash
+   # If using the module file from the repo:
+   module use /path/to/GDCGenomicsQC/envs
+   module load gdcgenomicsqc
+   ```
+
+#### Running with Sandbox Profile
+
+**Using the module (recommended):**
+```bash
+module use /path/to/GDCGenomicsQC/envs
+module load gdcgenomicsqc
+
+# Verify environment is set up
+echo $SINGULARITY_CACHEDIR
+echo $SNAKEMAKE_SINGULARITY_PREFIX
+
+# Run from any directory - --directory is set automatically
+gdcgenomicsqc --configfile /path/to/your/config.yaml
+```
+
+**Without module:**
+```bash
+cd GDCGenomicsQC/workflow
+snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
+```
+
+#### Comparison: Sandbox vs HPC/Interactive vs New HPC
+
+| Feature | Sandbox | HPC | New HPC (No Module) | Interactive |
+|---------|---------|-----|---------------------|-------------|
+| Container cache | Pre-cached at `/scratch.global/GDC/singularityimages` | Downloads on demand | Downloads on demand | Downloads on demand |
+| Internet required | No (after initial setup) | Yes | Yes | Yes |
+| Profile location | `profiles/sandbox` | `profiles/hpc` | `profiles/hpc` or `profiles/sandbox` | `profiles/interactive` |
+| Use case | Offline/air-gapped systems | Standard HPC runs | Fresh HPC without module | Local testing |
+| Module available | Yes (`gdcgenomicsqc`) | Yes (system) | No - manual setup required | No |
+| Setup required | Clone repo, run once to cache | Clone repo | Clone + create conda env | Clone + create conda env |
+
+**Setup time comparison:**
+- **Sandbox**: ~5 min initial setup + first run to cache (internet required), then offline
+- **HPC (with module)**: ~2 min to load module
+- **New HPC (no module)**: ~10-15 min (clone + conda setup)
+- **Interactive**: ~10-15 min (clone + conda setup)
+
+**Switching between profiles:**
+```bash
+# Use sandbox (offline)
+snakemake --profile ../profiles/sandbox ...
+
+# Use HPC (standard)
+snakemake --profile ../profiles/hpc ...
+
+# Use interactive (local)
+snakemake --profile ../profiles/interactive ...
+```
  - `--configfile </path/to/configfile>` path to .yaml configuring your desired run
  - to execute it somewhere else add these flags `--directory /path/to/GDCGenomicsQC/workflow --snakefile /path/to/GDCGenomicsQC/workflow/Snakefile`
  - For older versions of snakemake (if you dindn't install conda env create snakame as specified above) run with a slurm scheduler by appending `--cluster "sbatch --parsable"`

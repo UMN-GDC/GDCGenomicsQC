@@ -7,8 +7,16 @@
 # =============================================================================
 # Required: Project Paths
 # =============================================================================
-# Input PLINK files (prefix without .bed/.bim/.fam extension)
-INPUT_FILE: "/path/to/your/data/prefix"
+# Input genomic data template. Supports:
+# - Per-chromosome VCF: Use {CHR} placeholder (e.g., "/path/to/vcf/chr{CHR}.vcf.gz")
+# - Whole genome PLINK BED: "/path/to/data/merged.bed" (omit {CHR})
+# - Whole genome PLINK PGEN: "/path/to/data/merged.pgen" (omit {CHR})
+INPUT: "/path/to/data/chr{CHR}.vcf.gz"
+
+# Alternative VCF template for ABCD-style paths (optional)
+# Use for paths like: /spaces/.../chr{CHR}_dose.vcf.gz
+# Leave null to use INPUT path
+vcf_template: null
 
 # Output directory for pipeline results
 OUT_DIR: "/path/to/output/directory"
@@ -16,11 +24,11 @@ OUT_DIR: "/path/to/output/directory"
 # Reference data directory (required for various operations)
 REF: "/path/to/reference/data"
 
-# Optional: VCF template for chromosome-specific loading (use {CHR} placeholder)
-vcf_template: "/path/to/vcf/chr{CHR}.vcf.gz"
-
 # Local snakemake storage for caching
 local-storage-prefix: "/path/to/.snakemake/storage"
+
+# Chromosomes to process (list of integers)
+chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
 
 # =============================================================================
@@ -71,6 +79,15 @@ ancestry:
     # Ancestry inference method: "pca", "umap", "vae", or "rfmix"
     model: "pca"
 
+    # Bypass mode: Provide your own ancestry labels instead of running prediction
+    # Format: Tab-separated file with two columns (IID, ancestry), no header
+    # Example:
+    #   sample1  AFR
+    #   sample2  EUR
+    # When set, pipeline skips ancestry prediction and uses these labels directly.
+    # Set to null (or omit) to run standard ancestry prediction.
+    ancestry_file: null
+
 localAncestry:
     # Run RFMix for local ancestry inference
     RFMIX: false
@@ -83,6 +100,9 @@ localAncestry:
     
     # Output directory for figures
     figures: "figures"
+    
+    # Chromosomes for local ancestry (uses pipeline chromosomes if null)
+    chromosomes: null
 
 
 # =============================================================================
@@ -90,38 +110,61 @@ localAncestry:
 # =============================================================================
 # Estimate SNP-based heritability (h²) using Haseman-Elston regression
 snpHerit:
-    # Path to phenotype file
-    # CSV format with columns: IID, <trait>
-    # Or FAM format (.fam) with phenotype in 6th column
-    pheno: "/path/to/phenotype.csv"
-    
-    # Path to covariate file(s)
-    # Can be a single file path or comma-separated list for multiple files
-    # e.g., "/path/to/covariates.csv" or "/path/to/cov1.csv,/path/to/cov2.csv"
-    # Format: CSV with columns: IID, <covariates>
-    covar: "/path/to/covariates.csv"
-    
-    # Output filename for heritability estimates
-    out: "phenoEsts.csv"
-    
-    # Estimation method: "AdjHE" (Haseman-Elston regression)
-    # Other methods (not yet implemented): "GCTA", "PredLMM", "SWD", "COMBAT"
+    # Prefix for GRM files (prefix.grm.bin, prefix.grm.N.bin, prefix.grm.id)
+    # Used by MASH for heritability estimation
+    # Use {subset} placeholder for subset (e.g., AFR, EUR)
+    # If null, auto-derived as: OUT_DIR/{subset}/03-snpHeritability/{subset}_grm
+    prefix: null
+
+    # Path to phenotype file (required to activate snpHerit)
+    # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
+    # First two columns must be FID, IID
+    pheno: null
+
+    # Path to covariate file(s) (required when pheno is specified)
+    # Can be a single file path or list for multiple files
+    # Format: CSV/TSV with columns: FID, IID, <covariates>
+    covar: null
+
+    # Output filename for heritability estimates (CSV format)
+    out: null
+
+    # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE"
-    
-    # Number of principal components to include as covariates
+
+    # Number of principal components to use as covariates
+    # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
     npc: 10
-    
-    # Phenotype column number in FAM file (if using FAM format)
+
+    # Phenotype column(s) to analyze
+    # Integer or array: 1 = third column (after FID, IID)
     mpheno: 1
-    
-    # Loop through all covariate combinations (for model selection)
+
+    # Quantitative covariate column names (passed via --qcovar to GCTA)
+    # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
+    qcovar: null
+
+    # Discrete/categorical covariate column names (passed via --covar to GCTA)
+    # If null and covar provided, MASH auto-detects (columns with <35 unique values)
+    covar_discrete: null
+
+    # Column name to use as random effect (for AdjHE with site effects)
+    RV: null
+
+    # Loop through covariates, including all previous covariates in each iteration
     loop_covs: false
-    
-    # Fixed effect covariates to include
-    fixed_effects: []
-    
-    # Use random grouping for heritability estimation
-    random_groups: false
+
+    # Run SAdj-HE (standardized) instead of UAdj-HE (unstandardized)
+    std: false
+
+    # Rows to process at once when restoring GCTA GRM binary file
+    k: null
+
+    # Filter phenotype data (e.g., "age>30", "sex==1")
+    pheno_filter: null
+
+    # Filter covariate data (e.g., "site==1", "age>=18")
+    covar_filter: null
 
 
 # =============================================================================
@@ -131,6 +174,15 @@ snpHerit:
 phenotypeSimulation:
     # Ancestries to simulate for
     ancestries: ["AFR", "EUR"]
+    
+    # Directory containing simulation output (used by PRS pipeline)
+    # Set this when using pre-computed simulation files instead of running simulation
+    simulations_dir: null
+    
+    # GRM prefix template for snpHeritSim (MASH heritability estimation on simulated data)
+    # Use {anc} placeholder for ancestry (e.g., AFR_simulation, EUR_simulation)
+    # The full path will be: simulations_dir/{anc}_simulation
+    prefix: null
     
     # Number of simulations
     n_sims: 10
@@ -156,6 +208,43 @@ phenotypeSimulation:
     # Number of individuals to thin to (if not skipping)
     thin_count_inds: 10000
 
+    # GRM prefix template for snpHeritSim (MASH heritability estimation on simulated data)
+    # Use {anc} placeholder for ancestry (e.g., AFR_simulation, EUR_simulation)
+    # The full path will be: simulations_dir/{anc}_simulation
+    prefix: null
+
+
+# =============================================================================
+# PRS Methods Configuration
+# =============================================================================
+# Set enabled: true for methods you want to run
+# Commands are defined in workflow/rules/prsPipelines.smk (software is in container)
+prsMethods:
+  # Single ancestry methods
+  single_ct:
+    enabled: false
+  single_prsice:
+    enabled: true
+  single_prscs:
+    enabled: false
+  single_ldpred2:
+    enabled: true
+  single_lassosum2:
+    enabled: false
+  
+  # Multi ancestry methods
+  multi_ctsleb:
+    enabled: false
+  multi_prscsx:
+    enabled: false
+    ld_ref_dir: ""  # Optional: path to LD reference directory
+  multi_ldpred2:
+    enabled: false
+  multi_prosper:
+    enabled: false
+  multi_sdprs:
+    enabled: false
+
 
 # =============================================================================
 # Data Conversion Options
@@ -177,6 +266,3 @@ convertNfilt:
 # =============================================================================
 # Use thin subset for testing (reduces runtime)
 thin: false
-
-# Conda environment solver
-conda-frontend: mamba

@@ -10,6 +10,7 @@ extensions = [
     'sphinx_rtd_theme',
     'sphinx.ext.mathjax',
     'sphinxcontrib.mermaid',
+    'sphinx_tabs.tabs',
 ]
 
 # The master toctree document.

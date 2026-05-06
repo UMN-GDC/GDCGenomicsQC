@@ -22,19 +22,95 @@ slides.
 Prerequisites
 -------------
 
-- Access to an HPC cluster with SLURM scheduler
-- GDCGenomicsQC pipeline installed
-- Reference data configured
-- Working Snakemake profile (e.g., ``profiles/hpc``)
+**Setup:**
 
-For installation instructions, see :doc:`installation`.
+Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
+For detailed installation instructions, see:
 
-Verify your installation:
+- :doc:`installation` - Software setup (module, conda, or other methods)
+- :doc:`usage` - Running the pipeline
 
-.. code-block:: bash
+.. tabs::
 
-    cd GDCGenomicsQC
-    snakemake --version
+   .. tab:: MSI HPC
+
+      If you're using the MSI HPC cluster:
+
+      .. code-block:: bash
+
+           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+           module load gdcgenomicsMSI
+           conda activate snakemake
+
+Verify installation:
+
+        .. code-block:: bash
+
+            snakemake --version
+
+        .. note::
+
+            **You do NOT need to clone the repository.** The pipeline is pre-installed
+            via the ``gdcgenomicsMSI`` module. Just create your config file and run.
+
+     .. tab:: Sandbox
+
+        If you're using the Sandbox environment:
+
+        .. code-block:: bash
+
+            module use /scratch.global/GDC/GDCGenomicsQC/envs
+            module load gdcgenomicsSandbox
+            conda activate snakemake
+
+        Verify installation:
+
+        .. code-block:: bash
+
+            snakemake --version
+
+        .. note::
+
+            **You do NOT need to clone the repository.** The pipeline is pre-installed
+            via the ``gdcgenomicsSandbox`` module. Just create your config file and run.
+
+     .. tab:: Other HPCs
+
+       If your HPC has the GDC module pre-configured:
+
+       .. code-block:: bash
+
+           # Replace with your HPC's module path:
+           module use /path/to/GDCGenomicsQC/envs
+           module load gdcgenomicsMSI
+           conda activate snakemake
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC
+          snakemake --version
+
+   .. tab:: Local Snakemake
+
+      If you're using your own Snakemake installation:
+
+      .. code-block:: bash
+
+          conda activate snakemake
+          cd GDCGenomicsQC
+
+      Verify installation:
+
+      .. code-block:: bash
+
+          snakemake --version
+
+**Data Requirements:**
+
+- Reference panel with population labels (see :doc:`tutorial_1kg_assembly`)
+- QC-filtered genotype data (see :doc:`tutorial_qc_pipeline`)
 
 .. _dag-visualization:
 
@@ -51,6 +127,51 @@ The rule graph provides a cleaner view of rule dependencies:
 .. mermaid:: rulegraph_pca.mmd
 
 ----
+
+Required Input Files
+~~~~~~~~~~~~~~~~~~~~
+
+This step requires the following input files:
+
+.. list-table:: Ancestry Classification Input Files
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Input File
+     - Description
+   * - ``INPUT: "chr{CHR}.vcf.gz"`` (or .bed/.pgen)
+     - Per-chromosome genotype data (QC-filtered recommended)
+   * - ``REF/1000G_highcoverage/population.txt``
+     - Reference panel with population labels (IID, pop, superpop columns)
+   * - ``REF/1000G_highcoverage/1000G_highCoveragephased.pruned.pgen``
+     - LD-pruned, unrelated reference genotypes for PCA projection
+   * - ``OUT_DIR/full/initialFilter.pgen`` (or ``_CHR.pgen``)
+     - Initial QC-filtered sample genotypes
+
+**Input from Previous Steps:**
+
+The ancestry classification pipeline depends on:
+
+1. **QC Pipeline** (tutorial_qc_pipeline): Produces filtered genotype files
+2. **Reference Assembly** (tutorial_1kg_assembly): Provides reference panel
+
+**Config Parameters for Ancestry:**
+
+.. code-block:: yaml
+
+    ancestry:
+        threshold: 0.8  # Minimum posterior probability for classification
+        model: "pca"    # Options: pca, umap, rfmix (vae not yet implemented)
+        # Optional: reported_race: "/path/to/reported_race.tsv"
+
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
+    OUT_DIR: "/path/to/output"
+    REF: "/path/to/reference"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+**See also:** :doc:`tutorial_qc_pipeline` for QC preprocessing, :doc:`tutorial_1kg_assembly` for reference data.
 
 Lab Exercise: Running Ancestry Classification
 ----------------------------------------------
@@ -71,24 +192,29 @@ Create a configuration file for ancestry classification:
     mkdir -p ~/ancestry_lab
     cd ~/ancestry_lab
     cat > config_ancestry.yaml << 'EOF'
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
+    OUT_DIR: "/path/to/output/directory"
+    REF: "/path/to/reference/data"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
     ancestry:
         threshold: 0.8
         model: "pca"  # Options: pca, umap, rfmix (vae not yet implemented)
 
-    INPUT_FILE: "/path/to/your/vcf/files"
-    OUT_DIR: "/path/to/output/directory"
-    REF: "/path/to/reference/data"
-    vcf_template: "/path/to/vcf/chr{CHR}.vcf.gz"
-
     relatedness:
         method: "0"
+        king_cutoff: 0.0884
 
     localAncestry:
         RFMIX: true
         test: true
         thin_subjects: 0.1
+        figures: "figures"
+        chromosomes: null
 
-    thin: true
+    thin: false
     conda-frontend: mamba
     EOF
 
@@ -106,13 +232,38 @@ For this tutorial using simulated data, you should not find any related
 individuals (KING kinship coefficient ≈ 0), which serves as a good sanity
 check that the simulated data is properly independent.
 
-.. code-block:: bash
+.. tabs::
 
-    cd GDCGenomicsQC/workflow
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_ancestry.yaml \
-        classifyAncestry \
-        -j 10
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry -j 10
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry -j 10
+
+   .. tab:: Other HPCs
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry -j 10
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          cd GDCGenomicsQC/workflow
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_ancestry.yaml \
+              classifyAncestry \
+              -j 10
 
 This trains Random Forest models on reference coordinates and predicts ancestry
 probabilities for your samples.
@@ -126,28 +277,74 @@ Modify ``model`` in your config to compare embeddings:
 - **UMAP**: Nonlinear, good for visualization
 - **VAE**: Not yet implemented
 
-.. code-block:: bash
+.. tabs::
 
-    # Example: Switch to UMAP
-    ancestry:
-        threshold: 0.8
-        model: "umap"
+   .. tab:: MSI HPC
 
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_ancestry.yaml \
-        classifyAncestry
+      First edit your config to set ``model: "umap"``, then:
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry
+
+   .. tab:: Sandbox
+
+      First edit your config to set ``model: "umap"``, then:
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry
+
+   .. tab:: Other HPCs
+
+      First edit your config to set ``model: "umap"``, then:
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry
+
+   .. tab:: Local Snakemake
+
+      First edit your config to set ``model: "umap"``, then:
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_ancestry.yaml \
+              classifyAncestry
 
 Step 4: Ancestry-Specific Subsetting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The pipeline creates keep files for each predicted ancestry:
 
-.. code-block:: bash
+.. tabs::
 
-    # Run QC for a specific ancestry
-    snakemake --profile=../profiles/hpc \
-        --configfile ../config_ancestry.yaml \
-        convertNfilt/CHR=20/subset=EUR
+   .. tab:: MSI HPC
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+
+   .. tab:: Sandbox
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+
+   .. tab:: Other HPCs
+
+      .. code-block:: bash
+
+          gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+
+   .. tab:: Local Snakemake
+
+      .. code-block:: bash
+
+          snakemake --profile=../profiles/hpc \
+              --configfile ../config_ancestry.yaml \
+              convertNfilt/CHR=20/subset=EUR
 
 Available subsets are dynamically determined from classification results.
 
@@ -254,6 +451,80 @@ The pipeline will output:
 - Discrepancies can reveal both classification errors and limitations of
   self-reported labels
 
+Using a Provided Ancestry Classification File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you already have ancestry labels for your samples (e.g., from a previous
+analysis, clinical database, or external classifier), you can bypass the
+pipeline's ancestry prediction entirely by providing a tab-separated file.
+
+**When to use this:**
+
+- You have existing ancestry labels you trust
+- You want faster pipeline execution (skips PCA/UMAP/RFMix)
+- You need specific ancestry labels not supported by the default classifier
+
+**Input format** (``ancestry_labels.tsv``):
+
++----------+-----------+
+| IID      | ancestry  |
++==========+===========+
+| Sample1  | AFR       |
++----------+-----------+
+| Sample2  | EUR       |
++----------+-----------+
+| Sample3  | EUR       |
++----------+-----------+
+
+The file should be:
+
+- Tab-separated
+- Two columns: IID (sample ID), ancestry label
+- No header row
+- One line per sample
+
+To use your labels, add to your config:
+
+.. code-block:: bash
+
+    ancestry:
+        threshold: 0.8
+        model: "pca"
+        ancestry_file: "/path/to/ancestry_labels.tsv"
+
+**How the bypass works:**
+
+1. The pipeline reads your file and extracts unique ancestry labels
+2. Creates ``keep_{ancestry}.txt`` files in ``01-globalAncestry/`` (same as predicted)
+3. Skips ancestry prediction rules (PCA, UMAP, RFMix outputs are not required)
+4. Branches ancestry-specific QC using your provided labels
+
+**Behavior:**
+
+- Samples NOT in your file are excluded from ancestry-specific QC
+- They remain in the "full" dataset for non-stratified analyses
+- The ``phenotypeSimulation.ancestries`` config must match labels in your file
+
+**Example complete config:**
+
+.. code-block:: bash
+
+    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
+    OUT_DIR: "/path/to/output/directory"
+    REF: "/path/to/reference/data"
+    local-storage-prefix: "/path/to/.snakemake/storage"
+
+    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+    ancestry:
+        model: "pca"
+        ancestry_file: "/path/to/ancestry_labels.tsv"
+
+    phenotypeSimulation:
+        ancestries: ["AFR", "EUR"]  # Must match labels in your file
+
+This enables rapid iteration when you already have ancestry assignments.
+
 ----
 
 Discussion Points
@@ -291,3 +562,25 @@ These questions extend the practical exercise into deeper methodological conside
 For the theoretical foundations behind these methods—including PCA decomposition,
 Random Forest ensemble learning, and evaluation metrics—refer to the accompanying
 lecture materials.
+
+----
+
+Next Steps
+---------
+
+After completing this tutorial, you can:
+
+- :doc:`tutorial_heritability` - Estimate heritability using ancestry-classified samples
+- Return to :doc:`tutorial_qc_pipeline` - Run ancestry-specific QC using the keep files
+
+**The ancestry classification outputs enable:**
+
+- Ancestry-specific QC filters (``EUR/standardFilter.pgen``, ``AFR/standardFilter.pgen``, etc.)
+- Per-ancestry heritability estimation
+- Stratified GWAS analyses
+
+**See also:**
+
+- :doc:`installation` - Software setup (if not already done)
+- :doc:`usage` - Running the full pipeline
+- :doc:`genomics` - Technical details on ancestry methods

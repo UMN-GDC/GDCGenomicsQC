@@ -1,0 +1,26 @@
+name: classifyNreport
+channels:
+  - conda-forge
+  - bioconda
+  - r
+  - nodefaults
+dependencies:
+  - r-uwot
+  - r-svglite
+  - r-hdpca
+  - r-randomforest
+  - r-tidyverse
+  - r-data.table
+  - r-argparse
+  - r-mvtnorm
+  - bioconductor-gviz
+  - bioconductor-gdsfmt
+  - bioconductor-snprelate
+  - bioconductor-seqarray
+  - bioconductor-seqvartools
+  - bioconductor-biocparallel
+  - bioconductor-gwastools
+  - bioconductor-genesis
+  - bioconductor-xvector
+  - bioconductor-biostrings
+prefix: /projects/standard/gdc/public/envs/classifyNreport

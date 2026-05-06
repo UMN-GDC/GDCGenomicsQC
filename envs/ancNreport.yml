@@ -1,13 +1,12 @@
 name: ancNreport
 channels:
   - bioconda
-  - dranew
   - r
+  - dranew
   - conda-forge
   - nodefaults
 dependencies:
   - python=3.10
-  - pip
   - git
   - r-base
   - r-tidyverse
@@ -32,9 +31,6 @@ dependencies:
   - bcftools
   - bcftools-liftover-plugin
   - samtools>=1.17
-  - openjdk
-  - keras
-  - tensorflow=2.15
   - pandas-plink
   - scikit-learn
   - seaborn
@@ -43,6 +39,4 @@ dependencies:
   - fraposa-pgsc
   - plink
   - plink2
-  - pip:
-    - git+https://github.com/kr-colab/popvae.git
 prefix: /projects/standard/gdc/public/envs/ancNreport

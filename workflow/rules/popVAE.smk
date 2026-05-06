@@ -8,16 +8,16 @@ rule popVAE:
         runtime=2880,
     input:
         bed=os.path.join(
-            config["OUT_DIR"], "02-relatedness/standardFiltered.LDpruned.bed"
+            config.get("OUT_DIR", "/path/to/out"), "02-relatedness/standardFiltered.LDpruned.bed"
         ),
         bim=os.path.join(
-            config["OUT_DIR"], "02-relatedness/standardFiltered.LDpruned.bim"
+            config.get("OUT_DIR", "/path/to/out"), "02-relatedness/standardFiltered.LDpruned.bim"
         ),
         fam=os.path.join(
-            config["OUT_DIR"], "02-relatedness/standardFiltered.LDpruned.fam"
+            config.get("OUT_DIR", "/path/to/out"), "02-relatedness/standardFiltered.LDpruned.fam"
         ),
     output:
-        f"{config['OUT_DIR']}/04-globalAncestry/popvae",
+        f"{config.get('OUT_DIR', '/path/to/out')}/04-globalAncestry/popvae",
     params:
         input_prefix=lambda wildcards, input: input.bed[:-4],
         npc=10,

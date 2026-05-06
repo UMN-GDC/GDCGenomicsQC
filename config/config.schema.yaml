@@ -1,13 +1,25 @@
 # GDCGenomicsQC Configuration Schema
 # Used by Snakemake for validation
 
-INPUT_FILE:
+INPUT:
   type: str
   required: true
   description: |
-    Path to the input genomic data. This can be:
-    - A PLINK dataset prefix (.bed/.bim/.fam or .pgen/.pvar/.psam)
-    - A VCF file (will be converted to PLINK format)
+    Path template for input genomic data. Supports two patterns:
+    - Per-chromosome files: Use {CHR} placeholder (e.g., "/path/to/chr{CHR}.vcf.gz")
+    - Single merged file: Full path without {CHR} placeholder (e.g., "/path/to/merged.bed")
+    Detected by extension:
+    - .vcf or .vcf.gz -> VCF format (converted to PLINK)
+    - .bed -> PLINK bed/bim/fam format (whole genome dataset)
+    - .pgen -> PLINK pgen/pvar/psam format (whole genome dataset, used as-is)
+
+vcf_template:
+  type: str
+  nullable: true
+  description: |
+    Alternative VCF template path for ABCD data format.
+    Use this for ABCD-style VCF paths (e.g., /spaces/.../chr{CHR}_dose.vcf.gz)
+    If null, uses INPUT path.
 
 OUT_DIR:
   type: str
@@ -27,19 +39,18 @@ REF:
     - CrossMap/ (liftover chain files)
     - rfmix_ref/ (RFMIX genetic maps)
 
-vcf_template:
-  type: str
-  nullable: true
-  description: |
-    Template for VCF input files with {CHR} placeholder.
-    Used when input is in VCF format - will be expanded for each chromosome.
-    Set to null if input is already in PLINK format.
-
 local-storage-prefix:
   type: str
   nullable: true
   description: |
     Path for Snakemake's local storage cache.
+
+chromosomes:
+  type: list
+  required: true
+  description: |
+    List of chromosomes to process.
+    Example: [1, 2, 3] or [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
 SEX_CHECK:
   type: bool
@@ -82,6 +93,37 @@ ancestry:
       type: str
       default: "pca"
       enum: ["pca", "umap", "vae", "rfmix"]
+    ancestry_file:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Path to a user-provided ancestry labels file (bypass mode).
+        See also: ancestry_file_sep and ancestry_file_col for flexible column mapping.
+        Default format: Tab-separated, two columns (IID, ancestry_label), no header.
+        Example:
+          sample1  AFR
+          sample2  EUR
+        When provided, the pipeline skips ancestry prediction and uses these
+        labels directly for ancestry-specific QC branching. Samples not in this
+        file are excluded from ancestry-specific analysis but remain in the full dataset.
+    ancestry_file_sep:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Field separator for ancestry_file. Defaults to tab.
+        Set to " " (space), ",", or any other delimiter as needed.
+        Example: For "/projects/standard/gdc/public/Ref/1000G_highcoverage/population.txt"
+        which is space-separated, use " ".
+    ancestry_file_col:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Column name (or 0-based index) containing ancestry labels in ancestry_file.
+        If null, uses second column (index 1) as ancestry labels.
+        Example: For 1000G population.txt with header "Superpopulation", use "Superpopulation".
 
 internalPCA:
   type: dict
@@ -123,15 +165,34 @@ localAncestry:
     figures:
       type: str
       default: "figures"
+    chromosomes:
+      type: list
+      nullable: true
+      description: |
+        List of chromosomes for local ancestry. Uses pipeline chromosomes if null.
 
 phenotypeSimulation:
   type: dict
   default: {}
   schema:
+    enabled:
+      type: bool
+      default: false
+      description: Set to true to run phenotype simulation
     ancestries:
       type: list
       minitems: 2
       maxitems: 2
+    simulations_dir:
+      type: str
+      nullable: true
+      default: null
+      description: Directory containing simulation output (used by PRS pipeline)
+    prefix:
+      type: str
+      nullable: true
+      default: null
+      description: GRM prefix template for snpHeritSim (use {anc} placeholder)
     n_sims:
       type: int
       default: 10
@@ -161,36 +222,155 @@ snpHerit:
   type: dict
   default: {}
   schema:
+    prefix:
+      type: str
+      nullable: true
+      default: null
+      description: Prefix for GRM files (use {subset} placeholder for subset)
     pheno:
       type: str
       nullable: true
       default: null
+      description: Path to phenotype file (supports .parquet, .csv, .tsv, .tab, PLINK format)
     covar:
       type: str
       nullable: true
       default: null
+      description: Path to covariate file(s) (single path or list, format CSV/TSV with FID, IID)
     out:
       type: str
-      default: "phenoEsts"
+      nullable: true
+      default: null
+      description: Output filename for heritability estimates (CSV format)
     method:
       type: str
       default: "AdjHE"
-      enum: ["AdjHE", "GCTA", "PredLMM", "SWD", "COMBAT"]
+      enum: ["AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
     npc:
       type: int
       default: 10
-    random_groups:
-      type: bool
-      default: false
-    loop_covs:
-      type: bool
-      default: false
+      description: Number of principal components to use as covariates (int or array)
     mpheno:
       type: int
       default: 1
-    fixed_effects:
-      type: list
-      default: []
+      description: Phenotype column(s) to analyze (1 = third column after FID, IID)
+    qcovar:
+      type: str
+      nullable: true
+      default: null
+      description: Quantitative covariate column names (passed via --qcovar to GCTA)
+    covar_discrete:
+      type: str
+      nullable: true
+      default: null
+      description: Discrete/categorical covariate column names (passed via --covar to GCTA)
+    RV:
+      type: str
+      nullable: true
+      default: null
+      description: Column name to use as random effect (for AdjHE with site effects)
+    loop_covs:
+      type: bool
+      default: false
+      description: Loop through covariates, including all previous covariates in each iteration
+    std:
+      type: bool
+      default: false
+      description: Run SAdj-HE (standardized) instead of UAdj-HE (unstandardized)
+    k:
+      type: int
+      nullable: true
+      default: null
+      description: Rows to process at once when restoring GCTA GRM binary file
+    pheno_filter:
+      type: str
+      nullable: true
+      default: null
+      description: Filter phenotype data (e.g., "age>30", "sex==1")
+    covar_filter:
+      type: str
+      nullable: true
+      default: null
+      description: Filter covariate data (e.g., "site==1", "age>=18")
+
+prsMethods:
+  type: dict
+  default: {}
+  description: PRS methods configuration (single and multi ancestry methods)
+  schema:
+    single_ct:
+      type: dict
+      default: {enabled: false}
+      schema:
+        enabled:
+          type: bool
+          default: false
+    single_prsice:
+      type: dict
+      default: {enabled: true}
+      schema:
+        enabled:
+          type: bool
+          default: true
+    single_prscs:
+      type: dict
+      default: {enabled: false}
+      schema:
+        enabled:
+          type: bool
+          default: false
+    single_ldpred2:
+      type: dict
+      default: {enabled: true}
+      schema:
+        enabled:
+          type: bool
+          default: true
+    single_lassosum2:
+      type: dict
+      default: {enabled: false}
+      schema:
+        enabled:
+          type: bool
+          default: false
+    multi_ctsleb:
+      type: dict
+      default: {enabled: false}
+      schema:
+        enabled:
+          type: bool
+          default: false
+    multi_prscsx:
+      type: dict
+      default: {enabled: false, ld_ref_dir: ""}
+      schema:
+        enabled:
+          type: bool
+          default: false
+        ld_ref_dir:
+          type: str
+          default: ""
+    multi_ldpred2:
+      type: dict
+      default: {enabled: false}
+      schema:
+        enabled:
+          type: bool
+          default: false
+    multi_prosper:
+      type: dict
+      default: {enabled: false}
+      schema:
+        enabled:
+          type: bool
+          default: false
+    multi_sdprs:
+      type: dict
+      default: {enabled: false}
+      schema:
+        enabled:
+          type: bool
+          default: false
 
 convertNfilt:
   type: dict
@@ -207,8 +387,3 @@ convertNfilt:
       type: float
       nullable: true
       default: null
-
-conda-frontend:
-  type: str
-  default: "mamba"
-  enum: ["conda", "mamba"]

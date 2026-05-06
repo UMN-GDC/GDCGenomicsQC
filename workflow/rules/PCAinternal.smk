@@ -1,6 +1,6 @@
-rule PCAinternal_pcair:
+rule runPcairInternalPca:
     log:
-        OUT_DIR / "logs" / "PCAprivate_pcair_{subset}.log",
+        OUT_DIR / "logs" / "runPcairInternalPca_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -32,6 +32,7 @@ rule PCAinternal_pcair:
         input_prefix=lambda wildcards, input: str(input.pgen)[:-4],
         color_col=config.get("internalPCA", {}).get("color_by", "None"),
         pheno_file=config.get("internalPCA", {}).get("phenotype_file", "None"),
+        scripts_dir=SCRIPTS_DIR,
     shell:
         """
         echo "Running PC-AiR internal PCA"
@@ -41,7 +42,7 @@ rule PCAinternal_pcair:
         echo "Converting pgen to bed format..."
         plink2 --pfile {params.input_prefix} --export bed --out {params.input_prefix}
         
-        Rscript scripts/run_pcair_pcrelate.R \
+        Rscript {params.scripts_dir}/run_pcair_pcrelate.R \
             "{params.input_prefix}" \
             "{params.out_dir}" \
             "{params.color_col}" \
@@ -54,9 +55,9 @@ rule PCAinternal_pcair:
         """
 
 
-rule PCAinternal_plink2:
+rule runPlink2ApproximatePca:
     log:
-        OUT_DIR / "logs" / "PCAinternal_plink2_{subset}.log",
+        OUT_DIR / "logs" / "runPlink2ApproximatePca_{subset}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
