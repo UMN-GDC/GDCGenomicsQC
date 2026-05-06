@@ -66,7 +66,7 @@ if INPUT_IS_PER_CHROMOSOME:
                 cp {output.tempDir}/step3.psam {output.tempDir}/step4.psam
             fi
 
-            plink2 --pfile {output.tempDir}/step4 --make-pgen --out {output.pgen} --threads {threads}
+            plink2 --pfile {output.tempDir}/step4 --make-pgen --out {output.pgen%.pgen} --threads {threads}
             """
 
 else:
