@@ -20,17 +20,17 @@ high-performance clusters like the UMN MSI Agate cluster.
    api
    contributing
    tutorial_qc_pipeline
-   lab_qc_visualization
+   labs/lab_qc_visualization
    tutorial_ancestry_classification
-   lab_global_ancestry_visualization
+   labs/lab_global_ancestry_visualization
    tutorial_1kg_assembly
    tutorial_heritability
-   lab_heritability_visualization
+   labs/lab_heritability_visualization
    tutorial_phenotype_simulation
    tutorial_prs
-   lab_prs_single_visualization
+   labs/lab_prs_single_visualization
    tutorial_prs_multi
-   lab_local_ancestry_visualization
+   labs/lab_local_ancestry_visualization
 
 Getting Started
 ---------------
@@ -41,16 +41,16 @@ Getting Started
 2. :doc:`usage` - Learn how to run the pipeline
 3. :doc:`tutorial_1kg_assembly` - Download reference data
 4. :doc:`tutorial_qc_pipeline` - Run quality control
-5. :doc:`lab_qc_visualization` - **Lab**: Visualize basic QC outputs in R
+5. :doc:`labs/lab_qc_visualization` - **Lab**: Visualize basic QC outputs in R
 6. :doc:`tutorial_ancestry_classification` - Classify ancestry
-7. :doc:`lab_global_ancestry_visualization` - **Lab**: Visualize global ancestry outputs in R
+7. :doc:`labs/lab_global_ancestry_visualization` - **Lab**: Visualize global ancestry outputs in R
 8. :doc:`tutorial_phenotype_simulation` - Simulate phenotypes for method testing
 9. :doc:`tutorial_heritability` - Estimate heritability (with real phenotypes)
-10. :doc:`lab_heritability_visualization` - **Lab**: Visualize heritability outputs in R
+10. :doc:`labs/lab_heritability_visualization` - **Lab**: Visualize heritability outputs in R
 11. :doc:`tutorial_prs` - Run single-ancestry PRS methods
-12. :doc:`lab_prs_single_visualization` - **Lab**: Visualize single-ancestry PRS outputs in R
+12. :doc:`labs/lab_prs_single_visualization` - **Lab**: Visualize single-ancestry PRS outputs in R
 13. :doc:`tutorial_prs_multi` - Run multi-ancestry PRS methods
-14. :doc:`lab_local_ancestry_visualization` - **Lab**: Visualize local ancestry outputs in R
+14. :doc:`labs/lab_local_ancestry_visualization` - **Lab**: Visualize local ancestry outputs in R
 
 **Quick Setup (MSI/UMN HPC):**
 

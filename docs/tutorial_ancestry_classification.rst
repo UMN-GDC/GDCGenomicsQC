@@ -573,6 +573,11 @@ After completing this tutorial, you can:
 - :doc:`tutorial_heritability` - Estimate heritability using ancestry-classified samples
 - Return to :doc:`tutorial_qc_pipeline` - Run ancestry-specific QC using the keep files
 
+**Lab Materials**
+---------------
+
+- [Global Ancestry Visualization Lab (R Markdown)](labs/lab_global_ancestry_visualization.Rmd) - Interactive R notebook for visualizing global ancestry outputs
+
 **The ancestry classification outputs enable:**
 
 - Ancestry-specific QC filters (``EUR/standardFilter.pgen``, ``AFR/standardFilter.pgen``, etc.)

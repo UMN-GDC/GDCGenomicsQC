@@ -385,3 +385,8 @@ After completing this tutorial, you have explored:
 - :doc:`tutorial_ancestry_classification` - Ancestry classification
 - :doc:`tutorial_phenotype_simulation` - Phenotype simulation for testing methods
 - :doc:`genomics` - Technical details on heritability methods
+
+**Lab Materials**
+----------------
+
+- [Heritability Visualization Lab (R Markdown)](labs/lab_heritability_visualization.Rmd) - Interactive R notebook for visualizing heritability outputs

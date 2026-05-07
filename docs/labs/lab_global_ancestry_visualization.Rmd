@@ -1,0 +1,168 @@
+---
+title: "Lab: Visualizing and Working with Global Ancestry Outputs"
+author: "GDCGenomicsQC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lab: Visualizing and Working with Global Ancestry Outputs (R + Tidyverse)
+
+This lab covers interacting with output files from the **Global Ancestry Classification Pipeline** using R and tidyverse. You will work with posterior probabilities, ancestry classifications, and confusion matrices.
+
+**Estimated time**: 45 minutes
+
+**Prerequisites**:
+- Completed the ancestry classification tutorial (outputs in `OUT_DIR/01-globalAncestry/`)
+- R (≥4.0) with tidyverse installed
+- Set `OUT_DIR` to your pipeline output directory
+
+---
+
+# Setup: Load Libraries and Set Paths
+
+```{r load-libraries}
+library(tidyverse)
+OUT_DIR <- "/path/to/your/pipeline/output"
+global_anc_dir <- file.path(OUT_DIR, "01-globalAncestry")
+```
+
+---
+
+# Section 1: Global Ancestry Output Files Reference
+
+| File Path | Description |
+|----------|------------|
+| `01-globalAncestry/posterior_probabilities.tsv` | Per-sample posterior probabilities for each ancestry |
+| `01-globalAncestry/sample_coords.tsv` | Sample coordinates in PCA/UMAP space |
+| `01-globalAncestry/ref_coords.tsv` | Reference coordinates in PCA/UMAP space |
+| `01-globalAncestry/ancestry_classifications.tsv` | Predicted ancestry and confidence per sample |
+| `01-globalAncestry/keep_{ANC}.txt` | Sample IDs passing ancestry threshold for each ancestry |
+| `01-globalAncestry/posterior_probability_stacked_{model}.svg` | Pre-rendered stacked posterior probability plot (model = pca/umap) |
+
+---
+
+# Section 2: Load and Inspect Global Ancestry Data
+
+```{r load-data}
+# Load posterior probabilities (PCA model example)
+post_prob_path <- file.path(global_anc_dir, "posterior_probabilities.tsv")
+if (file.exists(post_prob_path)) {
+  post_prob <- read_tsv(post_prob_path)  # Columns: IID, pca_AFR, pca_AMR, pca_EUR, pca_SAS
+  glimpse(post_prob)
+}
+
+# Load ancestry classifications
+class_path <- file.path(global_anc_dir, "ancestry_classifications.tsv")
+if (file.exists(class_path)) {
+  class <- read_tsv(class_path)  # Columns: IID, pca_predicted, pca_confidence
+  glimpse(class)
+}
+
+# Join and pivot datasets for visualization
+if (exists("post_prob") && exists("class")) {
+  anc_data <- post_prob %>%
+    left_join(class, by = "IID") %>%
+    pivot_longer(
+      cols = starts_with("pca_"),
+      names_to = "ancestry",
+      values_to = "posterior_prob"
+    ) %>%
+    mutate(ancestry = gsub("pca_", "", ancestry))
+  glimpse(anc_data)
+}
+
+# Load confusion matrix (if exists)
+conf_path <- file.path(global_anc_dir, "ancestry_confusion_matrix.tsv")
+if (file.exists(conf_path)) {
+  conf_mat <- read_tsv(conf_path)
+  print(conf_mat)
+}
+```
+
+---
+
+# Section 3: Visualize Global Ancestry
+
+```{r visualize-ancestry}
+# 1. Stacked posterior probability plot (matches pipeline output)
+if (exists("anc_data")) {
+  ggplot(anc_data, aes(x = reorder(IID, posterior_prob), y = posterior_prob, fill = ancestry)) +
+    geom_col(width = 1) +
+    labs(
+      title = "Per-Sample Posterior Probabilities for Global Ancestry (PCA)",
+      x = "Sample ID",
+      y = "Posterior Probability",
+      fill = "Ancestry"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_blank(), panel.grid = element_blank())
+}
+
+# 2. Posterior probability distribution per ancestry
+if (exists("anc_data")) {
+  ggplot(anc_data, aes(x = posterior_prob, fill = ancestry)) +
+    geom_density(alpha = 0.5) +
+    labs(
+      title = "Posterior Probability Density per Ancestry",
+      x = "Posterior Probability",
+      y = "Density",
+      fill = "Ancestry"
+    ) +
+    theme_minimal()
+}
+
+# 3. Confusion matrix heatmap (if reported race available)
+if (exists("conf_mat")) {
+  ggplot(conf_mat, aes(x = predicted, y = reported, fill = n)) +
+    geom_tile() +
+    geom_text(aes(label = n), color = "white", size = 3) +
+    labs(
+      title = "Ancestry Classification Confusion Matrix",
+      x = "Predicted Ancestry",
+      y = "Reported Race",
+      fill = "Count"
+    ) +
+    theme_minimal()
+}
+```
+
+---
+
+# Section 4: Interactive Analysis
+
+```{r interactive-analysis}
+# Count samples per predicted ancestry
+if (exists("class")) {
+  anc_counts <- class %>%
+    count(pca_predicted, sort = TRUE)
+  print(anc_counts)
+}
+
+# Identify uncertain samples (confidence < 0.8 threshold)
+if (exists("class")) {
+  uncertain <- class %>%
+    filter(pca_confidence < 0.8) %>%
+    arrange(pca_confidence)
+  print(uncertain)
+}
+
+# Calculate average posterior probability per ancestry
+if (exists("anc_data")) {
+  avg_post <- anc_data %>%
+    group_by(ancestry) %>%
+    summarise(avg_posterior = mean(posterior_prob), .groups = "drop")
+  print(avg_post)
+}
+```
+
+---
+
+# Next Steps
+
+- Compare PCA vs UMAP posterior probability distributions
+- Analyze discordance between predicted ancestry and reported race
+- Proceed to the heritability visualization lab for heritability outputs

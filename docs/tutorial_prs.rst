@@ -361,3 +361,8 @@ After completing this tutorial, you have:
 - :doc:`tutorial_ancestry_classification` - Ancestry labels for PRS stratification
 - :doc:`tutorial_prs_multi` - Multi-ancestry PRS methods
 - :doc:`genomics` - Technical details on PRS methodology
+
+**Lab Materials**
+----------------
+
+- [Single-Ancestry PRS Visualization Lab (R Markdown)](labs/lab_prs_single_visualization.Rmd) - Interactive R notebook for visualizing PRS outputs
