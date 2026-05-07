@@ -20,6 +20,7 @@ rule runPcairInternalPca:
         gds=temp(OUT_DIR / "{subset}" / "intermediates" / "LDpruned.gds"),
         seq_gds=temp(OUT_DIR / "{subset}" / "intermediates" / "LDpruned_seq.gds"),
         pcaobj=OUT_DIR / "{subset}" / "pcair_pcaobj.RDS",
+        pcrelate=OUT_DIR / "{subset}" / "pcrelate_kinship.RDS",
         unrels=OUT_DIR / "{subset}" / "pcair_unrelated_ids.txt",
         coords=OUT_DIR / "{subset}" / "pcair_coordinates.tsv",
         plot=report(
