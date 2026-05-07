@@ -2,7 +2,7 @@ PRS_CONFIG = config.get("prsPipeline", {})
 PRS_SIM_CONFIG = config.get("phenotypeSimulation", {})
 
 # Allow pointing to pre-computed simulation files (for real data or external simulations)
-PRS_SIM_DIR = Path(PRS_SIM_CONFIG.get("simulations_dir", str(OUT_DIR / "simulations" / f"{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[0]}_{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[1]}")))
+PRS_SIM_DIR = Path(PRS_SIM_CONFIG.get("simulations_dir") or str(OUT_DIR / "simulations" / f"{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[0]}_{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[1]}"))
 PRS_ANC1 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[0]
 PRS_ANC2 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[1]
 PRS_OUT_DIR = Path(
@@ -75,7 +75,7 @@ rule preparePRSInputs:
 
 rule runSingleAncestryPRS:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:latest"
     log:
         OUT_DIR / "logs" / f"runSingleAncestryPRS_{PRS_ANC1}.log",
     threads: 4
