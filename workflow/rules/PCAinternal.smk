@@ -41,7 +41,7 @@ rule runPcairInternalPca:
         mkdir -p "$(dirname {output.eigenvec})"
         
         echo "Converting pgen to bed format..."
-        plink2 --pfile {params.input_prefix} --export bed --out {params.input_prefix}
+        plink2 --pfile {params.input_prefix} --make-bed --out {params.input_prefix}
         
         Rscript {params.scripts_dir}/run_pcair_pcrelate.R \
             "{params.input_prefix}" \
@@ -69,22 +69,26 @@ rule runPlink2ApproximatePca:
         mem_mb=32000,
         runtime=1440,
     input:
-        bed=OUT_DIR / "{subset}" / "unrelated.bed",
-        bim=OUT_DIR / "{subset}" / "unrelated.bim",
-        fam=OUT_DIR / "{subset}" / "unrelated.fam",
+        pgen=OUT_DIR / "{subset}" / "unrelated.pgen",
+        pvar=OUT_DIR / "{subset}" / "unrelated.pvar",
+        psam=OUT_DIR / "{subset}" / "unrelated.psam",
     output:
         eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
         eigenval=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenval",
     params:
-        input_prefix=lambda wildcards, input: str(input.bed)[:-4],
+        input_prefix=lambda wildcards, input: str(input.pgen)[:-5],
         npc=config.get("internalPCA", {}).get("npc", 20),
+        tmpdir=temp(directory(OUT_DIR / "{subset}" / "intermediates" / "plink2_pca_tmp")),
     shell:
         """
         echo "Running PLINK2 approx PCA on unrelated samples"
         
         mkdir -p "$(dirname {output.eigenvec})"
+        mkdir -p {params.tmpdir}
         
-        plink2 --bfile {params.input_prefix} \
+        plink2 --pfile {params.input_prefix} --make-bed --out {params.tmpdir}/unrelated
+        
+        plink2 --bfile {params.tmpdir}/unrelated \
             --pca approx {params.npc} \
             --out {output.eigenvec}
         

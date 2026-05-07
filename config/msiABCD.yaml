@@ -84,6 +84,12 @@ snpHerit:
     # Filter covariate data (e.g., "site==1", "age>=18")
     covar_filter: null
 
+    # Column name for individual ID in phenotype/covariate files (case-insensitive match)
+    iid_col: "IID"
+
+    # Column name for family ID in phenotype/covariate files (case-insensitive match)
+    fid_col: "FID"
+
 # Tool settings
 localAncestry:
     RFMIX: false
@@ -138,6 +144,11 @@ phenotypeSimulation:
     # Number of individuals to thin to (if not skipping)
     thin_count_inds: 10000
 
+# PRS Pipeline Inputs
+prsPipeline:
+    iid_col: "IID"
+    fid_col: "FID"
+
 # PRS Methods Configuration
 # Set enabled: true for methods you want to run
 # Commands are defined in workflow/rules/prsPipelines.smk (software is in container)
@@ -153,6 +164,8 @@ prsMethods:
     enabled: true
   single_lassosum2:
     enabled: false
+    iid_col: "IID"
+    fid_col: "FID"
   
   # Multi ancestry methods
   multi_ctsleb:

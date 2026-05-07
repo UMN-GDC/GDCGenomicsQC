@@ -166,6 +166,12 @@ snpHerit:
     # Filter covariate data (e.g., "site==1", "age>=18")
     covar_filter: null
 
+    # Column name for individual ID in phenotype/covariate files (case-insensitive match)
+    iid_col: "IID"
+
+    # Column name for family ID in phenotype/covariate files (case-insensitive match)
+    fid_col: "FID"
+
 
 # =============================================================================
 # Phenotype Simulation (Testing)
@@ -215,6 +221,16 @@ phenotypeSimulation:
 
 
 # =============================================================================
+# =============================================================================
+# PRS Pipeline Inputs
+# =============================================================================
+prsPipeline:
+    # Column name for individual ID (case-insensitive)
+    iid_col: "IID"
+    # Column name for family ID (case-insensitive)
+    fid_col: "FID"
+
+# =============================================================================
 # PRS Methods Configuration
 # =============================================================================
 # Set enabled: true for methods you want to run
@@ -231,6 +247,10 @@ prsMethods:
     enabled: true
   single_lassosum2:
     enabled: false
+    # Column name for individual ID (case-insensitive)
+    iid_col: "IID"
+    # Column name for family ID (case-insensitive)
+    fid_col: "FID"
   
   # Multi ancestry methods
   multi_ctsleb:

@@ -555,6 +555,8 @@ option_list <- list(
   make_option(c("--extract"), type = "character"),
   make_option(c("--enable-mmap"), action = "store_true", dest = "enable_mmap"),
   make_option(c("--ignore-fid"), action = "store_true", dest = "ignore_fid"),
+  make_option(c("--iid-col"), type = "character", dest = "iid_col", default = "IID"),
+  make_option(c("--fid-col"), type = "character", dest = "fid_col", default = "FID"),
   make_option(c("--id-delim"), type = "character"), 
   make_option(c("--logit-perm"), action = "store_true", dest = "logit_perm"),
   make_option(c("--keep-ambig"), action = "store_true", dest = "keep_ambig"),
@@ -785,6 +787,15 @@ shorten_label <- function(x) {
             strsplit(as.character(x), split = "\\.")[[1]], collapse = " "
         ), split = "_")[[1]], collapse = " ")
     return(str_wrap(lab)[[1]])
+}
+
+
+find_col <- function(header, col_name, desc) {
+    idx <- which(toupper(header) == toupper(col_name))
+    if (length(idx) == 0) {
+        stop(paste0("Error: ", desc, " column '", col_name, "' not found in file header"))
+    }
+    return(idx[1])
 }
 
 
@@ -2159,7 +2170,7 @@ if (!provided("target", argv) & !provided("target_list", argv)) {
 
 # Phenotype file check ----------------------------------------------------
 pheno.cols <- NULL
-pheno.index <- 6
+pheno.index <- NULL
 
 if (provided("pheno_col", argv)) {
   pheno.cols <- strsplit(argv$pheno_col, split = ",")[[1]]
@@ -2187,7 +2198,6 @@ if (provided("pheno_col", argv)) {
         check.names = FALSE
       )
     if (length(unique(header)) != length(header)) {
-      # Duplicated phenotype
       stop(
         "Error: Duplicated phenotype column detected. Please make sure you have provided the correct input"
       )
@@ -2203,13 +2213,19 @@ if (provided("pheno_col", argv)) {
     }
     binary.vector <- binary.vector[pheno.cols %in% colnames(header)]
     pheno.cols <- pheno.cols[pheno.cols %in% colnames(header)]
-    pheno.index <- 1:length(header)
-    pheno.index <- pheno.index[valid.pheno]
+    pheno.index <- which(colnames(header) %in% pheno.cols)
   }
 } else if (provided("pheno_file", argv)) {
-  pheno.index <- 3
-  if (ignore_fid)
-    pheno.index <- 2
+  header <-
+    read.table(
+      argv$pheno_file,
+      nrows = 1,
+      header = TRUE,
+      check.names = FALSE
+    )
+  pheno.index <- find_col(colnames(header), "Pheno", "Phenotype")
+  pheno.fid.idx <- find_col(colnames(header), argv$fid_col, paste0("FID (--fid-col ", argv$fid_col, ")"))
+  pheno.iid.idx <- find_col(colnames(header), argv$iid_col, paste0("IID (--iid-col ", argv$iid_col, ")"))
 } else{
   if (length(binary.vector) != 1) {
     stop("Too many binary target information. We only have one phenotype")
@@ -2286,72 +2302,60 @@ update_cov_header <- function(c) {
 covariance <- NULL
 covariance.base <- NULL
 if (provided("cov_file", argv)) {
-  # We assume the header is FID and IID, will fail if it isn't the case
   if (use.data.table) {
-    colclass <- list(character=1)
-    if(!ignore_fid){
-      colclass <- list(character=1:2)
-    }
     covariance <- fread(
       argv$cov_file,
       data.table = F,
-      header = T,
-      colClasses = colclass
+      header = T
     )
   } else {
-    colclass <- "character"
-    if(!ignore_fid){
-      colclass <- c("character", "character")
-    }
     covariance <-
       read.table(
         argv$cov_file,
-        header = T,
-        colClasses = colclass
+        header = T
       )
   }
-    # We assume the first two columns are always FID and IID unless user used ignore-fid
-    if(provided("ignore_fid", argv)){
-        colnames(covariance)[1] <- "IID"
-    }else{
-        colnames(covariance)[1:2] <- c("FID", "IID")
+  cov.header <- colnames(covariance)
+  fid_col <- argv$fid_col
+  iid_col <- argv$iid_col
+  if (ignore_fid) {
+    fid.idx <- find_col(cov.header, iid_col, paste0("IID (--iid-col ", iid_col, ")"))
+    colnames(covariance)[fid.idx] <- "IID"
+  } else {
+    fid.idx <- find_col(cov.header, fid_col, paste0("FID (--fid-col ", fid_col, ")"))
+    iid.idx <- find_col(cov.header, iid_col, paste0("IID (--iid-col ", iid_col, ")"))
+    colnames(covariance)[c(fid.idx, iid.idx)] <- c("FID", "IID")
+  }
+  cov.header <- colnames(covariance)
+  selected.cov <- cov.header[!cov.header %in% c("FID", "IID")]
+  if (provided("cov_col", argv)) {
+    c <- strsplit(argv$cov_col, split = ",")[[1]]
+    c <- update_cov_header(c)
+    selected.cov <- cov.header[cov.header %in% c]
+  }
+  covariance.base <- covariance[, cov.header %in% c("FID", "IID", selected.cov), drop = FALSE]
+  factor.cov <- NULL
+  if (provided("cov_factor", argv)) {
+    factor.cov <- strsplit(argv$cov_factor, split = ",")[[1]]
+    factor.cov <- update_cov_header(factor.cov)
+  }
+  for (i in colnames(covariance.base)) {
+    if (i != "FID" && i != "IID") {
+      if (i %in% factor.cov) {
+        covariance.base[, i] <- as.factor(covariance.base[, i])
+      } else {
+        covariance.base[, i] <-
+          as.numeric(as.character(covariance.base[, i]))
+      }
     }
-    cov.header <- colnames(covariance)
-    selected.cov <- cov.header[!cov.header%in%c("FID", "IID")]
-    if(provided("cov_col", argv)){
-        c <- strsplit(argv$cov_col, split = ",")[[1]]
-        c <- update_cov_header(c)
-        selected.cov <- cov.header[cov.header %in% c]
-    }
-    # We need to ensure all the factor covariates are as factored
-    covariance.base <- covariance[, cov.header%in%c("FID", "IID",selected.cov)]
-    factor.cov <- NULL
-    if (provided("cov_factor", argv)) {
-        factor.cov <- strsplit(argv$cov_factor, split = ",")[[1]]
-        factor.cov <- update_cov_header(factor.cov)
-    }
-    
-    for (i in colnames(covariance.base)) {
-        if (i != "FID" && i != "IID") {
-            if (i %in% factor.cov) {
-                covariance.base[, i] <- as.factor(covariance.base[, i])
-            } else{
-                covariance.base[, i] <-
-                    as.numeric(as.character(covariance.base[, i]))
-            }
-        }
-    }
-    if(ignore_fid){
-        colnames(covariance.base) <-
-            c("IID", paste0("Cov", (1:(
-                ncol(covariance.base) - 1
-            ))))
-    } else{
-        colnames(covariance.base) <-
-            c("FID", "IID", paste0("Cov", (1:(
-                ncol(covariance.base) - 2
-            ))))
-    }
+  }
+  if (ignore_fid) {
+    colnames(covariance.base) <-
+      c("IID", paste0("Cov", (1:(ncol(covariance.base) - 1))))
+  } else {
+    colnames(covariance.base) <-
+      c("FID", "IID", paste0("Cov", (1:(ncol(covariance.base) - 2))))
+  }
 }
 
 
@@ -2369,7 +2373,9 @@ process_plot <-
            pheno.name,
            parameters,
            use.data.table,
-           use.ggplot) {
+           use.ggplot,
+           pheno.fid.idx = NULL,
+           pheno.iid.idx = NULL) {
     if (pheno.name != "-") {
       prefix <- paste(prefix, pheno.name, sep = ".")
     }
@@ -2405,13 +2411,13 @@ process_plot <-
     }
     ignore_fid <- provided("ignore_fid", parameters)
     if (!ignore_fid) {
-      phenotype <- phenotype[, c(1:2, pheno.index)]
+      phenotype <- phenotype[, c(pheno.fid.idx, pheno.iid.idx, pheno.index)]
       colnames(phenotype) <- c("FID", "IID", "Pheno")
       phenotype <-
         phenotype[phenotype$FID %in% best$FID &
                     phenotype$IID %in% best$IID,]
     } else{
-      phenotype <- phenotype[, c(1, pheno.index)]
+      phenotype <- phenotype[, c(pheno.iid.idx, pheno.index)]
       colnames(phenotype) <- c("IID", "Pheno")
       phenotype <- phenotype[phenotype$IID %in% best$IID,]
     }
@@ -2564,35 +2570,43 @@ pheno.file <- gsub("#", "1", pheno.file)
 prs.summary <- NULL
 prsice.result <- NULL
 phenotype <- NULL
-colclass <- c("V1"="character")
-if(!ignore_fid){
-  colclass <- c("V1"="character", "V2"="character")
-}
 if (use.data.table) {
   prs.summary <-
     fread(paste0(argv$out, ".summary"), data.table = F)
   prsice.result <-
     fread(paste0(argv$out, ".prsice"), data.table = F)
-  phenotype <-
-    fread(
-      pheno.file,
-      data.table = F,
-      header = F,
-      colClasses = colclass
-    )
+  if (provided("pheno_file", argv)) {
+    phenotype <-
+      fread(
+        pheno.file,
+        data.table = F,
+        header = T
+      )
+  } else {
+    phenotype <-
+      fread(
+        pheno.file,
+        data.table = F,
+        header = F
+      )
+  }
 } else{
   prs.summary <-
     read.table(paste0(argv$out, ".summary"), header = T)
   prsice.result <-
     read.table(paste0(argv$out, ".prsice"), header = T)
-  phenotype <-
-    read.table(pheno.file, header = F, colClasses = colclass)
+  if (provided("pheno_file", argv)) {
+    phenotype <-
+      read.table(pheno.file, header = T)
+  } else {
+    phenotype <-
+      read.table(pheno.file, header = F)
+  }
 }
 
 if (!is.null(pheno.cols) &
     length(pheno.cols) > 1) {
   for (i in 1:length(pheno.cols)) {
-    # Update the covariance matrix accordingly
     process_plot(
       argv$out,
       phenotype,
@@ -2604,7 +2618,9 @@ if (!is.null(pheno.cols) &
       pheno.cols[i],
       argv,
       use.data.table,
-      use.ggplot
+      use.ggplot,
+      pheno.fid.idx,
+      pheno.iid.idx
     )
   }
   if (provided("multi_plot", argv)) {
@@ -2622,7 +2638,9 @@ if (!is.null(pheno.cols) &
     "-",
     argv,
     use.data.table,
-    use.ggplot
+    use.ggplot,
+    pheno.fid.idx,
+    pheno.iid.idx
   )
 }
 

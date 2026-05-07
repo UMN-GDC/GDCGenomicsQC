@@ -58,6 +58,8 @@ rule preparePRSInputs:
         phenotype_index=PRS_CONFIG.get("phenotype_index", 1),
         gwas_fraction=PRS_CONFIG.get("gwas_fraction", 0.5),
         seed=PRS_CONFIG.get("seed", 42),
+        fid_col=PRS_CONFIG.get("fid_col", "FID"),
+        iid_col=PRS_CONFIG.get("iid_col", "IID"),
         script=Path(workflow.basedir) / "scripts" / "prepare_prs_inputs.sh",
     shell:
         """
@@ -69,6 +71,8 @@ rule preparePRSInputs:
             --phenotype-index {params.phenotype_index} \
             --gwas-fraction {params.gwas_fraction} \
             --seed {params.seed} \
+            --fid-col {params.fid_col} \
+            --iid-col {params.iid_col} \
             > {log} 2>&1
         """
 

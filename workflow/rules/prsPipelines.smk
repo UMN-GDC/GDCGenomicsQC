@@ -28,6 +28,8 @@ def get_method_extra_args(method):
         ("ld_ref_dir", "--ld-ref-dir"),
         ("ld_ref_prefix", "--ld-ref-prefix"),
         ("ld_matrix_dir", "--ld-matrix-dir"),
+        ("iid_col", "--iid-col"),
+        ("fid_col", "--fid-col"),
     ):
         value = method_config.get(key)
         if value:

@@ -24,6 +24,8 @@ ANC2="EUR"
 PHENO_INDEX="1"
 GWAS_FRACTION="0.5"
 SEED="42"
+FID_COL="FID"
+IID_COL="IID"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -48,6 +50,12 @@ while [[ $# -gt 0 ]]; do
     --seed)
       [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
       SEED="$2"; shift 2 ;;
+    --fid-col)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      FID_COL="$2"; shift 2 ;;
+    --iid-col)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      IID_COL="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -80,7 +88,8 @@ make_pheno_file() {
   local out="$2"
   local pheno_col=$((5 + PHENO_INDEX))
 
-  awk -v col="$pheno_col" 'BEGIN {print "FID\tIID\tPHENO"} NF >= col && $col != "NA" && $col != "-9" {print $1 "\t" $2 "\t" $col}' "$fam" > "$out"
+  awk -v col="$pheno_col" -v fid="$FID_COL" -v iid="$IID_COL" \
+    'BEGIN {print fid "\t" iid "\tPHENO"} NF >= col && $col != "NA" && $col != "-9" {print $1 "\t" $2 "\t" $col}' "$fam" > "$out"
 }
 
 run_glm() {
