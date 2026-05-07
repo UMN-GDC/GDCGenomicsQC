@@ -307,6 +307,20 @@ rule run_snpHerit:
             if config.get("snpHerit", {}).get("pheno") and config.get("snpHerit", {}).get("covar")
             else []
         ),
+        lambda wildcards: (
+            [
+                Path(f"{config.get('snpHerit', {}).get('grm_prefix')}.grm.bin"),
+                Path(f"{config.get('snpHerit', {}).get('grm_prefix')}.grm.id"),
+                Path(f"{config.get('snpHerit', {}).get('grm_prefix')}.grm.N.bin"),
+            ]
+            if config.get("snpHerit", {}).get("grm_prefix")
+            else []
+        ),
+        lambda wildcards: (
+            config.get("snpHerit", {}).get("eigenvec")
+            if config.get("snpHerit", {}).get("eigenvec")
+            else []
+        ),
 
 
 rule run_PCAinternal:

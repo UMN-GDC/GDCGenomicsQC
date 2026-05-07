@@ -22,7 +22,12 @@ if SNP_HERIT_ACTIVE:
             argfile=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_argfile.json",
         params:
             out_dir=lambda wildcards: OUT_DIR / wildcards.subset / "03-snpHeritability",
-            prefix=lambda wildcards: OUT_DIR / wildcards.subset / f"{wildcards.subset}_grm",
+            prefix=lambda wildcards: (
+                SNP_HERIT_CONFIG.get("grm_prefix")
+                if SNP_HERIT_CONFIG.get("grm_prefix")
+                else OUT_DIR / wildcards.subset / f"{wildcards.subset}_grm"
+            ),
+            eigenvec=SNP_HERIT_CONFIG.get("eigenvec", None),
             npc=SNP_HERIT_CONFIG.get("npc", 10),
             mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
             method=SNP_HERIT_CONFIG.get("method", "AdjHE"),
@@ -59,6 +64,8 @@ if SNP_HERIT_ACTIVE:
                 config["pheno_filter"] = params.pheno_filter
             if params.covar_filter:
                 config["covar_filter"] = params.covar_filter
+            if params.eigenvec:
+                config["eigenvec"] = params.eigenvec
 
             with open(output.argfile, "w") as f:
                 json.dump(config, f, indent=2)

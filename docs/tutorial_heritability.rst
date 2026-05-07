@@ -143,8 +143,9 @@ This step requires the following input files:
         mpheno: 1                          # Phenotype column number
         qcovar: null                       # Quantitative covariate names (for GCTA)
         covar_discrete: null               # Discrete covariate names (for GCTA)
-        std: false                          # Run SAdj-HE (standardized) vs UAdj-HE
-        prefix: "/path/to/{subset}_grm"     # GRM prefix for MASH (optional)
+        std: false                         # Run SAdj-HE (standardized) vs UAdj-HE
+        grm_prefix: null                   # Pre-computed GRM prefix (optional)
+        eigenvec: null                     # Pre-computed eigenvector file (optional)
 
 **Output Files:**
 
@@ -203,15 +204,19 @@ Key parameters:
 +----------------------+-------------+------------------------------------------+
 | Parameter            | Default     | Description                              |
 +======================+=============+==========================================+
-| ``pheno``           | required    | Path to phenotype file (IID, pheno)     |
+| ``pheno``            | required    | Path to phenotype file (IID, pheno)     |
 +----------------------+-------------+------------------------------------------+
-| ``covar``           | null        | Path to covariate file (optional)       |
+| ``covar``            | null        | Path to covariate file (optional)       |
 +----------------------+-------------+------------------------------------------+
-| ``method``          | AdjHE       | Estimation method: AdjHE, GCTA, etc.   |
+| ``method``           | AdjHE       | Estimation method: AdjHE, GCTA, etc.   |
 +----------------------+-------------+------------------------------------------+
-| ``npc``            | 10          | Number of PCs to include as covariates  |
+| ``npc``              | 10          | Number of PCs to include as covariates  |
 +----------------------+-------------+------------------------------------------+
-| ``mpheno``         | 1           | Phenotype column number or name         |
+| ``mpheno``           | 1           | Phenotype column number or name         |
++----------------------+-------------+------------------------------------------+
+| ``grm_prefix``       | null        | Pre-computed GRM prefix (optional)      |
++----------------------+-------------+------------------------------------------+
+| ``eigenvec``         | null        | Pre-computed eigenvector file (optional)|
 +----------------------+-------------+------------------------------------------+
 | ``maf``              | 0.05        | Minor allele frequency threshold        |
 +----------------------+-------------+------------------------------------------+
@@ -264,15 +269,19 @@ Heritability Configuration Options
 +----------------------+-------------+------------------------------------------+
 | Parameter            | Default     | Description                              |
 +======================+=============+==========================================+
-| ``method``          | AdjHE       | Estimation method: AdjHE, GCTA, etc.    |
+| ``method``           | AdjHE       | Estimation method: AdjHE, GCTA, etc.    |
 +----------------------+-------------+------------------------------------------+
 | ``npc``              | 10          | Number of PCs to include as covariates  |
 +----------------------+-------------+------------------------------------------+
 | ``mpheno``           | 1           | Phenotype column number or name          |
 +----------------------+-------------+------------------------------------------+
-| ``fixed_effects``   | null        | Additional fixed effects to include      |
+| ``grm_prefix``       | null        | Pre-computed GRM prefix (optional)      |
 +----------------------+-------------+------------------------------------------+
-| ``random_groups``   | false       | Use random effects for group structure   |
+| ``eigenvec``         | null        | Pre-computed eigenvector file (optional)|
++----------------------+-------------+------------------------------------------+
+| ``fixed_effects``    | null        | Additional fixed effects to include      |
++----------------------+-------------+------------------------------------------+
+| ``random_groups``    | false       | Use random effects for group structure   |
 +----------------------+-------------+------------------------------------------+
 
 ----
