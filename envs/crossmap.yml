@@ -1,0 +1,12 @@
+name: crossmap
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.10
+  - plink
+  - plink2
+  - pip
+  - pip:
+    - crossmap
+prefix: /projects/standard/gdc/public/envs/crossmap

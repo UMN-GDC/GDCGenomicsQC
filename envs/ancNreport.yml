@@ -1,12 +1,13 @@
 name: ancNreport
 channels:
+  - genomedk
   - conda-forge
   - bioconda
   - nodefaults
 dependencies:
   - python=3.10
   - git
-  - r-base
+  - r-base=4.3
   - r-tidyverse
   - r-uwot
   - r-randomforest
@@ -15,6 +16,8 @@ dependencies:
   - r-mvtnorm
   - r-gt
   - r-svglite
+  - r-boot
+  - r-lpsolve
   - r-hdpca
   - perl
   - bioconductor-gdsfmt
@@ -27,14 +30,11 @@ dependencies:
   - bioconductor-xvector
   - bioconductor-biostrings
   - bcftools
-  - bcftools-liftover-plugin
   - samtools>=1.17
   - pandas-plink
   - scikit-learn
   - seaborn
   - xarray
-  - crossmap
-  - fraposa-pgsc
   - plink
   - plink2
 prefix: /projects/standard/gdc/public/envs/ancNreport

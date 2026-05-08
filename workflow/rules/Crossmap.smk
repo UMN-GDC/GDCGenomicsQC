@@ -1,6 +1,6 @@
 rule crossmap:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/crossmap:latest"
     conda:
         "../../envs/ancNreport.yml"
     threads: 8

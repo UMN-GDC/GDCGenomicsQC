@@ -15,7 +15,6 @@ dependencies:
   - r-argparse
   - r-gt
   - r-svglite
-  - r-hdpca
   - perl
   - bioconductor-gdsfmt
   - bioconductor-snprelate

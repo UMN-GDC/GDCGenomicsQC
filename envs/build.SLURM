@@ -7,7 +7,9 @@
 #SBATCH --partition=msismall
 #SBATCH --job-name=buildImage
 #SBATCH --output=build_%a.out
-#SBATCH --array=0-4
+#SBATCH --array=5
+
+# can be array=0-5
 
 module load apptainer
 
@@ -28,6 +30,7 @@ declare -a DEFINITIONS=(
     "rfmix"
     "mash"
     "phenotypeSim"
+    "crossmap"
 )
 
 # Get the array index
