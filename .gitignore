@@ -10,8 +10,8 @@ AGENTS.md
 
 */.wget-hsts
 */_build/*
-*.yaml
-*.yml
+config/*.yaml
+config/*.yml
 !docs/images/*.svg
 !docs/images/*.mmd
 !docs/*.svg
