@@ -519,6 +519,11 @@ After completing this tutorial, proceed to:
 - :doc:`tutorial_ancestry_classification` - Classify ancestry using the QC-filtered data
 - :doc:`tutorial_heritability` - Estimate heritability using QC-filtered genotypes
 
+**Lab Materials**
+---------------
+
+- [QC Visualization Lab (R Markdown)](labs/lab_qc_visualization.Rmd) - Interactive R notebook for visualizing QC outputs
+
 **See also:**
 
 - :doc:`installation` - Software setup (if not already done)

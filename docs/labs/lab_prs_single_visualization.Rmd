@@ -1,0 +1,163 @@
+---
+title: "Lab: Visualizing and Working with Single-Ancestry PRS Outputs"
+author: "GDCGenomicsQC"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lab: Visualizing and Working with Single-Ancestry PRS Outputs (R + Tidyverse)
+
+This lab covers interacting with output files from the **Single-Ancestry PRS Pipeline** using R and tidyverse. You will work with PRS scores, performance metrics (R², AUC), and compare methods.
+
+**Estimated time**: 1 hour
+
+**Prerequisites**:
+- Completed the PRS tutorial (outputs in `OUT_DIR/prs_inputs/{ANC1}_{ANC2}/`)
+- R (≥4.0) with tidyverse installed
+- Set `OUT_DIR` to your pipeline output directory
+
+---
+
+# Setup: Load Libraries and Set Paths
+
+```{r load-libraries}
+library(tidyverse)
+OUT_DIR <- "/path/to/your/pipeline/output"
+# PRS outputs are in OUT_DIR/prs_inputs/{ANC1}_{ANC2}/
+anc1 <- "AFR"  # First ancestry
+anc2 <- "EUR"  # Second ancestry
+prs_out_dir <- file.path(OUT_DIR, "prs_inputs", paste0(anc1, "_", anc2))
+```
+
+---
+
+# Section 1: Single-Ancestry PRS Output Files Reference
+
+| File Path | Description |
+|----------|------------|
+| `single_prsice/` | PRSice2 output (best_pRS.prs, summary.csv) |
+| `single_ldpred2/` | LDPred2 output (prs_scores.tsv) |
+| `method_runs/{method}/` | Per-method output directories |
+| `*.done` | Completion markers for each method |
+
+---
+
+# Section 2: Load and Inspect PRS Data
+
+```{r load-data}
+# Load PRS scores for PRSice2
+prsice_score_path <- file.path(prs_out_dir, "single_prsice", "best_pRS.prs")
+if (file.exists(prsice_score_path)) {
+  prs_scores <- read_tsv(prsice_score_path, col_names = c("FID", "IID", "PRS"))
+  glimpse(prs_scores)
+}
+
+# Load PRSice2 summary
+prsice_summary_path <- file.path(prs_out_dir, "single_prsice", "summary.csv")
+if (file.exists(prsice_summary_path)) {
+  prsice_summary <- read_csv(prsice_summary_path)
+  glimpse(prsice_summary)
+}
+
+# Load LDPred2 scores
+ldpred2_path <- file.path(prs_out_dir, "single_ldpred2", "prs_scores.tsv")
+if (file.exists(ldpred2_path)) {
+  ldpred2_scores <- read_tsv(ldpred2_path)
+  glimpse(ldpred2_scores)
+}
+```
+
+---
+
+# Section 3: Visualize PRS Performance
+
+```{r visualize-prs}
+# 1. Compare R² across single-ancestry methods
+if (exists("perf")) {
+  ggplot(perf, aes(x = reorder(method, R2), y = R2, fill = method)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = round(R2, 3)), vjust = -0.3, size = 3) +
+    labs(
+      title = "PRS Performance (R²) Across Single-Ancestry Methods",
+      x = "Method",
+      y = "Variance Explained (R²)",
+      fill = "Method"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+# 2. Compare AUC across methods (for binary traits)
+if (exists("perf") && any(!is.na(perf$AUC))) {
+  ggplot(perf, aes(x = reorder(method, AUC), y = AUC, fill = method)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = round(AUC, 3)), vjust = -0.3, size = 3) +
+    labs(
+      title = "PRS Performance (AUC) Across Single-Ancestry Methods",
+      x = "Method",
+      y = "Area Under ROC Curve (AUC)",
+      fill = "Method"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+# 3. PRS score distribution (example with PRSice2)
+if (exists("prs_scores")) {
+  ggplot(prs_scores, aes(x = PRS)) +
+    geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
+    labs(
+      title = "PRS Score Distribution (PRSice2)",
+      x = "Polygenic Risk Score",
+      y = "Number of Samples"
+    ) +
+    theme_minimal()
+}
+```
+
+---
+
+# Section 4: Interactive Analysis
+
+```{r interactive-analysis}
+# Identify best-performing method
+if (exists("perf")) {
+  best_method <- perf %>%
+    arrange(desc(R2)) %>%
+    slice(1)
+  print(best_method)
+}
+
+# Compare p-values across methods
+if (exists("perf")) {
+  perf <- perf %>%
+    mutate(significant = p_value < 0.05)
+  sig_counts <- perf %>%
+    count(significant)
+  print(sig_counts)
+}
+
+# Correlate PRS scores with phenotype (if phenotype data available)
+if (exists("prs_scores")) {
+  pheno_path <- file.path(PRS_OUT_DIR, "target_phenotype.tsv")
+  if (file.exists(pheno_path)) {
+    pheno <- read_tsv(pheno_path, col_names = c("IID", "pheno"))
+    combined <- prs_scores %>%
+      left_join(pheno, by = "IID")
+    cor_test <- cor.test(combined$PRS, combined$pheno)
+    print(cor_test)
+  }
+}
+```
+
+---
+
+# Next Steps
+
+- Compare single-ancestry PRS to multi-ancestry PRS (see multi-ancestry PRS tutorial)
+- Validate PRS in independent holdout samples
+- Export top-performing PRS scores for downstream analysis
