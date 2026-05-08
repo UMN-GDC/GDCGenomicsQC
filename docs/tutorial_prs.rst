@@ -361,3 +361,40 @@ After completing this tutorial, you have:
 - :doc:`tutorial_ancestry_classification` - Ancestry labels for PRS stratification
 - :doc:`tutorial_prs_multi` - Multi-ancestry PRS methods
 - :doc:`genomics` - Technical details on PRS methodology
+
+
+External Data Inputs
+-------------------
+
+Instead of using simulated phenotypes from the pipeline, you can point to your own
+genotype data, GWAS summary statistics, and phenotypes by configuring ``prsPipeline.external``:
+
+.. code-block:: yaml
+
+    prsPipeline:
+        external:
+            target_bed: "/path/to/genotypes"
+            target_sumstats: "/path/to/gwas.tsv"
+            target_pheno: "/path/to/pheno.tsv"
+
+If running multi-ancestry methods, also specify the second ancestry:
+
+.. code-block:: yaml
+
+    prsPipeline:
+        external:
+            target_bed: "/path/to/anc1_genotypes"
+            target_sumstats: "/path/to/anc1_gwas.tsv"
+            target_pheno: "/path/to/anc1_pheno.tsv"
+            anc2_bed: "/path/to/anc2_genotypes"
+            training_sumstats: "/path/to/anc2_gwas.tsv"
+            training_pheno: "/path/to/anc2_pheno.tsv"
+
+**Pipeline-generated files:** If you've run the QC pipeline first, typical paths are:
+
+- Genotypes: ``OUT_DIR/{ANC}/standardFilter.bed`` (after Standard QC)
+- For GRM: ``OUT_DIR/{ANC}/unrelated.grm.bin`` (from Relatedness step)
+
+**GWAS format:** Tab-separated with columns: SNP, A1, A2, BETA, SE, P
+
+**Phenotype format:** Tab-separated with columns: FID, IID, <phenotype>

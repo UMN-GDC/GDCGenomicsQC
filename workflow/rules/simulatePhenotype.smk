@@ -14,7 +14,7 @@ rule simulateBivariatePhenotypes:
     log:
         OUT_DIR / "logs" / "simulateBivariatePhenotypes.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
     conda:
         "../../envs/phenotypeSim.yml"
     threads: 8

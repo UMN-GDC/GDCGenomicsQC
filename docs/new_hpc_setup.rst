@@ -58,6 +58,11 @@ Edit the configuration file at ``config/config.yaml``:
         method: "king"
         king_cutoff: 0.0884
 
+    # Internal PCA (optional)
+    internalPCA:
+        method: "plink2"  # "plink2", "pcair", or "both"
+        npc: 20
+
     SEX_CHECK: false
     thin: false
 

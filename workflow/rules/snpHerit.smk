@@ -13,9 +13,15 @@ if SNP_HERIT_CONFIG:
 
 if SNP_HERIT_ACTIVE:
 
+    def get_snpHerit_pca_input(wildcards):
+        pca_input = SNP_HERIT_CONFIG.get("pca_input")
+        if pca_input:
+            return {"pca": pca_input}
+        return {}
+
     rule prepareSnpHeritArgfile:
         input:
-            pcaobj=OUT_DIR / "{subset}" / "pcair_pcaobj.RDS",
+            lambda wildcards: get_snpHerit_pca_input(wildcards),
             pheno=config.get("snpHerit", {}).get("pheno"),
             covar=config.get("snpHerit", {}).get("covar"),
         output:
@@ -27,7 +33,7 @@ if SNP_HERIT_ACTIVE:
                 if SNP_HERIT_CONFIG.get("grm_prefix")
                 else OUT_DIR / wildcards.subset / f"{wildcards.subset}_grm"
             ),
-            eigenvec=SNP_HERIT_CONFIG.get("eigenvec", None),
+            pca_input=SNP_HERIT_CONFIG.get("pca_input", None),
             npc=SNP_HERIT_CONFIG.get("npc", 10),
             mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
             method=SNP_HERIT_CONFIG.get("method", "AdjHE"),
@@ -43,9 +49,8 @@ if SNP_HERIT_ACTIVE:
 
             os.makedirs(params.out_dir, exist_ok=True)
 
-            config = {
+            mash_config = {
                 "prefix": str(params.prefix),
-                "PC": str(input.pcaobj),
                 "pheno": str(input.pheno),
                 "covar": str(input.covar),
                 "out": str(params.out_dir) + "/mash_output",
@@ -56,25 +61,30 @@ if SNP_HERIT_ACTIVE:
                 "fid_col": params.fid_col,
             }
 
+            if params.pca_input:
+                pca_path = str(params.pca_input)
+                if pca_path.endswith(".RDS"):
+                    mash_config["PC"] = pca_path
+                elif pca_path.endswith(".eigenvec") or pca_path.endswith(".eigenvec.txt"):
+                    mash_config["eigenvec"] = pca_path
+
             if params.qcovar:
-                config["qcovar"] = params.qcovar
+                mash_config["qcovar"] = params.qcovar
             if params.covar_discrete:
-                config["covar_discrete"] = params.covar_discrete
+                mash_config["covar_discrete"] = params.covar_discrete
             if params.pheno_filter:
-                config["pheno_filter"] = params.pheno_filter
+                mash_config["pheno_filter"] = params.pheno_filter
             if params.covar_filter:
-                config["covar_filter"] = params.covar_filter
-            if params.eigenvec:
-                config["eigenvec"] = params.eigenvec
+                mash_config["covar_filter"] = params.covar_filter
 
             with open(output.argfile, "w") as f:
-                json.dump(config, f, indent=2)
+                json.dump(mash_config, f, indent=2)
 
     rule estimateSnpHeritability:
         log:
             OUT_DIR / "{subset}" / "03-snpHeritability" / "mash.log",
         container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest"
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
         threads: 8
         resources:
             nodes=1,

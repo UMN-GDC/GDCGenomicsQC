@@ -1,7 +1,8 @@
 name: karyoploteR
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
+  - nodefaults
 dependencies:
   - r-base>=4.2
   - r-tidyverse

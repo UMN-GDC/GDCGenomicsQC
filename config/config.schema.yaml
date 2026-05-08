@@ -134,8 +134,8 @@ internalPCA:
       default: false
     method:
       type: str
-      default: "pcair"
-      enum: ["pcair", "plink2"]
+      default: "plink2"
+      enum: ["plink2", "pcair", "both"]
     npc:
       type: int
       default: 20
@@ -222,11 +222,16 @@ snpHerit:
   type: dict
   default: {}
   schema:
-    prefix:
+    grm_prefix:
       type: str
       nullable: true
       default: null
-      description: Prefix for GRM files (use {subset} placeholder for subset)
+      description: Pre-computed GRM prefix (prefix.grm.bin, prefix.grm.id, prefix.grm.N.bin)
+    pca_input:
+      type: str
+      nullable: true
+      default: null
+      description: PCA input - either .RDS (PC-AiR object) or .eigenvec file for PCs
     pheno:
       type: str
       nullable: true

@@ -1,8 +1,10 @@
+INTERNAL_PCA_METHOD = config.get("internalPCA", {}).get("method", "plink2")
+
 rule runPcairInternalPca:
     log:
         OUT_DIR / "logs" / "runPcairInternalPca_{subset}.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     conda:
         "../../envs/ancNreport.yml"
     threads: 8
@@ -23,6 +25,9 @@ rule runPcairInternalPca:
         pcrelate=OUT_DIR / "{subset}" / "pcrelate_kinship.RDS",
         unrels=OUT_DIR / "{subset}" / "pcair_unrelated_ids.txt",
         coords=OUT_DIR / "{subset}" / "pcair_coordinates.tsv",
+        grm=OUT_DIR / "{subset}" / "pcair.grm.bin",
+        grmid=OUT_DIR / "{subset}" / "pcair.grm.id",
+        grmN=OUT_DIR / "{subset}" / "pcair.grm.N.bin",
         plot=report(
             OUT_DIR / "{subset}" / "figures" / "pcair_pcs.svg",
             caption="../../report/pcair.rst",
@@ -36,6 +41,11 @@ rule runPcairInternalPca:
         scripts_dir=SCRIPTS_DIR,
     shell:
         """
+        if [[ "{INTERNAL_PCA_METHOD}" != "pcair" && "{INTERNAL_PCA_METHOD}" != "both" ]]; then
+            echo "Skipping PC-AiR (method={INTERNAL_PCA_METHOD})"
+            exit 0
+        fi
+        
         echo "Running PC-AiR internal PCA"
         
         mkdir -p "$(dirname {output.eigenvec})"
@@ -52,6 +62,16 @@ rule runPcairInternalPca:
             "{output.gds}" \
             "{output.seq_gds}"
         
+        echo "Creating GRM with plink2 using unrelated samples..."
+        plink2 --bfile {params.input_prefix} \
+            --keep {output.unrels} \
+            --make-grm-bin \
+            --out {params.out_dir}/pcair_grm
+        
+        mv {params.out_dir}/pcair_grm.grm.bin {output.grm}
+        mv {params.out_dir}/pcair_grm.grm.id {output.grmid}
+        mv {params.out_dir}/pcair_grm.grm.N.bin {output.grmN}
+        
         echo "PC-AiR completed"
         """
 
@@ -60,7 +80,7 @@ rule runPlink2ApproximatePca:
     log:
         OUT_DIR / "logs" / "runPlink2ApproximatePca_{subset}.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     conda:
         "../../envs/ancNreport.yml"
     threads: 8
@@ -81,6 +101,11 @@ rule runPlink2ApproximatePca:
         tmpdir=temp(directory(OUT_DIR / "{subset}" / "intermediates" / "plink2_pca_tmp")),
     shell:
         """
+        if [[ "{INTERNAL_PCA_METHOD}" != "plink2" && "{INTERNAL_PCA_METHOD}" != "both" ]]; then
+            echo "Skipping PLINK2 PCA (method={INTERNAL_PCA_METHOD})"
+            exit 0
+        fi
+        
         echo "Running PLINK2 approx PCA on unrelated samples"
         
         mkdir -p "$(dirname {output.eigenvec})"

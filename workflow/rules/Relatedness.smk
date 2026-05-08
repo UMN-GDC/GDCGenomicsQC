@@ -2,7 +2,7 @@ rule checkRelatednessExtractUnrelated:
     log:
         OUT_DIR / "logs" / "checkRelatednessExtractUnrelated_{subset}.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     conda:
         "../../envs/ancNreport.yml"
     resources:

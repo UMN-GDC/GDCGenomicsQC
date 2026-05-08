@@ -33,6 +33,11 @@ The pipeline is pre-installed via the ``gdcgenomicsqc`` module.
             method: "king"
             king_cutoff: 0.0884
 
+        # Internal PCA (optional)
+        internalPCA:
+            method: "plink2"  # "plink2", "pcair", or "both"
+            npc: 20
+
         SEX_CHECK: false
         thin: false
         GRM: true
@@ -261,6 +266,11 @@ Example configuration:
                 method: "king"
                 king_cutoff: 0.0884
 
+            # Internal PCA (optional)
+            internalPCA:
+                method: "plink2"  # "plink2", "pcair", or "both"
+                npc: 20
+
             GRM: true
 
             ancestry:
@@ -333,19 +343,24 @@ Example configuration:
 
            chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-           relatedness:
-               method: "king"
-               king_cutoff: 0.0884
+relatedness:
+                method: "king"
+                king_cutoff: 0.0884
 
-           GRM: true
+            # Internal PCA (optional)
+            internalPCA:
+                method: "plink2"  # "plink2", "pcair", or "both"
+                npc: 20
 
-           ancestry:
-               ancestry_file: "/path/to/ancestry_labels.tsv"
-               threshold: 0.8
+            GRM: true
 
-           localAncestry:
-               RFMIX: false
-               test: false
+            ancestry:
+                ancestry_file: "/path/to/ancestry_labels.tsv"
+                threshold: 0.8
+
+            localAncestry:
+                RFMIX: false
+                test: false
 
            thin: false
 

@@ -2,7 +2,6 @@ name: classifyNreport
 channels:
   - conda-forge
   - bioconda
-  - r
   - nodefaults
 dependencies:
   - r-uwot

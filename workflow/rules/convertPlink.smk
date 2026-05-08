@@ -33,7 +33,7 @@ rule convertPlinkPerChromosome:
     log:
         OUT_DIR / "logs" / "convertPlinkPerChromosome_{subset}_{CHR}.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     conda:
         "../../envs/ancNreport.yml"
     threads: 4
@@ -152,7 +152,7 @@ if not INPUT_IS_PER_CHROMOSOME:
         log:
             OUT_DIR / "logs" / "convertPlinkSingleFile_{subset}.log",
         container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
         conda:
             "../../envs/ancNreport.yml"
         threads: 8

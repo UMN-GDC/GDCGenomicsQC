@@ -3,7 +3,7 @@ if not INPUT_IS_PER_CHROMOSOME:
         log:
             OUT_DIR / "logs" / "plotSampleVariantMissingness_{subset}.log",
         container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
         conda:
             "../../envs/ancNreport.yml"
         threads: 1

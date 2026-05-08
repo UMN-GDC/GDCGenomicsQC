@@ -202,18 +202,24 @@ Create a configuration file for QC:
     chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
     relatedness:
-        method: "0"
+        method: "king"  # "0" for none, "king" or "primus" for removal
         king_cutoff: 0.0884
 
     SEX_CHECK: true
     thin: false
     conda-frontend: mamba
+    
+    # Internal PCA (optional)
+    internalPCA:
+        method: "plink2"  # "plink2", "pcair", or "both"
+        npc: 20
     EOF
 
 Key parameters:
 
 - ``SEX_CHECK``: Enable/disable sex verification (default: true)
 - ``relatedness.method``: Relatedness filtering method ("0" for none, "king" or "primus" for removal)
+- ``internalPCA.method``: PCA method ("plink2", "pcair", or "both")
 
 Step 2: Run Initial QC
 ~~~~~~~~~~~~~~~~~~~~~~~

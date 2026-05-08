@@ -158,6 +158,135 @@ Section 4: Interactive Analysis
 
 ----
 
+Section 5: Understanding GRM Decomposition
+-----------------------------------------
+
+The genetic relationship matrix (GRM) captures pairwise relatedness between all samples.
+Heritability estimation decomposes this into components. Here we visualize idealized GRM structures:
+
+.. code-block:: r
+
+    # 1. Create 100x100 idealized GRM with population structure
+    set.seed(42)
+    n <- 100
+
+    # Simulate 3 subpopulations with varying relatedness
+    # 40 samples from pop1, 30 from pop2, 30 from pop3
+    pop_sizes <- c(40, 30, 30)
+    pops <- rep(1:3, pop_sizes)
+
+    # Create GRM with structure:
+    # - Within-population: high relatedness (0.1-0.3)
+    # - Between-population: low relatedness (0.0-0.05)
+    grm_structured <- matrix(0, n, n)
+    for (i in 1:n) {
+      for (j in 1:n) {
+        if (pops[i] == pops[j]) {
+          # Within population: higher relatedness + noise
+          grm_structured[i, j] <- runif(1, 0.1, 0.3)
+        } else {
+          # Between populations: lower relatedness
+          grm_structured[i, j] <- runif(1, 0.0, 0.05)
+        }
+      }
+    }
+    # Add diagonal (self-relatedness = 0.5 for inbreeding)
+    diag(grm_structured) <- 0.5
+
+    # Convert to long format for ggplot
+    grm_long <- expand.grid(row = 1:n, col = 1:n) %>%
+      mutate(value = as.vector(grm_structured),
+             pop_row = pops[row],
+             pop_col = pops[col])
+
+    # Heatmap of structured GRM
+    ggplot(grm_long, aes(x = col, y = row, fill = value)) +
+      geom_tile() +
+      scale_fill_gradient(low = "white", high = "darkred", name = "Kinship") +
+      labs(
+        title = "Idealized GRM with Population Structure",
+        x = "Sample Index",
+        y = "Sample Index"
+      ) +
+      theme_minimal() +
+      theme(axis.text = element_blank())
+
+    # 2. Identity matrix (no structure - all samples independent)
+    identity_mat <- diag(n)
+
+    identity_long <- expand.grid(row = 1:n, col = 1:n) %>%
+      mutate(value = as.vector(identity_mat))
+
+    ggplot(identity_long, aes(x = col, y = row, fill = value)) +
+      geom_tile() +
+      scale_fill_gradient(low = "white", high = "blue", name = "Kinship") +
+      labs(
+        title = "Identity Matrix (No Relatedness)",
+        x = "Sample Index",
+        y = "Sample Index"
+      ) +
+      theme_minimal() +
+      theme(axis.text = element_blank())
+
+    # 3. Block diagonal matrix (resembling site/cohort coincidence)
+    # 10 blocks of 10 samples each
+    n_blocks <- 10
+    block_size <- 10
+    block_diag <- matrix(0, n, n)
+
+    for (b in 1:n_blocks) {
+      idx <- ((b-1) * block_size + 1):(b * block_size)
+      # Within-block: high relatedness
+      block_diag[idx, idx] <- runif(block_size * block_size, 0.2, 0.4)
+    }
+    diag(block_diag) <- 0.5  # Self-relatedness
+
+    block_long <- expand.grid(row = 1:n, col = 1:n) %>%
+      mutate(value = as.vector(block_diag))
+
+    ggplot(block_long, aes(x = col, y = row, fill = value)) +
+      geom_tile() +
+      scale_fill_gradient(low = "white", high = "darkgreen", name = "Kinship") +
+      labs(
+        title = "Block Diagonal GRM (Site/Cohort Structure)",
+        x = "Sample Index",
+        y = "Sample Index"
+      ) +
+      theme_minimal() +
+      theme(axis.text = element_blank())
+
+    # 4. Compare eigenvalues (spectral decomposition)
+    # This shows how variance is distributed across components
+
+    eig_structured <- eigen(grm_structured, symmetric = TRUE)$values
+    eig_identity <- eigen(identity_mat, symmetric = TRUE)$values
+    eig_block <- eigen(block_diag, symmetric = TRUE)$values
+
+    eigenvalues_df <- data.frame(
+      component = 1:20,
+      structured = eig_structured[1:20],
+      identity = eig_identity[1:20],
+      block_diagonal = eig_block[1:20]
+    ) %>% pivot_longer(-component, names_to = "matrix_type", values_to = "eigenvalue")
+
+    ggplot(eigenvalues_df, aes(x = component, y = eigenvalue, color = matrix_type)) +
+      geom_point(size = 3) +
+      geom_line() +
+      labs(
+        title = "Eigenvalue Spectra Comparison",
+        x = "Principal Component",
+        y = "Eigenvalue",
+        color = "Matrix Type"
+      ) +
+      theme_minimal()
+
+    # Interpretation:
+    # - Identity: All eigenvalues = 1 (uniform variance)
+    # - Block diagonal: Few large eigenvalues (capturing block structure)
+    # - Structured: Intermediate eigenvalues (continuous population structure)
+
+----
+
 Next Steps
 ----------
 

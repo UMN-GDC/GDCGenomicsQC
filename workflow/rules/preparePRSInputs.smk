@@ -19,7 +19,7 @@ rule preparePRSInputs:
     conda:
         "../../envs/ancNreport.yml"
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     threads: 4
     resources:
         nodes=1,
@@ -79,7 +79,7 @@ rule preparePRSInputs:
 
 rule runSingleAncestryPRS:
     container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:latest"
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     log:
         OUT_DIR / "logs" / f"runSingleAncestryPRS_{PRS_ANC1}.log",
     threads: 4
@@ -100,7 +100,6 @@ rule runSingleAncestryPRS:
             "single_ancestry_script",
             "/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline/run_single_ancestry_PRS_pipeline.sh",
         ),
-        flags=PRS_CONFIG.get("single_ancestry_flags", "-c -l -s -P"),
     shell:
         """
         set -euo pipefail
@@ -108,14 +107,13 @@ rule runSingleAncestryPRS:
         echo "Running single-ancestry PRS pipeline" > {log}
         echo "Script: {params.script}" >> {log}
         echo "Config: {input.config}" >> {log}
-        echo "Flags: {params.flags}" >> {log}
 
         if [[ ! -f "{params.script}" ]]; then
             echo "Missing single-ancestry PRS script: {params.script}" >> {log}
             exit 1
         fi
 
-        bash {params.script} {params.flags} -C {input.config} >> {log} 2>&1
+        bash {params.script} -C {input.config} >> {log} 2>&1
 
         touch {output.done}
         """

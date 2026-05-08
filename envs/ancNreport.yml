@@ -1,9 +1,7 @@
 name: ancNreport
 channels:
-  - bioconda
-  - r
-  - dranew
   - conda-forge
+  - bioconda
   - nodefaults
 dependencies:
   - python=3.10

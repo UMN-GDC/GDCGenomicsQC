@@ -12,7 +12,7 @@ checkpoint generateKaryotypeAncestryPlots:
     log:
         OUT_DIR / "logs" / "generateKaryotypeAncestryPlots.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     conda:
         "../../envs/karyoploteR.yml"
     resources:

@@ -1,9 +1,7 @@
 name: genomeUtils
 channels:
-  - bioconda
-  - dranew
-  - r
   - conda-forge
+  - bioconda
   - nodefaults
 dependencies:
   - python=3.10
