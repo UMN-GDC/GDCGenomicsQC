@@ -5,9 +5,9 @@
 # This wrapper adds:
 #   --profile profiles/hpc
 #   --snakefile workflow/Snakefile
-#   --directory workflow/Snakefile
 # Users only need to specify --configfile
 
-WORKFLOW_DIR=/scratch.global/coffm049/GDCGenomicsQC
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKFLOW_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
 
 exec snakemake --directory "$WORKFLOW_DIR" --profile "$WORKFLOW_DIR/profiles/hpc" --snakefile "$WORKFLOW_DIR/workflow/Snakefile" --rerun-incomplete "$@"
