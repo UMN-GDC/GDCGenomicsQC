@@ -1,10 +1,6 @@
 from pathlib import Path
 import os
 
-def get_input_is_per_chromosome():
-    return "{CHR}" in config.get("INPUT", "")
-
-INPUT_IS_PER_CHROMOSOME = get_input_is_per_chromosome()
 
 def get_input_format():
     inp = config.get("INPUT", "")
@@ -37,7 +33,7 @@ rule convertPlinkPerChromosome:
     log:
         OUT_DIR / "logs" / "convertPlinkPerChromosome_{subset}_{CHR}.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     conda:
         "../../envs/ancNreport.yml"
     threads: 4
@@ -46,16 +42,16 @@ rule convertPlinkPerChromosome:
         mem_mb=32000,
         runtime=240,
     output:
-        pgen=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen",
-        pvar=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar",
-        psam=OUT_DIR / "{subset}" / "initialFilter_{CHR}.psam",
+        pgen=temp(OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen"),
+        pvar=temp(OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar"),
+        psam=temp(OUT_DIR / "{subset}" / "initialFilter_{CHR}.psam"),
         tempDir=temp(
             directory(
                 OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "initial_filter"
             )
         ),
-        smiss=OUT_DIR / "{subset}" / "initial_{CHR}.smiss",
-        vmiss=OUT_DIR / "{subset}" / "initial_{CHR}.vmiss",
+        smiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.smiss"),
+        vmiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"),
     input:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
@@ -156,7 +152,7 @@ if not INPUT_IS_PER_CHROMOSOME:
         log:
             OUT_DIR / "logs" / "convertPlinkSingleFile_{subset}.log",
         container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
         conda:
             "../../envs/ancNreport.yml"
         threads: 8
@@ -174,8 +170,8 @@ if not INPUT_IS_PER_CHROMOSOME:
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter_single")
             ),
-            smiss=OUT_DIR / "{subset}" / "initial.smiss",
-            vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
+            smiss=temp(OUT_DIR / "{subset}" / "initial.smiss"),
+            vmiss=temp(OUT_DIR / "{subset}" / "initial.vmiss"),
         input:
             fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
             keep=get_ancestry_file,

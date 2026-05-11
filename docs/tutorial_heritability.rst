@@ -143,8 +143,9 @@ This step requires the following input files:
         mpheno: 1                          # Phenotype column number
         qcovar: null                       # Quantitative covariate names (for GCTA)
         covar_discrete: null               # Discrete covariate names (for GCTA)
-        std: false                          # Run SAdj-HE (standardized) vs UAdj-HE
-        prefix: "/path/to/{subset}_grm"     # GRM prefix for MASH (optional)
+        std: false                         # Run SAdj-HE (standardized) vs UAdj-HE
+        grm_prefix: null                   # Pre-computed GRM prefix (optional)
+        pca_input: null                     # PCA input - .RDS (PC-AiR) or .eigenvec file
 
 **Output Files:**
 
@@ -203,15 +204,19 @@ Key parameters:
 +----------------------+-------------+------------------------------------------+
 | Parameter            | Default     | Description                              |
 +======================+=============+==========================================+
-| ``pheno``           | required    | Path to phenotype file (IID, pheno)     |
+| ``pheno``            | required    | Path to phenotype file (IID, pheno)     |
 +----------------------+-------------+------------------------------------------+
-| ``covar``           | null        | Path to covariate file (optional)       |
+| ``covar``            | null        | Path to covariate file (optional)       |
 +----------------------+-------------+------------------------------------------+
-| ``method``          | AdjHE       | Estimation method: AdjHE, GCTA, etc.   |
+| ``method``           | AdjHE       | Estimation method: AdjHE, GCTA, etc.   |
 +----------------------+-------------+------------------------------------------+
-| ``npc``            | 10          | Number of PCs to include as covariates  |
+| ``npc``              | 10          | Number of PCs to include as covariates  |
 +----------------------+-------------+------------------------------------------+
-| ``mpheno``         | 1           | Phenotype column number or name         |
+| ``mpheno``           | 1           | Phenotype column number or name         |
++----------------------+-------------+------------------------------------------+
+| ``grm_prefix``       | null        | Pre-computed GRM prefix (optional)      |
++----------------------+-------------+------------------------------------------+
+| ``pca_input``        | null        | PCA input - .RDS (PC-AiR) or .eigenvec file |
 +----------------------+-------------+------------------------------------------+
 | ``maf``              | 0.05        | Minor allele frequency threshold        |
 +----------------------+-------------+------------------------------------------+
@@ -264,15 +269,19 @@ Heritability Configuration Options
 +----------------------+-------------+------------------------------------------+
 | Parameter            | Default     | Description                              |
 +======================+=============+==========================================+
-| ``method``          | AdjHE       | Estimation method: AdjHE, GCTA, etc.    |
+| ``method``           | AdjHE       | Estimation method: AdjHE, GCTA, etc.    |
 +----------------------+-------------+------------------------------------------+
 | ``npc``              | 10          | Number of PCs to include as covariates  |
 +----------------------+-------------+------------------------------------------+
 | ``mpheno``           | 1           | Phenotype column number or name          |
 +----------------------+-------------+------------------------------------------+
-| ``fixed_effects``   | null        | Additional fixed effects to include      |
+| ``grm_prefix``       | null        | Pre-computed GRM prefix (optional)      |
 +----------------------+-------------+------------------------------------------+
-| ``random_groups``   | false       | Use random effects for group structure   |
+| ``pca_input``        | null        | PCA input - .RDS (PC-AiR) or .eigenvec file |
++----------------------+-------------+------------------------------------------+
+| ``fixed_effects``    | null        | Additional fixed effects to include      |
++----------------------+-------------+------------------------------------------+
+| ``random_groups``    | false       | Use random effects for group structure   |
 +----------------------+-------------+------------------------------------------+
 
 ----
@@ -376,3 +385,28 @@ After completing this tutorial, you have explored:
 - :doc:`tutorial_ancestry_classification` - Ancestry classification
 - :doc:`tutorial_phenotype_simulation` - Phenotype simulation for testing methods
 - :doc:`genomics` - Technical details on heritability methods
+
+
+External Data Inputs
+-------------------
+
+Instead of relying on pipeline-generated PCA/GRM outputs, you can provide your own:
+
+.. code-block:: yaml
+
+    snpHerit:
+        pheno: "/path/to/phenotype.tsv"
+        covar: "/path/to/covariates.tsv"
+        grm_prefix: "/path/to/your_grm_prefix"   # GRM files: prefix.grm.bin, .grm.id, .grm.N.bin
+        pca_input: "/path/to/your_pca.eigenvec"  # Or .RDS file from PC-AiR
+
+**Pipeline-generated files:** If you've run the QC/PCA pipeline first:
+
+- GRM from Relatedness: ``OUT_DIR/{ANC}/unrelated.grm.bin``
+- GRM from PCAiR: ``OUT_DIR/{ANC}/pcair.grm.bin`` (if method includes pcair)
+- Eigenvectors from plink2: ``OUT_DIR/{ANC}/internal_pca_plink2.eigenvec``
+- PC-AiR object: ``OUT_DIR/{ANC}/pcair_pcaobj.RDS``
+
+The ``pca_input`` accepts either:
+- ``.eigenvec`` file (from PLINK2 PCA)
+- ``.RDS`` file (from PC-AiR)

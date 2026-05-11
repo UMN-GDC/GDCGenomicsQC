@@ -1,9 +1,7 @@
 name: genomeUtils
 channels:
-  - bioconda
-  - dranew
-  - r
   - conda-forge
+  - bioconda
   - nodefaults
 dependencies:
   - python=3.10
@@ -17,7 +15,6 @@ dependencies:
   - r-argparse
   - r-gt
   - r-svglite
-  - r-hdpca
   - perl
   - bioconductor-gdsfmt
   - bioconductor-snprelate

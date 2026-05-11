@@ -2,7 +2,7 @@ PRS_CONFIG = config.get("prsPipeline", {})
 PRS_SIM_CONFIG = config.get("phenotypeSimulation", {})
 
 # Allow pointing to pre-computed simulation files (for real data or external simulations)
-PRS_SIM_DIR = Path(PRS_SIM_CONFIG.get("simulations_dir", str(OUT_DIR / "simulations" / f"{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[0]}_{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[1]}")))
+PRS_SIM_DIR = Path(PRS_SIM_CONFIG.get("simulations_dir") or str(OUT_DIR / "simulations" / f"{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[0]}_{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[1]}"))
 PRS_ANC1 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[0]
 PRS_ANC2 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[1]
 PRS_OUT_DIR = Path(
@@ -19,7 +19,7 @@ rule preparePRSInputs:
     conda:
         "../../envs/ancNreport.yml"
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     threads: 4
     resources:
         nodes=1,
@@ -58,6 +58,8 @@ rule preparePRSInputs:
         phenotype_index=PRS_CONFIG.get("phenotype_index", 1),
         gwas_fraction=PRS_CONFIG.get("gwas_fraction", 0.5),
         seed=PRS_CONFIG.get("seed", 42),
+        fid_col=PRS_CONFIG.get("fid_col", "FID"),
+        iid_col=PRS_CONFIG.get("iid_col", "IID"),
         script=Path(workflow.basedir) / "scripts" / "prepare_prs_inputs.sh",
     shell:
         """
@@ -69,13 +71,15 @@ rule preparePRSInputs:
             --phenotype-index {params.phenotype_index} \
             --gwas-fraction {params.gwas_fraction} \
             --seed {params.seed} \
+            --fid-col {params.fid_col} \
+            --iid-col {params.iid_col} \
             > {log} 2>&1
         """
 
 
 rule runSingleAncestryPRS:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/prs:latest"
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     log:
         OUT_DIR / "logs" / f"runSingleAncestryPRS_{PRS_ANC1}.log",
     threads: 4
@@ -96,7 +100,6 @@ rule runSingleAncestryPRS:
             "single_ancestry_script",
             "/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline/run_single_ancestry_PRS_pipeline.sh",
         ),
-        flags=PRS_CONFIG.get("single_ancestry_flags", "-c -l -s -P"),
     shell:
         """
         set -euo pipefail
@@ -104,14 +107,13 @@ rule runSingleAncestryPRS:
         echo "Running single-ancestry PRS pipeline" > {log}
         echo "Script: {params.script}" >> {log}
         echo "Config: {input.config}" >> {log}
-        echo "Flags: {params.flags}" >> {log}
 
         if [[ ! -f "{params.script}" ]]; then
             echo "Missing single-ancestry PRS script: {params.script}" >> {log}
             exit 1
         fi
 
-        bash {params.script} {params.flags} -C {input.config} >> {log} 2>&1
+        bash {params.script} -C {input.config} >> {log} 2>&1
 
         touch {output.done}
         """

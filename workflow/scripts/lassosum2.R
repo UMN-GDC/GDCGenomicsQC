@@ -68,11 +68,29 @@ option_list = list(
   make_option("--cleanup", action="store", default=T, type="logical",
               help="Cleanup temporary files or not [default: %default]"),
   make_option("--NCORES", action="store", default=1, type="integer",
-              help="How many cores to use [default: %default]")
+              help="How many cores to use [default: %default]"),
+  make_option("--iid-col", action="store", default="IID", type="character",
+              help="Name of the IID column in phenotype/covariate files [default: %default]"),
+  make_option("--fid-col", action="store", default="FID", type="character",
+              help="Name of the FID column in phenotype/covariate files [default: %default]")
 )
 opt = parse_args(OptionParser(option_list=option_list))
 
 if ( opt$verbose == 2 ) { SYS_PRINT = F } else { SYS_PRINT = T }
+
+find_col <- function(colnames, target) {
+    t <- toupper(target)
+    for (cn in colnames) {
+        if (toupper(cn) == t) return(cn)
+    }
+    stop("Could not find column '", target, "' in file. Available: ", paste(colnames, collapse=", "))
+}
+
+get_id_cols <- function(df) {
+    fid_cn <- find_col(colnames(df), opt$fid_col)
+    iid_cn <- find_col(colnames(df), opt$iid_col)
+    list(fid = fid_cn, iid = iid_cn)
+}
 
 suppressWarnings(dir.create(opt$PATH_out))
 
@@ -339,19 +357,25 @@ for(mmm in 1:M){
   ############
   ## Step 3.1. Load data
 
-  # Make/fetch the phenotype file
   fam <- read.table(paste(bfile_tuning,".fam",sep=''),as.is=T)
   if ( !is.na(pheno_tuning) ) {
-      pheno <- read.table(pheno_tuning, as.is=T)
-      # Match up data
-      m <- match( paste(fam[,1],fam[,2]) , paste(pheno[,1],pheno[,2]) )
+      pheno_raw <- readLines(pheno_tuning, n=1)
+      first_val <- suppressWarnings(as.numeric(strsplit(trimws(pheno_raw), "\\s+")[[1]][1]))
+      has_header <- is.na(first_val)
+      pheno <- read.table(pheno_tuning, header=has_header, as.is=T)
+      if (has_header) {
+          cols <- get_id_cols(pheno)
+          m <- match(paste(fam[,1], fam[,2]), paste(pheno[[cols$fid]], pheno[[cols$iid]]))
+      } else {
+          m <- match(paste(fam[,1], fam[,2]), paste(pheno[,1], pheno[,2]))
+      }
       m.keep <- !is.na(m)
       fam <- fam[m.keep,,drop=F]
       pheno <- pheno[m[m.keep],,drop=F]
   } else {
       pheno <- fam[,c(1,2,6)]
   }
-  m <- is.na(pheno[,3]) # Remove samples with missing phenotype
+  m <- is.na(pheno[,3])
   fam <- fam[!m,,drop=F]
   pheno <- pheno[!m,,drop=F]
 
@@ -359,8 +383,8 @@ for(mmm in 1:M){
   if ( !is.na(covar_tuning) ) {
       covar <- read.table(covar_tuning,as.is=T,head=T)
       if ( opt$verbose >= 1 ) cat( "Loaded",ncol(covar)-2,"covariates\n")
-      # Match up data
-      m <- match( paste(fam[,1],fam[,2]) , paste(covar[,1],covar[,2]) )
+      cols <- get_id_cols(covar)
+      m <- match(paste(fam[,1],fam[,2]), paste(covar[[cols$fid]], covar[[cols$iid]]))
       m.keep <- !is.na(m)
       fam <- fam[m.keep,]
       pheno <- pheno[m.keep,]
@@ -386,7 +410,9 @@ for(mmm in 1:M){
 
   SCORE <- fread2(paste0(out_path,"/tmp/sample_scores/lassosum2_tuning.sscore"))
 
-  m <- match( paste(fam[,1],fam[,2]) , paste(SCORE[,1],SCORE[,2]) )
+  score_fid_cn <- find_col(colnames(SCORE), "FID")
+  score_iid_cn <- find_col(colnames(SCORE), "IID")
+  m <- match( paste(fam[,1],fam[,2]) , paste(SCORE[[score_fid_cn]], SCORE[[score_iid_cn]]) )
   m.keep <- !is.na(m)
   fam <- fam[m.keep,]
   pheno <- pheno[m.keep,]
@@ -494,16 +520,23 @@ for(mmm in 1:M){
     # Make/fetch the phenotype file
     fam <- read.table(paste(bfile_testing,".fam",sep=''),as.is=T)
     if ( !is.na(pheno_testing) ) {
-        pheno <- read.table(pheno_testing, as.is=T)
-        # Match up data
-        m <- match( paste(fam[,1],fam[,2]) , paste(pheno[,1],pheno[,2]) )
+        pheno_raw <- readLines(pheno_testing, n=1)
+        first_val <- suppressWarnings(as.numeric(strsplit(trimws(pheno_raw), "\\s+")[[1]][1]))
+        has_header <- is.na(first_val)
+        pheno <- read.table(pheno_testing, header=has_header, as.is=T)
+        if (has_header) {
+            cols <- get_id_cols(pheno)
+            m <- match(paste(fam[,1],fam[,2]), paste(pheno[[cols$fid]], pheno[[cols$iid]]))
+        } else {
+            m <- match(paste(fam[,1],fam[,2]), paste(pheno[,1], pheno[,2]))
+        }
         m.keep <- !is.na(m)
         fam <- fam[m.keep,,drop=F]
         pheno <- pheno[m[m.keep],,drop=F]
     } else {
         pheno <- fam[,c(1,2,6)]
     }
-    m <- is.na(pheno[,3]) # Remove samples with missing phenotype
+    m <- is.na(pheno[,3])
     fam <- fam[!m,,drop=F]
     pheno <- pheno[!m,,drop=F]
 
@@ -511,8 +544,8 @@ for(mmm in 1:M){
     if ( !is.na(covar_testing) ) {
         covar <- ( read.table(covar_testing,as.is=T,head=T) )
         if ( opt$verbose >= 1 ) cat( "Loaded",ncol(covar)-2,"covariates\n")
-        # Match up data
-        m <- match( paste(fam[,1],fam[,2]) , paste(covar[,1],covar[,2]) )
+        cols <- get_id_cols(covar)
+        m <- match(paste(fam[,1],fam[,2]), paste(covar[[cols$fid]], covar[[cols$iid]]))
         m.keep <- !is.na(m)
         fam <- fam[m.keep,]
         pheno <- pheno[m.keep,]
@@ -534,7 +567,9 @@ for(mmm in 1:M){
 
     SCORE <- fread2(paste0(out_path,"/tmp/sample_scores/lassosum2_testing.sscore"))
 
-    m <- match( paste(fam[,1],fam[,2]) , paste(SCORE[,1],SCORE[,2]) )
+    score_fid_cn <- find_col(colnames(SCORE), "FID")
+    score_iid_cn <- find_col(colnames(SCORE), "IID")
+    m <- match( paste(fam[,1],fam[,2]) , paste(SCORE[[score_fid_cn]], SCORE[[score_iid_cn]]) )
     m.keep <- !is.na(m)
     fam <- fam[m.keep,]
     pheno <- pheno[m.keep,]

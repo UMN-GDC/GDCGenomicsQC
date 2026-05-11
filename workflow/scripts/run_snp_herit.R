@@ -2,8 +2,8 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) < 9) {
-    stop("Usage: Rscript run_snp_herit.R <out_dir> <pcrelate_file> <pcaobj_file> <unrelated_ids_file> <pheno_file> <covar_file> <out_file> <npc> <mpheno> <method>\n")
+if (length(args) < 10) {
+    stop("Usage: Rscript run_snp_herit.R <out_dir> <pcrelate_file> <pcaobj_file> <unrelated_ids_file> <pheno_file> <covar_file> <out_file> <npc> <mpheno> <method> [iid_col] [fid_col]\n")
 }
 
 out_dir <- args[1]
@@ -16,6 +16,17 @@ out_file <- args[7]
 npc <- as.integer(args[8])
 mpheno <- as.integer(args[9])
 method <- args[10]
+iid_col <- if (!is.na(args[11]) && args[11] != "") args[11] else "IID"
+fid_col <- if (!is.na(args[12]) && args[12] != "") args[12] else "FID"
+
+find_col <- function(colnames, target, optional = FALSE) {
+    t <- toupper(target)
+    for (cn in colnames) {
+        if (toupper(cn) == t) return(cn)
+    }
+    if (optional) return(NULL)
+    stop("Could not find column '", target, "' in file. Available columns: ", paste(colnames, collapse=", "))
+}
 
 suppressPackageStartupMessages({
     library(GENESIS)
@@ -40,14 +51,15 @@ if (pheno_ext == "fam") {
     cat("Reading phenotype file as FAM format...\n")
     pheno <- read.table(pheno_file, header = FALSE, stringsAsFactors = FALSE)
     colnames(pheno) <- c("FID", "IID", "PID", "MID", "Sex", "Pheno")
-    pheno <- pheno[, c("IID", "Pheno")]
-    colnames(pheno) <- c("IID", "phenotype")
+    pheno_iid_col <- "IID"
 } else {
     cat("Reading phenotype file as CSV...\n")
     pheno <- read.csv(pheno_file, stringsAsFactors = FALSE)
+    pheno_iid_col <- find_col(colnames(pheno), iid_col)
 }
 
 cat("Phenotype columns:", colnames(pheno), "\n")
+cat("Using IID column:", pheno_iid_col, "\n")
 
 cat("Reading covariate file(s)...\n")
 covar_files <- unlist(strsplit(covar_file, ","))
@@ -58,26 +70,29 @@ covar_list <- lapply(covar_files, function(f) {
     read.csv(f, stringsAsFactors = FALSE)
 })
 
+covar_iid_col <- find_col(colnames(covar_list[[1]]), iid_col)
+
 if (length(covar_list) > 1) {
-    cat("Merging", length(covar_list), "covariate files on IID...\n")
-    covar <- Reduce(function(x, y) merge(x, y, by = "IID", all = FALSE, suffixes = c("", ".y")), covar_list)
+    cat("Merging", length(covar_list), "covariate files on", covar_iid_col, "...\n")
+    covar <- Reduce(function(x, y) merge(x, y, by = covar_iid_col, all = FALSE, suffixes = c("", ".y")), covar_list)
     covar <- covar[, !grepl("\\.y$", colnames(covar))]
 } else {
     covar <- covar_list[[1]]
 }
 
 cat("Covariate columns:", colnames(covar), "\n")
+cat("Using IID column:", covar_iid_col, "\n")
 
 cat("Matching samples...\n")
-pheno <- pheno %>% filter(IID %in% unrels)
-covar <- covar %>% filter(IID %in% unrels)
+pheno <- pheno %>% filter(.data[[pheno_iid_col]] %in% unrels)
+covar <- covar %>% filter(.data[[covar_iid_col]] %in% unrels)
 
-common_ids <- intersect(pheno$IID, covar$IID)
-pheno <- pheno %>% filter(IID %in% common_ids)
-covar <- covar %>% filter(IID %in% common_ids)
+common_ids <- intersect(pheno[[pheno_iid_col]], covar[[covar_iid_col]])
+pheno <- pheno %>% filter(.data[[pheno_iid_col]] %in% common_ids)
+covar <- covar %>% filter(.data[[covar_iid_col]] %in% common_ids)
 
-pheno <- pheno %>% arrange(match(IID, common_ids))
-covar <- covar %>% arrange(match(IID, common_ids))
+pheno <- pheno %>% arrange(match(.data[[pheno_iid_col]], common_ids))
+covar <- covar %>% arrange(match(.data[[covar_iid_col]], common_ids))
 
 cat("Final sample count:", length(common_ids), "\n")
 
@@ -97,7 +112,7 @@ if (method == "AdjHE") {
     cat("Using Haseman-Elston regression...\n")
     
     y <- pheno$phenotype
-    names(y) <- pheno$IID
+    names(y) <- pheno[[pheno_iid_col]]
     
     X <- cbind(rep(1, length(common_ids)), pc_matrix)
     

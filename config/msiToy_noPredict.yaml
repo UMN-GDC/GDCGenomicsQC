@@ -30,21 +30,32 @@ thin: false
 
 # SNP Heritability Estimation
 snpHerit:
-    # Prefix for GRM files (prefix.grm.bin, prefix.grm.N.bin, prefix.grm.id)
-    # Used by MASH for heritability estimation
-    # Use {subset} placeholder for subset (e.g., AFR, EUR)
-    # If null, auto-derived as: OUT_DIR/{subset}/03-snpHeritability/{subset}_grm
-    prefix: "/scratch.global/coffm049/simulated/{subset}"
+    # For estimating heritability on "full" subset (all samples), use:
+    # - internalPCA method: "plink2" (recommended) or "both"
+    # - GRM will come from PCAIR if method includes "pcair"
+    # - Eigenvec will come from plink2 if method includes "plink2"
+    
+    # Pre-computed GRM prefix (prefix.grm.bin, prefix.grm.id, prefix.grm.N.bin)
+    # Options:
+    #   - null: MASH will compute GRM automatically from PCA
+    #   - "/path/to/output/full/pcair_grm" (if PCAIR ran with GRM)
+    #   - "/path/to/output/full/unrelated_grm" (from relatedness step)
+    #   - "/scratch.global/coffm049/simulated/{subset}" (for simulated data)
+    grm_prefix: "/scratch.global/coffm049/simulated/{subset}"
+    
+    # Pre-computed eigenvector file for GRM construction
+    # Options:
+    #   - null: MASH will compute eigenvectors from PCA
+    #   - "/path/to/output/full/internal_pca_plink2.eigenvec" (if method=plink2)
+    pca_input: null
 
     # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID
     pheno: "/scratch.global/coffm049/simulated/AFR_simulation_pheno1.pheno"
 
-    # Path to covariate file(s) (required when pheno is specified)
-    # Can be a single file path or list for multiple files
-    # Format: CSV/TSV with columns: FID, IID, <covariates>
-    covar: "/scratch.global/coffm049/simulated/AFR_simulation.fam"
+    # No covariates for toy/simulated datasets
+    covar: null
 
     # Output filename for heritability estimates (CSV format)
     out: null
@@ -86,6 +97,12 @@ snpHerit:
     # Filter covariate data (e.g., "site==1", "age>=18")
     covar_filter: null
 
+    # Column name for individual ID in phenotype/covariate files (case-insensitive match)
+    iid_col: "IID"
+
+    # Column name for family ID in phenotype/covariate files (case-insensitive match)
+    fid_col: "FID"
+
 # Tool settings
 localAncestry:
     RFMIX: false
@@ -95,6 +112,8 @@ localAncestry:
     chromosomes: [20, 21]  # Use pipeline chromosomes if null, or specify list e.g. [13, 14, 15]
 
 internalPCA:
+    method: "plink2"  # "plink2", "pcair", or "both"
+    npc: 20
     plot: true
     color_by: null
     phenotype_file: null
@@ -145,6 +164,17 @@ phenotypeSimulation:
     # Number of individuals to thin to (if not skipping)
     thin_count_inds: 10000
 
+# PRS Pipeline Inputs
+prsPipeline:
+    iid_col: "IID"
+    fid_col: "FID"
+    
+    # Use external data instead of simulation (optional)
+    # external:
+    #     target_bed: "/path/to/genotypes"
+    #     target_sumstats: "/path/to/gwas.tsv"
+    #     target_pheno: "/path/to/pheno.tsv"
+
 # PRS Methods Configuration
 # Set enabled: true for methods you want to run
 # Commands are defined in workflow/rules/prsPipelines.smk (software is in container)
@@ -160,6 +190,8 @@ prsMethods:
     enabled: true
   single_lassosum2:
     enabled: false
+    iid_col: "IID"
+    fid_col: "FID"
   
   # Multi ancestry methods
   multi_ctsleb:

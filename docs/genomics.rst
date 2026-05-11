@@ -115,7 +115,8 @@ Config Options:
 .. code-block:: yaml
 
     relatedness:
-        method: "0"  # Options: "0" (KING), "pcair", "pcrelate"
+        method: "king"  # Options: "king", "primus", or other (assumes unrelated)
+        king_cutoff: 0.0884  # KING cutoff for "unrelated"
 
     SEX_CHECK: true  # Whether to perform sex check
     GRM: true  # Whether to compute GRM
@@ -133,9 +134,37 @@ Config Options:
    * - **PC-AiR**
      - Captures ancestry without bias from family clusters.
      - Generating ancestry PCs for regression models.
-   * - **PC-Relate**
-     - High accuracy in admixed populations.
-     - Final kinship estimation and relatedness filtering.
+* - **PC-Relate**
+      - High accuracy in admixed populations.
+      - Final kinship estimation and relatedness filtering.
+
+
+Internal PCA Methods
+--------------------
+
+The pipeline supports two methods for computing internal PCA:
+
+.. list-table:: Internal PCA Method Comparison
+   :widths: 20 40 40
+   :header-rows: 1
+
+   * - Method
+     - Description
+     - Output
+   * - **plink2**
+     - Fast approximate PCA using PLINK2 on unrelated samples
+     - ``internal_pca_plink2.eigenvec``, ``internal_pca_plink2.eigenval``
+   * - **pcair**
+     - PC-AiR using all samples, computes PC-relate kinship and GRM
+     - ``pcair_pcaobj.RDS``, ``pcrelate_kinship.RDS``, ``pcair.grm.bin``
+   * - **both**
+     - Run both methods
+
+.. code-block:: yaml
+
+    internalPCA:
+        method: "plink2"  # Options: "plink2", "pcair", "both"
+        npc: 20           # Number of PCs for plink2 method
 
 
 Module 5: Standard QC

@@ -1,0 +1,15 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%files
+    crossmap.yml /tmp/crossmap.yml
+
+%post
+    /opt/conda/bin/micromamba env create -y -f /tmp/crossmap.yml
+    echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
+    echo "conda activate crossmap" >> ~/.bashrc
+
+%environment
+    CONDA_ENV=/opt/conda/envs/crossmap
+    PATH=/opt/conda/envs/crossmap/bin:$PATH
+    LANG=C.UTF-8 LC_ALL=C.UTF-8

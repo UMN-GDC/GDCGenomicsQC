@@ -396,3 +396,8 @@ After completing this tutorial, you have:
 - :doc:`tutorial_qc_pipeline` - Genotype QC preprocessing
 - :doc:`tutorial_ancestry_classification` - Ancestry labels for PRS stratification
 - :doc:`genomics` - Technical details on multi-ancestry PRS methodology
+
+**Lab Materials**
+----------------
+
+- [Local Ancestry Visualization Lab (R Markdown)](labs/lab_local_ancestry_visualization.Rmd) - Interactive R notebook for visualizing local ancestry outputs

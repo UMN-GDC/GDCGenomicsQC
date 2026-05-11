@@ -2,7 +2,7 @@ rule estimateLocalAncestryPerChromosome:
     log:
         OUT_DIR / "logs" / "estimateLocalAncestryPerChromosome_{CHR}.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1"
     conda:
         "../../envs/rfmix.yml"
     threads: 4
@@ -66,7 +66,7 @@ rule aggregateLocalAncestryResults:
     log:
         OUT_DIR / "logs" / "aggregateLocalAncestryResults.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     conda:
         "../../envs/ancNreport.yml"
     threads: 4

@@ -208,6 +208,8 @@ detects the format based on the file extension and whether ``{CHR}`` is present:
 
     # Internal PCA
     internalPCA:
+        method: "plink2"  # "plink2", "pcair", or "both"
+        npc: 20
         plot: true
         color_by: null
         phenotype_file: null

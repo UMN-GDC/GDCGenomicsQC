@@ -1,11 +1,12 @@
 from pathlib import Path
-import pandas as pd 
+import pandas as pd
 
 OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
 REF = Path(config.get("REF", "/path/to/ref"))
 ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 LOCAL_ANCESTRY_CHROMOSOMES = config.get("localAncestry", {}).get("chromosomes") or CHROMOSOMES
+INPUT_IS_PER_CHROMOSOME = "{CHR}" in config.get("INPUT", "")
 
 
 def has_provided_ancestry():

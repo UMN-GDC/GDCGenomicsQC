@@ -57,6 +57,12 @@ GRM: true
 # Internal PCA (Population Structure)
 # =============================================================================
 internalPCA:
+    # PCA method: "plink2" (fast, uses unrelated), "pcair" (full samples, PC-relate), "both"
+    method: "plink2"
+    
+    # Number of PCs for plink2 method
+    npc: 20
+    
     # Generate PCA plots
     plot: true
     
@@ -109,12 +115,25 @@ localAncestry:
 # SNP Heritability Estimation
 # =============================================================================
 # Estimate SNP-based heritability (h²) using Haseman-Elston regression
+#
+# For estimating heritability on "full" subset (all samples), configure:
+#   - internalPCA: method "plink2" (recommended) or "both"
+#   - GRM will come from PCAIR if method includes "pcair"
+#   - Eigenvec will come from plink2 if method includes "plink2"
+#
 snpHerit:
-    # Prefix for GRM files (prefix.grm.bin, prefix.grm.N.bin, prefix.grm.id)
-    # Used by MASH for heritability estimation
-    # Use {subset} placeholder for subset (e.g., AFR, EUR)
-    # If null, auto-derived as: OUT_DIR/{subset}/03-snpHeritability/{subset}_grm
-    prefix: null
+    # Pre-computed GRM prefix (prefix.grm.bin, prefix.grm.id, prefix.grm.N.bin)
+    # Options:
+    #   - null: MASH will compute GRM automatically from PCA
+    #   - "/path/to/output/full/pcair_grm" (if PCAIR ran with GRM)
+    #   - "/path/to/output/full/unrelated_grm" (from relatedness step)
+    grm_prefix: null
+    
+    # Pre-computed eigenvector file for GRM construction
+    # Options:
+    #   - null: MASH will compute eigenvectors from PCA
+    #   - "/path/to/output/full/internal_pca_plink2.eigenvec" (if method=plink2)
+    pca_input: null
 
     # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
@@ -166,6 +185,12 @@ snpHerit:
     # Filter covariate data (e.g., "site==1", "age>=18")
     covar_filter: null
 
+    # Column name for individual ID in phenotype/covariate files (case-insensitive match)
+    iid_col: "IID"
+
+    # Column name for family ID in phenotype/covariate files (case-insensitive match)
+    fid_col: "FID"
+
 
 # =============================================================================
 # Phenotype Simulation (Testing)
@@ -215,6 +240,37 @@ phenotypeSimulation:
 
 
 # =============================================================================
+# =============================================================================
+# PRS Pipeline Inputs
+# =============================================================================
+prsPipeline:
+    # Column name for individual ID (case-insensitive)
+    iid_col: "IID"
+    # Column name for family ID (case-insensitive)
+    fid_col: "FID"
+    
+    # External data mode: Use external GWAS and genotype data instead of simulation
+    # If set, the pipeline will use these files directly without running preparePRSInputs
+    # Leave empty/null to use simulation-based inputs from phenotypeSimulation
+    external:
+        # Required for single-ancestry PRS:
+        target_bed: null          # Path to target PLINK bed file (without extension)
+        target_sumstats: null    # Path to GWAS summary statistics (tsv/txt format)
+        target_pheno: null       # Path to target phenotype file
+        
+        # Optional - for multi-ancestry PRS:
+        anc2_bed: null           # Path to ancestry2 PLINK bed file
+        training_sumstats: null  # Path to training GWAS summary stats
+        training_pheno: null     # Path to training phenotype file
+        
+        # Optional:
+        target_bim: null         # Explicit bim path (if not automatically derived)
+        target_fam: null         # Explicit fam path (if not automatically derived)
+        anc2_bim: null           # Explicit anc2 bim path
+        anc2_fam: null           # Explicit anc2 fam path
+        pcs: null                # Path to PCs file (for methods that use PCs)
+
+# =============================================================================
 # PRS Methods Configuration
 # =============================================================================
 # Set enabled: true for methods you want to run
@@ -231,6 +287,10 @@ prsMethods:
     enabled: true
   single_lassosum2:
     enabled: false
+    # Column name for individual ID (case-insensitive)
+    iid_col: "IID"
+    # Column name for family ID (case-insensitive)
+    fid_col: "FID"
   
   # Multi ancestry methods
   multi_ctsleb:

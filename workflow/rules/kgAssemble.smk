@@ -1,5 +1,5 @@
 rule assemble1000GenomesReference:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
     conda: "../../envs/ancNreport.yml"
     threads: 8
     resources:

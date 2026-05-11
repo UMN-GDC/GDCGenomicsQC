@@ -10,8 +10,8 @@ AGENTS.md
 
 */.wget-hsts
 */_build/*
-*.yaml
-*.yml
+config/*.yaml
+config/*.yml
 !docs/images/*.svg
 !docs/images/*.mmd
 !docs/*.svg
@@ -96,20 +96,6 @@ gcta64
 
 */temp/*
 *.gz
-<<<<<<< HEAD
-*.bed
-*.bim
-*.fam
-*.vcf
-*.ped
-*.log
-*.sexcheck
-
-!data/toySim/toy.*
-=======
-
-
-# plink files
 *.bed
 *.bim
 *.fam
@@ -120,10 +106,8 @@ gcta64
 *.sexcheck
 *.het
 *.sif
+!data/toySim/toy.*
 data/toyData/toy_GSA*
-
-
->>>>>>> reportWriter
 
 /.quarto/
 qc.sif
