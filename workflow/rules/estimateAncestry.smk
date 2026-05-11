@@ -1,6 +1,6 @@
 checkpoint estimateGlobalAncestry:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
     resources:

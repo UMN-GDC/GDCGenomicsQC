@@ -66,7 +66,7 @@ rule aggregateLocalAncestryResults:
     log:
         OUT_DIR / "logs" / "aggregateLocalAncestryResults.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
     threads: 4

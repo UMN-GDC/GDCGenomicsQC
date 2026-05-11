@@ -5,9 +5,8 @@ channels:
   - nodefaults
 dependencies:
   - r-uwot
-  - r-svglite
-  - r-hdpca
-  - r-randomforest
+- r-svglite
+   - r-randomforest
   - r-tidyverse
   - r-data.table
   - r-argparse

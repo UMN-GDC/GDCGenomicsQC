@@ -19,7 +19,7 @@ rule preparePRSInputs:
     conda:
         "../../envs/ancNreport.yml"
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     threads: 4
     resources:
         nodes=1,

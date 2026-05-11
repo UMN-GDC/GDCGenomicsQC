@@ -2,7 +2,7 @@ rule runPcaOnReferencePanel:
     log:
         OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
     threads: 8

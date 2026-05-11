@@ -16,10 +16,9 @@ dependencies:
   - r-mvtnorm
   - r-gt
   - r-svglite
-  - r-boot
-  - r-lpsolve
-  - r-hdpca
-  - perl
+- r-boot
+   - r-lpsolve
+   - perl
   - bioconductor-gdsfmt
   - bioconductor-snprelate
   - bioconductor-seqarray

@@ -7,7 +7,7 @@
 #SBATCH --partition=msismall
 #SBATCH --job-name=buildImage
 #SBATCH --output=build_%a.out
-#SBATCH --array=5
+#SBATCH --array=0
 
 # can be array=0-5
 

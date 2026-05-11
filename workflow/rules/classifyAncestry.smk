@@ -3,7 +3,7 @@ checkpoint estimateGlobalAncestry:
     log:
         OUT_DIR / "logs" / "estimateGlobalAncestry.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
     threads: 8
@@ -56,7 +56,7 @@ checkpoint classifySamplesByAncestry:
     log:
         OUT_DIR / "logs" / "classifySamplesByAncestry.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:v1"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
     threads: 1

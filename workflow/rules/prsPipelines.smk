@@ -564,7 +564,7 @@ rule runAllEnabledPRS:
     input:
         resources=rules.preparePRSMethodResources.output.ready,
         env=get_prs_env,
-        lambda wildcards: rules.prepareExternalPRSInputs.output.env if PRS_USE_EXTERNAL else [],
+        external_env=lambda wildcards: rules.prepareExternalPRSInputs.output.env if PRS_USE_EXTERNAL else [],
         single_ct_done=PRS_METHOD_RUN_DIR / "single_ct.done" if prs_method_enabled("single_ct") else [],
         single_prsice_done=PRS_METHOD_RUN_DIR / "single_prsice.done" if prs_method_enabled("single_prsice") else [],
         single_prscs_done=PRS_METHOD_RUN_DIR / "single_prscs.done" if prs_method_enabled("single_prscs") else [],
