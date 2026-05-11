@@ -18,7 +18,7 @@ proc ModulesHelp { } {
 }
 
 # Activate conda and snakemake environment
-set snakemake_env /projects/standard/gdc/public/envs/snakemake
+set snakemake_env /scratch.global/baron063/miniconda3/envs/snakemake
 
 # Add conda base and snakemake env to PATH
 prepend-path PATH $snakemake_env/bin
