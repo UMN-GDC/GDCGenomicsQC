@@ -18,14 +18,11 @@ proc ModulesHelp { } {
 }
 
 # Activate conda and snakemake environment
-set conda_base /scratch.global/baron063/miniconda3
-set snakemake_env /scratch.global/baron063/miniconda3/envs/snakemake
+set snakemake_env /projects/standard/gdc/public/envs/snakemake
 
 # Add conda base and snakemake env to PATH
 prepend-path PATH $snakemake_env/bin
-prepend-path PATH $conda_base/condabin
-
-set basedir [file dirname [file dirname [info script]]]
+set basedir [file dirname [info script]]
 prepend-path PATH $basedir/bin
 setenv APPTAINER_CACHEDIR /scratch.global/GDC/singularityimages
 setenv SINGULARITY_CACHEDIR /scratch.global/GDC/singularityimages

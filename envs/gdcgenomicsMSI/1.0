@@ -16,15 +16,19 @@ proc ModulesHelp { } {
     puts stderr "\tthe --configfile option."
 }
 
-# Load Snakemake module
-if { ! [module-info mode remove] } {
-    module load snakemake
-}
+# Activate conda and snakemake environment
+set snakemake_env /projects/standard/gdc/public/envs/snakemake
 
-set basedir /scratch.global/coffm049/GDCGenomicsQC/envs/gdcgenomicsMSI
+# Add conda base and snakemake env to PATH
+prepend-path PATH $snakemake_env/bin
+
+set basedir [file dirname [info script]]
 prepend-path PATH $basedir/bin
+
 setenv APPTAINER_CACHEDIR /projects/standard/gdc/shared/singularity_images
 setenv SINGULARITY_CACHEDIR /projects/standard/gdc/shared/singularity_images
 setenv SNAKEMAKE_APPTAINER_PREFIX /projects/standard/gdc/shared/singularity_images
 setenv SNAKEMAKE_SINGULARITY_PREFIX /projects/standard/gdc/shared/singularity_images
+
+
 

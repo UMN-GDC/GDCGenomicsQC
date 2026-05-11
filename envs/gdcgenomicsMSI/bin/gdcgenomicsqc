@@ -5,6 +5,7 @@
 # This wrapper adds:
 #   --profile profiles/hpc
 #   --snakefile workflow/Snakefile
+#   --directory workflow/Snakefile
 # Users only need to specify --configfile
 
 WORKFLOW_DIR=/scratch.global/coffm049/GDCGenomicsQC
