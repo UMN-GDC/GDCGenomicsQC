@@ -127,5 +127,5 @@ if (nrow(sample_plot_df) > 0) {
         theme(legend.position = "bottom")
 
     ggsave(file.path(args$out, "ancestry_classification_space.svg"),
-        plot = p, dpi = 300, width = 9, height = 5 * length(rfmix_models))
+        plot = p, width = 1920, height = 800 * length(rfmix_models), units = "px")
 }

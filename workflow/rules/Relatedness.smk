@@ -9,6 +9,7 @@ rule checkRelatednessExtractUnrelated:
         nodes=1,
         mem_mb=128000,
         runtime=720,
+    threads: 8
     input:
         pgen=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
         pvar=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
@@ -37,6 +38,7 @@ rule checkRelatednessExtractUnrelated:
         echo "KING ESTIMATION using PLINK2 with cutoff {params.king_cutoff}"
         plink2 --pfile {params.input_prefix} \
             --make-grm-bin \
+            --threads {threads} \
             --king-cutoff {params.king_cutoff} \
             --make-king \
             --out {params.output_prefix}_grm
@@ -50,11 +52,11 @@ rule checkRelatednessExtractUnrelated:
         echo "PRIMUS ESTIMATION"
         mkdir -p {params.output_prefix}_primus_tmp
         bash {params.scripts_dir}/run_primus.sh {params.input_prefix} {params.output_prefix}_primus_tmp {params.ref_path}
-        plink2 --bfile {params.output_prefix}_primus_tmp/unrelated --make-grm-bin --out {params.output_prefix}_grm
+        plink2 --bfile {params.output_prefix}_primus_tmp/unrelated --make-grm-bin --out {params.output_prefix}_grm --threads {threads}
         mv {params.output_prefix}_grm.grm.bin {output.grm}
         mv {params.output_prefix}_grm.grm.id {output.grmid}
         mv {params.output_prefix}_grm.grm.N.bin {output.grmN}
-        plink2 --bfile {params.output_prefix}_primus_tmp/unrelated --make-pgen --out {params.output_prefix}
+        plink2 --bfile {params.output_prefix}_primus_tmp/unrelated --make-pgen --out {params.output_prefix} --threads {threads}
         rm -rf {params.output_prefix}_primus_tmp
 
     else
@@ -62,7 +64,7 @@ rule checkRelatednessExtractUnrelated:
         cp {input.pgen} {output.pgen}
         cp {input.pvar} {output.pvar}
         cp {input.psam} {output.psam}
-        plink2 --pfile {params.input_prefix} --make-grm-bin --out {params.output_prefix}_grm
+        plink2 --pfile {params.input_prefix} --make-grm-bin --out {params.output_prefix}_grm --threads {threads}
         mv {params.output_prefix}_grm.grm.bin {output.grm}
         mv {params.output_prefix}_grm.grm.id {output.grmid}
         mv {params.output_prefix}_grm.grm.N.bin {output.grmN}

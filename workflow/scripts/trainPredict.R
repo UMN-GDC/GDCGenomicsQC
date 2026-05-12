@@ -219,7 +219,7 @@ plot_posterior_stacked_area <- function(prob_results, out_dir) {
             labs(fill = "Ancestry", title = paste0("Global Ancestry Proportions (", toupper(model), ")"))
 
         ggsave(file.path(out_dir, paste0("posterior_probability_stacked_", model, ".svg")),
-            plot = p, dpi = 300, width = max(8, n_subjects * 0.02), height = 6)
+            plot = p, width = 10, height = 7, units = "in")
     }
 }
 

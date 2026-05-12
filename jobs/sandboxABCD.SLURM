@@ -4,7 +4,9 @@
 #SBATCH --mem=1G
 #SBATCH --time=72:00:00
 
-module use /scratch.global/coffm049/GDCGenomicsQC/envs
+module use /scratch.global/GDC/GDCGenomicsQC/envs
 module load gdcgenomicsSandbox
 
-gdcgenomicsqc run_classifyAncestry --configfile ../config/sandboxABCD.yaml 
+#gdcgenomicsqc --until run_classifyAncestry --configfile ../config/sandboxABCD.yaml 
+#gdcgenomicsqc --until run_ancestryQC --configfile ../config/sandboxABCD.yaml 
+gdcgenomicsqc --until run_PCAinternal --configfile ../config/sandboxABCD.yaml
