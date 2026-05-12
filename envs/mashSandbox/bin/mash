@@ -1,0 +1,26 @@
+#!/bin/bash
+# Wrapper for mash.sif that runs with --argfile
+# Usage: mash [ARGS...]
+#
+# This wrapper runs apptainer with mash.sif and passes --argfile to the MASH estimate command.
+# The argfile is expected to be a JSON file containing mash configuration.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKFLOW_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
+MASH_SIF="$WORKFLOW_DIR/envs/mash.sif"
+
+usage() {
+    echo "Usage: mash estimate --argfile <argfile.json>"
+    echo ""
+    echo "Runs MASH estimate with the specified argfile using the mash.sif container."
+    exit 1
+}
+
+APPTAINER_ARGS="--bind /scratch.global,/home"
+
+if [ "$1" = "estimate" ]; then
+    shift
+    exec apptainer run $APPTAINER_ARGS "$MASH_SIF" MASH estimate "$@"
+else
+    exec apptainer run $APPTAINER_ARGS "$MASH_SIF" MASH "$@"
+fi

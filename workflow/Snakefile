@@ -102,12 +102,13 @@ rule all:
                 OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
                 subset=get_ancestries(wildcards),
             )
-            if config.get("snpHerit", {}).get("pheno") and config.get("snpHerit", {}).get("covar")
+            if config.get("snpHerit", {}).get("pheno")
             else []
         ),
 
 
 ruleorder: convertPlinkPerChromosome > mergeChromosomesAndFilter
+ruleorder: convertPlinkSingleFile > mergeChromosomesAndFilter
 ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 # include: "rules/trainGnomix.smk"
@@ -304,7 +305,7 @@ rule run_snpHerit:
                 / "mash_output.csv",
                 subset=get_ancestries(wildcards),
             )
-            if config.get("snpHerit", {}).get("pheno") and config.get("snpHerit", {}).get("covar")
+            if config.get("snpHerit", {}).get("pheno")
             else []
         ),
         lambda wildcards: (

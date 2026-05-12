@@ -244,9 +244,10 @@ snpHerit:
       description: Path to covariate file(s) (single path or list, format CSV/TSV with FID, IID)
     out:
       type: str
-      nullable: true
-      default: null
-      description: Output filename for heritability estimates (CSV format)
+      required: true
+      description: |
+        Output path for heritability estimates (CSV format).
+        Required when snpHerit is active.
     method:
       type: str
       default: "AdjHE"

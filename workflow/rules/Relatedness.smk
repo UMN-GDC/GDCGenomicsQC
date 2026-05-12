@@ -25,6 +25,8 @@ rule checkRelatednessExtractUnrelated:
         method=config.get("relatedness", {}).get("method", "king"),
         scripts_dir=SCRIPTS_DIR,
         input_prefix=lambda wildcards, input: str(input.pgen)[:-5],
+        output_prefix=lambda wildcards, output: str(output.pgen)[:-5],
+        ref_path=config.get("REF", "/path/to/ref"),
     shell:
         """
 
@@ -37,33 +39,33 @@ rule checkRelatednessExtractUnrelated:
             --make-grm-bin \
             --king-cutoff {params.king_cutoff} \
             --king-table \
-            --out {output.pgen[:-5]}_grm
-        mv {output.pgen[:-5]}_grm.grm.bin {output.grm}
-        mv {output.pgen[:-5]}_grm.grm.id {output.grmid}
-        mv {output.pgen[:-5]}_grm.grm.N.bin {output.grmN}
-        awk -v cutoff={params.king_cutoff} '$5 < cutoff {{print $1, $2}}' {output.pgen[:-5]}_grm.king.cutoff.in.id | head -n -1 > {output.pgen[:-5]}_unrel_ids.txt
-        plink2 --pfile {params.input_prefix} --keep {output.pgen[:-5]}_unrel_ids.txt --make-pgen --out {output.pgen[:-5]}
+            --out {params.output_prefix}_grm
+        mv {params.output_prefix}_grm.grm.bin {output.grm}
+        mv {params.output_prefix}_grm.grm.id {output.grmid}
+        mv {params.output_prefix}_grm.grm.N.bin {output.grmN}
+        awk -v cutoff={params.king_cutoff} '$5 < cutoff {{print $1, $2}}' {params.output_prefix}_grm.king.cutoff.in.id | head -n -1 > {params.output_prefix}_unrel_ids.txt
+        plink2 --pfile {params.input_prefix} --keep {params.output_prefix}_unrel_ids.txt --make-pgen --out {params.output_prefix}
 
     elif [[ "{params.method}" == "primus" || "{params.method}" == "2" ]]; then
         echo "PRIMUS ESTIMATION"
-        mkdir -p {output.pgen[:-5]}_primus_tmp
-        bash {params.scripts_dir}/run_primus.sh {params.input_prefix} {output.pgen[:-5]}_primus_tmp {config.get("REF", "/path/to/ref")}
-        plink2 --bfile {output.pgen[:-5]}_primus_tmp/unrelated --make-grm-bin --out {output.pgen[:-5]}_grm
-        mv {output.pgen[:-5]}_grm.grm.bin {output.grm}
-        mv {output.pgen[:-5]}_grm.grm.id {output.grmid}
-        mv {output.pgen[:-5]}_grm.grm.N.bin {output.grmN}
-        plink2 --bfile {output.pgen[:-5]}_primus_tmp/unrelated --make-pgen --out {output.pgen[:-5]}
-        rm -rf {output.pgen[:-5]}_primus_tmp
+        mkdir -p {params.output_prefix}_primus_tmp
+        bash {params.scripts_dir}/run_primus.sh {params.input_prefix} {params.output_prefix}_primus_tmp {params.ref_path}
+        plink2 --bfile {params.output_prefix}_primus_tmp/unrelated --make-grm-bin --out {params.output_prefix}_grm
+        mv {params.output_prefix}_grm.grm.bin {output.grm}
+        mv {params.output_prefix}_grm.grm.id {output.grmid}
+        mv {params.output_prefix}_grm.grm.N.bin {output.grmN}
+        plink2 --bfile {params.output_prefix}_primus_tmp/unrelated --make-pgen --out {params.output_prefix}
+        rm -rf {params.output_prefix}_primus_tmp
 
     else
         echo "ASSUMING UNRELATED: no relatedness method specified"
         cp {input.pgen} {output.pgen}
         cp {input.pvar} {output.pvar}
         cp {input.psam} {output.psam}
-        plink2 --pfile {params.input_prefix} --make-grm-bin --out {output.pgen[:-5]}_grm
-        mv {output.pgen[:-5]}_grm.grm.bin {output.grm}
-        mv {output.pgen[:-5]}_grm.grm.id {output.grmid}
-        mv {output.pgen[:-5]}_grm.grm.N.bin {output.grmN}
+        plink2 --pfile {params.input_prefix} --make-grm-bin --out {params.output_prefix}_grm
+        mv {params.output_prefix}_grm.grm.bin {output.grm}
+        mv {params.output_prefix}_grm.grm.id {output.grmid}
+        mv {params.output_prefix}_grm.grm.N.bin {output.grmN}
     fi
 
     """

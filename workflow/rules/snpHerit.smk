@@ -1,9 +1,7 @@
 SNP_HERIT_CONFIG = config.get("snpHerit", {})
-SNP_HERIT_ACTIVE = bool(SNP_HERIT_CONFIG.get("pheno") and SNP_HERIT_CONFIG.get("covar"))
+SNP_HERIT_ACTIVE = bool(SNP_HERIT_CONFIG.get("pheno"))
 
 if SNP_HERIT_CONFIG:
-    if SNP_HERIT_CONFIG.get("pheno") and not SNP_HERIT_CONFIG.get("covar"):
-        raise ValueError("snpHerit.covar must be specified in config when pheno is specified")
     if SNP_HERIT_CONFIG.get("covar") and not SNP_HERIT_CONFIG.get("pheno"):
         raise ValueError("snpHerit.pheno must be specified in config when covar is specified")
     valid_methods = ["AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
@@ -19,15 +17,26 @@ if SNP_HERIT_ACTIVE:
             return {"pca": pca_input}
         return {}
 
+    def get_snpHerit_covar_input(wildcards):
+        covar = SNP_HERIT_CONFIG.get("covar")
+        if covar:
+            return {"covar": covar}
+        return {}
+
     rule prepareSnpHeritArgfile:
         input:
             lambda wildcards: get_snpHerit_pca_input(wildcards),
+            lambda wildcards: get_snpHerit_covar_input(wildcards),
             pheno=config.get("snpHerit", {}).get("pheno"),
-            covar=config.get("snpHerit", {}).get("covar"),
         output:
             argfile=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_argfile.json",
         params:
             out_dir=lambda wildcards: OUT_DIR / wildcards.subset / "03-snpHeritability",
+            mash_out=lambda wildcards: (
+                str(Path(SNP_HERIT_CONFIG.get("out")).with_suffix(""))
+                if SNP_HERIT_CONFIG.get("out")
+                else str(OUT_DIR / wildcards.subset / "03-snpHeritability") + "/mash_output"
+            ),
             prefix=lambda wildcards: (
                 SNP_HERIT_CONFIG.get("grm_prefix")
                 if SNP_HERIT_CONFIG.get("grm_prefix")
@@ -52,14 +61,16 @@ if SNP_HERIT_ACTIVE:
             mash_config = {
                 "prefix": str(params.prefix),
                 "pheno": str(input.pheno),
-                "covar": str(input.covar),
-                "out": str(params.out_dir) + "/mash_output",
+                "out": params.mash_out,
                 "npc": int(params.npc),
                 "mpheno": int(params.mpheno),
                 "Method": params.method,
                 "iid_col": params.iid_col,
                 "fid_col": params.fid_col,
             }
+
+            if "covar" in input:
+                mash_config["covar"] = str(input.covar)
 
             if params.pca_input:
                 pca_path = str(params.pca_input)
@@ -96,6 +107,6 @@ if SNP_HERIT_ACTIVE:
             estimates=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
         shell:
             """
-            mkdir -p {output.estimates".parent"}
+            mkdir -p {output.estimates.parent}
             MASH estimate --argfile {input.argfile} > {log} 2>&1
             """

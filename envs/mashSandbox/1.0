@@ -1,0 +1,18 @@
+#%Module######################################################################
+#
+#     MASH module file
+#     Wrapper for mash.sif to run with --argfile flag
+#
+
+proc ModulesHelp { } {
+    puts stderr "\tThis module loads the MASH wrapper for sandbox testing."
+    puts stderr "\tIt provides a convenient wrapper around mash.sif."
+    puts stderr "\t"
+    puts stderr "\tUsage: mash estimate --argfile <argfile.json>"
+    puts stderr "\t"
+    puts stderr "\tThe wrapper runs apptainer with mash.sif and exposes"
+    puts stderr "\tthe --argfile flag for MASH estimate commands."
+}
+
+set basedir [file dirname [info script]]
+prepend-path PATH $basedir/bin
