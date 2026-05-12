@@ -66,10 +66,27 @@ def get_prs_target_pheno(wildcards):
         return PRS_EXTERNAL.get("target_pheno")
     return rules.preparePRSInputs.output.target_study_pheno
 
-def get_prs_env(wildcards):
+def get_prs_env_path(wildcards):
     if PRS_USE_EXTERNAL:
         return PRS_OUT_DIR / "external_prs_inputs.env"
     return rules.preparePRSInputs.output.env
+
+
+def get_prs_env_vars(wildcards):
+    env_path = get_prs_env_path(wildcards)
+    if not env_path:
+        return {}
+    env_file = Path(env_path) if isinstance(env_path, str) else env_path
+    if not env_file.exists():
+        return {}
+    vars = {}
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if line and "=" in line:
+                key, value = line.split("=", 1)
+                vars[key] = value
+    return vars
 
 
 rule preparePRSMethodResources:
@@ -156,7 +173,6 @@ rule runSingleAncestryCT:
         runtime=240,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "single_ct.done",
     params:
@@ -164,6 +180,7 @@ rule runSingleAncestryCT:
         out_dir=PRS_METHOD_RUN_DIR / "single_ct",
         script=Path(workflow.basedir) / "scripts" / "ctsleb.R",
         extra=get_method_extra_args("single_ct"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -171,14 +188,13 @@ rule runSingleAncestryCT:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
         Rscript {params.script} \
-            --ss "$target_sumstats_file" \
-            --bed "$study_sample_plink.bed" \
-            --bim "$study_sample_plink.bim" \
-            --fam "$study_sample_plink.fam" \
-            --pheno "$target_study_pheno_file" \
+            --ss "{params.env_vars[target_sumstats_file]}" \
+            --bed "{params.env_vars[study_sample_plink.bed]}" \
+            --bim "{params.env_vars[study_sample_plink.bim]}" \
+            --fam "{params.env_vars[study_sample_plink.fam]}" \
+            --pheno "{params.env_vars[target_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
             > {log} 2>&1
@@ -197,7 +213,6 @@ rule runSingleAncestryLassosum2:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "single_lassosum2.done",
     params:
@@ -205,6 +220,7 @@ rule runSingleAncestryLassosum2:
         out_dir=PRS_METHOD_RUN_DIR / "single_lassosum2",
         script=Path(workflow.basedir) / "scripts" / "lassosum2.R",
         extra=get_method_extra_args("single_lassosum2"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -212,14 +228,13 @@ rule runSingleAncestryLassosum2:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
         Rscript {params.script} \
-            --sumstats "$target_sumstats_file" \
-            --bed "$study_sample_plink.bed" \
-            --bim "$study_sample_plink.bim" \
-            --fam "$study_sample_plink.fam" \
-            --pheno "$target_study_pheno_file" \
+            --sumstats "{params.env_vars[target_sumstats_file]}" \
+            --bed "{params.env_vars[study_sample_plink.bed]}" \
+            --bim "{params.env_vars[study_sample_plink.bim]}" \
+            --fam "{params.env_vars[study_sample_plink.fam]}" \
+            --pheno "{params.env_vars[target_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
             > {log} 2>&1
@@ -239,7 +254,6 @@ rule runSingleAncestryPRSice:
         runtime=240,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "single_prsice.done",
     params:
@@ -247,6 +261,7 @@ rule runSingleAncestryPRSice:
         out_dir=PRS_METHOD_RUN_DIR / "single_prsice",
         script=Path(workflow.basedir) / "scripts" / "PRSice.R",
         extra=get_method_extra_args("single_prsice"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -254,13 +269,12 @@ rule runSingleAncestryPRSice:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
         Rscript {params.script} \
-            --prsice /opt/conda/envs/singlePRS/bin/PRSice \
-            --base "$target_sumstats_file" \
-            --target "$study_sample_plink" \
-            --pheno "$target_study_pheno_file" \
+            --prsice PRSice \
+            --base "{params.env_vars[target_sumstats_file]}" \
+            --target "{params.env_vars[study_sample_plink.bed]}" \
+            --pheno "{params.env_vars[target_study_pheno_file]}" \
             --out {params.out_dir}/prsice \
             {params.extra} \
             > {log} 2>&1
@@ -280,13 +294,13 @@ rule runSingleAncestryPRSCS:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "single_prscs.done",
     params:
         enabled=prs_method_enabled("single_prscs"),
         out_dir=PRS_METHOD_RUN_DIR / "single_prscs",
         extra=get_method_extra_args("single_prscs"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -294,11 +308,10 @@ rule runSingleAncestryPRSCS:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
-        python /usr/local/bin/PRSCS.py \
-            --target-sumstats "$target_sumstats_file" \
-            --target-pheno "$target_study_pheno_file" \
+        python PRSCS.py \
+            --target-sumstats "{params.env_vars[target_sumstats_file]}" \
+            --target-pheno "{params.env_vars[target_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
             > {log} 2>&1
@@ -318,7 +331,6 @@ rule runSingleAncestryLDpred2:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "single_ldpred2.done",
     params:
@@ -326,6 +338,7 @@ rule runSingleAncestryLDpred2:
         out_dir=PRS_METHOD_RUN_DIR / "single_ldpred2",
         script=Path(workflow.basedir) / "scripts" / "ldpred2.R",
         extra=get_method_extra_args("single_ldpred2"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -333,13 +346,12 @@ rule runSingleAncestryLDpred2:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
         export OMP_NUM_THREADS=1
         Rscript {params.script} \
-            --ss "$target_sumstats_file" \
-            --anc_bed "$study_sample_plink.bed" \
-            --bim "$study_sample_plink.bim" \
+            --ss "{params.env_vars[target_sumstats_file]}" \
+            --anc_bed "{params.env_vars[study_sample_plink.bed]}" \
+            --bim "{params.env_vars[study_sample_plink.bim]}" \
             --out {params.out_dir}/ldpred2 \
             {params.extra} \
             > {log} 2>&1
@@ -359,13 +371,13 @@ rule runMultiAncestryCTSLEB:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "multi_ctsleb.done",
     params:
         enabled=prs_method_enabled("multi_ctsleb"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_ctsleb",
         extra=get_method_extra_args("multi_ctsleb"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -373,19 +385,18 @@ rule runMultiAncestryCTSLEB:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
-        Rscript /usr/local/bin/ctsleb_multi.R \
-            --target-sumstats "$target_sumstats_file" \
-            --training-sumstats "$training_sumstats_file" \
-            --target-bed "$study_sample_plink.bed" \
-            --target-bim "$study_sample_plink.bim" \
-            --target-fam "$study_sample_plink.fam" \
-            --target-pheno "$target_study_pheno_file" \
-            --anc2-bed "$study_sample_plink_anc2.bed" \
-            --anc2-bim "$study_sample_plink_anc2.bim" \
-            --anc2-fam "$study_sample_plink_anc2.fam" \
-            --anc2-pheno "$training_study_pheno_file" \
+        Rscript ctsleb_multi.R \
+            --target-sumstats "{params.env_vars[target_sumstats_file]}" \
+            --training-sumstats "{params.env_vars[training_sumstats_file]}" \
+            --target-bed "{params.env_vars[study_sample_plink.bed]}" \
+            --target-bim "{params.env_vars[study_sample_plink.bim]}" \
+            --target-fam "{params.env_vars[study_sample_plink.fam]}" \
+            --target-pheno "{params.env_vars[target_study_pheno_file]}" \
+            --anc2-bed "{params.env_vars[study_sample_plink_anc2.bed]}" \
+            --anc2-bim "{params.env_vars[study_sample_plink_anc2.bim]}" \
+            --anc2-fam "{params.env_vars[study_sample_plink_anc2.fam]}" \
+            --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
             > {log} 2>&1
@@ -405,13 +416,13 @@ rule runMultiAncestryPRSCSx:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "multi_prscsx.done",
     params:
         enabled=prs_method_enabled("multi_prscsx"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_prscsx",
         extra=get_method_extra_args("multi_prscsx"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -419,13 +430,12 @@ rule runMultiAncestryPRSCSx:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
-        python /usr/local/bin/PRSCSx.py \
-            --target-sumstats "$target_sumstats_file" \
-            --training-sumstats "$training_sumstats_file" \
-            --target-pheno "$target_study_pheno_file" \
-            --anc2-pheno "$training_study_pheno_file" \
+        python PRSCSx.py \
+            --target-sumstats "{params.env_vars[target_sumstats_file]}" \
+            --training-sumstats "{params.env_vars[training_sumstats_file]}" \
+            --target-pheno "{params.env_vars[target_study_pheno_file]}" \
+            --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
             > {log} 2>&1
@@ -445,13 +455,13 @@ rule runMultiAncestryLDpred2:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "multi_ldpred2.done",
     params:
         enabled=prs_method_enabled("multi_ldpred2"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_ldpred2",
         extra=get_method_extra_args("multi_ldpred2"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -459,19 +469,18 @@ rule runMultiAncestryLDpred2:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
-        Rscript /usr/local/bin/ldpred2_multi.R \
-            --target-sumstats "$target_sumstats_file" \
-            --training-sumstats "$training_sumstats_file" \
-            --target-bed "$study_sample_plink.bed" \
-            --target-bim "$study_sample_plink.bim" \
-            --target-fam "$study_sample_plink.fam" \
-            --target-pheno "$target_study_pheno_file" \
-            --anc2-bed "$study_sample_plink_anc2.bed" \
-            --anc2-bim "$study_sample_plink_anc2.bim" \
-            --anc2-fam "$study_sample_plink_anc2.fam" \
-            --anc2-pheno "$training_study_pheno_file" \
+        Rscript ldpred2_multi.R \
+            --target-sumstats "{params.env_vars[target_sumstats_file]}" \
+            --training-sumstats "{params.env_vars[training_sumstats_file]}" \
+            --target-bed "{params.env_vars[study_sample_plink.bed]}" \
+            --target-bim "{params.env_vars[study_sample_plink.bim]}" \
+            --target-fam "{params.env_vars[study_sample_plink.fam]}" \
+            --target-pheno "{params.env_vars[target_study_pheno_file]}" \
+            --anc2-bed "{params.env_vars[study_sample_plink_anc2.bed]}" \
+            --anc2-bim "{params.env_vars[study_sample_plink_anc2.bim]}" \
+            --anc2-fam "{params.env_vars[study_sample_plink_anc2.fam]}" \
+            --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
             > {log} 2>&1
@@ -491,13 +500,13 @@ rule runMultiAncestryPROSPER:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "multi_prosper.done",
     params:
         enabled=prs_method_enabled("multi_prosper"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_prosper",
         extra=get_method_extra_args("multi_prosper"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -505,13 +514,12 @@ rule runMultiAncestryPROSPER:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
-        python /usr/local/bin/PROSPER.py \
-            --target-sumstats "$target_sumstats_file" \
-            --training-sumstats "$training_sumstats_file" \
-            --target-pheno "$target_study_pheno_file" \
-            --anc2-pheno "$training_study_pheno_file" \
+        python PROSPER.py \
+            --target-sumstats "{params.env_vars[target_sumstats_file]}" \
+            --training-sumstats "{params.env_vars[training_sumstats_file]}" \
+            --target-pheno "{params.env_vars[target_study_pheno_file]}" \
+            --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
             > {log} 2>&1
@@ -531,13 +539,13 @@ rule runMultiAncestrySDPRS:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
     output:
         done=PRS_METHOD_RUN_DIR / "multi_sdprs.done",
     params:
         enabled=prs_method_enabled("multi_sdprs"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_sdprs",
         extra=get_method_extra_args("multi_sdprs"),
+        env_vars=get_prs_env_vars,
     shell:
         """
         if [[ "{params.enabled}" != "True" ]]; then
@@ -545,13 +553,12 @@ rule runMultiAncestrySDPRS:
             touch {output.done}
             exit 0
         fi
-        source {input.env}
         mkdir -p {params.out_dir}
-        python /usr/local/bin/SDPRX.py \
-            --target-sumstats "$target_sumstats_file" \
-            --training-sumstats "$training_sumstats_file" \
-            --target-pheno "$target_study_pheno_file" \
-            --anc2-pheno "$training_study_pheno_file" \
+        python SDPRX.py \
+            --target-sumstats "{params.env_vars[target_sumstats_file]}" \
+            --training-sumstats "{params.env_vars[training_sumstats_file]}" \
+            --target-pheno "{params.env_vars[target_study_pheno_file]}" \
+            --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
             > {log} 2>&1
@@ -563,7 +570,6 @@ rule runAllEnabledPRS:
     """Run all PRS methods that are enabled in config."""
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=get_prs_env,
         external_env=lambda wildcards: rules.prepareExternalPRSInputs.output.env if PRS_USE_EXTERNAL else [],
         single_ct_done=PRS_METHOD_RUN_DIR / "single_ct.done" if prs_method_enabled("single_ct") else [],
         single_prsice_done=PRS_METHOD_RUN_DIR / "single_prsice.done" if prs_method_enabled("single_prsice") else [],

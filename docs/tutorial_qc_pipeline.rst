@@ -511,6 +511,177 @@ accompanying lecture materials.
 
 ----
 
+Data Types Reference
+--------------------
+
+This section provides a high-level overview of the file formats used throughout
+the QC pipeline. Understanding these formats helps interpret pipeline outputs
+and troubleshoot data issues.
+
+Genotype Data Formats
+~~~~~~~~~~~~~~~~~~~~~
+
+**VCF/VCF.gz (Variant Call Format)**
+
+The standard format for storing genetic variants. Files ending in ``.vcf.gz``
+are compressed using bgzip for efficiency. VCF files contain:
+
+- Header lines describing the format and reference genome
+- Metadata lines describing FILTER, INFO, and FORMAT fields
+- Data lines with chromosome, position, ID, reference allele, alternate allele,
+  quality, filter status, and INFO fields
+- Genotype calls in the sample columns
+
+Each VCF file is typically indexed by a corresponding ``.csi`` file (see below)
+to enable random access to specific genomic regions.
+
+**PLINK BED/BIM/FAM**
+
+The traditional PLINK binary genotype format. A complete dataset consists of:
+
+- ``.bed`` file: Binary genotype matrix (major mode)
+- ``.bim`` file: Variant information (chromosome, rs ID, genetic position,
+  base pair position, allele 1, allele 2)
+- ``.fam`` file: Family/sample information (family ID, individual ID, paternal
+  ID, maternal ID, sex, phenotype)
+
+The ``.bim`` and ``.fam`` files are plain text; only the genotype matrix is
+stored in binary format for compactness.
+
+**PLINK PGEN**
+
+The newer PLINK2 binary genotype format, offering advantages over BED:
+
+- ``.pgen`` file: Binary genotype matrix with flexible encoding
+- ``.pvar`` file: Variant information (replaces ``.bim``)
+- ``.psam`` file: Sample information (replaces ``.fam``)
+
+PGEN supports multiple variant encoding schemes within a single file, enabling
+more efficient storage and faster operations on large datasets. The pipeline
+uses PGEN internally for all computations.
+
+Genomic Interval Files
+~~~~~~~~~~~~~~~~~~~~~~
+
+**BED (Genomic Intervals)**
+
+Browser Extensible Display format for genomic intervals. Standard 3-column BED:
+
+- Column 1: Chromosome
+- Column 2: Start position (0-based)
+- Column 3: End position (1-based)
+
+Extended BED formats (6-column, 12-column) include additional fields such
+as name, score, strand, thick start/end, item RGB, and block counts/sizes.
+Used for genomic region definitions, target files, and annotation tracks.
+
+Index Files
+~~~~~~~~~~~
+
+**CSI Index Files**
+
+Tabix-style index files (``.csi``) that enable random access to compressed
+VCF files. CSI (Coordinate Sorted Index) is an improvement over the older
+ TBI format, supporting files with many more variants (up to ~4 billion).
+
+When you see ``chr22.vcf.gz.csi``, this index file allows tools to quickly
+locate variants in a specific genomic region without scanning the entire file.
+
+Statistical and Output Files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**GRM (Genetic Relationship Matrix)**
+
+Binary matrix storing pairwise genetic relationships between samples. Used
+for estimating heritability and controlling for population structure. The
+GRM is computed from QC-filtered variants and stored in PLINK2's ``.grm``
+format with accompanying ``.grm.id`` sample mapping.
+
+**KING Output Files**
+
+Relatedness estimates computed by the KING software. Output includes:
+
+- ``.king`` file: Kinship coefficients between sample pairs
+- ``.king.id``: Sample identifiers corresponding to matrix rows/columns
+
+Kinship coefficients are used to identify and remove related individuals,
+with a default cutoff of 0.0884 (equivalent to 3rd-degree relatives).
+
+**IDS and ID Mapping Files**
+
+Plain text files listing sample or variant identifiers:
+
+- ``.ids`` files: Lists of sample IDs for subsetting operations
+- ``.psam``/``.fam`` files: Sample identifiers with optional family structure
+- Used for sample selection, excluded sample lists, and cross-referencing
+  between analysis stages
+
+**Eigenvec/Eigenval Files**
+
+Principal component analysis (PCA) results:
+
+- ``.eigenvec``: Sample coordinates in PCA space (sample ID + PC values)
+- ``.eigenval``: Variance explained by each principal component
+
+Used for ancestry visualization, population structure correction, and
+outlier detection. The pipeline generates these files for both internal
+PCA and reference panel projection.
+
+Tabular Data Files
+~~~~~~~~~~~~~~~~~~
+
+**TSV (Tab-Separated Values)**
+
+Plain text format for structured data where columns are separated by tabs.
+Pipeline outputs in TSV format include:
+
+- ``.smiss``: Sample missingness statistics
+- ``.vmiss``: Variant missingness statistics
+- ``.afreq``: Allele frequency summaries
+- ``.hwe``: Hardy-Weinberg equilibrium test results
+
+TSV is preferred for data with variable-length fields or when compatibility
+with Unix tools (cut, awk, sort) is desired.
+
+**CSV (Comma-Separated Values)**
+
+Plain text format for structured data with comma delimiters. Used for:
+
+- Configuration files (YAML is preferred for pipeline config, but CSV appears
+  in some auxiliary data files)
+- Population labels and annotation files
+
+CSV is simpler than TSV but can cause issues with fields containing commas;
+TSV is generally preferred for genetic data.
+
+**Plink Report Files**
+
+Various PLINK output files in text format:
+
+- ``.het``: Heterozygosity statistics per sample
+- ``.hh``: Half-homozygous variant calls (potential Mendel errors)
+- ``.irem``: Samples removed by quality filters
+
+These files are plain text TSV format and can be inspected directly.
+
+File Format Compatibility
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The pipeline automatically converts between formats as needed:
+
++---------------------+------------------+------------------+
+| Input Format        | Internal Format  | Output Options   |
++=====================+==================+==================+
+| VCF.gz              | PGEN             | PGEN, VCF.gz     |
+| BED/BIM/FAM         | PGEN             | PGEN, BED        |
+| PGEN                | PGEN             | PGEN, VCF.gz     |
++---------------------+------------------+------------------+
+
+All intermediate computations use PGEN for efficiency. Final outputs can be
+converted to VCF for compatibility with downstream tools.
+
+----
+
 Next Steps
 ---------
 
