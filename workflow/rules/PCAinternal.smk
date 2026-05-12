@@ -80,7 +80,7 @@ rule runPlink2ApproximatePca:
     log:
         OUT_DIR / "logs" / "runPlink2ApproximatePca_{subset}.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
     threads: 8

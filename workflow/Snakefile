@@ -55,7 +55,6 @@ include: "rules/umap.smk"
 include: "rules/classifyAncestry.smk"
 include: "rules/RFMIX.smk"
 include: "rules/plotKaryotypeAncestry.smk"
-# include: "rules/simulatePhenotype.smk"
 if config.get("phenotypeSimulation", {}).get("enabled", False):
     include: "rules/simulatePhenotype2.smk"
 include: "rules/snpHerit.smk"

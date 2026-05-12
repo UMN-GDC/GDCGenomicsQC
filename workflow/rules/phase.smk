@@ -26,7 +26,7 @@ def get_input_psam(wildcards):
 rule convertPgenToVcf:
     log:
         OUT_DIR / "logs" / "Convert_{CHR}.log",
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1"
+    container: "docker://gfanz/plink2:latest"
     conda: "../../envs/rfmix.yml"
     threads: 8
     resources:

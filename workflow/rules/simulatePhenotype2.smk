@@ -85,7 +85,7 @@ rule simulateBivariatePhenotypes:
 
 rule computeSimGRM:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
+        "docker://gfanz/plink2:latest"
     conda:
         "../../envs/phenotypeSim.yml"
     threads: 4
@@ -110,7 +110,7 @@ rule computeSimGRM:
 
 rule computeSimGRM_anc2:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
+        "docker://gfanz/plink2:latest"
     conda:
         "../../envs/phenotypeSim.yml"
     threads: 4
@@ -136,7 +136,7 @@ rule computeSimGRM_anc2:
 
 rule computeSimPCA:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
+        "docker://gfanz/plink2:latest"
     conda:
         "../../envs/phenotypeSim.yml"
     threads: 4
@@ -159,7 +159,7 @@ rule computeSimPCA:
 
 rule computeSimPCA_anc2:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
+        "docker://gfanz/plink2:latest"
     conda:
         "../../envs/phenotypeSim.yml"
     threads: 4
@@ -183,7 +183,7 @@ rule computeSimPCA_anc2:
 
 rule extractSimPheno:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
+        "docker://gfanz/plink2:latest"
     conda:
         "../../envs/phenotypeSim.yml"
     threads: 1
@@ -202,7 +202,7 @@ rule extractSimPheno:
 
 rule extractSimPheno_anc2:
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
+        "docker://gfanz/plink2:latest"
     conda:
         "../../envs/phenotypeSim.yml"
     threads: 1

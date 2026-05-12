@@ -3,7 +3,7 @@ if INPUT_IS_PER_CHROMOSOME:
         log:
             OUT_DIR / "logs" / "applyStandardQualityControl_{subset}_{CHR}.log",
         container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+            "docker://gfanz/plink2:latest"
         conda:
             "../../envs/ancNreport.yml"
         threads: 8

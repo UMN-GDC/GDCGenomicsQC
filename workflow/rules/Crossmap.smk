@@ -41,9 +41,9 @@ rule crossmap:
     awk '{print $4}' study.$NAME.lifted.bed3 > updated.snp
     awk '{print $4, $3}' study.$NAME.lifted.bed3 > updated.position
     awk '{print $4, $1}' study.$NAME.lifted.bed3 > updated.chr
-    plink --file prep2 --extract updated.snp --make-bed --out result1
-    plink --bfile result1 --update-map updated.position --make-bed --out result2
-    plink --bfile result2 --update-chr updated.chr --make-bed --out result3
-    plink --bfile result3 --recode --out study.$NAME.lifted
-    plink --bfile result3 --recode --make-bed --out study.$NAME.lifted
+    plink2 --file prep2 --extract updated.snp --make-bed --out result1
+    plink2 --bfile result1 --update-map updated.position --make-bed --out result2
+    plink2 --bfile result2 --update-chr updated.chr --make-bed --out result3
+    plink2 --bfile result3 --recode --out study.$NAME.lifted
+    plink2 --bfile result3 --recode --make-bed --out study.$NAME.lifted
     """

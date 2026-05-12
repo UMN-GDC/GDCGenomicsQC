@@ -33,7 +33,7 @@ rule convertPlinkPerChromosome:
     log:
         OUT_DIR / "logs" / "convertPlinkPerChromosome_{subset}_{CHR}.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
     threads: 4
