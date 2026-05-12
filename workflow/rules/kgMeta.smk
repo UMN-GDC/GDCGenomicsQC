@@ -28,7 +28,7 @@ checkpoint kgMeta:
         wget -O {output.gr38fastagz} {params.fasta}
 
         wget -O {output.shapemap} {params.shapemap}
-        mkdir {REF}/gmaps
+        mkdir -p {REF}/gmaps
         tar -xzf {output.shapemap} -C {REF}/gmaps
 
         gunzip -c {output.gr38fastagz} > {output.gr38fasta}
