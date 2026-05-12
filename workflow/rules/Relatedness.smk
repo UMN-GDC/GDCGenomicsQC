@@ -38,7 +38,7 @@ rule checkRelatednessExtractUnrelated:
         plink2 --pfile {params.input_prefix} \
             --make-grm-bin \
             --king-cutoff {params.king_cutoff} \
-            --king-table \
+            --make-king \
             --out {params.output_prefix}_grm
         mv {params.output_prefix}_grm.grm.bin {output.grm}
         mv {params.output_prefix}_grm.grm.id {output.grmid}
