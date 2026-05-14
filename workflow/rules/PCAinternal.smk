@@ -113,11 +113,11 @@ rule runPlink2ApproximatePca:
         
         plink2 --pfile {params.input_prefix} --make-bed --out {params.tmpdir}/unrelated
         
+        PCA_OUT_PREFIX="{output.eigenvec}"
+        PCA_OUT_PREFIX="${{PCA_OUT_PREFIX%.eigenvec}}"
         plink2 --bfile {params.tmpdir}/unrelated \
             --pca approx {params.npc} \
-            --out {output.eigenvec}
-        
-        cp {output.eigenvec}.eigenval {output.eigenval}
+            --out $PCA_OUT_PREFIX
         
         echo "PLINK2 approx PCA completed"
         """
