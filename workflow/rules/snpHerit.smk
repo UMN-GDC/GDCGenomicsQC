@@ -98,6 +98,7 @@ if SNP_HERIT_ACTIVE:
 
             mash_config["loop_covars"] = params.loop_covs
             mash_config["random_groups"] = params.rv if params.rv else "None"
+            mash_config["Naive"] = SNP_HERIT_CONFIG.get("Naive", False)
 
             if params.std:
                 mash_config["std"] = params.std
