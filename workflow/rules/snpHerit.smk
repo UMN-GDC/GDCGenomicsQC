@@ -111,6 +111,6 @@ if SNP_HERIT_ACTIVE:
             estimates=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
         shell:
             """
-            mkdir -p {output.estimates.parent}
+            mkdir -p "$(dirname {output.estimates})"
             MASH estimate --argfile {input.argfile} > {log} 2>&1
             """
