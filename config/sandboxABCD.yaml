@@ -1,5 +1,5 @@
 # Project-wide paths
-INPUT: "/shared/release/abcd/dairc/concat/genetics/genotype_microarray/imputed/chr{CHR}_dose.vcf.gz"
+INPUT: "/home/ood-coffm049/abcdGenBackup/merged_chroms.bed"
 OUT_DIR: "/scratch.global/GDC/r25outputs/ABCD"
 REF: "/scratch.global/GDC/referenceData"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
