@@ -50,6 +50,10 @@ if SNP_HERIT_ACTIVE:
             covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete", None),
             iid_col=SNP_HERIT_CONFIG.get("iid_col", "IID"),
             fid_col=SNP_HERIT_CONFIG.get("fid_col", "FID"),
+            loop_covs=SNP_HERIT_CONFIG.get("loop_covars", False),
+            rv=SNP_HERIT_CONFIG.get("RV", None),
+            std=SNP_HERIT_CONFIG.get("std", False),
+            k=SNP_HERIT_CONFIG.get("k", None),
             pheno_filter=SNP_HERIT_CONFIG.get("pheno_filter", None),
             covar_filter=SNP_HERIT_CONFIG.get("covar_filter", None),
         run:
@@ -91,6 +95,15 @@ if SNP_HERIT_ACTIVE:
                 mash_config["pheno_filter"] = params.pheno_filter
             if params.covar_filter:
                 mash_config["covar_filter"] = params.covar_filter
+
+            mash_config["loop_covars"] = params.loop_covs
+
+            if params.std:
+                mash_config["std"] = params.std
+            if params.k is not None:
+                mash_config["k"] = params.k
+            if params.rv:
+                mash_config["RV"] = params.rv
 
             with open(output.argfile, "w") as f:
                 json.dump(mash_config, f, indent=2)

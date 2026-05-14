@@ -84,7 +84,7 @@ snpHerit:
     RV: null
 
     # Loop through covariates, including all previous covariates in each iteration
-    loop_covs: false
+    loop_covars: false
 
     # Run SAdj-HE (standardized) instead of UAdj-HE (unstandardized)
     std: false
