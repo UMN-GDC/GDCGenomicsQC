@@ -63,7 +63,7 @@ if SNP_HERIT_ACTIVE:
                 "pheno": str(input.pheno),
                 "out": params.mash_out,
                 "npc": int(params.npc),
-                "mpheno": int(params.mpheno),
+                "mpheno": params.mpheno,
                 "Method": params.method,
                 "iid_col": params.iid_col,
                 "fid_col": params.fid_col,
