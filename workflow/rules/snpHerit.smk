@@ -66,7 +66,7 @@ if SNP_HERIT_ACTIVE:
                 "prefix": str(params.prefix),
                 "pheno": str(input.pheno),
                 "out": params.mash_out,
-                "npc": int(params.npc),
+                "npc": [int(params.npc)] if not isinstance(params.npc, list) else [int(n) for n in params.npc],
                 "mpheno": params.mpheno,
                 "Method": params.method,
                 "iid_col": params.iid_col,
