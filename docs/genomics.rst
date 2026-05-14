@@ -273,6 +273,51 @@ Config Options:
 
 
 
+File Naming Conventions
+-----------------------
+
+The pipeline uses a structured naming convention for intermediate and output files.
+Each stage appends a suffix to the file prefix indicating what processing steps have
+been applied:
+
+.. list-table:: Naming Convention Suffixes
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Suffix
+     - Meaning
+   * - ``f1``
+     - **Filter 1**: Initial QC — sample and variant missingness filtering (``--geno``, ``--mind``)
+   * - ``f1.f2``
+     - **Filter 2**: Standard QC — MAF, HWE, heterozygosity, and optional sex check applied on top of f1
+   * - ``f1.ldpruned``
+     - **LD Pruned**: Variants pruned for linkage disequilibrium using ``--indep-pairwise 50 5 0.2``
+   * - ``f1.ldpruned.unrelated``
+     - **Unrelated subset**: Related samples removed via KING (or other method) from the LD-pruned set
+   * - ``f1.ldpruned.unrelated.ldpruned``
+     - **LD Pruned (unrelated)**: A second LD-pruning pass applied to the unrelated subset
+   * - ``f1.f2.ldpruned``
+     - **LD Pruned (post-Standard QC)**: LD pruning applied after both QC filters
+
+Example output file tree for the ``full`` subset::
+
+    OUT_DIR/
+    └── full/
+        ├── f1.pgen                        # After initial QC
+        ├── f1.f2.pgen                     # After standard QC
+        ├── f1.ldpruned.pgen               # LD pruned (pre-relatedness)
+        ├── f1.ldpruned.unrelated.pgen     # Unrelated samples only
+        ├── f1.ldpruned.unrelated.ldpruned.pgen  # LD pruned unrelated samples
+        ├── f1.f2.ldpruned.pgen            # LD pruned post-standard QC
+        ├── f1.ldpruned.unrelated.grm.bin  # GRM from unrelated subset
+        ├── f1.ldpruned.unrelated.grm.id
+        ├── f1.ldpruned.unrelated.grm.N.bin
+        ├── internal_pca_plink2.eigenvec   # Internal PCA (plink2)
+        └── internal_pca_plink2.eigenval
+
+When processing per-chromosome inputs, chromosome-specific files use the pattern
+``f1_{CHR}.pgen`` and ``f1.f2_{CHR}.pgen``.
+
 Technical Implementation
 ------------------------
 

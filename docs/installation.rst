@@ -298,6 +298,85 @@ Example configuration:
 
        :doc:`Skip to Usage <usage>`
 
+    .. tab:: Module-First HPC
+
+       For HPC environments where Singularity/Apptainer containers are restricted
+       or unavailable, use a ``-moduleFirst`` profile. Tools are loaded via the
+       system's ``module load`` instead of containers.
+
+       **Prerequisites:**
+
+       - Access to HPC with SLURM scheduler
+       - Git
+       - Conda or Mamba
+       - Environment modules for required tools (plink2, bcftools, shapeit4, etc.)
+       - Apptainer (optional — for fallback when a tool isn't available as a module)
+
+       **1. Clone the Repository**
+
+       .. code-block:: bash
+
+           git clone https://github.com/UMN-GDC/GDCGenomicsQC.git
+           cd GDCGenomicsQC
+
+       **2. Set Up Snakemake Environment**
+
+       .. code-block:: bash
+
+           conda env create -n snakemake -f envs/snakemake.yml
+           conda activate snakemake
+
+       **3. Choose and Configure a Module-First Profile**
+
+       The ``profiles/sandbox-moduleFirst`` profile uses ``null`` versions (picks
+       up whatever the module environment provides):
+
+       .. code-block:: yaml
+
+           # profiles/sandbox-moduleFirst/profile.yaml
+           executor: slurm
+           software-deployment-method: [env-modules, apptainer]
+           default-resources:
+             plink_version: null    # use whatever 'module load plink2' gives
+             bcftools_version: null
+             shapeit_version: null
+             rfmix_version: null
+             samtools_version: null
+
+       The ``profiles/hpc-moduleFirst`` profile pins explicit versions:
+
+       .. code-block:: yaml
+
+           # profiles/hpc-moduleFirst/config.yaml
+           executor: slurm
+           software-deployment-method: [env-modules, apptainer]
+           default-resources:
+             slurm_account: gdc
+             plink_version: "plink/2.00-alpha-091019"
+             bcftools_version: "bcftools/1.2"
+             shapeit_version: "shapeit/4.2.2"
+             rfmix_version: "rfmix/09599c1"
+             samtools_version: "samtools/1.21"
+
+       **4. Configure Your Run**
+
+       .. code-block:: yaml
+
+           INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
+           OUT_DIR: "/path/to/output/directory"
+           REF: "/path/to/reference/data"
+           local-storage-prefix: "/path/to/.snakemake/storage"
+           chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+       **5. Run**
+
+       .. code-block:: bash
+
+           cd GDCGenomicsQC/workflow
+           snakemake --profile ../profiles/hpc-moduleFirst --configfile ../config/config.yaml
+
+       :doc:`Skip to Usage <usage>`
+
     .. tab:: Interactive (Local/Testing)
 
       For local execution without SLURM. Useful for testing and small datasets.
@@ -465,26 +544,29 @@ The pipeline supports multiple ways to access its dependencies. Choose the metho
      - Best For
      - Setup Required
     * - **Module System (MSI)**
-      - MSI HPC clusters
-      - ``module load gdcgenomicsMSI``
-    * - **Module System (Sandbox)**
-      - Sandbox environments
-      - ``module load gdcgenomicsSandbox``
-   * - **Conda Environment**
-     - Custom HPC or local
-     - ``conda env create``
-   * - **Singularity/Apptainer**
-     - Container-based HPC
-     - Pull images manually
-   * - **System-wide Install**
-     - Local development
-     - ``pip install`` / ``conda install``
+       - MSI HPC clusters
+       - ``module load gdcgenomicsMSI``
+     * - **Module System (Sandbox)**
+       - Sandbox environments
+       - ``module load gdcgenomicsSandbox``
+    * - **Module-First** (:file:`*-moduleFirst` profiles)
+       - Locked-down HPC (no containers)
+       - Clone repo + conda env + ``module load plink/bcftools/...``
+    * - **Conda Environment**
+      - Custom HPC or local
+      - ``conda env create``
+    * - **Singularity/Apptainer**
+      - Container-based HPC
+      - Pull images manually
+    * - **System-wide Install**
+      - Local development
+      - ``pip install`` / ``conda install``
 
 Software Environment Summary
 ---------------------------
 
 .. list-table:: Quick Reference: How to Load Software
-   :widths: 30 25 25 20
+   :widths: 30 25 25 25
    :header-rows: 1
 
    * - Software
@@ -496,17 +578,21 @@ Software Environment Summary
      - (auto-loaded by ``gdcgenomicsMSI``)
      - (auto-loaded by ``gdcgenomicsSandbox``)
     * - GDC Pipeline
-       - (via containers)
-       - ``module load gdcgenomicsMSI``
-       - ``module load gdcgenomicsSandbox``
-    * - Apptainer
-      - N/A
-      - ``module load apptainer`` (auto-loaded)
-      - ``module load apptainer`` (auto-loaded)
-    * - SLURM
-      - N/A
-      - (Usually default on HPC)
-      - (Usually default on HPC)
+        - (via containers)
+        - ``module load gdcgenomicsMSI``
+        - ``module load gdcgenomicsSandbox``
+     * - GDC Pipeline (Module-First)
+        - (via env modules)
+        - ``snakemake --profile ../profiles/hpc-moduleFirst``
+        - ``snakemake --profile ../profiles/sandbox-moduleFirst``
+     * - Apptainer
+       - N/A
+       - ``module load apptainer`` (auto-loaded)
+       - ``module load apptainer`` (auto-loaded)
+     * - SLURM
+       - N/A
+       - (Usually default on HPC)
+       - (Usually default on HPC)
 
 External Dependencies
 ---------------------

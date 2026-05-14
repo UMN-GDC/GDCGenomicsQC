@@ -121,6 +121,60 @@ Choose the method that matches your HPC setup:
 
             snakemake --profile ../profiles/sandbox --configfile /path/to/your/config.yaml
 
+    .. tab:: Module-First (Locked-Down HPC)
+
+       For environments where Singularity/Apptainer containers cannot be used
+       (e.g., locked-down HPC), the pipeline supports loading tools via
+       environment modules instead. Use the ``*-moduleFirst`` profiles:
+
+       .. code-block:: bash
+
+            # Set up module paths for your HPC
+            module use /path/to/GDCGenomicsQC/envs
+            module load gdcgenomicsMSI
+
+            # Run with the module-first profile
+            snakemake --profile ../profiles/hpc-moduleFirst --configfile ../config/config.yaml
+
+       **How it works:**
+
+       The ``software-deployment-method: [env-modules, apptainer]`` setting in
+       the profile tells Snakemake to prefer system-installed tools (loaded via
+       ``module load``) over containers. Tool versions are specified as
+       ``default-resources`` in the profile:
+
+       .. code-block:: yaml
+
+            # profiles/hpc-moduleFirst/config.yaml
+            executor: slurm
+            software-deployment-method: [env-modules, apptainer]
+            default-resources:
+              slurm_account: gdc
+              mem_mb: 4000
+              runtime: 60
+              plink_version: "plink/2.00-alpha-091019"
+              bcftools_version: "bcftools/1.2"
+              shapeit_version: "shapeit/4.2.2"
+              rfmix_version: "rfmix/09599c1"
+              samtools_version: "samtools/1.21"
+
+       Set a version to ``null`` to let the rule use whatever is available in the
+       module environment at runtime:
+
+       .. code-block:: yaml
+
+            # profiles/sandbox-moduleFirst/profile.yaml
+            software-deployment-method: [env-modules, apptainer]
+            default-resources:
+              plink_version: null
+              bcftools_version: null
+              # ... tools loaded from environment modules, not containers
+
+       Available profiles:
+
+       - ``profiles/hpc-moduleFirst`` — MSI-style HPC with explicit versions
+       - ``profiles/sandbox-moduleFirst`` — Sandbox with null versions (use whatever the module env provides)
+
     .. tab:: Local Snakemake (Conda)
 
 If you're setting up on a new HPC without the module, see the :doc:`new_hpc_setup` guide.
@@ -215,6 +269,34 @@ detects the format based on the file extension and whether ``{CHR}`` is present:
         phenotype_file: null
 
 See :doc:`genomics` for detailed descriptions of all configuration options.
+
+Available Profiles
+------------------
+
+The pipeline ships with several profiles for different environments:
+
+.. list-table:: Profile Reference
+   :widths: 25 40 35
+   :header-rows: 1
+
+   * - Profile
+     - Deployment Method
+     - Best For
+   * - ``profiles/hpc``
+     - Apptainer containers
+     - MSI HPC (standard)
+   * - ``profiles/sandbox``
+     - Apptainer containers
+     - Sandbox (standard)
+   * - ``profiles/hpc-moduleFirst``
+     - Environment modules, fallback to Apptainer
+     - Locked-down HPC with explicit tool versions
+   * - ``profiles/sandbox-moduleFirst``
+     - Environment modules, fallback to Apptainer
+     - Locked-down HPC with flexible tool versions
+   * - ``profiles/interactive``
+     - Local execution (no SLURM)
+     - Testing and small datasets
 
 Running the Pipeline
 -------------------

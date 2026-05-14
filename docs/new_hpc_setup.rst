@@ -12,6 +12,12 @@ the module is not pre-installed. If you're on MSI HPC or Sandbox, see the
    :depth: 2
    :local:
 
+.. note::
+
+   If your HPC restricts container usage (Singularity/Apptainer), consider using
+   the ``-moduleFirst`` profiles instead. See the
+   :doc:`Module-First setup option<installation>` in the installation guide.
+
 Option 1: Clone and Use Directly
 --------------------------
 
@@ -72,6 +78,22 @@ Edit the configuration file at ``config/config.yaml``:
 
     cd GDCGenomicsQC/workflow
     snakemake --profile ../profiles/hpc --configfile ../config/config.yaml
+
+   For locked-down environments where containers aren't available, use the
+   module-first profile instead:
+
+   .. code-block:: bash
+
+        # Ensure required tools are available via module load
+        module load plink/2.00-alpha-091019
+        module load bcftools/1.2
+        module load shapeit/4.2.2
+        module load rfmix/09599c1
+        module load samtools/1.21
+
+        cd GDCGenomicsQC/workflow
+        snakemake --profile ../profiles/hpc-moduleFirst \
+            --configfile ../config/config.yaml
 
 Option 2: Create a Custom Module
 --------------------------
