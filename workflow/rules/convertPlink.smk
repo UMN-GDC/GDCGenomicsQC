@@ -178,6 +178,7 @@ if not INPUT_IS_PER_CHROMOSOME:
         params:
             format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
             single_input=lambda wildcards: config.get("INPUT", ""),
+            single_input_prefix=lambda wildcards: config.get("INPUT", "").replace(".bed", "").replace(".bim", "").replace(".fam", "").replace(".pgen", "").replace(".vcf", "").replace(".vcf.gz", ""),
             thin=config.get("thin", False),
             min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
             max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
@@ -190,9 +191,17 @@ if not INPUT_IS_PER_CHROMOSOME:
 
             FORMAT="{params.format}"
             SINGLE_INPUT="{params.single_input}"
+            SINGLE_INPUT_PREFIX="{params.single_input_prefix}"
 
             echo "Input is a single file: $SINGLE_INPUT"
-            plink2 --$FORMAT $SINGLE_INPUT --make-pgen --rm-dup force-first --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+
+            if [ "$FORMAT" = "bed" ]; then
+                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+            elif [ "$FORMAT" = "vcf" ]; then
+                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+            else
+                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+            fi
 
             plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta} --ref-from-fa force --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
             plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_2
