@@ -40,13 +40,13 @@ snpHerit:
     #   - null: MASH will compute GRM automatically from PCA
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/pcair_grm" (if PCAIR ran with GRM)
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/unrelated_grm" (from relatedness step)
-    grm_prefix: null
+    grm_prefix: "/scratch.global/coffm049/r25pipeline/ABCD/full/f1.ldpruned.unrelated"
     
     # Pre-computed eigenvector file for GRM construction
     # Options:
     #   - null: MASH will compute eigenvectors from PCA
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec" (if method=plink2)
-    pca_input: null
+    pca_input: "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec"
 
     # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
