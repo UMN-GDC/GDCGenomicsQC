@@ -7,4 +7,4 @@
 module use /scratch.global/GDC/GDCGenomicsQC/envs
 module load gdcgenomicsSandbox
 
-gdcgenomicsqc /scratch.global/coffm049/r25pipeline/ABCD/full/f1.ldpruned.unrelated.grm.bin /scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec --configfile ../config/sandboxABCD.yaml
+gdcgenomicsqc /scratch.global/GDC/r25outputs/ABCD/full/f1.ldpruned.unrelated.grm.bin /scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec --configfile ../config/sandboxABCD.yaml
