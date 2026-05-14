@@ -304,7 +304,7 @@ rule run_snpHerit:
                 / "{subset}"
                 / "03-snpHeritability"
                 / "mash_output.csv",
-                subset=get_ancestries(wildcards),
+                subset=["full"],
             )
             if config.get("snpHerit", {}).get("pheno")
             else []
