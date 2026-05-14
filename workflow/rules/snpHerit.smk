@@ -14,19 +14,19 @@ if SNP_HERIT_ACTIVE:
     def get_snpHerit_pca_input(wildcards):
         pca_input = SNP_HERIT_CONFIG.get("pca_input")
         if pca_input:
-            return {"pca": pca_input}
-        return {}
+            return pca_input
+        return []
 
     def get_snpHerit_covar_input(wildcards):
         covar = SNP_HERIT_CONFIG.get("covar")
         if covar:
-            return {"covar": covar}
-        return {}
+            return covar
+        return []
 
     rule prepareSnpHeritArgfile:
         input:
-            lambda wildcards: get_snpHerit_pca_input(wildcards),
-            lambda wildcards: get_snpHerit_covar_input(wildcards),
+            pca=lambda wildcards: get_snpHerit_pca_input(wildcards),
+            covar=lambda wildcards: get_snpHerit_covar_input(wildcards),
             pheno=config.get("snpHerit", {}).get("pheno"),
         output:
             argfile=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_argfile.json",
@@ -70,7 +70,11 @@ if SNP_HERIT_ACTIVE:
             }
 
             if "covar" in input:
-                mash_config["covar"] = str(input.covar)
+                covar_val = input.covar
+                if isinstance(covar_val, list):
+                    mash_config["covar"] = [str(f) for f in covar_val]
+                else:
+                    mash_config["covar"] = str(covar_val)
 
             if params.pca_input:
                 pca_path = str(params.pca_input)
