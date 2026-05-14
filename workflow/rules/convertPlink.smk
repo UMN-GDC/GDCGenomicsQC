@@ -203,8 +203,8 @@ if not INPUT_IS_PER_CHROMOSOME:
                 plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             fi
 
-            plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta} --ref-from-fa force --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
-            plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_2
+            plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta} --ref-from-fa force --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
+            plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_2
 
             bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads} {output.tempDir}
 
