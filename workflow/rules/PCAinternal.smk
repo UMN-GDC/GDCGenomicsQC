@@ -13,9 +13,9 @@ rule runPcairInternalPca:
         mem_mb=32000,
         runtime=2880,
     input:
-        pgen=OUT_DIR / "{subset}" / "standardFilter.LDpruned.pgen",
-        pvar=OUT_DIR / "{subset}" / "standardFilter.LDpruned.pvar",
-        psam=OUT_DIR / "{subset}" / "standardFilter.LDpruned.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.f2.ldpruned.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.f2.ldpruned.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.f2.ldpruned.psam",
     output:
         eigenvec=OUT_DIR / "{subset}" / "internal_pca.eigenvec",
         eigenval=OUT_DIR / "{subset}" / "internal_pca.eigenval",
@@ -35,7 +35,7 @@ rule runPcairInternalPca:
         ),
     params:
         out_dir=OUT_DIR / "{subset}",
-        input_prefix=lambda wildcards, input: str(input.pgen)[:-4],
+        input_prefix=lambda wildcards, input: input.pgen[:-4],
         color_col=config.get("internalPCA", {}).get("color_by", "None"),
         pheno_file=config.get("internalPCA", {}).get("phenotype_file", "None"),
         scripts_dir=SCRIPTS_DIR,
@@ -89,14 +89,14 @@ rule runPlink2ApproximatePca:
         mem_mb=32000,
         runtime=1440,
     input:
-        pgen=OUT_DIR / "{subset}" / "unrelated.pgen",
-        pvar=OUT_DIR / "{subset}" / "unrelated.pvar",
-        psam=OUT_DIR / "{subset}" / "unrelated.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.psam",
     output:
         eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
         eigenval=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenval",
     params:
-        input_prefix=lambda wildcards, input: str(input.pgen)[:-5],
+        input_prefix=lambda wildcards, input: input.pgen[:-5],
         npc=config.get("internalPCA", {}).get("npc", 20),
         tmpdir=temp(directory(OUT_DIR / "{subset}" / "intermediates" / "plink2_pca_tmp")),
     shell:

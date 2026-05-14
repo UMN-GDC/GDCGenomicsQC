@@ -1,9 +1,9 @@
 executor: slurm
 jobs: 25
-use-apptainer: true
-apptainer-prefix: /scratch.global/GDC/singularityimages
+software-deployment-method: [env-modules, apptainer]
+software-deployment-prefix: "/path/to/your/storage/apptainer_images"
+apptainer-prefix: "/path/to/your/storage/apptainer_images"
 apptainer-args: "--bind /scratch.global,/projects,/spaces,/home"
-software-deployment-method: [apptainer]
 default-resources:
   - slurm_account=gdc
   - mem_mb=4000
@@ -14,4 +14,3 @@ default-resources:
   - rfmix_version: "rfmix/09599c1"
   - samtools_version: "samtools/1.21"
 latency-wait: 20
-# Removed shared-fs-usage that was causing auto-mount issues

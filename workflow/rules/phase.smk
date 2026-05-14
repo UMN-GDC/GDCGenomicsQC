@@ -4,23 +4,23 @@ def get_chrom(wildcards):
 
 def get_input_pgen(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
-        return OUT_DIR / "full" / f"initialFilter_{get_chrom(wildcards)}.pgen"
+        return OUT_DIR / "full" / f"f1_{get_chrom(wildcards)}.pgen"
     else:
-        return OUT_DIR / "full" / "initialFilter.pgen"
+        return OUT_DIR / "full" / "f1.pgen"
 
 
 def get_input_pvar(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
-        return OUT_DIR / "full" / f"initialFilter_{get_chrom(wildcards)}.pvar"
+        return OUT_DIR / "full" / f"f1_{get_chrom(wildcards)}.pvar"
     else:
-        return OUT_DIR / "full" / "initialFilter.pvar"
+        return OUT_DIR / "full" / "f1.pvar"
 
 
 def get_input_psam(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
-        return OUT_DIR / "full" / f"initialFilter_{get_chrom(wildcards)}.psam"
+        return OUT_DIR / "full" / f"f1_{get_chrom(wildcards)}.psam"
     else:
-        return OUT_DIR / "full" / "initialFilter.psam"
+        return OUT_DIR / "full" / "f1.psam"
 
 
 rule convertPgenToVcf:
@@ -34,7 +34,7 @@ rule convertPgenToVcf:
         mem_mb=16000,
         runtime=120,
     input:
-        std=OUT_DIR / "full" / "standardFilter.pgen",
+        std=OUT_DIR / "full" / "f1.f2.pgen",
         pgen=get_input_pgen,
         pvar=get_input_pvar,
         psam=get_input_psam,

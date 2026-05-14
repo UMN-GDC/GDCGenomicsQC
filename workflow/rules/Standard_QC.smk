@@ -12,13 +12,13 @@ if INPUT_IS_PER_CHROMOSOME:
             mem_mb=32000,
             runtime=60,
         input:
-            pgen=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen",
-            pvar=OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar",
-            psam=OUT_DIR / "{subset}" / "initialFilter_{CHR}.psam",
+            pgen=OUT_DIR / "{subset}" / "f1_{CHR}.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1_{CHR}.pvar",
+            psam=OUT_DIR / "{subset}" / "f1_{CHR}.psam",
         output:
-            pgen=OUT_DIR / "{subset}" / "standardFilter_{CHR}.pgen",
-            pvar=OUT_DIR / "{subset}" / "standardFilter_{CHR}.pvar",
-            psam=OUT_DIR / "{subset}" / "standardFilter_{CHR}.psam",
+            pgen=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pvar",
+            psam=OUT_DIR / "{subset}" / "f1.f2_{CHR}.psam",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter_{CHR}")
             ),
@@ -84,19 +84,19 @@ else:
             mem_mb=32000,
             runtime=60,
         input:
-            pgen=OUT_DIR / "{subset}" / "initialFilter.pgen",
-            pvar=OUT_DIR / "{subset}" / "initialFilter.pvar",
-            psam=OUT_DIR / "{subset}" / "initialFilter.psam",
-            LDpgen=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
-            LDpvar=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
-            LDpsam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
+            pgen=OUT_DIR / "{subset}" / "f1.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1.pvar",
+            psam=OUT_DIR / "{subset}" / "f1.psam",
+            LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned.psam",
         output:
-            pgen=OUT_DIR / "{subset}" / "standardFilter.pgen",
-            pvar=OUT_DIR / "{subset}" / "standardFilter.pvar",
-            psam=OUT_DIR / "{subset}" / "standardFilter.psam",
-            LDpgen=OUT_DIR / "{subset}" / "standardFilter.LDpruned.pgen",
-            LDpvar=OUT_DIR / "{subset}" / "standardFilter.LDpruned.pvar",
-            LDpsam=OUT_DIR / "{subset}" / "standardFilter.LDpruned.psam",
+            pgen=OUT_DIR / "{subset}" / "f1.f2.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1.f2.pvar",
+            psam=OUT_DIR / "{subset}" / "f1.f2.psam",
+            LDpgen=OUT_DIR / "{subset}" / "f1.f2.ldpruned.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "f1.f2.ldpruned.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "f1.f2.ldpruned.psam",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter")
             ),
@@ -125,4 +125,9 @@ else:
               mv {input.LDpsam} {output.tempDir}/pastSex.psam
             fi
             bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
+
+            for ext in pgen pvar psam; do
+                mv {params.output_dir}/standardFilter.$ext {params.output_dir}/f1.f2.$ext
+                mv {params.output_dir}/standardFilter.LDpruned.$ext {params.output_dir}/f1.f2.ldpruned.$ext
+            done
             """

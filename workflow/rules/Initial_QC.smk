@@ -11,12 +11,12 @@ rule mergeChromosomesAndFilter:
         mem_mb=32000,
         runtime=240,
     output:
-        pgen=OUT_DIR / "{subset}" / "initialFilter.pgen",
-        pvar=OUT_DIR / "{subset}" / "initialFilter.pvar",
-        psam=OUT_DIR / "{subset}" / "initialFilter.psam",
-        LDbed=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
-        LDbim=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
-        LDfam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.psam",
+        LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
+        LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
+        LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned.psam",
         tempDir=temp(
             directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter")
         ),
@@ -25,13 +25,13 @@ rule mergeChromosomesAndFilter:
     input:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         pgen=expand(
-            OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES
-        ),
-        psam=expand(
-            OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.psam", CHR=CHROMOSOMES
+            OUT_DIR / "{{subset}}" / "f1_{CHR}.pgen", CHR=CHROMOSOMES
         ),
         pvar=expand(
-            OUT_DIR / "{{subset}}" / "initialFilter_{CHR}.pvar", CHR=CHROMOSOMES
+            OUT_DIR / "{{subset}}" / "f1_{CHR}.pvar", CHR=CHROMOSOMES
+        ),
+        psam=expand(
+            OUT_DIR / "{{subset}}" / "f1_{CHR}.psam", CHR=CHROMOSOMES
         ),
         keep=get_ancestry_file,
     params:
@@ -80,4 +80,7 @@ rule mergeChromosomesAndFilter:
     fi
     mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
     mv {output.tempDir}/intermediate_0.smiss {output.smiss}
+    for ext in pgen pvar psam; do
+        mv {params.output_prefix}.LDpruned.$ext {params.output_prefix}.ldpruned.$ext
+    done
     """

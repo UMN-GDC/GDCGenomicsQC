@@ -1,0 +1,19 @@
+executor: slurm
+
+slurm-status-command: squeue
+
+jobs: 15
+software-deployment-method: [env-modules, apptainer]
+software-deployment-prefix: /scratch.global/GDC/singularityimages
+apptainer-prefix: /scratch.global/GDC/singularityimages
+apptainer-args: "--bind /scratch.global,/home"
+latency-wait: 60
+
+default-resources:
+  - mem_mb=4000
+  - runtime=60
+  - plink_version: null
+  - bcftools_version: null
+  - shapeit_version: null
+  - rfmix_version: null
+  - samtools_version: null

@@ -81,19 +81,19 @@ rule all:
         ),
         lambda wildcards: (
             expand(
-                OUT_DIR / "{ANC}" / ("initialFilter_{CHR}.pgen" if INPUT_IS_PER_CHROMOSOME else "initialFilter.pgen"),
+                OUT_DIR / "{ANC}" / ("f1_{CHR}.pgen" if INPUT_IS_PER_CHROMOSOME else "f1.pgen"),
                 ANC=get_provided_ancestries(), CHR=CHROMOSOMES,
             )
             if has_provided_ancestry() else 
             expand(
-                OUT_DIR / "full" / ("initialFilter_{CHR}.pgen" if INPUT_IS_PER_CHROMOSOME else "initialFilter.pgen"),
+                OUT_DIR / "full" / ("f1_{CHR}.pgen" if INPUT_IS_PER_CHROMOSOME else "f1.pgen"),
                 CHR=CHROMOSOMES,
             )
         ),
         expand(
-            OUT_DIR / "{ANC}" / "standardFilter.pgen", ANC=get_provided_ancestries()
+            OUT_DIR / "{ANC}" / "f1.f2.pgen", ANC=get_provided_ancestries()
         ) if has_provided_ancestry() else (
-            expand(OUT_DIR / "full" / "standardFilter.pgen")
+            expand(OUT_DIR / "full" / "f1.f2.pgen")
         ),
         # snpHeritability estimates
         lambda wildcards: (
@@ -138,11 +138,11 @@ rule run_initialQC:
         runtime=60,
     input:
         lambda wildcards: (
-            expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES)
+            expand(OUT_DIR / "full" / "f1_{CHR}.pgen", CHR=CHROMOSOMES)
             if "{CHR}" in config.get("INPUT", "")
-            else [OUT_DIR / "full" / "initialFilter.pgen"]
+            else [OUT_DIR / "full" / "f1.pgen"]
         ),
-        OUT_DIR / "full" / "standardFilter.pgen",
+        OUT_DIR / "full" / "f1.f2.pgen",
         OUT_DIR / "full" / "figures" / "smiss.svg",
         OUT_DIR / "full" / "figures" / "vmiss.svg",
 
@@ -195,25 +195,25 @@ rule run_ancestryQC:
     input:
         lambda wildcards: (
             expand(
-                OUT_DIR / "{ANCESTRY}" / "initialFilter_{CHR}.pgen",
+                OUT_DIR / "{ANCESTRY}" / "f1_{CHR}.pgen",
                 ANCESTRY=get_ancestries(wildcards),
                 CHR=CHROMOSOMES,
             )
             if INPUT_IS_PER_CHROMOSOME
             else expand(
-                OUT_DIR / "{ANCESTRY}" / "initialFilter.pgen",
+                OUT_DIR / "{ANCESTRY}" / "f1.pgen",
                 ANCESTRY=get_ancestries(wildcards),
             )
         ),
         lambda wildcards: (
             expand(
-                OUT_DIR / "{ANCESTRY}" / "standardFilter_{CHR}.pgen",
+                OUT_DIR / "{ANCESTRY}" / "f1.f2_{CHR}.pgen",
                 ANCESTRY=get_ancestries(wildcards),
                 CHR=CHROMOSOMES,
             )
             if INPUT_IS_PER_CHROMOSOME
             else expand(
-                OUT_DIR / "{ANCESTRY}" / "standardFilter.pgen",
+                OUT_DIR / "{ANCESTRY}" / "f1.f2.pgen",
                 ANCESTRY=get_ancestries(wildcards),
             )
         ),
@@ -226,9 +226,9 @@ rule run_relatedness:
         mem_mb=4000,
         runtime=420,  # 1 week
     input:
-        OUT_DIR / "full" / "unrelated.pgen",
+        OUT_DIR / "full" / "f1.ldpruned.unrelated.pgen",
         lambda wildcards: expand(
-            OUT_DIR / "{ANCESTRY}" / "unrelated.pgen",
+            OUT_DIR / "{ANCESTRY}" / "f1.ldpruned.unrelated.pgen",
             ANCESTRY=get_ancestries(wildcards),
         ),
 

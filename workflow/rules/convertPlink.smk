@@ -42,9 +42,9 @@ rule convertPlinkPerChromosome:
         mem_mb=32000,
         runtime=240,
     output:
-        pgen=temp(OUT_DIR / "{subset}" / "initialFilter_{CHR}.pgen"),
-        pvar=temp(OUT_DIR / "{subset}" / "initialFilter_{CHR}.pvar"),
-        psam=temp(OUT_DIR / "{subset}" / "initialFilter_{CHR}.psam"),
+        pgen=temp(OUT_DIR / "{subset}" / "f1_{CHR}.pgen"),
+        pvar=temp(OUT_DIR / "{subset}" / "f1_{CHR}.pvar"),
+        psam=temp(OUT_DIR / "{subset}" / "f1_{CHR}.psam"),
         tempDir=temp(
             directory(
                 OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "initial_filter"
@@ -139,9 +139,9 @@ mv {output.tempDir}/intermediate_0.smiss {output.smiss}
 def get_merge_input_files(wildcards):
     if INPUT_IS_PER_CHROMOSOME:
         return dict(
-            pgen=expand(OUT_DIR / "full" / "initialFilter_{CHR}.pgen", CHR=CHROMOSOMES),
-            pvar=expand(OUT_DIR / "full" / "initialFilter_{CHR}.pvar", CHR=CHROMOSOMES),
-            psam=expand(OUT_DIR / "full" / "initialFilter_{CHR}.psam", CHR=CHROMOSOMES),
+            pgen=expand(OUT_DIR / "full" / "f1_{CHR}.pgen", CHR=CHROMOSOMES),
+            pvar=expand(OUT_DIR / "full" / "f1_{CHR}.pvar", CHR=CHROMOSOMES),
+            psam=expand(OUT_DIR / "full" / "f1_{CHR}.psam", CHR=CHROMOSOMES),
         )
     else:
         return dict()
@@ -161,12 +161,12 @@ if not INPUT_IS_PER_CHROMOSOME:
             mem_mb=64000,
             runtime=480,
         output:
-            pgen=OUT_DIR / "{subset}" / "initialFilter.pgen",
-            pvar=OUT_DIR / "{subset}" / "initialFilter.pvar",
-            psam=OUT_DIR / "{subset}" / "initialFilter.psam",
-            LDbed=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pgen",
-            LDbim=OUT_DIR / "{subset}" / "initialFilter.LDpruned.pvar",
-            LDfam=OUT_DIR / "{subset}" / "initialFilter.LDpruned.psam",
+            pgen=OUT_DIR / "{subset}" / "f1.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1.pvar",
+            psam=OUT_DIR / "{subset}" / "f1.psam",
+            LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned.psam",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter_single")
             ),
@@ -201,4 +201,7 @@ if not INPUT_IS_PER_CHROMOSOME:
 
             mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
             mv {output.tempDir}/intermediate_0.smiss {output.smiss}
+            for ext in pgen pvar psam; do
+                mv {params.output_prefix}.LDpruned.$ext {params.output_prefix}.ldpruned.$ext
+            done
             """

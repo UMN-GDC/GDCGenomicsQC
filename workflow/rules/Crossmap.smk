@@ -9,41 +9,33 @@ rule crossmap:
         mem_mb=32000,
         runtime=120,
     input:
-        bed=OUT_DIR / "01-Initialfilter" / "initialFilter.bed",
-        bim=OUT_DIR / "01-Initialfilter" / "initialFilter.bim",
-        fam=OUT_DIR / "01-Initialfilter" / "initialFilter.fam",
-        chain=ancient(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
+        pgen=OUT_DIR / "full" / "f1.pgen",
+        pvar=OUT_DIR / "full" / "f1.pvar",
+        psam=OUT_DIR / "full" / "f1.psam",
     output:
-        # List all files that PLINK will actually create
-        eigen=OUT_DIR / "04-globalAncestry" / "ref.eigenvec",
-        projected=OUT_DIR / "04-globalAncestry" / "sampleRefPCscores.sscore",
-        tempDir=temp(directory(OUT_DIR / "04-globalAncestry" / "intermediates")),
+        pgen=OUT_DIR / "full" / "f1.h38.pgen",
+        pvar=OUT_DIR / "full" / "f1.h38.pvar",
+        psam=OUT_DIR / "full" / "f1.h38.psam",
+        tempDir=temp(directory(OUT_DIR / "full" / "intermediates" / "crossmap")),
     params:
-        method=config.get("relatedness", {}).get("method", "king"),
-        grm=config.get("relatedness", {}).get("method", "king"),
-        out_dir=OUT_DIR / "04-globalAncestry",
-        input_prefix=OUT_DIR / "01-Initialfilter" / "initialFilter",
-        input_dir=OUT_DIR / "01-Initialfilter",
-        ref=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased"),
+        input_prefix=OUT_DIR / "full" / "f1",
+        output_prefix=OUT_DIR / "full" / "f1.h38",
+        chain=ancient(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
     shell:
         """
+        mkdir -p {output.tempDir}
 
-    # Since plink denote X chromosome's pseudo-autosomal region as a separate 'XY' chromosome, we want to merge to pass ontto LiftOver/CrossMap. 
-    # We also reformat the numeric chromsome {1-26} to {1-22, X, Y, MT} for LiftOver/CrossMap
-    plink --bfile $FILE/$NAME --merge-x no-fail --make-bed --out prep1
-    plink --bfile prep1 --recode --output-chr 'MT' --out prep2
-    
-    rm prep.bed updated.snp updated.position updated.chr
-    awk '{print $1, $4-1, $4, $2}' prep2.map > prep.bed
-    
-    python ${REF}/CrossMap/CrossMap.py bed {input.chain} prep.bed study.${NAME}.lifted.bed3
-    
-    awk '{print $4}' study.$NAME.lifted.bed3 > updated.snp
-    awk '{print $4, $3}' study.$NAME.lifted.bed3 > updated.position
-    awk '{print $4, $1}' study.$NAME.lifted.bed3 > updated.chr
-    plink2 --file prep2 --extract updated.snp --make-bed --out result1
-    plink2 --bfile result1 --update-map updated.position --make-bed --out result2
-    plink2 --bfile result2 --update-chr updated.chr --make-bed --out result3
-    plink2 --bfile result3 --recode --out study.$NAME.lifted
-    plink2 --bfile result3 --recode --make-bed --out study.$NAME.lifted
-    """
+        plink2 --pfile {params.input_prefix} --make-bed --out {output.tempDir}/study
+
+        awk '{{print $1, $4-1, $4, $2}}' {output.tempDir}/study.bim > {output.tempDir}/study_pos.bed
+
+        CrossMap.py bed {params.chain} {output.tempDir}/study_pos.bed {output.tempDir}/study_hg38
+
+        awk '{{print $4}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/lifted_snps.txt
+        awk '{{print $4, $3}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_pos.txt
+        awk '{{print $4, $1}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_chr.txt
+
+        plink2 --bfile {output.tempDir}/study --extract {output.tempDir}/lifted_snps.txt --make-bed --out {output.tempDir}/step1
+        plink2 --bfile {output.tempDir}/step1 --update-map {output.tempDir}/new_pos.txt --make-bed --out {output.tempDir}/step2
+        plink2 --bfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --make-pgen --out {params.output_prefix}
+        """

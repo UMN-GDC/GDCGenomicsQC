@@ -11,9 +11,9 @@ rule runPcaOnReferencePanel:
         mem_mb=32000,
         runtime=2880,
     input:
-        pgen=OUT_DIR / "full" / "initialFilter.pgen",
-        pvar=OUT_DIR / "full" / "initialFilter.pvar",
-        psam=OUT_DIR / "full" / "initialFilter.psam",
+        pgen=OUT_DIR / "full" / "f1.pgen",
+        pvar=OUT_DIR / "full" / "f1.pvar",
+        psam=OUT_DIR / "full" / "f1.psam",
         ldPgen=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
         ldPvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
         ldPsam=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
@@ -25,7 +25,7 @@ rule runPcaOnReferencePanel:
     params:
         method=config.get("relatedness", {}).get("method", "king"),
         grm=config.get("relatedness", {}).get("method", "king"),
-        input_prefix=OUT_DIR / "full" / "initialFilter",
+        input_prefix=OUT_DIR / "full" / "f1",
         dir=str(OUT_DIR / "01-globalAncestry"),
         ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
     shell:

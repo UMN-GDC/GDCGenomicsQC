@@ -7,8 +7,14 @@ use-singularity: true
 singularity-prefix: /scratch.global/GDC/singularityimages
 apptainer-prefix: /scratch.global/GDC/singularityimages
 singularity-args: "--bind /scratch.global,/home"
+software-deployment-method: [apptainer]
 latency-wait: 60
 
 default-resources:
   - mem_mb=4000
   - runtime=60
+  - plink_version: "plink/2.00-alpha-091019"
+  - bcftools_version: "bcftools/1.2"
+  - shapeit_version: "shapeit/4.2.2"
+  - rfmix_version: "rfmix/09599c1"
+  - samtools_version: "samtools/1.21"

@@ -14,7 +14,7 @@ SIM_INPUT_PREFIXES = SIM_CONFIG.get("input_prefixes", {})
 def sim_input(prefixes, anc, ext):
     if anc in prefixes:
         return Path(prefixes[anc] + ext)
-    return OUT_DIR / anc / f"initialFilter{ext}"
+    return OUT_DIR / anc / f"f1{ext}"
 
 
 rule simulateBivariatePhenotypes:

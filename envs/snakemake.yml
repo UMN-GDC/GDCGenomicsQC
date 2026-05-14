@@ -4,5 +4,6 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - snakemake
+  - python >=3.11
+  - snakemake >=9.0
   - snakemake-executor-plugin-slurm
