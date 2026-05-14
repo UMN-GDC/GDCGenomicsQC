@@ -97,6 +97,7 @@ if SNP_HERIT_ACTIVE:
                 mash_config["covar_filter"] = params.covar_filter
 
             mash_config["loop_covars"] = params.loop_covs
+            mash_config["random_groups"] = params.rv if params.rv else "None"
 
             if params.std:
                 mash_config["std"] = params.std
