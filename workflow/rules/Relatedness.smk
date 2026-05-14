@@ -9,7 +9,7 @@ rule checkRelatednessExtractUnrelated:
         nodes=1,
         mem_mb=128000,
         runtime=720,
-    threads: 8
+    threads: 16
     input:
         pgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
         pvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",

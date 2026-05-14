@@ -26,7 +26,7 @@ This lab covers interacting with output files from the **Global Ancestry Classif
 
 ```{r load-libraries}
 library(tidyverse)
-OUT_DIR <- "/path/to/your/pipeline/output"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
 global_anc_dir <- file.path(OUT_DIR, "01-globalAncestry")
 ```
 
@@ -66,21 +66,12 @@ if (file.exists(class_path)) {
 if (exists("post_prob") && exists("class")) {
   anc_data <- post_prob %>%
     left_join(class, by = "IID") %>%
-    pivot_longer(
-      cols = starts_with("pca_"),
-      names_to = "ancestry",
-      values_to = "posterior_prob"
-    ) %>%
-    mutate(ancestry = gsub("pca_", "", ancestry))
+    mutate(ancestry = str_sub(IID, 1, 3))
   glimpse(anc_data)
 }
 
-# Load confusion matrix (if exists)
-conf_path <- file.path(global_anc_dir, "ancestry_confusion_matrix.tsv")
-if (file.exists(conf_path)) {
-  conf_mat <- read_tsv(conf_path)
-  print(conf_mat)
-}
+table(anc_data$ancestry, anc_data$umap_predicted)
+table(anc_data$ancestry, anc_data$pca_predicted)
 ```
 
 ---
@@ -88,78 +79,26 @@ if (file.exists(conf_path)) {
 # Section 3: Visualize Global Ancestry
 
 ```{r visualize-ancestry}
-# 1. Stacked posterior probability plot (matches pipeline output)
-if (exists("anc_data")) {
-  ggplot(anc_data, aes(x = reorder(IID, posterior_prob), y = posterior_prob, fill = ancestry)) +
-    geom_col(width = 1) +
-    labs(
-      title = "Per-Sample Posterior Probabilities for Global Ancestry (PCA)",
-      x = "Sample ID",
-      y = "Posterior Probability",
-      fill = "Ancestry"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_blank(), panel.grid = element_blank())
-}
-
-# 2. Posterior probability distribution per ancestry
-if (exists("anc_data")) {
-  ggplot(anc_data, aes(x = posterior_prob, fill = ancestry)) +
-    geom_density(alpha = 0.5) +
-    labs(
-      title = "Posterior Probability Density per Ancestry",
-      x = "Posterior Probability",
-      y = "Density",
-      fill = "Ancestry"
-    ) +
-    theme_minimal()
-}
-
-# 3. Confusion matrix heatmap (if reported race available)
-if (exists("conf_mat")) {
-  ggplot(conf_mat, aes(x = predicted, y = reported, fill = n)) +
-    geom_tile() +
-    geom_text(aes(label = n), color = "white", size = 3) +
-    labs(
-      title = "Ancestry Classification Confusion Matrix",
-      x = "Predicted Ancestry",
-      y = "Reported Race",
-      fill = "Count"
-    ) +
-    theme_minimal()
-}
+anc_data |>
+    pivot_longer(
+      cols = pca_EUR:pca_AFR,
+      names_to = "supposed_ancestry",
+      values_to = "posterior_prob"
+    ) |>
+  slice_head(n = 50, by = ancestry) |>
+  ggplot(aes(x = reorder(IID, posterior_prob), y = posterior_prob, fill = supposed_ancestry)) +
+  geom_col(width = 1) +
+  labs(
+    title = "Per-Sample Posterior Probabilities for Global Ancestry (PCA)",
+    x = "Sample ID",
+    y = "Posterior Probability",
+    fill = "Ancestry"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(), panel.grid = element_blank()) +
+  facet_wrap(~ancestry, scales = "free_x")
 ```
 
----
-
-# Section 4: Interactive Analysis
-
-```{r interactive-analysis}
-# Count samples per predicted ancestry
-if (exists("class")) {
-  anc_counts <- class %>%
-    count(pca_predicted, sort = TRUE)
-  print(anc_counts)
-}
-
-# Identify uncertain samples (confidence < 0.8 threshold)
-if (exists("class")) {
-  uncertain <- class %>%
-    filter(pca_confidence < 0.8) %>%
-    arrange(pca_confidence)
-  print(uncertain)
-}
-
-# Calculate average posterior probability per ancestry
-if (exists("anc_data")) {
-  avg_post <- anc_data %>%
-    group_by(ancestry) %>%
-    summarise(avg_posterior = mean(posterior_prob), .groups = "drop")
-  print(avg_post)
-}
-```
-
----
 
 # Next Steps
 

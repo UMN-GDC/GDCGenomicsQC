@@ -29,7 +29,7 @@ This lab covers interacting with output files from the **Basic QC Pipeline** usi
 library(tidyverse)
 
 # Set pipeline output directory (update this path!)
-OUT_DIR <- "/path/to/your/pipeline/output"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
 subset <- "full"  # QC outputs are per-subset (full, EUR, AFR, etc.)
 ```
 
@@ -57,7 +57,7 @@ All files are tab-separated with PLINK-style columns (no header row unless noted
 ```{r load-data}
 # Load sample missingness (initial filter)
 smiss_path <- file.path(OUT_DIR, subset, "initial.smiss")
-smiss <- read_tsv(smiss_path, col_names = c("IID", "FID", "F_MISS", "N_MISS"))
+smiss <- read_tsv(smiss_path)
 
 # Inspect structure
 glimpse(smiss)
@@ -65,14 +65,20 @@ summary(smiss$F_MISS)
 
 # Load variant missingness
 vmiss_path <- file.path(OUT_DIR, subset, "initial.vmiss")
-vmiss <- read_tsv(vmiss_path, col_names = c("CHR", "ID", "F_MISS", "N_MISS"))
+vmiss <- read_tsv(vmiss_path)
 glimpse(vmiss)
 
+hwe <- read_tsv(file.path(OUT_DIR, subset, "zoomhwe.hwe"))
+glimpse(hwe)
+
+freq <- read_tsv(file.path(OUT_DIR, subset, "MAF_check.afreq"))
+glimpse(freq)
+
 # Load heterozygosity rates (from PLINK2 --het output, no header)
-het_path <- file.path(OUT_DIR, subset, "intermediates/standard_filter_1/hetcheck.het")
-het <- read_tsv(het_path, col_names = c("FID", "IID", "O_HOM", "E_HOM", "N_NM")) %>%
-  mutate(het_rate = (N_NM - O_HOM) / N_NM)
-glimpse(het)
+# het_path <- file.path(OUT_DIR, subset, "intermediates/standard_filter_1/hetcheck.het")
+# het <- read_tsv(het_path, col_names = c("FID", "IID", "O_HOM", "E_HOM", "N_NM")) %>%
+#   mutate(het_rate = (N_NM - O_HOM) / N_NM)
+# glimpse(het)
 ```
 
 ---
@@ -102,21 +108,31 @@ ggplot(vmiss, aes(x = F_MISS * 100)) +
   ) +
   theme_minimal()
 
-# 3. Heterozygosity rate distribution (identify outliers)
-het_stats <- het %>%
-  summarise(mean = mean(het_rate), sd = sd(het_rate))
-
-ggplot(het, aes(x = het_rate)) +
-  geom_histogram(bins = 30, fill = "purple", alpha = 0.7) +
-  geom_vline(xintercept = c(het_stats$mean - 3*het_stats$sd, 
-                           het_stats$mean + 3*het_stats$sd), 
-             color = "red", linetype = "dashed") +
-  labs(
-    title = "Sample Heterozygosity Rate Distribution",
-    x = "Heterozygosity Rate",
-    y = "Number of Samples"
-  ) +
+freq |>
+  ggplot(aes(x = ALT_FREQS)) +
+  geom_histogram() +
   theme_minimal()
+freq |>
+  ggplot(aes(x = ALT_FREQS)) +
+  geom_histogram() +
+  theme_minimal() +
+  facet_wrap(~`#CHROM`)
+
+# # 3. Heterozygosity rate distribution (identify outliers)
+# het_stats <- het %>%
+#   summarise(mean = mean(het_rate), sd = sd(het_rate))
+# 
+# ggplot(het, aes(x = het_rate)) +
+#   geom_histogram(bins = 30, fill = "purple", alpha = 0.7) +
+#   geom_vline(xintercept = c(het_stats$mean - 3*het_stats$sd, 
+#                            het_stats$mean + 3*het_stats$sd), 
+#              color = "red", linetype = "dashed") +
+#   labs(
+#     title = "Sample Heterozygosity Rate Distribution",
+#     x = "Heterozygosity Rate",
+#     y = "Number of Samples"
+#   ) +
+#   theme_minimal()
 ```
 
 ---
@@ -131,24 +147,24 @@ high_missing <- smiss %>%
 print(high_missing)
 
 # Count heterozygosity failures (3 SD from mean)
-het_failures <- het %>%
-  filter(het_rate < (het_stats$mean - 3*het_stats$sd) | 
-         het_rate > (het_stats$mean + 3*het_stats$sd)) %>%
-  mutate(failure_type = ifelse(het_rate < (het_stats$mean - 3*het_stats$sd), 
-                             "Low", "High"))
-print(het_failures)
+# het_failures <- het %>%
+#   filter(het_rate < (het_stats$mean - 3*het_stats$sd) | 
+#          het_rate > (het_stats$mean + 3*het_stats$sd)) %>%
+#   mutate(failure_type = ifelse(het_rate < (het_stats$mean - 3*het_stats$sd), 
+#                              "Low", "High"))
+# print(het_failures)
 
 # Load and inspect sex discrepancies (if available)
 # Note: file may have _CHR suffix if per-chromosome processing
-sex_path <- file.path(OUT_DIR, subset, "sex_discrepancy.txt")
-if (!file.exists(sex_path)) {
-  # Try with chromosome suffix
-  sex_path <- file.path(OUT_DIR, subset, "sex_discrepancy_1.txt")
-}
-if (file.exists(sex_path)) {
-  sex_disc <- read_tsv(sex_path, col_names = c("FID", "IID"))
-  print(sex_disc)
-}
+# sex_path <- file.path(OUT_DIR, subset, "sex_discrepancy.txt")
+# if (!file.exists(sex_path)) {
+#   # Try with chromosome suffix
+#   sex_path <- file.path(OUT_DIR, subset, "sex_discrepancy_1.txt")
+# }
+# if (file.exists(sex_path)) {
+#   sex_disc <- read_tsv(sex_path, col_names = c("FID", "IID"))
+#   print(sex_disc)
+# }
 ```
 
 ---
