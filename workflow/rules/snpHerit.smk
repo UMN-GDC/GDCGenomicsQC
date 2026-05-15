@@ -125,8 +125,8 @@ if SNP_HERIT_ACTIVE:
     rule estimateSnpHeritability:
         log:
             OUT_DIR / "{subset}" / "03-snpHeritability" / "mash.log",
-        container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
+        conda:
+            "../envs/mash.yml"
         threads: 8
         resources:
             nodes=1,
