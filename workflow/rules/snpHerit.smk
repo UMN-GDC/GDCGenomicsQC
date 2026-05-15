@@ -97,7 +97,7 @@ if SNP_HERIT_ACTIVE:
                 if pca_path.endswith(".RDS"):
                     mash_config["PC"] = pca_path
                 elif pca_path.endswith(".eigenvec") or pca_path.endswith(".eigenvec.txt"):
-                    mash_config["eigenvec"] = pca_path
+                    mash_config["PC"] = pca_path
 
             if params.qcovar:
                 mash_config["qcovar"] = params.qcovar
@@ -109,7 +109,7 @@ if SNP_HERIT_ACTIVE:
                 mash_config["covar_filter"] = params.covar_filter
 
             mash_config["loop_covars"] = params.loop_covs
-            mash_config["random_groups"] = params.rv if params.rv else "None"
+            mash_config["random_groups"] = params.rv if params.rv else None
             mash_config["Naive"] = SNP_HERIT_CONFIG.get("Naive", False)
 
             if params.std:
@@ -138,6 +138,5 @@ if SNP_HERIT_ACTIVE:
             estimates=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
         shell:
             """
-            mkdir -p "$(dirname {output.estimates})"
-            MASH --argfile {input.argfile} > {log} 2>&1
+            micromamba run -n MASH MASH --argfile {input.argfile} > {log} 2>&1
             """
