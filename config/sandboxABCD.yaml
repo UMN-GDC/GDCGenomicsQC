@@ -48,13 +48,12 @@ snpHerit:
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec" (if method=plink2)
     pca_input: "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec"
 
-    # Path to phenotype file (required to activate snpHerit)
+    # Phenotype file(s) — single path or list of paths
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID
     pheno: "/path/to/phenotype_file.tsv"
 
-    # Path to covariate file(s) (required when pheno is specified)
-    # Can be a single file path or list for multiple files
+    # Covariate file(s) — single path or list of paths (required when pheno is specified)
     # Format: CSV/TSV with columns: FID, IID, <covariates>
     covar: "/path/to/covariate_file.tsv"
 
@@ -64,12 +63,12 @@ snpHerit:
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE"
 
-    # Number of principal components to use as covariates
-    # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
+    # Number of principal components — integer or list of integers
+    # Examples: 10  or  [5, 10, 20]
     npc: 10
 
-    # Phenotype column(s) to analyze
-    # Integer or array: 1 = third column (after FID, IID)
+    # Phenotype column(s) — column name string or list of column name strings
+    # Examples: "BMI"  or  ["BMI", "Height"]
     mpheno: 1
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
@@ -82,6 +81,9 @@ snpHerit:
 
     # Column name to use as random effect (for AdjHE with site effects)
     RV: null
+
+    # Use naive estimator (default: false for AdjHE)
+    Naive: false
 
     # Loop through covariates, including all previous covariates in each iteration
     loop_covars: false

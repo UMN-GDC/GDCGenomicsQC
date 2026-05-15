@@ -49,7 +49,7 @@ snpHerit:
     #   - "/path/to/output/full/internal_pca_plink2.eigenvec" (if method=plink2)
     pca_input: null
 
-    # Path to phenotype file (required to activate snpHerit)
+    # Phenotype file(s) — single path or list of paths
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID
     pheno: "/scratch.global/coffm049/simulated/AFR_simulation_pheno1.pheno"
@@ -63,12 +63,12 @@ snpHerit:
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE"
 
-    # Number of principal components to use as covariates
-    # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
+    # Number of principal components — integer or list of integers
+    # Examples: 10  or  [5, 10, 20]
     npc: 10
 
-    # Phenotype column(s) to analyze
-    # Integer or array: 1 = third column (after FID, IID)
+    # Phenotype column(s) — column name string or list of column name strings
+    # Examples: "BMI"  or  ["BMI", "Height"]
     mpheno: 1
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
@@ -83,7 +83,10 @@ snpHerit:
     RV: null
 
     # Loop through covariates, including all previous covariates in each iteration
-    loop_covs: false
+    loop_covars: false
+
+    # Use naive estimator (default: false for AdjHE)
+    Naive: false
 
     # Run SAdj-HE (standardized) instead of UAdj-HE (unstandardized)
     std: false

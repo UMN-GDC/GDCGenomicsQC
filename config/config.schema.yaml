@@ -236,12 +236,12 @@ snpHerit:
       type: str
       nullable: true
       default: null
-      description: Path to phenotype file (supports .parquet, .csv, .tsv, .tab, PLINK format)
+      description: Path to phenotype file(s) — single path or list of paths (supports .parquet, .csv, .tsv, .tab, PLINK format)
     covar:
       type: str
       nullable: true
       default: null
-      description: Path to covariate file(s) (single path or list, format CSV/TSV with FID, IID)
+      description: Path to covariate file(s) — single path or list of paths (format CSV/TSV with FID, IID)
     out:
       type: str
       required: true
@@ -255,11 +255,11 @@ snpHerit:
     npc:
       type: int
       default: 10
-      description: Number of principal components to use as covariates (int or array)
+      description: Number of principal components — integer (e.g., 10) or list of integers (e.g., [5, 10, 20])
     mpheno:
-      type: int
-      default: 1
-      description: Phenotype column(s) to analyze (1 = third column after FID, IID)
+      type: str
+      default: "1"
+      description: Phenotype column(s) — column name string (e.g., "BMI") or list of strings (e.g., ["BMI", "Height"])
     qcovar:
       type: str
       nullable: true
@@ -274,11 +274,15 @@ snpHerit:
       type: str
       nullable: true
       default: null
-      description: Column name to use as random effect (for AdjHE with site effects)
-    loop_covs:
+      description: Column name to use as random effect (for AdjHE with site effects); passed as "random_groups" to MASH
+    loop_covars:
       type: bool
       default: false
       description: Loop through covariates, including all previous covariates in each iteration
+    Naive:
+      type: bool
+      default: false
+      description: Use naive estimator (default: false for AdjHE)
     std:
       type: bool
       default: false

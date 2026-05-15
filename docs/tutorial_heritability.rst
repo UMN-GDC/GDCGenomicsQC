@@ -136,16 +136,18 @@ This step requires the following input files:
 .. code-block:: yaml
 
     snpHerit:
-        pheno: "/path/to/phenotype.tsv"    # Phenotype file (IID, pheno) - required
-        covar: "/path/to/covariates.tsv"   # Covariate file (optional)
-        method: "AdjHE"                    # Estimation method: AdjHE, GCTA, PredLMM, SWD
-        npc: 10                            # Number of PCs to include (or array [3, 5, 10])
-        mpheno: 1                          # Phenotype column number
-        qcovar: null                       # Quantitative covariate names (for GCTA)
-        covar_discrete: null               # Discrete covariate names (for GCTA)
-        std: false                         # Run SAdj-HE (standardized) vs UAdj-HE
-        grm_prefix: null                   # Pre-computed GRM prefix (optional)
-        pca_input: null                     # PCA input - .RDS (PC-AiR) or .eigenvec file
+        pheno: "/path/to/phenotype.tsv"       # Phenotype file(s) — single path or list of paths
+        covar: "/path/to/covariates.tsv"      # Covariate file(s) — single path or list (optional)
+        method: "AdjHE"                       # Estimation method: AdjHE, GCTA, PredLMM, SWD
+        npc: 10                               # PCs — integer (e.g., 10) or list (e.g., [5, 10, 20])
+        mpheno: "BMI"                         # Phenotype column — name string or list (e.g., ["BMI", "Height"])
+        qcovar: null                          # Quantitative covariate names (for GCTA)
+        covar_discrete: null                  # Discrete covariate names (for GCTA)
+        std: false                            # Run SAdj-HE (standardized) vs UAdj-HE
+        loop_covars: false                    # Loop through covariates iteratively
+        Naive: false                          # Use naive estimator (false for AdjHE)
+        grm_prefix: null                      # Pre-computed GRM prefix (optional)
+        pca_input: null                       # PCA input — .RDS (PC-AiR) or .eigenvec file
 
 **Output Files:**
 
@@ -194,7 +196,9 @@ Create a configuration file with your phenotype and covariate paths:
         covar: "/path/to/covariates.tsv"
         method: "AdjHE"
         npc: 10
-        mpheno: 1
+        mpheno: "BMI"
+        loop_covars: false
+        Naive: false
 
     conda-frontend: mamba
     EOF
@@ -204,21 +208,23 @@ Key parameters:
 +----------------------+-------------+------------------------------------------+
 | Parameter            | Default     | Description                              |
 +======================+=============+==========================================+
-| ``pheno``            | required    | Path to phenotype file (IID, pheno)     |
+| ``pheno``            | required    | Phenotype file(s) — single path or list |
 +----------------------+-------------+------------------------------------------+
-| ``covar``            | null        | Path to covariate file (optional)       |
+| ``covar``            | null        | Covariate file(s) — single path or list |
 +----------------------+-------------+------------------------------------------+
 | ``method``           | AdjHE       | Estimation method: AdjHE, GCTA, etc.   |
 +----------------------+-------------+------------------------------------------+
-| ``npc``              | 10          | Number of PCs to include as covariates  |
+| ``npc``              | 10          | PCs — integer or list (e.g., [5,10,20]) |
 +----------------------+-------------+------------------------------------------+
-| ``mpheno``           | 1           | Phenotype column number or name         |
+| ``mpheno``           | "1"         | Phenotype column name(s) — string or list |
 +----------------------+-------------+------------------------------------------+
 | ``grm_prefix``       | null        | Pre-computed GRM prefix (optional)      |
 +----------------------+-------------+------------------------------------------+
-| ``pca_input``        | null        | PCA input - .RDS (PC-AiR) or .eigenvec file |
+| ``pca_input``        | null        | PCA input — .RDS (PC-AiR) or .eigenvec |
 +----------------------+-------------+------------------------------------------+
-| ``maf``              | 0.05        | Minor allele frequency threshold        |
+| ``loop_covars``      | false       | Loop through covariates iteratively     |
++----------------------+-------------+------------------------------------------+
+| ``Naive``            | false       | Use naive estimator (false for AdjHE)   |
 +----------------------+-------------+------------------------------------------+
 
 Step 2: Run SNP Heritability Estimation
@@ -271,17 +277,17 @@ Heritability Configuration Options
 +======================+=============+==========================================+
 | ``method``           | AdjHE       | Estimation method: AdjHE, GCTA, etc.    |
 +----------------------+-------------+------------------------------------------+
-| ``npc``              | 10          | Number of PCs to include as covariates  |
+| ``npc``              | 10          | PCs — integer or list (e.g., [5,10,20]) |
 +----------------------+-------------+------------------------------------------+
-| ``mpheno``           | 1           | Phenotype column number or name          |
+| ``mpheno``           | "1"         | Phenotype column name(s) — string or list|
 +----------------------+-------------+------------------------------------------+
 | ``grm_prefix``       | null        | Pre-computed GRM prefix (optional)      |
 +----------------------+-------------+------------------------------------------+
-| ``pca_input``        | null        | PCA input - .RDS (PC-AiR) or .eigenvec file |
+| ``pca_input``        | null        | PCA input — .RDS or .eigenvec file      |
 +----------------------+-------------+------------------------------------------+
-| ``fixed_effects``    | null        | Additional fixed effects to include      |
+| ``loop_covars``      | false       | Loop through covariates iteratively     |
 +----------------------+-------------+------------------------------------------+
-| ``random_groups``    | false       | Use random effects for group structure   |
+| ``Naive``            | false       | Use naive estimator (false for AdjHE)  |
 +----------------------+-------------+------------------------------------------+
 
 ----
@@ -395,10 +401,12 @@ Instead of relying on pipeline-generated PCA/GRM outputs, you can provide your o
 .. code-block:: yaml
 
     snpHerit:
-        pheno: "/path/to/phenotype.tsv"
-        covar: "/path/to/covariates.tsv"
+        pheno: "/path/to/phenotype.tsv"          # Single file, or ["file1.tsv", "file2.tsv"]
+        covar: "/path/to/covariates.tsv"          # Single file, or ["file1.tsv", "file2.tsv"]
         grm_prefix: "/path/to/your_grm_prefix"   # GRM files: prefix.grm.bin, .grm.id, .grm.N.bin
         pca_input: "/path/to/your_pca.eigenvec"  # Or .RDS file from PC-AiR
+        mpheno: "BMI"                             # Column name string, or ["BMI", "Height"]
+        npc: 10                                   # Integer, or [5, 10, 20]
 
 **Pipeline-generated files:** If you've run the QC/PCA pipeline first:
 

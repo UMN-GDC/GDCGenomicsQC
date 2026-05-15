@@ -62,12 +62,24 @@ if SNP_HERIT_ACTIVE:
 
             os.makedirs(params.out_dir, exist_ok=True)
 
+            pheno_val = input.pheno
+            if isinstance(pheno_val, list):
+                pheno_list = [str(p) for p in pheno_val]
+            else:
+                pheno_list = [str(pheno_val)]
+
+            mpheno_val = params.mpheno
+            if isinstance(mpheno_val, list):
+                mpheno_list = [str(m) for m in mpheno_val]
+            else:
+                mpheno_list = [str(mpheno_val)]
+
             mash_config = {
                 "prefix": str(params.prefix),
-                "pheno": str(input.pheno),
+                "pheno": pheno_list,
                 "out": params.mash_out,
                 "npc": [int(params.npc)] if not isinstance(params.npc, list) else [int(n) for n in params.npc],
-                "mpheno": params.mpheno,
+                "mpheno": mpheno_list,
                 "Method": params.method,
                 "iid_col": params.iid_col,
                 "fid_col": params.fid_col,

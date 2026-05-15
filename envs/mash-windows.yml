@@ -17,7 +17,6 @@ dependencies:
   - tqdm=4.64.1
   - scikit-learn
   - pip
-  - gcta
   - pyarrow    # This is the "engine"
   - fastparquet # Optional: an alternative engine often used with Dask
   - dask
