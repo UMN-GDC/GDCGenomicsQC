@@ -40,7 +40,7 @@ snpHerit:
     #   - null: MASH will compute GRM automatically from PCA
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/pcair_grm" (if PCAIR ran with GRM)
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/unrelated_grm" (from relatedness step)
-    grm_prefix: "/scratch.global/coffm049/r25pipeline/ABCD/full/f1.ldpruned.unrelated"
+    grm_prefix: "/scratch.global/GDC/r25outputs/ABCD/full/f1.ldpruned.unrelated"
     
     # Pre-computed eigenvector file for GRM construction
     # Options:
@@ -48,42 +48,60 @@ snpHerit:
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec" (if method=plink2)
     pca_input: "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec"
 
-    # Phenotype file(s) — single path or list of paths
+    # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID
-    pheno: "/path/to/phenotype_file.tsv"
-
-    # Covariate file(s) — single path or list of paths (required when pheno is specified)
+    pheno: 
+      - "/scratch.global/GDC/abcdData/mr_y_smri__vol__aseg.tsv"
+      - "nc_y_nihtb.tsv"
+    
+    # Path to covariate file(s) (required when pheno is specified)
+    # Can be a single file path or list for multiple files
     # Format: CSV/TSV with columns: FID, IID, <covariates>
-    covar: "/path/to/covariate_file.tsv"
-
+    covar: 
+      - "/scratch.global/GDC/abcdData/ab_g_stc.tsv"
+      - "/scratch.global/GDC/abcdData/ab_p_demo.tsv"
+  
     # Output filename for heritability estimates (CSV format)
-    out: null
+    out: "/scratch.global/GDC/abcdData/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE"
 
-    # Number of principal components — integer or list of integers
-    # Examples: 10  or  [5, 10, 20]
-    npc: 10
+    # Number of principal components to use as covariates
+    # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
+    npc: 2
 
-    # Phenotype column(s) — column name string or list of column name strings
-    # Examples: "BMI"  or  ["BMI", "Height"]
-    mpheno: 1
+    # Phenotype column(s) to analyze
+    # Integer or array: 1 = third column (after FID, IID)
+    mpheno:
+      - "mr_y_smri__vol__aseg__cd__lh_sum"
+      - "mr_y_smri__vol__aseg__pt__lh_sum"
+      - "mr_y_smri__vol__aseg__pl__lh_sum"
+      - "mr_y_smri__vol__aseg__ag__lh_sum"
+      - "mr_y_smri__vol__aseg__hc__lh_sum"
+      - "mr_y_smri__vol__aseg__ab__lh_sum"
+      - "mr_y_smri__vol__aseg__cd__rh_sum"
+      - "mr_y_smri__vol__aseg__pt__rh_sum"
+      - "mr_y_smri__vol__aseg__pl__rh_sum"
+      - "mr_y_smri__vol__aseg__ag__rh_sum"
+      - "mr_y_smri__vol__aseg__hc__rh_sum"
+      - "mr_y_smri__vol__aseg__ab__rh_sum"
+      - "mr_y_smri__vol__aseg__whb_sum"
+      - "mr_y_smri__vol__aseg__icv_sum"
+
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
     qcovar: null
+    #- "ab_p_demo_age"
 
     # Discrete/categorical covariate column names (passed via --covar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with <35 unique values)
     covar_discrete: null
-
+    #- "ab_g_stc__cohort_sex"
     # Column name to use as random effect (for AdjHE with site effects)
     RV: null
-
-    # Use naive estimator (default: false for AdjHE)
-    Naive: false
 
     # Loop through covariates, including all previous covariates in each iteration
     loop_covars: false
@@ -93,18 +111,20 @@ snpHerit:
 
     # Rows to process at once when restoring GCTA GRM binary file
     k: null
+    # Use naive estimator (default: false for AdjHE)
+    Naive: false
 
     # Filter phenotype data (e.g., "age>30", "sex==1")
     pheno_filter: null
 
     # Filter covariate data (e.g., "site==1", "age>=18")
-    covar_filter: null
+    covar_filter: "session_id==ses-00A"
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
-    iid_col: "IID"
+    iid_col: "participant_id"
 
     # Column name for family ID in phenotype/covariate files (case-insensitive match)
-    fid_col: "FID"
+    fid_col: "ab_g_stc__design_id__fam"
 
 # Tool settings
 localAncestry:

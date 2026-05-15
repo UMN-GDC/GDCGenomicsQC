@@ -139,5 +139,5 @@ if SNP_HERIT_ACTIVE:
         shell:
             """
             mkdir -p "$(dirname {output.estimates})"
-            MASH estimate --argfile {input.argfile} > {log} 2>&1
+            MASH --argfile {input.argfile} > {log} 2>&1
             """
