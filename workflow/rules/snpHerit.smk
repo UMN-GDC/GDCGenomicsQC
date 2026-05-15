@@ -138,5 +138,5 @@ if SNP_HERIT_ACTIVE:
             estimates=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
         shell:
             """
-            micromamba run -n MASH MASH --argfile {input.argfile} > {log} 2>&1
+            MASH --argfile {input.argfile} > {log} 2>&1
             """
