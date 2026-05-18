@@ -79,7 +79,7 @@ if SNP_HERIT_ACTIVE:
 
     rule estimateSnpHeritability:
         log:
-            str(Path(str(SNP_HERIT_CONFIG["out"]).replace(".csv", ".log"))).resolve(),
+            str(Path(str(SNP_HERIT_CONFIG["out"]).replace(".csv", ".log")).resolve()),
         conda:
             "../envs/mash.yml"
         container:
