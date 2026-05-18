@@ -53,7 +53,7 @@ snpHerit:
     # First two columns must be FID, IID
     pheno: 
       - "/scratch.global/GDC/abcdData/mr_y_smri__vol__aseg.tsv"
-      - "nc_y_nihtb.tsv"
+      - "/scratch.global/GDC/abcdData/nc_y_nihtb.tsv"
     
     # Path to covariate file(s) (required when pheno is specified)
     # Can be a single file path or list for multiple files

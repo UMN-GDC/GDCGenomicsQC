@@ -29,7 +29,7 @@ if SNP_HERIT_ACTIVE:
             covar=lambda wildcards: get_snpHerit_covar_input(wildcards),
             pheno=config.get("snpHerit", {}).get("pheno"),
         output:
-            argfile=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_argfile.json",
+            argfile=config.get("snpHerit", {}).get("out").replace(".csv", ".json")
         params:
             out_dir=lambda wildcards: OUT_DIR / wildcards.subset / "03-snpHeritability",
             mash_out=lambda wildcards: (
@@ -118,9 +118,11 @@ if SNP_HERIT_ACTIVE:
 
     rule estimateSnpHeritability:
         log:
-            OUT_DIR / "{subset}" / "03-snpHeritability" / "mash.log",
+            config.get("snpHerit", {}).get("out").replace(".csv", ".log")
         conda:
             "../envs/mash.yml"
+        container:
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
         threads: 8
         resources:
             nodes=1,
@@ -129,7 +131,7 @@ if SNP_HERIT_ACTIVE:
         input:
             argfile=rules.prepareSnpHeritArgfile.output.argfile,
         output:
-            estimates=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
+            estimates=config.get("snpHerit", {}).get("out"),
         shell:
             """
             MASH --argfile {input.argfile} > {log} 2>&1

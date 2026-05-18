@@ -3,7 +3,7 @@ executor: slurm
 slurm-status-command: squeue
 
 jobs: 15
-software-deployment-method: [env-modules, apptainer, conda]
+software-deployment-method: [conda]
 software-deployment-prefix: /scratch.global/GDC/singularityimages
 apptainer-prefix: /scratch.global/GDC/singularityimages
 apptainer-args: "--bind /scratch.global,/home"
