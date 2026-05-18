@@ -2,8 +2,10 @@ name: mash
 channels:
   - conda-forge
   - bioconda
+  - nodefaults
 dependencies:
   - python>=3.8
+  - git
   - pip
   - pip:
     - gdcmash
@@ -14,3 +16,5 @@ dependencies:
   - scikit-learn
   - pandas-plink
   - tqdm
+  - pip:
+    - git+https://github.com/UMN-GDC/MASH.git
