@@ -113,3 +113,4 @@ data/toyData/toy_GSA*
 qc.sif
 *.err
 *.out
+.DS_Store
