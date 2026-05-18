@@ -289,15 +289,10 @@ rule run_snpHerit:
         mem_mb=4000,
         runtime=420,
     input:
-        config.get("snpHerit", {}).get("out"),
         lambda wildcards: (
-            expand(
-                OUT_DIR
-                / "{subset}"
-                / "03-snpHeritability"
-                / "mash_output.csv",
-                subset=["full"],
-            )
+            [
+                rules.estimateSnpHeritability.output.estimates,
+            ]
             if config.get("snpHerit", {}).get("pheno")
             else []
         ),
@@ -308,11 +303,6 @@ rule run_snpHerit:
                 Path(f"{config.get('snpHerit', {}).get('grm_prefix')}.grm.N.bin"),
             ]
             if config.get("snpHerit", {}).get("grm_prefix")
-            else []
-        ),
-        lambda wildcards: (
-            config.get("snpHerit", {}).get("eigenvec")
-            if config.get("snpHerit", {}).get("eigenvec")
             else []
         ),
 
