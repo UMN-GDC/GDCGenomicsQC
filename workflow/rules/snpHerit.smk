@@ -85,24 +85,18 @@ if SNP_HERIT_ACTIVE:
                 "fid_col": params.fid_col,
             }
 
-            if "covar" in input:
-                covar_val = input.covar
-                if isinstance(covar_val, list):
-                    mash_config["covar"] = [str(f) for f in covar_val]
+            covar_from_config = SNP_HERIT_CONFIG.get("covar")
+            if covar_from_config:
+                if isinstance(covar_from_config, list):
+                    mash_config["covar"] = [str(f) for f in covar_from_config]
                 else:
-                    mash_config["covar"] = str(covar_val)
+                    mash_config["covar"] = str(covar_from_config)
 
             if params.pca_input:
-                pca_path = str(params.pca_input)
-                if pca_path.endswith(".RDS"):
-                    mash_config["PC"] = pca_path
-                elif pca_path.endswith(".eigenvec") or pca_path.endswith(".eigenvec.txt"):
-                    mash_config["PC"] = pca_path
+                mash_config["PC"] = str(params.pca_input)
 
-            if params.qcovar:
-                mash_config["qcovar"] = params.qcovar
-            if params.covar_discrete:
-                mash_config["covar_discrete"] = params.covar_discrete
+            mash_config["qcovar"] = params.qcovar
+            mash_config["covar_discrete"] = params.covar_discrete
             if params.pheno_filter:
                 mash_config["pheno_filter"] = params.pheno_filter
             if params.covar_filter:
