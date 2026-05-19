@@ -7,8 +7,6 @@ dependencies:
   - python>=3.8
   - git
   - pip
-  - pip:
-    - gdcmash
   - numpy
   - pandas
   - scipy
@@ -16,5 +14,7 @@ dependencies:
   - scikit-learn
   - pandas-plink
   - tqdm
+  - gcta
   - pip:
+    - gdcmash
     - git+https://github.com/UMN-GDC/MASH.git
