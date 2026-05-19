@@ -16,5 +16,4 @@ dependencies:
   - tqdm
   - gcta
   - pip:
-    - gdcmash
     - git+https://github.com/UMN-GDC/MASH.git
