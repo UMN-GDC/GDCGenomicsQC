@@ -7,6 +7,5 @@
 module use /scratch.global/GDC/GDCGenomicsQC/envs
 module load gdcgenomicsSandbox
 
-#gdcgenomicsqc --until run_classifyAncestry --configfile ../config/sandboxABCD.yaml 
-#gdcgenomicsqc --until run_ancestryQC --configfile ../config/sandboxABCD.yaml 
-gdcgenomicsqc --until run_PCAinternal --configfile ../config/sandboxABCD.yaml
+gdcgenomicsqc --until run_snpHerit --configfile ../config/sandboxABCD.yaml
+# gdcgenomicsqc --until run_classifyAncestry --configfile ../config/sandboxABCD.yaml

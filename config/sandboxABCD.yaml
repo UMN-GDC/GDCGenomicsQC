@@ -1,5 +1,6 @@
 # Project-wide paths
-INPUT: "/home/ood-coffm049/abcdGenBackup/merged_chroms.bed"
+# INPUT: "/scratch.global/GDC/abcdGenBackup/merged_chroms.bed"
+INPUT: "/shared/release/abcd/abcd/concatenated/genetics/genotype_microarray/smokescreen/merged_chroms.bed"
 OUT_DIR: "/scratch.global/GDC/r25outputs/ABCD"
 REF: "/scratch.global/GDC/referenceData"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
@@ -30,6 +31,12 @@ thin: false
 
 # SNP Heritability Estimation
 snpHerit:
+
+    #"/shared/archive_release/abcd/dairc/rawdata/phenotype/nc_y_nihtb.tsv"
+    #"/shared/archive_release/abcd/dairc/rawdata/phenotype/mr_y_smri__vol__aseg.tsv"
+    #"/shared/archive_release/abcd/dairc/rawdata/phenotype/ab_p_demo.tsv"
+    #"/shared/archive_release/abcd/dairc/rawdata/phenotype/ab_g_stc.tsv"
+    
     # For estimating heritability on "full" subset (all samples), use:
     # - internalPCA method: "plink2" (recommended) or "both"
     # - GRM will come from PCAIR if method includes "pcair"
@@ -52,8 +59,8 @@ snpHerit:
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID
     pheno: 
-      - "/scratch.global/GDC/abcdData/mr_y_smri__vol__aseg.tsv"
       - "/scratch.global/GDC/abcdData/nc_y_nihtb.tsv"
+      - "/scratch.global/GDC/abcdData/mr_y_smri__vol__aseg.tsv"
     
     # Path to covariate file(s) (required when pheno is specified)
     # Can be a single file path or list for multiple files
@@ -70,7 +77,7 @@ snpHerit:
 
     # Number of principal components to use as covariates
     # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
-    npc: 2
+    npc: 10
 
     # Phenotype column(s) to analyze
     # Integer or array: 1 = third column (after FID, IID)
@@ -93,13 +100,13 @@ snpHerit:
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
-    qcovar: null
-    #- "ab_p_demo_age"
+    qcovar:
+      - "ab_p_demo_age"
 
     # Discrete/categorical covariate column names (passed via --covar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with <35 unique values)
-    covar_discrete: null
-    #- "ab_g_stc__cohort_sex"
+    covar_discrete:
+      - "ab_g_stc__cohort_sex"
     # Column name to use as random effect (for AdjHE with site effects)
     RV: null
 
@@ -115,7 +122,7 @@ snpHerit:
     Naive: false
 
     # Filter phenotype data (e.g., "age>30", "sex==1")
-    pheno_filter: null
+    pheno_filter: "session_id==ses-00A"
 
     # Filter covariate data (e.g., "site==1", "age>=18")
     covar_filter: "session_id==ses-00A"
