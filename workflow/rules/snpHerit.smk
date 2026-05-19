@@ -80,6 +80,8 @@ if SNP_HERIT_ACTIVE:
     rule estimateSnpHeritability:
         log:
             str(Path(str(SNP_HERIT_CONFIG["out"]).replace(".csv", ".log")).resolve()),
+        conda:
+            "../../envs/mash.yml"
         container:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
         threads: 8
