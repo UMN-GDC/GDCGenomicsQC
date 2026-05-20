@@ -40,7 +40,7 @@ if not INPUT_IS_PER_CHROMOSOME:
                 shell("""
                     mkdir -p {output.tempDir}
 
-                    awk 'NR>1 {{print "chr"$1, $2-1, $2, $3}}' {params.input_prefix}.pvar > {output.tempDir}/study_pos.bed
+                    awk '$1 !~ /^#/ {{print "chr"$1, $2-1, $2, $3}}' {params.input_prefix}.pvar > {output.tempDir}/study_pos.bed
 
                     CrossMap bed {params.chain} {output.tempDir}/study_pos.bed {output.tempDir}/study_hg38
 
@@ -53,6 +53,6 @@ if not INPUT_IS_PER_CHROMOSOME:
                     plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --make-pgen --out {params.output_prefix}
                 """)
             shell("""
-                awk 'NR>1 {{print $2}}' {params.input_prefix}.ldpruned.pvar > {output.tempDir}/ldpruned_vars.txt
+                awk '$1 !~ /^#/ {{print $2}}' {params.input_prefix}.ldpruned.pvar > {output.tempDir}/ldpruned_vars.txt
                 plink2 --pfile {params.output_prefix} --extract {output.tempDir}/ldpruned_vars.txt --make-pgen --out {params.output_prefix}.ldpruned
             """)
