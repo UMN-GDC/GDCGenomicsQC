@@ -44,7 +44,7 @@ if not INPUT_IS_PER_CHROMOSOME:
 
                     awk '{{print $1, $4-1, $4, $2}}' {output.tempDir}/study.bim > {output.tempDir}/study_pos.bed
 
-                    CrossMap.py bed {params.chain} {output.tempDir}/study_pos.bed {output.tempDir}/study_hg38
+                    CrossMap bed {params.chain} {output.tempDir}/study_pos.bed {output.tempDir}/study_hg38
 
                     awk '{{print $4}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/lifted_snps.txt
                     awk '{{print $4, $3}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_pos.txt
