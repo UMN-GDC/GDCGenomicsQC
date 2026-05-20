@@ -27,8 +27,8 @@ if not INPUT_IS_PER_CHROMOSOME:
             LDpsam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.psam",
             tempDir=temp(directory(OUT_DIR / "{subset}" / "intermediates" / "crossmap")),
         params:
-            input_prefix=OUT_DIR / "{subset}" / "f1",
-            output_prefix=OUT_DIR / "{subset}" / "f1.b38",
+            input_prefix=lambda wildcards: OUT_DIR / wildcards.subset / "f1",
+            output_prefix=lambda wildcards: OUT_DIR / wildcards.subset / "f1.b38",
             chain=ancient(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
         run:
             if BUILD == "GRCh38":
