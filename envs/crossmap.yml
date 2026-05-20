@@ -1,12 +1,9 @@
 name: crossmap
 channels:
   - conda-forge
+  - bioconda
   - nodefaults
 dependencies:
-  - python=3.11
-  - plink
+  - python>=3.8
   - plink2
-  - pip
-  - pip:
-    - crossmap==0.7.3
-prefix: /projects/standard/gdc/public/envs/crossmap
+  - crossmap
