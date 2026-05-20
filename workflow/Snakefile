@@ -76,8 +76,8 @@ rule all:
             if not has_provided_ancestry() else []
         ),
         lambda wildcards: (
-            [OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
-             expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES)]
+            [OUT_DIR / "02-localAncestry" / "ancestry_full.txt"] +
+            expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES)
             if (not has_provided_ancestry() and uses_rfmix()) else []
         ),
         lambda wildcards: (
