@@ -8,4 +8,5 @@ module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 
 gdcgenomicsqc --until run_classifyAncestry --configfile ../config/sandboxABCD.yaml
-#gdcgenomicsqc --until run_snpHerit --configfile ../config/sandboxABCD2.yaml
+gdcgenomicsqc --until run_ancestryQC --configfile ../config/sandboxABCD.yaml
+gdcgenomicsqc --until run_snpHerit --configfile ../config/sandboxABCD.yaml

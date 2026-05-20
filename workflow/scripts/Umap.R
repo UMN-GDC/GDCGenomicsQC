@@ -47,7 +47,7 @@ mod <- pcs |>
     # n_threads = 1,
     # n_components = 2,
     # n_neighbors = 50, ret_mod = T)
-studyUmap <- pcs |>
+studyUmap <- samplePCs |>
   select(starts_with("PC")) |>
   scale() |>
   as.data.frame() |>
@@ -56,15 +56,17 @@ studyUmap <- pcs |>
 
 mod$embedding |>
   magrittr::set_colnames(paste("UMAP", 1:args$ncoords, sep = "")) |>
-  cbind(pcs[,c("#IID")]) |>
-  relocate(`#IID`) |>
+  as.data.frame() |>
+  mutate(IID = pcs[,c(`#IID`)]) |>
+  relocate(IID) |>
   data.table::fwrite(file = paste0(args$out, "_ref.csv"),
          row.names = FALSE)
 print(paste0("UMAP coordinates saved to ", args$out))
 
 studyUmap |>
   magrittr::set_colnames(paste("UMAP", 1:args$ncoords, sep = "")) |>
-  cbind(samplePCs[, c("#IID")]) |>
-  relocate(`#IID`) |>
+  as.data.frame() |>
+  mutate(IID = samplePCs[, c(IID)]) |> 
+  relocate(IID) |>
   data.table::fwrite(file = paste0(args$out, "_sample.csv"),
          row.names = FALSE)

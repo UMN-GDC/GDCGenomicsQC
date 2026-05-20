@@ -36,6 +36,8 @@ rule runPcaOnReferencePanel:
         # Filter pruned ref panel to shared SNPs and LDprune
         plink2 --pfile {params.input_prefix} --write-snplist \
             --maf 0.05 \
+            --chr 1-22 \
+            --allow-extra-chr \
             --threads {threads} \
             --out {params.dir}/intermediates/study_snps
         
@@ -52,6 +54,8 @@ rule runPcaOnReferencePanel:
         
         echo "Project sample onto the reference PCs."
         plink2 --pfile {params.input_prefix} \
+               --chr 1-22 \
+               --allow-extra-chr \
                --read-freq {params.dir}/ref.acount \
                --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
                --score-col-nums 6-15 \
