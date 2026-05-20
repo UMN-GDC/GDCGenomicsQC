@@ -122,6 +122,7 @@ internalPCA:
     phenotype_file: null
 
 ancestry:
+    build: "GRCh38"
     threshold: 0.8
     model: "pca"
     ancestry_file: "/projects/standard/gdc/public/toyData/allSubjects_hg38.popu"

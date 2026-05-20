@@ -93,6 +93,14 @@ ancestry:
       type: str
       default: "pca"
       enum: ["pca", "umap", "vae", "rfmix"]
+    build:
+      type: str
+      default: "GRCh38"
+      enum: ["GRCh38", "GRCh37", "hg19"]
+      description: |
+        Genome build of the input study data.
+        If not GRCh38, the study data is lifted over to GRCh38 via CrossMap.
+        Supported conversions: GRCh37, hg19 → GRCh38.
     ancestry_file:
       type: str
       nullable: true

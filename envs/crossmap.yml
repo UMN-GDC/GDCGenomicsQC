@@ -3,10 +3,10 @@ channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - python=3.10
+  - python=3.11
   - plink
   - plink2
   - pip
   - pip:
-    - crossmap
+    - crossmap==0.7.3
 prefix: /projects/standard/gdc/public/envs/crossmap
