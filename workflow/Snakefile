@@ -199,7 +199,7 @@ rule run_ancestryQC:
         ),
         lambda wildcards: (
             expand(
-                OUT_DIR / "{ANCESTRY}" / "f1.f2_{CHR}.pgen",
+                OUT_DIR / "{ANCESTRY}" / "f1.b38.f2_{CHR}.pgen",
                 ANCESTRY=get_ancestries(wildcards),
                 CHR=CHROMOSOMES,
             )

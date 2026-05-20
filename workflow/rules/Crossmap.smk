@@ -16,11 +16,15 @@ if not INPUT_IS_PER_CHROMOSOME:
             pgen=OUT_DIR / "{subset}" / "f1.pgen",
             pvar=OUT_DIR / "{subset}" / "f1.pvar",
             psam=OUT_DIR / "{subset}" / "f1.psam",
+            LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
             chain=ancient(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
         output:
             pgen=OUT_DIR / "{subset}" / "f1.b38.pgen",
             pvar=OUT_DIR / "{subset}" / "f1.b38.pvar",
             psam=OUT_DIR / "{subset}" / "f1.b38.psam",
+            LDpgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.psam",
             tempDir=temp(directory(OUT_DIR / "{subset}" / "intermediates" / "crossmap")),
         params:
             input_prefix=OUT_DIR / "{subset}" / "f1",
@@ -29,6 +33,7 @@ if not INPUT_IS_PER_CHROMOSOME:
         run:
             if BUILD == "GRCh38":
                 shell("""
+                    mkdir -p {output.tempDir}
                     plink2 --pfile {params.input_prefix} \
                            --make-pgen \
                            --out {params.output_prefix}
@@ -51,3 +56,7 @@ if not INPUT_IS_PER_CHROMOSOME:
                     plink2 --bfile {output.tempDir}/step1 --update-map {output.tempDir}/new_pos.txt --make-bed --out {output.tempDir}/step2
                     plink2 --bfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --make-pgen --out {params.output_prefix}
                 """)
+            shell("""
+                awk 'NR>1 {{print $2}}' {params.input_prefix}.ldpruned.pvar > {output.tempDir}/ldpruned_vars.txt
+                plink2 --pfile {params.output_prefix} --extract {output.tempDir}/ldpruned_vars.txt --make-pgen --out {params.output_prefix}.ldpruned
+            """)
