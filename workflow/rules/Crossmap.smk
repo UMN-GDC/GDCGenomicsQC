@@ -40,19 +40,17 @@ if not INPUT_IS_PER_CHROMOSOME:
                 shell("""
                     mkdir -p {output.tempDir}
 
-                    plink2 --pfile {params.input_prefix} --make-bed --out {output.tempDir}/study
-
-                    awk '{{print $1, $4-1, $4, $2}}' {output.tempDir}/study.bim > {output.tempDir}/study_pos.bed
+                    awk 'NR>1 {{print "chr"$1, $2-1, $2, $3}}' {params.input_prefix}.pvar > {output.tempDir}/study_pos.bed
 
                     CrossMap bed {params.chain} {output.tempDir}/study_pos.bed {output.tempDir}/study_hg38
 
                     awk '{{print $4}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/lifted_snps.txt
                     awk '{{print $4, $3}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_pos.txt
-                    awk '{{print $4, $1}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_chr.txt
+                    awk '{{gsub(/^chr/,"",$1); print $4, $1}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_chr.txt
 
-                    plink2 --bfile {output.tempDir}/study --extract {output.tempDir}/lifted_snps.txt --make-bed --out {output.tempDir}/step1
-                    plink2 --bfile {output.tempDir}/step1 --update-map {output.tempDir}/new_pos.txt --make-bed --out {output.tempDir}/step2
-                    plink2 --bfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --make-pgen --out {params.output_prefix}
+                    plink2 --pfile {params.input_prefix} --extract {output.tempDir}/lifted_snps.txt --make-pgen --out {output.tempDir}/step1
+                    plink2 --pfile {output.tempDir}/step1 --update-map {output.tempDir}/new_pos.txt --make-pgen --out {output.tempDir}/step2
+                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --make-pgen --out {params.output_prefix}
                 """)
             shell("""
                 awk 'NR>1 {{print $2}}' {params.input_prefix}.ldpruned.pvar > {output.tempDir}/ldpruned_vars.txt
