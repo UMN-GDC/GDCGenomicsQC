@@ -158,7 +158,7 @@ internalPCA:
     phenotype_file: null
 
 ancestry:
-    build: "GRCh38"
+    build: "GRCh37"
     threshold: 0.8
     model: "pca"
     ancestry_file: null
