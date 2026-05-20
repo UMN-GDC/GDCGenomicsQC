@@ -5,7 +5,7 @@
 #SBATCH --mem=32G
 #SBATCH --time=2880
 
-module use /scratch.global/coffm049/GDCGenomicsQC/envs
+module use "$HOME/GDCGenomicsQC/envs"
 module load mashMSI
 
 mash estimate --argfile {ARGFILE}
