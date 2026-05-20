@@ -11,17 +11,17 @@ rule checkRelatednessExtractUnrelated:
         runtime=720,
     threads: 16
     input:
-        pgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
-        psam=OUT_DIR / "{subset}" / "f1.ldpruned.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.psam",
     output:
-        pgen=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.pvar",
-        psam=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.psam",
-        unrels=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated_ids.txt",
-        grm=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.grm.bin",
-        grmid=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.grm.id",
-        grmN=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.grm.N.bin",
+        pgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.psam",
+        unrels=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_ids.txt",
+        grm=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.bin",
+        grmid=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.id",
+        grmN=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
     params:
         king_cutoff=config.get("relatedness", {}).get("king_cutoff", 0.0884),
         method=config.get("relatedness", {}).get("method", "king"),
@@ -87,13 +87,13 @@ rule ldPruneUnrelated:
         mem_mb=32000,
         runtime=60,
     input:
-        pgen=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.pvar",
-        psam=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.psam",
     output:
-        pgen=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.pvar",
-        psam=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.psam",
     params:
         input_prefix=lambda wildcards, input: input.pgen[:-5],
     shell:

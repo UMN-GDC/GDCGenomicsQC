@@ -13,9 +13,9 @@ rule runPcairInternalPca:
         mem_mb=32000,
         runtime=2880,
     input:
-        pgen=OUT_DIR / "{subset}" / "f1.f2.ldpruned.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1.f2.ldpruned.pvar",
-        psam=OUT_DIR / "{subset}" / "f1.f2.ldpruned.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.psam",
     output:
         eigenvec=OUT_DIR / "{subset}" / "internal_pca.eigenvec",
         eigenval=OUT_DIR / "{subset}" / "internal_pca.eigenval",
@@ -89,9 +89,9 @@ rule runPlink2ApproximatePca:
         mem_mb=32000,
         runtime=1440,
     input:
-        pgen=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.pvar",
-        psam=OUT_DIR / "{subset}" / "f1.ldpruned.unrelated.ldpruned.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.psam",
     output:
         eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
         eigenval=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenval",

@@ -84,19 +84,19 @@ else:
             mem_mb=32000,
             runtime=60,
         input:
-            pgen=OUT_DIR / "{subset}" / "f1.pgen",
-            pvar=OUT_DIR / "{subset}" / "f1.pvar",
-            psam=OUT_DIR / "{subset}" / "f1.psam",
-            LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
-            LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
-            LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned.psam",
+            pgen=OUT_DIR / "{subset}" / "f1.b38.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1.b38.pvar",
+            psam=OUT_DIR / "{subset}" / "f1.b38.psam",
+            LDpgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.psam",
         output:
-            pgen=OUT_DIR / "{subset}" / "f1.f2.pgen",
-            pvar=OUT_DIR / "{subset}" / "f1.f2.pvar",
-            psam=OUT_DIR / "{subset}" / "f1.f2.psam",
-            LDpgen=OUT_DIR / "{subset}" / "f1.f2.ldpruned.pgen",
-            LDpvar=OUT_DIR / "{subset}" / "f1.f2.ldpruned.pvar",
-            LDpsam=OUT_DIR / "{subset}" / "f1.f2.ldpruned.psam",
+            pgen=OUT_DIR / "{subset}" / "f1.b38.f2.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1.b38.f2.pvar",
+            psam=OUT_DIR / "{subset}" / "f1.b38.f2.psam",
+            LDpgen=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.psam",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter")
             ),
@@ -127,7 +127,7 @@ else:
             bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
 
             for ext in pgen pvar psam; do
-                mv {params.output_dir}/standardFilter.$ext {params.output_dir}/f1.f2.$ext
-                mv {params.output_dir}/standardFilter.LDpruned.$ext {params.output_dir}/f1.f2.ldpruned.$ext
+                mv {params.output_dir}/standardFilter.$ext {params.output_dir}/f1.b38.f2.$ext
+                mv {params.output_dir}/standardFilter.LDpruned.$ext {params.output_dir}/f1.b38.f2.ldpruned.$ext
             done
             """

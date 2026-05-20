@@ -11,12 +11,12 @@ rule mergeChromosomesAndFilter:
         mem_mb=32000,
         runtime=240,
     output:
-        pgen=OUT_DIR / "{subset}" / "f1.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1.pvar",
-        psam=OUT_DIR / "{subset}" / "f1.psam",
-        LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
-        LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
-        LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned.psam",
+        pgen=OUT_DIR / "{subset}" / "f1.b38.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.b38.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.b38.psam",
+        LDpgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.pgen",
+        LDpvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.pvar",
+        LDpsam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.psam",
         tempDir=temp(
             directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter")
         ),

@@ -6,21 +6,21 @@ def get_input_pgen(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
         return OUT_DIR / "full" / f"f1_{get_chrom(wildcards)}.pgen"
     else:
-        return OUT_DIR / "full" / "f1.pgen"
+        return OUT_DIR / "full" / "f1.b38.pgen"
 
 
 def get_input_pvar(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
         return OUT_DIR / "full" / f"f1_{get_chrom(wildcards)}.pvar"
     else:
-        return OUT_DIR / "full" / "f1.pvar"
+        return OUT_DIR / "full" / "f1.b38.pvar"
 
 
 def get_input_psam(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
         return OUT_DIR / "full" / f"f1_{get_chrom(wildcards)}.psam"
     else:
-        return OUT_DIR / "full" / "f1.psam"
+        return OUT_DIR / "full" / "f1.b38.psam"
 
 
 rule convertPgenToVcf:
@@ -34,7 +34,7 @@ rule convertPgenToVcf:
         mem_mb=16000,
         runtime=120,
     input:
-        std=OUT_DIR / "full" / "f1.f2.pgen",
+        std=OUT_DIR / "full" / "f1.b38.f2.pgen",
         pgen=get_input_pgen,
         pvar=get_input_pvar,
         psam=get_input_psam,
