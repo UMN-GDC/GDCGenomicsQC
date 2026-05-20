@@ -46,7 +46,7 @@ rule runPcaOnReferencePanel:
                --freq counts \
                --threads {threads} \
                --extract {params.dir}/intermediates/study_snps.snplist \
-               --pca approx allele-wts vcols=chrom,ref,alt \
+               --pca allele-wts vcols=chrom,ref,alt \
                --out {params.dir}/ref \
                --allow-no-sex
         
