@@ -1,6 +1,3 @@
-BUILD = config.get("ancestry", {}).get("build", "GRCh38")
-
-
 if not INPUT_IS_PER_CHROMOSOME:
     rule crossmapStudyToB38:
         container:
@@ -31,7 +28,8 @@ if not INPUT_IS_PER_CHROMOSOME:
             output_prefix=lambda wildcards: OUT_DIR / wildcards.subset / "f1.b38",
             chain=ancient(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
         run:
-            if BUILD == "GRCh38":
+            _build = config.get("ancestry", {}).get("build", "GRCh38")
+            if _build == "GRCh38":
                 shell("""
                     mkdir -p {output.tempDir}
                     plink2 --pfile {params.input_prefix} \
