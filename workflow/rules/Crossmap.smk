@@ -53,6 +53,6 @@ if not INPUT_IS_PER_CHROMOSOME:
                     plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --make-pgen --out {params.output_prefix}
                 """)
             shell("""
-                awk '$1 !~ /^#/ {{print $2}}' {params.input_prefix}.ldpruned.pvar > {output.tempDir}/ldpruned_vars.txt
+                awk '$1 !~ /^#/ {{print $3}}' {params.input_prefix}.ldpruned.pvar > {output.tempDir}/ldpruned_vars.txt
                 plink2 --pfile {params.output_prefix} --extract {output.tempDir}/ldpruned_vars.txt --make-pgen --out {params.output_prefix}.ldpruned
             """)
