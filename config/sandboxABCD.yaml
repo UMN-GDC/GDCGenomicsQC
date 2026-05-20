@@ -1,7 +1,7 @@
 # Project-wide paths
 # INPUT: "/scratch.global/GDC/abcdGenBackup/merged_chroms.bed"
 INPUT: "/shared/release/abcd/abcd/concatenated/genetics/genotype_microarray/smokescreen/merged_chroms.bed"
-OUT_DIR: "/scratch.global/GDC/r25outputs/ABCD"
+OUT_DIR: "/scratch.global/GDC/r25outputs/abcd"
 REF: "/scratch.global/GDC/referenceData"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
 
@@ -73,11 +73,11 @@ snpHerit:
     out: "/scratch.global/GDC/abcdData/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
-    method: "AdjHE"
+    method: "AdjHE_random"
 
     # Number of principal components to use as covariates
     # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
-    npc: 10
+    npc: 20
 
     # Phenotype column(s) to analyze
     # Integer or array: 1 = third column (after FID, IID)
@@ -96,7 +96,16 @@ snpHerit:
       - "mr_y_smri__vol__aseg__ab__rh_sum"
       - "mr_y_smri__vol__aseg__whb_sum"
       - "mr_y_smri__vol__aseg__icv_sum"
-
+      - "nc_y_nihtb__picvcb__uncor_score"
+      - "nc_y_nihtb__flnkr__uncor_score"
+      - "nc_y_nihtb__lswmt__uncor_score"
+      - "nc_y_nihtb__crdst__uncor_score"
+      - "nc_y_nihtb__pttcp__uncor_score"
+      - "nc_y_nihtb__picsq__uncor_score"
+      - "nc_y_nihtb__readr__uncor_score"
+      - "nc_y_nihtb__comp__fluid__uncor_score"
+      - "nc_y_nihtb__comp__cryst__uncor_score"
+      - "nc_y_nihtb__comp__tot__uncor_score"
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)

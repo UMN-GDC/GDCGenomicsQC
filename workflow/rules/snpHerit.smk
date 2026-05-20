@@ -4,7 +4,7 @@ SNP_HERIT_ACTIVE = bool(SNP_HERIT_CONFIG.get("pheno"))
 if SNP_HERIT_CONFIG:
     if SNP_HERIT_CONFIG.get("covar") and not SNP_HERIT_CONFIG.get("pheno"):
         raise ValueError("snpHerit.pheno must be specified in config when covar is specified")
-    valid_methods = ["AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
+    valid_methods = ["AdjHE", "AdjHE_fixed", "AdjHE_mixed", "AdjHE_random", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
     method = SNP_HERIT_CONFIG.get("method", "AdjHE")
     if method not in valid_methods:
         raise ValueError(f"snpHerit.method must be one of {valid_methods}")

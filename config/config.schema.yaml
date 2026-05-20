@@ -251,7 +251,7 @@ snpHerit:
     method:
       type: str
       default: "AdjHE"
-      enum: ["AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
+      enum: ["AdjHE", "AdjHE_fixed", "AdjHE_mixed", "AdjHE_random", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
     npc:
       type: int
       default: 10
