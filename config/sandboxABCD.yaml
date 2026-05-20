@@ -73,11 +73,11 @@ snpHerit:
     out: "/scratch.global/GDC/abcdData/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
-    method: "AdjHE_random"
+    method: "AdjHE_mixed"
 
     # Number of principal components to use as covariates
     # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
-    npc: 20
+    npc: [5, 15]
 
     # Phenotype column(s) to analyze
     # Integer or array: 1 = third column (after FID, IID)

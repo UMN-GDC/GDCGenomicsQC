@@ -6,7 +6,7 @@ jobs: 15
 use-singularity: true
 singularity-prefix: /scratch.global/GDC/singularityimages
 apptainer-prefix: /scratch.global/GDC/singularityimages
-singularity-args: "--bind /scratch.global,/home"
+singularity-args: "--bind /scratch.global,/home,/shared"
 software-deployment-method: [apptainer]
 latency-wait: 60
 
