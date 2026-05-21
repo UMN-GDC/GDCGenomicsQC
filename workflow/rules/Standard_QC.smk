@@ -122,9 +122,9 @@ else:
               plink2 --pfile {params.input_prefix} --remove {params.output_dir}/sex_discrepancy.txt --make-pgen --out {output.tempDir}/pastSex --threads {threads}
             else
               echo "Ignoring Sex check"
-              mv {input.LDpgen} {output.tempDir}/pastSex.pgen
-              mv {input.LDpvar} {output.tempDir}/pastSex.pvar
-              mv {input.LDpsam} {output.tempDir}/pastSex.psam
+              cp {input.LDpgen} {output.tempDir}/pastSex.pgen
+              cp {input.LDpvar} {output.tempDir}/pastSex.pvar
+              cp {input.LDpsam} {output.tempDir}/pastSex.psam
             fi
             bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
 
