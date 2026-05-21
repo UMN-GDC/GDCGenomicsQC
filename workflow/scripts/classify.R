@@ -41,12 +41,10 @@ model <- args$model
 predicted_col <- paste0(model, "_predicted")
 confidence_col <- paste0(model, "_confidence")
 
-unique_ancestries <- result |>
-    filter(.data[[confidence_col]] >= args$threshold) |>
-    pull(predicted_col) |>
-    unique()
+prob_cols <- prob_df |> select(starts_with(paste0(model, "_"))) |> colnames()
+all_ancestries <- gsub(paste0(model, "_"), "", prob_cols)
 
-for (anc in unique_ancestries) {
+for (anc in all_ancestries) {
     result |>
         filter(.data[[predicted_col]] == anc, .data[[confidence_col]] >= args$threshold) |>
         select(IID) |>
