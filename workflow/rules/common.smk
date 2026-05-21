@@ -12,7 +12,7 @@ SOFTWARE_MODULES = config.get("software-modules", {})
 
 def mod(*tools):
     """Get env module names for given tools from config, filtering out undefined ones."""
-    return [SOFTWARE_MODULES[t] for t in tools if t in SOFTWARE_MODULES]
+    return [SOFTWARE_MODULES[t] for t in tools if SOFTWARE_MODULES.get(t)]
 
 
 def has_provided_ancestry():
