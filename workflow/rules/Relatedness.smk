@@ -101,6 +101,6 @@ rule ldPruneUnrelated:
     shell:
         """
         echo "LD pruning unrelated samples"
-        plink2 --pfile {params.input_prefix} --indep-pairwise 50 5 0.2 --out {params.input_prefix}_indep --threads {threads}
+        plink2 --pfile {params.input_prefix} --allow-extra-chr --chr 1-22 --indep-pairwise 50 5 0.2 --out {params.input_prefix}_indep --threads {threads}
         plink2 --pfile {params.input_prefix} --extract {params.input_prefix}_indep.prune.in --make-pgen --out {params.input_prefix}.ldpruned --threads {threads}
         """
