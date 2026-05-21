@@ -83,13 +83,13 @@ fi
 CMD=""
 
 if [ "$FORMAT" = "vcf" ]; then
-    CMD="plink2 --vcf $CHROM_INPUT --make-pgen --rm-dup force-first --snps-only 'just-acgt' --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --vcf $CHROM_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
 elif [ "$FORMAT" = "bed" ]; then
     BED_PREFIX=${{CHROM_INPUT%.bed}}
-    CMD="plink2 --bfile $BED_PREFIX --make-pgen --rm-dup force-first --snps-only 'just-acgt' --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --bfile $BED_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
 elif [ "$FORMAT" = "pgen" ]; then
     PGEN_PREFIX=${{CHROM_INPUT%.pgen}}
-    CMD="plink2 --pfile $PGEN_PREFIX --make-pgen --rm-dup force-first --snps-only 'just-acgt' --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --pfile $PGEN_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
 else
     echo "Unknown format: $FORMAT"
     exit 1
@@ -195,11 +195,11 @@ if not INPUT_IS_PER_CHROMOSOME:
             echo "Input is a single file: $SINGLE_INPUT"
 
             if [ "$FORMAT" = "bed" ]; then
-                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only 'just-acgt' --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             elif [ "$FORMAT" = "vcf" ]; then
-                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only 'just-acgt' --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             else
-                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only 'just-acgt' --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             fi
 
             plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta} --ref-from-fa force --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
