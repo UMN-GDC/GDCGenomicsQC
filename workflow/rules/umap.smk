@@ -5,8 +5,7 @@ rule applyUmapDimensionalityReduction:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        lambda wildcards: [config["R_module"]] if config.get("R_module") else []
+    envmodules: lambda wildcards: [config["R_module"]] if config.get("R_module") else []
     threads: 8
     resources:
         nodes=1,

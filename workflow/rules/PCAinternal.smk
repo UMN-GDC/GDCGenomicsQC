@@ -7,8 +7,7 @@ rule runPcairInternalPca:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        lambda wildcards: [m for m in [config.get("plink_module"), config.get("R_module")] if m]
+    envmodules: lambda wildcards: [m for m in [config.get("plink_module"), config.get("R_module")] if m]
     threads: 8
     resources:
         nodes=1,
@@ -75,8 +74,7 @@ rule runPlink2ApproximatePca:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
+    envmodules: lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
     threads: 8
     resources:
         nodes=1,
@@ -124,8 +122,7 @@ rule plot_pcair_pcs:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        lambda wildcards: [config["R_module"]] if config.get("R_module") else []
+    envmodules: lambda wildcards: [config["R_module"]] if config.get("R_module") else []
     threads: 1
     resources:
         nodes=1,

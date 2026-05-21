@@ -36,8 +36,7 @@ rule convertPlinkPerChromosome:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
+    envmodules: lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
     threads: 4
     resources:
         nodes=1,
@@ -156,8 +155,7 @@ if not INPUT_IS_PER_CHROMOSOME:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
-        envmodules:
-            lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
+        envmodules: lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
         threads: 8
         resources:
             nodes=1,
