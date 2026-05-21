@@ -206,8 +206,8 @@ plot_posterior_stacked_area <- function(prob_results, out_dir) {
         n_subjects <- length(unique(prob_model$IID))
 
         p <- prob_model |>
-            ggplot(aes(x = IID, y = value, fill = ancestry, group = ancestry)) +
-            geom_area(position = "stack") +
+            ggplot(aes(x = IID, y = value, fill = ancestry)) +
+            geom_col(position = "stack", width = 1) +
             theme_minimal() +
             theme(
                 legend.position = "right",
