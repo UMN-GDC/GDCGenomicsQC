@@ -91,10 +91,19 @@ rule all:
                 CHR=CHROMOSOMES,
             )
         ),
-        expand(
-            OUT_DIR / "{ANC}" / "f1.b38.f2.pgen", ANC=get_provided_ancestries()
-        ) if has_provided_ancestry() else (
-            expand(OUT_DIR / "full" / "f1.b38.f2.pgen")
+        lambda wildcards: (
+            expand(
+                OUT_DIR / "{ANC}" / "f1.f2_{CHR}.pgen",
+                ANC=get_provided_ancestries(), CHR=CHROMOSOMES,
+            )
+            if (has_provided_ancestry() and INPUT_IS_PER_CHROMOSOME)
+            else expand(
+                OUT_DIR / "{ANC}" / "f1.b38.f2.pgen", ANC=get_provided_ancestries()
+            ) if has_provided_ancestry() else (
+                expand(OUT_DIR / "full" / "f1.f2_{CHR}.pgen", CHR=CHROMOSOMES)
+                if INPUT_IS_PER_CHROMOSOME
+                else expand(OUT_DIR / "full" / "f1.b38.f2.pgen")
+            )
         ),
 
 
@@ -134,7 +143,11 @@ rule run_initialQC:
             if "{CHR}" in config.get("INPUT", "")
             else [OUT_DIR / "full" / "f1.pgen"]
         ),
-        OUT_DIR / "full" / "f1.b38.f2.pgen",
+        lambda wildcards: (
+            expand(OUT_DIR / "full" / "f1.f2_{CHR}.pgen", CHR=CHROMOSOMES)
+            if "{CHR}" in config.get("INPUT", "")
+            else [OUT_DIR / "full" / "f1.b38.f2.pgen"]
+        ),
         OUT_DIR / "full" / "figures" / "smiss.svg",
         OUT_DIR / "full" / "figures" / "vmiss.svg",
 
@@ -199,7 +212,7 @@ rule run_ancestryQC:
         ),
         lambda wildcards: (
             expand(
-                OUT_DIR / "{ANCESTRY}" / "f1.b38.f2_{CHR}.pgen",
+                OUT_DIR / "{ANCESTRY}" / "f1.f2_{CHR}.pgen",
                 ANCESTRY=get_ancestries(wildcards),
                 CHR=CHROMOSOMES,
             )
