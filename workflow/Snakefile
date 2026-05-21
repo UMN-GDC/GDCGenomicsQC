@@ -56,6 +56,7 @@ include: "rules/umap.smk"
 include: "rules/classifyAncestry.smk"
 include: "rules/RFMIX.smk"
 include: "rules/plotKaryotypeAncestry.smk"
+include: "rules/plotQC.smk"
 if config.get("phenotypeSimulation", {}).get("enabled", False):
     include: "rules/simulatePhenotype2.smk"
 include: "rules/snpHerit.smk"
@@ -246,6 +247,39 @@ rule run_rfmix:
             expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES)
         ) if uses_rfmix() else [],
         ancestry=lambda wildcards: [OUT_DIR / "02-localAncestry" / "ancestry_full.txt"] if uses_rfmix() else [],
+
+
+rule run_qcPlots:
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=60,
+    input:
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "smiss.svg",
+             OUT_DIR / "full" / "figures" / "vmiss.svg"]
+            if not input_is_per_chromosome() else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "hwe_histogram.svg"]
+            if not input_is_per_chromosome() else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "het_distribution.svg"]
+            if not input_is_per_chromosome() else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "relatedness_histogram.svg"]
+            if not input_is_per_chromosome() else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "pcair_pcs.svg"]
+            if config.get("internalPCA", {}).get("method", "plink2") in ["pcair", "both"]
+            else []
+        ),
+        OUT_DIR / "01-globalAncestry" / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
+        OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
 
 
 rule run_simulatePhenotype:
