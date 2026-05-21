@@ -70,6 +70,7 @@ rule phaseWithShapeit:
         runtime=1320,
     input:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
+        ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
         gmap=ancient(REF / "gmaps" / "hg38map.chr{CHR}.txt"),
     output:
         vcf=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf"),
@@ -90,6 +91,7 @@ rule phaseWithShapeit:
           shapeit4 \
               --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
               --map {input.gmap} \
+              --reference {input.ref} \
               --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
@@ -99,6 +101,7 @@ rule phaseWithShapeit:
           shapeit4 \
               --input {input.vcf} \
               --map {input.gmap} \
+              --reference {input.ref} \
               --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
