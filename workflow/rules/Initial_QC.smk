@@ -10,7 +10,7 @@ rule mergeChromosomesAndFilter:
     threads: 8
     resources:
         nodes=1,
-        mem_mb=32000,
+        mem_mb=128000,
         runtime=240,
     output:
         pgen=OUT_DIR / "{subset}" / "f1.pgen",

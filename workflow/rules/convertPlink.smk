@@ -154,20 +154,20 @@ if not INPUT_IS_PER_CHROMOSOME:
             OUT_DIR / "logs" / "convertPlinkSingleFile_{subset}.log",
         container:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda:
-        "../../envs/ancNreport.yml"
-    envmodules:
-        mod("plink2")
-    threads: 8
-    resources:
-        nodes=1,
-        mem_mb=64000,
-        runtime=480,
-    output:
-        pgen=OUT_DIR / "{subset}" / "f1.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1.pvar",
-        psam=OUT_DIR / "{subset}" / "f1.psam",
-        LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
+        conda:
+            "../../envs/ancNreport.yml"
+        envmodules:
+            mod("plink2")
+        threads: 8
+        resources:
+            nodes=1,
+            mem_mb=64000,
+            runtime=480,
+        output:
+            pgen=OUT_DIR / "{subset}" / "f1.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1.pvar",
+            psam=OUT_DIR / "{subset}" / "f1.psam",
+            LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
             LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
             LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned.psam",
             tempDir=temp(
