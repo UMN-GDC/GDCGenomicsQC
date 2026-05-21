@@ -51,7 +51,7 @@ rule convertPgenToVcf:
         chrom=get_chrom,
     shell:
         """
-        plink2 --pfile {params.input_prefix} --chr {params.chrom} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
+        plink2 --pfile {params.input_prefix} --chr {params.chrom} --allow-extra-chr --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
         """
 
