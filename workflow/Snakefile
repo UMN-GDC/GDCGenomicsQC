@@ -245,6 +245,7 @@ rule run_rfmix:
             expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=LOCAL_ANCESTRY_CHROMOSOMES) +
             expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES)
         ) if uses_rfmix() else [],
+        ancestry=lambda wildcards: [OUT_DIR / "02-localAncestry" / "ancestry_full.txt"] if uses_rfmix() else [],
 
 
 rule run_simulatePhenotype:
