@@ -5,8 +5,7 @@ rule runPcaOnReferencePanel:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        mod("plink2")
+    envmodules: use("plink_module")
     threads: 8
     resources:
         nodes=1,

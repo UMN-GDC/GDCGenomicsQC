@@ -210,12 +210,11 @@ prsMethods:
   multi_sdprs:
     enabled: false
 
-# Software modules used by env-modules deployment (from profiles/hpc)
-software-modules:
-    plink2: "plink/2.00-alpha-091019"
-    bcftools: "bcftools/1.2"
-    shapeit: "shapeit/4.2.2"
-    rfmix: "rfmix/09599c1"
-    samtools: "samtools/1.21"
-    R: null           # Not defined in HPC profile — falls back to conda
-    crossmap: null    # Not defined in HPC profile — falls back to conda
+# Environment module names for HPC env-modules deployment.
+plink_module: "plink/2.00-alpha-091019"
+bcftools_module: "bcftools/1.2"
+shapeit_module: "shapeit/4.2.2"
+rfmix_module: "rfmix/09599c1"
+samtools_module: "samtools/1.21"
+R_module: null
+crossmap_module: null

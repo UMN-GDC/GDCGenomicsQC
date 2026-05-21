@@ -337,14 +337,12 @@ thin: false
 # Environment Modules (HPC env-modules deployment)
 # =============================================================================
 # Module names for Snakemake's env-modules deployment method.
-# Used when the profile has software-deployment-method: [env-modules, ...]
-# Leave null to fall back to apptainer/conda.
-# Example values are typical HPC module names — adjust for your system.
-software-modules:
-    plink2: null      # e.g., "plink/2.00-alpha-091019"
-    bcftools: null    # e.g., "bcftools/1.2"
-    shapeit: null     # e.g., "shapeit/4.2.2"
-    rfmix: null       # e.g., "rfmix/09599c1"
-    R: null           # e.g., "R/4.2.0"
-    samtools: null    # e.g., "samtools/1.21"
-    crossmap: null    # e.g., "CrossMap/0.6.5"
+# Rules use: envmodules: use("plink_module", "R_module")
+# Returns [name] for set modules, [] for null — falls through to container/conda.
+plink_module: null      # e.g., "plink2/2.00alpha"
+bcftools_module: null   # e.g., "bcftools/1.2"
+shapeit_module: null    # e.g., "shapeit/4.2.2"
+rfmix_module: null      # e.g., "rfmix/09599c1"
+R_module: null          # e.g., "R/4.2.0"
+samtools_module: null   # e.g., "samtools/1.21"
+crossmap_module: null   # e.g., "CrossMap/0.6.5"

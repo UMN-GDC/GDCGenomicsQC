@@ -6,8 +6,7 @@ if not INPUT_IS_PER_CHROMOSOME:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
-        envmodules:
-            mod("R")
+        envmodules: use("R_module")
         threads: 1
         resources:
             nodes=1,

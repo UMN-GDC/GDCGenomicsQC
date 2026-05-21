@@ -7,12 +7,13 @@ ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 LOCAL_ANCESTRY_CHROMOSOMES = config.get("localAncestry", {}).get("chromosomes") or CHROMOSOMES
 INPUT_IS_PER_CHROMOSOME = "{CHR}" in config.get("INPUT", "")
-SOFTWARE_MODULES = config.get("software-modules", {})
 
 
-def mod(*tools):
-    """Get env module names for given tools from config, filtering out undefined ones."""
-    return [SOFTWARE_MODULES[t] for t in tools if SOFTWARE_MODULES.get(t)]
+def use(*module_keys):
+    """Return a lambda that resolves env module names from config keys.
+    Pass config key names like 'plink_module', 'R_module', etc.
+    Returns [name] for set modules, [] for null/missing — falls through to container/conda."""
+    return lambda wc: [config[k] for k in module_keys if config.get(k)]
 
 
 def has_provided_ancestry():

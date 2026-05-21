@@ -36,8 +36,7 @@ rule convertPlinkPerChromosome:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        mod("plink2")
+    envmodules: use("plink_module")
     threads: 4
     resources:
         nodes=1,
@@ -156,8 +155,7 @@ if not INPUT_IS_PER_CHROMOSOME:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
-        envmodules:
-            mod("plink2")
+        envmodules: use("plink_module")
         threads: 8
         resources:
             nodes=1,

@@ -5,8 +5,7 @@ rule applyUmapDimensionalityReduction:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        mod("R")
+    envmodules: use("R_module")
     threads: 8
     resources:
         nodes=1,

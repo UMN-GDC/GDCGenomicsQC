@@ -406,45 +406,35 @@ convertNfilt:
       nullable: true
       default: null
 
-software-modules:
-  type: dict
-  default: {}
-  description: |
-    Mapping of tool names to environment module names for HPC env-modules deployment.
-    Each value is the module name string as it would be passed to `module load`.
-    Used when the Snakemake profile has `software-deployment-method: [env-modules, ...]`.
-    Example:
-      plink2: "plink/2.00-alpha-091019"
-      bcftools: "bcftools/1.2"
-      shapeit: "shapeit/4.2.2"
-      rfmix: "rfmix/09599c1"
-      R: "R/4.2.0"
-  schema:
-    plink2:
-      type: str
-      nullable: true
-      default: null
-    bcftools:
-      type: str
-      nullable: true
-      default: null
-    shapeit:
-      type: str
-      nullable: true
-      default: null
-    rfmix:
-      type: str
-      nullable: true
-      default: null
-    R:
-      type: str
-      nullable: true
-      default: null
-    samtools:
-      type: str
-      nullable: true
-      default: null
-    crossmap:
-      type: str
-      nullable: true
-      default: null
+# Environment module names for HPC env-modules deployment.
+# Each value is the module name as passed to `module load`.
+# Set to null to skip env-modules and fall back to container/conda.
+plink_module:
+  type: str
+  nullable: true
+  default: null
+  description: Module name for plink2, e.g. "plink2/2.00alpha"
+bcftools_module:
+  type: str
+  nullable: true
+  default: null
+shapeit_module:
+  type: str
+  nullable: true
+  default: null
+rfmix_module:
+  type: str
+  nullable: true
+  default: null
+R_module:
+  type: str
+  nullable: true
+  default: null
+samtools_module:
+  type: str
+  nullable: true
+  default: null
+crossmap_module:
+  type: str
+  nullable: true
+  default: null

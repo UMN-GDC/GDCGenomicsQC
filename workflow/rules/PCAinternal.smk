@@ -7,8 +7,7 @@ rule runPcairInternalPca:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        mod("plink2", "R")
+    envmodules: use("plink_module", "R_module")
     threads: 8
     resources:
         nodes=1,
@@ -75,8 +74,7 @@ rule runPlink2ApproximatePca:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        mod("plink2")
+    envmodules: use("plink_module")
     threads: 8
     resources:
         nodes=1,
@@ -124,8 +122,7 @@ rule plot_pcair_pcs:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules:
-        mod("R")
+    envmodules: use("R_module")
     threads: 1
     resources:
         nodes=1,
