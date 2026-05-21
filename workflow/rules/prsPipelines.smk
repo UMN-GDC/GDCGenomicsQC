@@ -127,13 +127,13 @@ if PRS_USE_EXTERNAL:
             env=PRS_OUT_DIR / "external_prs_inputs.env",
         params:
             target_bed=PRS_EXTERNAL.get("target_bed"),
-            target_bim=lambda wildcards: PRS_EXTERNAL.get("target_bim") or PRS_EXTERNAL.get("target_bed").replace(".bed", ".bim").replace(".pgen", ".pvar"),
-            target_fam=lambda wildcards: PRS_EXTERNAL.get("target_fam") or PRS_EXTERNAL.get("target_bed").replace(".bed", ".fam").replace(".pgen", ".psam"),
+            target_bim=PRS_EXTERNAL.get("target_bim") or PRS_EXTERNAL.get("target_bed").replace(".bed", ".bim").replace(".pgen", ".pvar"),
+            target_fam=PRS_EXTERNAL.get("target_fam") or PRS_EXTERNAL.get("target_bed").replace(".bed", ".fam").replace(".pgen", ".psam"),
             target_sumstats=PRS_EXTERNAL.get("target_sumstats"),
             target_pheno=PRS_EXTERNAL.get("target_pheno"),
             anc2_bed=PRS_EXTERNAL.get("anc2_bed", None),
-            anc2_bim=lambda wildcards: PRS_EXTERNAL.get("anc2_bim") or PRS_EXTERNAL.get("anc2_bed").replace(".bed", ".bim").replace(".pgen", ".pvar") if PRS_EXTERNAL.get("anc2_bed") else None,
-            anc2_fam=lambda wildcards: PRS_EXTERNAL.get("anc2_fam") or PRS_EXTERNAL.get("anc2_bed").replace(".bed", ".fam").replace(".pgen", ".psam") if PRS_EXTERNAL.get("anc2_bed") else None,
+            anc2_bim=PRS_EXTERNAL.get("anc2_bim") or PRS_EXTERNAL.get("anc2_bed").replace(".bed", ".bim").replace(".pgen", ".pvar") if PRS_EXTERNAL.get("anc2_bed") else None,
+            anc2_fam=PRS_EXTERNAL.get("anc2_fam") or PRS_EXTERNAL.get("anc2_bed").replace(".bed", ".fam").replace(".pgen", ".psam") if PRS_EXTERNAL.get("anc2_bed") else None,
             training_sumstats=PRS_EXTERNAL.get("training_sumstats", None),
             training_pheno=PRS_EXTERNAL.get("training_pheno", None),
             pcs=PRS_EXTERNAL.get("pcs", None),
@@ -570,7 +570,7 @@ rule runAllEnabledPRS:
     """Run all PRS methods that are enabled in config."""
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        external_env=lambda wildcards: rules.prepareExternalPRSInputs.output.env if PRS_USE_EXTERNAL else [],
+        external_env=rules.prepareExternalPRSInputs.output.env if PRS_USE_EXTERNAL else [],
         single_ct_done=PRS_METHOD_RUN_DIR / "single_ct.done" if prs_method_enabled("single_ct") else [],
         single_prsice_done=PRS_METHOD_RUN_DIR / "single_prsice.done" if prs_method_enabled("single_prsice") else [],
         single_prscs_done=PRS_METHOD_RUN_DIR / "single_prscs.done" if prs_method_enabled("single_prscs") else [],

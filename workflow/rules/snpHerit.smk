@@ -13,9 +13,9 @@ if SNP_HERIT_ACTIVE:
 
     rule prepareSnpHeritArgfile:
         input:
-            pca=lambda wildcards: [SNP_HERIT_CONFIG["pca_input"]] if SNP_HERIT_CONFIG.get("pca_input") else [],
-            covar=lambda wildcards: list(SNP_HERIT_CONFIG["covar"]) if SNP_HERIT_CONFIG.get("covar") else [],
-            pheno=lambda wildcards: list(SNP_HERIT_CONFIG["pheno"]) if SNP_HERIT_CONFIG.get("pheno") else [],
+            pca=[SNP_HERIT_CONFIG["pca_input"]] if SNP_HERIT_CONFIG.get("pca_input") else [],
+            covar=list(SNP_HERIT_CONFIG["covar"]) if SNP_HERIT_CONFIG.get("covar") else [],
+            pheno=list(SNP_HERIT_CONFIG["pheno"]) if SNP_HERIT_CONFIG.get("pheno") else [],
         output:
             argfile=Path(str(SNP_HERIT_CONFIG["out"]).replace(".csv", ".json")).resolve(),
         run:
@@ -84,7 +84,7 @@ if SNP_HERIT_ACTIVE:
             "../../envs/mash.yml"
         container:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
-        envmodules: lambda wildcards: [config["R_module"]] if config.get("R_module") else []
+        envmodules: [config.get("R_module")] if config.get("R_module") else []
         threads: 8
         resources:
             nodes=1,

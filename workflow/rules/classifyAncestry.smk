@@ -6,7 +6,7 @@ checkpoint estimateGlobalAncestry:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
-    envmodules: lambda wildcards: [config["R_module"]] if config.get("R_module") else []
+    envmodules: [config.get("R_module")] if config.get("R_module") else []
     threads: 8
     resources:
         nodes=1,
@@ -18,7 +18,7 @@ checkpoint estimateGlobalAncestry:
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
         umap_sample=OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
-        rfmix_global=lambda wildcards: OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
+        rfmix_global=OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
     output:
         pos_prob=OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
         sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
@@ -53,7 +53,7 @@ checkpoint classifySamplesByAncestry:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
-    envmodules: lambda wildcards: [config["R_module"]] if config.get("R_module") else []
+    envmodules: [config.get("R_module")] if config.get("R_module") else []
     threads: 1
     resources:
         nodes=1,
@@ -92,7 +92,7 @@ rule plot_posterior_ridge:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
-    envmodules: lambda wildcards: [config["R_module"]] if config.get("R_module") else []
+    envmodules: [config.get("R_module")] if config.get("R_module") else []
     threads: 1
     resources:
         nodes=1,
@@ -124,7 +124,7 @@ rule plot_classification_space:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
-    envmodules: lambda wildcards: [config["R_module"]] if config.get("R_module") else []
+    envmodules: [config.get("R_module")] if config.get("R_module") else []
     threads: 1
     resources:
         nodes=1,

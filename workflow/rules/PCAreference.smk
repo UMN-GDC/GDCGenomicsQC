@@ -5,7 +5,7 @@ rule runPcaOnReferencePanel:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules: lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
+    envmodules: [config.get("plink_module")] if config.get("plink_module") else []
     threads: 8
     resources:
         nodes=1,

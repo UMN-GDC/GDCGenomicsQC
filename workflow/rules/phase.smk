@@ -28,14 +28,14 @@ rule convertPgenToVcf:
         OUT_DIR / "logs" / "Convert_{CHR}.log",
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/rfmix.yml"
-    envmodules: lambda wildcards: [m for m in [config.get("plink_module"), config.get("bcftools_module")] if m]
+    envmodules: [m for m in [config.get("plink_module"), config.get("bcftools_module")] if m]
     threads: 8
     resources:
         nodes=1,
         mem_mb=16000,
         runtime=120,
     input:
-        std=lambda wildcards: (
+        std=(
             OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.pgen"
             if "{CHR}" in config.get("INPUT", "")
             else OUT_DIR / "full" / "f1.b38.f2.pgen"
@@ -62,7 +62,7 @@ rule phaseWithShapeit:
         OUT_DIR / "logs" / "Phase_{CHR}.log",
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1"
     conda: "../../envs/rfmix.yml"
-    envmodules: lambda wildcards: [m for m in [config.get("plink_module"), config.get("bcftools_module"), config.get("shapeit_module")] if m]
+    envmodules: [m for m in [config.get("plink_module"), config.get("bcftools_module"), config.get("shapeit_module")] if m]
     threads: 8
     resources:
         nodes=1,
@@ -112,7 +112,7 @@ rule compressAndIndexVcf:
         OUT_DIR / "logs" / "Compress_{CHR}.log",
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/rfmix.yml"
-    envmodules: lambda wildcards: [config["bcftools_module"]] if config.get("bcftools_module") else []
+    envmodules: [config.get("bcftools_module")] if config.get("bcftools_module") else []
     threads: 4
     resources:
         nodes=1,

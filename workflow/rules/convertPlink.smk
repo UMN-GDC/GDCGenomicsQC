@@ -17,8 +17,8 @@ checkpoint checkInputType:
     output:
         touch(OUT_DIR / ".input_type_detected")
     params:
-        is_per_chr=lambda wildcards: "{CHR}" in config.get("INPUT", ""),
-        format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+        is_per_chr="{CHR}" in config.get("INPUT", ""),
+        format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
         input_path=config.get("INPUT", "")
     shell:
         """
@@ -36,7 +36,7 @@ rule convertPlinkPerChromosome:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules: lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
+    envmodules: [config.get("plink_module")] if config.get("plink_module") else []
     threads: 4
     resources:
         nodes=1,
@@ -57,7 +57,7 @@ rule convertPlinkPerChromosome:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
     params:
-        format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+        format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
         chrom_input=lambda wc: config.get("INPUT", "").format(CHR=wc.CHR),
         thin=config.get("thin", False),
         min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
@@ -155,7 +155,7 @@ if not INPUT_IS_PER_CHROMOSOME:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
-        envmodules: lambda wildcards: [config["plink_module"]] if config.get("plink_module") else []
+        envmodules: [config.get("plink_module")] if config.get("plink_module") else []
         threads: 8
         resources:
             nodes=1,
@@ -177,9 +177,9 @@ if not INPUT_IS_PER_CHROMOSOME:
             fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
             keep=get_ancestry_file,
         params:
-            format=lambda wildcards: "vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
-            single_input=lambda wildcards: config.get("INPUT", ""),
-            single_input_prefix=lambda wildcards: config.get("INPUT", "").replace(".bed", "").replace(".bim", "").replace(".fam", "").replace(".pgen", "").replace(".vcf", "").replace(".vcf.gz", ""),
+            format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+            single_input=config.get("INPUT", ""),
+            single_input_prefix=config.get("INPUT", "").replace(".bed", "").replace(".bim", "").replace(".fam", "").replace(".pgen", "").replace(".vcf", "").replace(".vcf.gz", ""),
             thin=config.get("thin", False),
             min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
             max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),

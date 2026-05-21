@@ -1,7 +1,7 @@
 rule assemble1000GenomesReference:
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
-    envmodules: lambda wildcards: [m for m in [config.get("samtools_module"), config.get("plink_module")] if m]
+    envmodules: [m for m in [config.get("samtools_module"), config.get("plink_module")] if m]
     threads: 8
     resources:
         nodes = 1,

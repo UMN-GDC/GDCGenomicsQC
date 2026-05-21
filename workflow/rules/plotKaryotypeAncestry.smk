@@ -15,7 +15,7 @@ checkpoint generateKaryotypeAncestryPlots:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/karyoploteR.yml"
-    envmodules: lambda wildcards: [config["R_module"]] if config.get("R_module") else []
+    envmodules: [config.get("R_module")] if config.get("R_module") else []
     resources:
         nodes=1,
         mem_mb=16000,
@@ -32,7 +32,7 @@ checkpoint generateKaryotypeAncestryPlots:
         ),
     params:
         msp_dir=OUT_DIR / "02-localAncestry",
-        figures_dir=lambda wildcards: OUT_DIR
+        figures_dir=OUT_DIR
         / "02-localAncestry"
         / config.get("localAncestry", {}).get("figures", "figures"),
         chromosomes="1-22",
