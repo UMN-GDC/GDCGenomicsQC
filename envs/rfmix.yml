@@ -8,7 +8,7 @@ dependencies:
   - plink
   - plink2
   - bcftools
-  - boost-cpp  # SHAPEIT4 is highly sensitive to Boost versions
+  - boost-cpp==1.85.0  # SHAPEIT4 compiled against boost 1.85.0
   - htslib
   - libstdcxx-ng
   - rfmix
