@@ -35,7 +35,7 @@ rule convertPgenToVcf:
         mem_mb=16000,
         runtime=120,
     input:
-        std=(
+        std=lambda wildcards: (
             OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.pgen"
             if "{CHR}" in config.get("INPUT", "")
             else OUT_DIR / "full" / "f1.b38.f2.pgen"
