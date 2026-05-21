@@ -4,23 +4,86 @@ def get_chrom(wildcards):
 
 def get_input_pgen(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
-        return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.pgen"
+        return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.unrel.pgen"
     else:
-        return OUT_DIR / "full" / "f1.b38.f2.pgen"
+        return OUT_DIR / "full" / "f1.b38.f2.unrel.pgen"
 
 
 def get_input_pvar(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
-        return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.pvar"
+        return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.unrel.pvar"
     else:
-        return OUT_DIR / "full" / "f1.b38.f2.pvar"
+        return OUT_DIR / "full" / "f1.b38.f2.unrel.pvar"
 
 
 def get_input_psam(wildcards):
     if "{CHR}" in config.get("INPUT", ""):
-        return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.psam"
+        return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.unrel.psam"
     else:
-        return OUT_DIR / "full" / "f1.b38.f2.psam"
+        return OUT_DIR / "full" / "f1.b38.f2.unrel.psam"
+
+
+if INPUT_IS_PER_CHROMOSOME:
+    rule extractUnrelatedSubjects:
+        log:
+            OUT_DIR / "logs" / "extractUnrelated_{CHR}.log",
+        container:
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        conda:
+            "../../envs/ancNreport.yml"
+        envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
+        threads: 4
+        resources:
+            nodes=1,
+            mem_mb=16000,
+            runtime=60,
+        input:
+            pgen=OUT_DIR / "full" / "f1.f2_{CHR}.pgen",
+            pvar=OUT_DIR / "full" / "f1.f2_{CHR}.pvar",
+            psam=OUT_DIR / "full" / "f1.f2_{CHR}.psam",
+            keep=OUT_DIR / "full" / "f1.b38.ldpruned.unrelated_ids.txt",
+        output:
+            pgen=OUT_DIR / "full" / "f1.f2_{CHR}.unrel.pgen",
+            pvar=OUT_DIR / "full" / "f1.f2_{CHR}.unrel.pvar",
+            psam=OUT_DIR / "full" / "f1.f2_{CHR}.unrel.psam",
+        params:
+            input_prefix=lambda wildcards, input: input.pgen[:-5],
+            output_prefix=lambda wildcards, output: output.pgen[:-5],
+        shell:
+            """
+            plink2 --pfile {params.input_prefix} --keep {input.keep} --make-pgen --out {params.output_prefix} --threads {threads}
+            """
+
+else:
+    rule extractUnrelatedSubjects:
+        log:
+            OUT_DIR / "logs" / "extractUnrelated.log",
+        container:
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        conda:
+            "../../envs/ancNreport.yml"
+        envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
+        threads: 4
+        resources:
+            nodes=1,
+            mem_mb=16000,
+            runtime=60,
+        input:
+            pgen=OUT_DIR / "full" / "f1.b38.f2.pgen",
+            pvar=OUT_DIR / "full" / "f1.b38.f2.pvar",
+            psam=OUT_DIR / "full" / "f1.b38.f2.psam",
+            keep=OUT_DIR / "full" / "f1.b38.ldpruned.unrelated_ids.txt",
+        output:
+            pgen=OUT_DIR / "full" / "f1.b38.f2.unrel.pgen",
+            pvar=OUT_DIR / "full" / "f1.b38.f2.unrel.pvar",
+            psam=OUT_DIR / "full" / "f1.b38.f2.unrel.psam",
+        params:
+            input_prefix=lambda wildcards, input: input.pgen[:-5],
+            output_prefix=lambda wildcards, output: output.pgen[:-5],
+        shell:
+            """
+            plink2 --pfile {params.input_prefix} --keep {input.keep} --make-pgen --out {params.output_prefix} --threads {threads}
+            """
 
 
 rule convertPgenToVcf:
@@ -36,9 +99,9 @@ rule convertPgenToVcf:
         runtime=120,
     input:
         std=lambda wildcards: (
-            OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.pgen"
+            OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.unrel.pgen"
             if "{CHR}" in config.get("INPUT", "")
-            else OUT_DIR / "full" / "f1.b38.f2.pgen"
+            else OUT_DIR / "full" / "f1.b38.f2.unrel.pgen"
         ),
         pgen=get_input_pgen,
         pvar=get_input_pvar,
