@@ -1,6 +1,8 @@
 rule popVAE:
     conda:
         "../../envs/ancNreport.yml"
+    envmodules:
+        mod("plink2")
     threads: 8
     resources:
         nodes=1,

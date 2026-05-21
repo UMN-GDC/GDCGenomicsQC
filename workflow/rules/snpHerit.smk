@@ -84,6 +84,8 @@ if SNP_HERIT_ACTIVE:
             "../../envs/mash.yml"
         container:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
+        envmodules:
+            mod("R")
         threads: 8
         resources:
             nodes=1,

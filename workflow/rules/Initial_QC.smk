@@ -5,6 +5,8 @@ rule mergeChromosomesAndFilter:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
+    envmodules:
+        mod("plink2")
     threads: 8
     resources:
         nodes=1,

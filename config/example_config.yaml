@@ -331,3 +331,20 @@ convertNfilt:
 # =============================================================================
 # Use thin subset for testing (reduces runtime)
 thin: false
+
+
+# =============================================================================
+# Environment Modules (HPC env-modules deployment)
+# =============================================================================
+# Module names for Snakemake's env-modules deployment method.
+# Used when the profile has software-deployment-method: [env-modules, ...]
+# Leave null to fall back to apptainer/conda.
+# Example values are typical HPC module names — adjust for your system.
+software-modules:
+    plink2: null      # e.g., "plink/2.00-alpha-091019"
+    bcftools: null    # e.g., "bcftools/1.2"
+    shapeit: null     # e.g., "shapeit/4.2.2"
+    rfmix: null       # e.g., "rfmix/09599c1"
+    R: null           # e.g., "R/4.2.0"
+    samtools: null    # e.g., "samtools/1.21"
+    crossmap: null    # e.g., "CrossMap/0.6.5"

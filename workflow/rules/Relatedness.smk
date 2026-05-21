@@ -5,6 +5,8 @@ rule checkRelatednessExtractUnrelated:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
+    envmodules:
+        mod("plink2")
     resources:
         nodes=1,
         mem_mb=128000,
@@ -81,6 +83,8 @@ rule ldPruneUnrelated:
         "docker://gfanz/plink2:latest"
     conda:
         "../../envs/ancNreport.yml"
+    envmodules:
+        mod("plink2")
     threads: 8
     resources:
         nodes=1,

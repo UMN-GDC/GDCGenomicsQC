@@ -1,6 +1,8 @@
 rule assemble1000GenomesReference:
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/ancNreport.yml"
+    envmodules:
+        mod("samtools", "plink2")
     threads: 8
     resources:
         nodes = 1,

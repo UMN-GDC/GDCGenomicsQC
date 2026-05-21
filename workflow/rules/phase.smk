@@ -28,6 +28,8 @@ rule convertPgenToVcf:
         OUT_DIR / "logs" / "Convert_{CHR}.log",
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/rfmix.yml"
+    envmodules:
+        mod("plink2", "bcftools")
     threads: 8
     resources:
         nodes=1,
@@ -61,6 +63,8 @@ rule phaseWithShapeit:
         OUT_DIR / "logs" / "Phase_{CHR}.log",
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1"
     conda: "../../envs/rfmix.yml"
+    envmodules:
+        mod("plink2", "bcftools", "shapeit")
     threads: 8
     resources:
         nodes=1,
@@ -110,6 +114,8 @@ rule compressAndIndexVcf:
         OUT_DIR / "logs" / "Compress_{CHR}.log",
     container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/rfmix.yml"
+    envmodules:
+        mod("bcftools")
     threads: 4
     resources:
         nodes=1,

@@ -7,6 +7,8 @@ if not INPUT_IS_PER_CHROMOSOME:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
+        envmodules:
+            mod("plink2", "R")
         threads: 4
         resources:
             nodes=1,
@@ -40,6 +42,8 @@ if not INPUT_IS_PER_CHROMOSOME:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
+        envmodules:
+            mod("plink2", "R")
         threads: 4
         resources:
             nodes=1,
@@ -82,6 +86,8 @@ if not INPUT_IS_PER_CHROMOSOME:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
+        envmodules:
+            mod("plink2", "R")
         threads: 8
         resources:
             nodes=1,
