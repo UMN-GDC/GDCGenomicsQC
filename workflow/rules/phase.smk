@@ -26,7 +26,7 @@ def get_input_psam(wildcards):
 rule convertPgenToVcf:
     log:
         OUT_DIR / "logs" / "Convert_{CHR}.log",
-    container: "docker://gfanz/plink2:latest"
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/rfmix.yml"
     threads: 8
     resources:
@@ -108,7 +108,7 @@ rule phaseWithShapeit:
 rule compressAndIndexVcf:
     log:
         OUT_DIR / "logs" / "Compress_{CHR}.log",
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1"
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda: "../../envs/rfmix.yml"
     threads: 4
     resources:
