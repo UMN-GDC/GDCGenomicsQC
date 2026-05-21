@@ -22,13 +22,6 @@ checkpoint estimateGlobalAncestry:
         pos_prob=OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
         sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
         ref_coords=OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
-        ridge_plot=report(
-            OUT_DIR
-            / "01-globalAncestry"
-            / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
-            caption="../../report/ancestry_ridgelines.rst",
-            category="Global ancestry",
-        ),
     params:
         dir=OUT_DIR / "01-globalAncestry",
         script=workflow.source_path("../scripts/trainPredict.R"),
@@ -70,11 +63,6 @@ checkpoint classifySamplesByAncestry:
         ref_coords=OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
     output:
         classifications=OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
-        class_plot=report(
-            OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
-            caption="../../report/ancestry_classification.rst",
-            category="Global ancestry",
-        ),
         keep_AFR=OUT_DIR / "01-globalAncestry" / "keep_AFR.txt",
         keep_AMR=OUT_DIR / "01-globalAncestry" / "keep_AMR.txt",
         keep_EAS=OUT_DIR / "01-globalAncestry" / "keep_EAS.txt",
@@ -92,4 +80,67 @@ checkpoint classifySamplesByAncestry:
           --out {params.dir} \
           --threshold {params.threshold} \
           --model {params.model}
+        """
+
+
+rule plot_posterior_ridge:
+    log:
+        OUT_DIR / "logs" / "plot_posterior_ridge.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/genomeUtils.yml"
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=8000,
+        runtime=30,
+    input:
+        prob_file=OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
+    output:
+        ridge_plot=report(
+            OUT_DIR / "01-globalAncestry" / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
+            caption="../../report/ancestry_ridgelines.rst",
+            category="Global ancestry",
+        ),
+    params:
+        out_dir=OUT_DIR / "01-globalAncestry",
+        script=workflow.source_path("../scripts/plotPosterior.R"),
+    shell:
+        """
+        Rscript {params.script} \
+            --prob_file {input.prob_file} \
+            --out_dir {params.out_dir}
+        """
+
+
+rule plot_classification_space:
+    log:
+        OUT_DIR / "logs" / "plot_classification_space.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/genomeUtils.yml"
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=8000,
+        runtime=30,
+    input:
+        classifications=OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
+        sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
+        ref_coords=OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
+    output:
+        class_plot=report(
+            OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
+            caption="../../report/ancestry_classification.rst",
+            category="Global ancestry",
+        ),
+    params:
+        out_dir=OUT_DIR / "01-globalAncestry",
+        script=workflow.source_path("../scripts/plotClassification.R"),
+    shell:
+        """
+        Rscript {params.script} \
+            --out_dir {params.out_dir}
         """

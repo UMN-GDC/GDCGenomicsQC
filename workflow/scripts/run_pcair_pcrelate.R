@@ -2,22 +2,20 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) < 7) {
-    stop("Usage: Rscript run_pcair_pcrelate.R <bed_prefix> <out_dir> <color_col> <pheno_file> <plot_out> <gds_file> <seq_gds_file>\n")
+if (length(args) < 4) {
+    stop("Usage: Rscript run_pcair_pcrelate.R <bed_prefix> <out_dir> <gds_file> <seq_gds_file>\n")
 }
 
 bed_prefix <- args[1]
 out_dir <- args[2]
-color_col <- args[3]
-pheno_file <- args[4]
-plot_out <- args[5]
-gds_file <- args[6]
-seq_gds_file <- args[7]
+gds_file <- args[3]
+seq_gds_file <- args[4]
 
 pcaobj_file <- file.path(out_dir, "pcair_pcaobj.RDS")
 unrels_file <- file.path(out_dir, "pcair_unrelated_ids.txt")
 pcrelate_file <- file.path(out_dir, "pcrelate_kinship.RDS")
 coords_file <- file.path(out_dir, "pcair_coordinates.tsv")
+plot_out <- file.path(out_dir, "figures", "pcair_pcs.svg")
 
 suppressPackageStartupMessages({
     library(SNPRelate)
@@ -103,30 +101,5 @@ coords <- as_tibble(pcs[, 1:n_pcs], rownames = "IID")
 colnames(coords)[-1] <- pc_names
 
 write_tsv(coords, coords_file)
-
-color_col <- ifelse(color_col == "None" || color_col == "", NA, color_col)
-pheno_file <- ifelse(pheno_file == "None" || pheno_file == "", NA, pheno_file)
-
-if (!is.na(color_col) && !is.na(pheno_file) && file.exists(pheno_file)) {
-    pheno <- read_tsv(pheno_file)
-    if (color_col %in% colnames(pheno)) {
-        coords <- coords |> left_join(pheno |> select(IID, all_of(color_col)), by = "IID")
-        color_var <- color_col
-    } else {
-        coords$color_group <- "all"
-        color_var <- "color_group"
-    }
-} else {
-    coords$color_group <- "all"
-    color_var <- "color_group"
-}
-
-p <- ggplot(coords, aes(x = PC1, y = PC2, color = .data[[color_var]])) +
-    geom_point(alpha = 0.6, size = 2) +
-    theme_minimal() +
-    theme(legend.position = "bottom") +
-    labs(title = "PC-AiR: Internal Sample PCs")
-
-ggsave(plot_out, plot = p, dpi = 300, width = 8, height = 6)
 
 cat("PC-AiR and PC-Relate completed successfully\n")

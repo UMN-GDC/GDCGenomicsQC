@@ -148,9 +148,6 @@ rule run_initialQC:
             if "{CHR}" in config.get("INPUT", "")
             else [OUT_DIR / "full" / "f1.b38.f2.pgen"]
         ),
-        OUT_DIR / "full" / "figures" / "smiss.svg",
-        OUT_DIR / "full" / "figures" / "vmiss.svg",
-
 
 rule run_pca:
     threads: 1
@@ -188,7 +185,6 @@ rule run_classifyAncestry:
     input:
         rfmix=lambda wildcards: OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
         posterior=OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
-        ridge_plot=OUT_DIR / "01-globalAncestry" / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
 
 
 rule run_ancestryQC:
@@ -332,7 +328,6 @@ rule run_PCAinternal:
             [
                 OUT_DIR / "full" / "pcair_pcaobj.RDS",
                 OUT_DIR / "full" / "pcrelate_kinship.RDS",
-                OUT_DIR / "full" / "figures" / "pcair_pcs.svg",
                 OUT_DIR / "full" / "pcair_coordinates.tsv",
             ]
             if config.get("internalPCA", {}).get("method", "plink2") in ["pcair", "both"]

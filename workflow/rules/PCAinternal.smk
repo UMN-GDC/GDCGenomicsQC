@@ -28,16 +28,9 @@ rule runPcairInternalPca:
         grm=OUT_DIR / "{subset}" / "pcair.grm.bin",
         grmid=OUT_DIR / "{subset}" / "pcair.grm.id",
         grmN=OUT_DIR / "{subset}" / "pcair.grm.N.bin",
-        plot=report(
-            OUT_DIR / "{subset}" / "figures" / "pcair_pcs.svg",
-            caption="../../report/pcair.rst",
-            category="Internal PCA",
-        ),
     params:
         out_dir=OUT_DIR / "{subset}",
         input_prefix=lambda wildcards, input: input.pgen[:-4],
-        color_col=config.get("internalPCA", {}).get("color_by", "None"),
-        pheno_file=config.get("internalPCA", {}).get("phenotype_file", "None"),
         scripts_dir=SCRIPTS_DIR,
     shell:
         """
@@ -56,9 +49,6 @@ rule runPcairInternalPca:
         Rscript {params.scripts_dir}/run_pcair_pcrelate.R \
             "{params.input_prefix}" \
             "{params.out_dir}" \
-            "{params.color_col}" \
-            "{params.pheno_file}" \
-            "{output.plot}" \
             "{output.gds}" \
             "{output.seq_gds}"
         
@@ -120,4 +110,39 @@ rule runPlink2ApproximatePca:
             --out $PCA_OUT_PREFIX
         
         echo "PLINK2 approx PCA completed"
+        """
+
+
+rule plot_pcair_pcs:
+    log:
+        OUT_DIR / "logs" / "plot_pcair_pcs_{subset}.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=8000,
+        runtime=30,
+    input:
+        coords=OUT_DIR / "{subset}" / "pcair_coordinates.tsv",
+    output:
+        plot=report(
+            OUT_DIR / "{subset}" / "figures" / "pcair_pcs.svg",
+            caption="../../report/pcair.rst",
+            category="Internal PCA",
+        ),
+    params:
+        color_col=config.get("internalPCA", {}).get("color_by", "None"),
+        pheno_file=config.get("internalPCA", {}).get("phenotype_file", "None"),
+        scripts_dir=SCRIPTS_DIR,
+    shell:
+        """
+        mkdir -p "$(dirname {output.plot})"
+        Rscript {params.scripts_dir}/plotPCAIR.R \
+            --coords {input.coords} \
+            --out {output.plot} \
+            --color-col {params.color_col} \
+            --pheno-file {params.pheno_file}
         """
