@@ -38,9 +38,13 @@ checkpoint kgMeta:
         """
 
 
+def get_shapemap(wildcards):
+    return ancient(checkpoints.kgMeta.get().output.shapemap)
+
+
 checkpoint splitMapChr:
     input:
-        shapemap=ancient(checkpoints.kgMeta.get().output.shapemap)
+        shapemap=get_shapemap
     output:
         map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt")
     shell:
