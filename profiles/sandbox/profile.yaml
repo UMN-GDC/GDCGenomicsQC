@@ -7,7 +7,7 @@ use-singularity: true
 singularity-prefix: /scratch.global/GDC/singularityimages
 apptainer-prefix: /scratch.global/GDC/singularityimages
 singularity-args: "--bind /scratch.global,/home,/shared"
-software-deployment-method: [apptainer, env-modules]
+software-deployment-method: [env-modules, apptainer]
 latency-wait: 60
 
 default-resources:
