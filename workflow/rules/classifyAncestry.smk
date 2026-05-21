@@ -6,7 +6,7 @@ checkpoint estimateGlobalAncestry:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
-    envmodules: [config.get("R_module")] if config.get("R_module") else []
+    envmodules: *([config.get("R_module")] if config.get("R_module") else [])
     threads: 8
     resources:
         nodes=1,
@@ -53,7 +53,7 @@ checkpoint classifySamplesByAncestry:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
-    envmodules: [config.get("R_module")] if config.get("R_module") else []
+    envmodules: *([config.get("R_module")] if config.get("R_module") else [])
     threads: 1
     resources:
         nodes=1,
@@ -92,7 +92,7 @@ rule plot_posterior_ridge:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
-    envmodules: [config.get("R_module")] if config.get("R_module") else []
+    envmodules: *([config.get("R_module")] if config.get("R_module") else [])
     threads: 1
     resources:
         nodes=1,
@@ -124,7 +124,7 @@ rule plot_classification_space:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/genomeUtils.yml"
-    envmodules: [config.get("R_module")] if config.get("R_module") else []
+    envmodules: *([config.get("R_module")] if config.get("R_module") else [])
     threads: 1
     resources:
         nodes=1,
