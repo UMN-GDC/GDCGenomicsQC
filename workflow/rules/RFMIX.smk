@@ -5,7 +5,8 @@ rule estimateLocalAncestryPerChromosome:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1"
     conda:
         "../../envs/rfmix.yml"
-    envmodules: use("bcftools_module", "rfmix_module")
+    envmodules:
+        lambda wildcards: [m for m in [config.get("bcftools_module"), config.get("rfmix_module")] if m]
     threads: 4
     resources:
         nodes=1,
@@ -70,7 +71,8 @@ rule aggregateLocalAncestryResults:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/ancNreport.yml"
-    envmodules: use("R_module")
+    envmodules:
+        lambda wildcards: [config["R_module"]] if config.get("R_module") else []
     threads: 4
     resources:
         nodes=1,

@@ -3,7 +3,8 @@ rule crossmapStudyToB38:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/crossmap:latest"
     conda:
         "../../envs/crossmap.yml"
-    envmodules: use("plink_module", "crossmap_module")
+    envmodules:
+        lambda wildcards: [m for m in [config.get("plink_module"), config.get("crossmap_module")] if m]
     threads: 8
     resources:
         nodes=1,

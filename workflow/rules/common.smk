@@ -9,13 +9,6 @@ LOCAL_ANCESTRY_CHROMOSOMES = config.get("localAncestry", {}).get("chromosomes") 
 INPUT_IS_PER_CHROMOSOME = "{CHR}" in config.get("INPUT", "")
 
 
-def use(*module_keys):
-    """Return a lambda that resolves env module names from config keys.
-    Pass config key names like 'plink_module', 'R_module', etc.
-    Returns [name] for set modules, [] for null/missing — falls through to container/conda."""
-    return lambda wc: [config[k] for k in module_keys if config.get(k)]
-
-
 def has_provided_ancestry():
     ancestry_file = config.get("ancestry", {}).get("ancestry_file")
     return ancestry_file and Path(ancestry_file).exists()

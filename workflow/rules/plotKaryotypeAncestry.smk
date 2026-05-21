@@ -15,7 +15,8 @@ checkpoint generateKaryotypeAncestryPlots:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
         "../../envs/karyoploteR.yml"
-    envmodules: use("R_module")
+    envmodules:
+        lambda wildcards: [config["R_module"]] if config.get("R_module") else []
     resources:
         nodes=1,
         mem_mb=16000,

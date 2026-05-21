@@ -6,7 +6,8 @@ if INPUT_IS_PER_CHROMOSOME:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
-        envmodules: use("plink_module", "R_module")
+        envmodules:
+            lambda wildcards: [m for m in [config.get("plink_module"), config.get("R_module")] if m]
         threads: 8
         resources:
             nodes=1,
@@ -79,7 +80,8 @@ else:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
-        envmodules: use("plink_module", "R_module")
+        envmodules:
+            lambda wildcards: [m for m in [config.get("plink_module"), config.get("R_module")] if m]
         threads: 8
         resources:
             nodes=1,
