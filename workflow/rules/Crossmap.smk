@@ -24,8 +24,8 @@ rule crossmapStudyToB38:
         LDpsam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.psam",
         tempDir=directory(OUT_DIR / "{subset}" / "intermediates" / "crossmap"),
     params:
-        input_prefix=OUT_DIR / wildcards.subset / "f1",
-        output_prefix=OUT_DIR / wildcards.subset / "f1.b38",
+        input_prefix=lambda wildcards: OUT_DIR / wildcards.subset / "f1",
+        output_prefix=lambda wildcards: OUT_DIR / wildcards.subset / "f1.b38",
         chain=ancient(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
     run:
         _build = config.get("ancestry", {}).get("build", "GRCh38")
