@@ -7,3 +7,4 @@ dependencies:
   - python >=3.11
   - snakemake >=9.0
   - snakemake-executor-plugin-slurm
+  - snakemake-software-deployment-plugin-envmodules
