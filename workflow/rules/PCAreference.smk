@@ -1,71 +1,169 @@
-rule runPcaOnReferencePanel:
-    log:
-        OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
-    container:
-        "docker://gfanz/plink2:latest"
-    conda:
-        "../../envs/ancNreport.yml"
-    envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
-    threads: 8
-    resources:
-        nodes=1,
-        mem_mb=32000,
-        runtime=2880,
-    input:
-        pgen=OUT_DIR / "full" / "f1.b38.pgen",
-        pvar=OUT_DIR / "full" / "f1.b38.pvar",
-        psam=OUT_DIR / "full" / "f1.b38.psam",
-        ldPgen=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
-        ldPvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
-        ldPsam=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
-    output:
-        eigen=OUT_DIR / "01-globalAncestry" / "ref.eigenvec",
-        projected=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
-        projectedref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
-        tempDir=temp(directory(OUT_DIR / "01-globalAncestry" / "intermediates")),
-    params:
-        method=config.get("relatedness", {}).get("method", "king"),
-        grm=config.get("relatedness", {}).get("method", "king"),
-        input_prefix=OUT_DIR / "full" / "f1.b38",
-        dir=str(OUT_DIR / "01-globalAncestry"),
-        ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
-    shell:
-        """
-        echo "PCA: "
-        mkdir -p {output.tempDir}
-        
-        # Filter pruned ref panel to shared SNPs and LDprune
-        plink2 --pfile {params.input_prefix} --write-snplist \
-            --maf 0.05 \
-            --chr 1-22 \
-            --allow-extra-chr \
-            --threads {threads} \
-            --out {params.dir}/intermediates/study_snps
-        
+if INPUT_IS_PER_CHROMOSOME:
+    rule runPcaOnReferencePanel:
+        log:
+            OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
+        container:
+            "docker://gfanz/plink2:latest"
+        conda:
+            "../../envs/ancNreport.yml"
+        envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
+        threads: 8
+        resources:
+            nodes=1,
+            mem_mb=64000,
+            runtime=2880,
+        input:
+            pgen=lambda wildcards: expand(
+                OUT_DIR / "full" / "f1.b38_{CHR}.pgen", CHR=CHROMOSOMES
+            ),
+            pvar=lambda wildcards: expand(
+                OUT_DIR / "full" / "f1.b38_{CHR}.pvar", CHR=CHROMOSOMES
+            ),
+            psam=lambda wildcards: expand(
+                OUT_DIR / "full" / "f1.b38_{CHR}.psam", CHR=CHROMOSOMES
+            ),
+            ldPgen=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
+            ldPvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
+            ldPsam=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
+        output:
+            eigen=OUT_DIR / "01-globalAncestry" / "ref.eigenvec",
+            projected=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+            projectedref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+            tempDir=temp(directory(OUT_DIR / "01-globalAncestry" / "intermediates")),
+        params:
+            dir=str(OUT_DIR / "01-globalAncestry"),
+            ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
+            chroms=" ".join(str(c) for c in CHROMOSOMES),
+        shell:
+            """
+            mkdir -p {output.tempDir}
 
-        # calculate ld on ref intersection with sample with common frequency
-        # compute PCA refrence only
-        plink2 --pfile {params.ref} \
-               --freq counts \
-               --threads {threads} \
-               --extract {params.dir}/intermediates/study_snps.snplist \
-               --pca allele-wts vcols=chrom,ref,alt \
-               --out {params.dir}/ref \
-               --allow-no-sex
-        
-        echo "Project sample onto the reference PCs."
-        plink2 --pfile {params.input_prefix} \
-               --chr 1-22 \
-               --allow-extra-chr \
-               --read-freq {params.dir}/ref.acount \
-               --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
-               --score-col-nums 6-15 \
-               --out {params.dir}/sampleRefPCscores
-        echo "Project ref onto the reference PCs."
-        
-        plink2 --pfile {params.ref} \
-               --read-freq {params.dir}/ref.acount \
-               --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
-               --score-col-nums 6-15 \
-               --out {params.dir}/refRefPCscores
-        """
+            # Per-chromosome: write per-chrom study snplists and extract matching variants
+            for chr_f in {input.pgen}; do
+                chr_prefix=${{chr_f%.pgen}}
+                chr_name=$(basename $chr_prefix | sed 's/f1.b38_//')
+                plink2 --pfile $chr_prefix \
+                    --write-snplist \
+                    --maf 0.05 \
+                    --chr $chr_name \
+                    --allow-extra-chr \
+                    --threads {threads} \
+                    --out {output.tempDir}/study_snps_$chr_name
+                plink2 --pfile $chr_prefix \
+                    --extract {params.ref}.pvar \
+                    --make-pgen \
+                    --threads {threads} \
+                    --out {output.tempDir}/study_lai_$chr_name
+            done
+
+            # Concatenate per-chrom snplists
+            cat {output.tempDir}/study_snps_*.snplist > {output.tempDir}/study_snps.snplist
+
+            # Concatenate per-chrom extracted variants
+            > {output.tempDir}/mergelist.txt
+            for f in {output.tempDir}/study_lai_*.pgen; do
+                echo "${{f%.pgen}}" >> {output.tempDir}/mergelist.txt
+            done
+            plink2 --pmerge-list {output.tempDir}/mergelist.txt \
+                   --make-pgen \
+                   --threads {threads} \
+                   --out {output.tempDir}/study_lai
+
+            # Compute PCA on reference using shared SNPs
+            plink2 --pfile {params.ref} \
+                   --freq counts \
+                   --threads {threads} \
+                   --extract {output.tempDir}/study_snps.snplist \
+                   --pca allele-wts vcols=chrom,ref,alt \
+                   --out {params.dir}/ref \
+                   --allow-no-sex
+
+            # Project study onto reference PCs
+            plink2 --pfile {output.tempDir}/study_lai \
+                   --chr {params.chroms} \
+                   --allow-extra-chr \
+                   --read-freq {params.dir}/ref.acount \
+                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
+                   --score-col-nums 6-15 \
+                   --out {params.dir}/sampleRefPCscores
+
+            # Project reference onto reference PCs
+            plink2 --pfile {params.ref} \
+                   --read-freq {params.dir}/ref.acount \
+                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
+                   --score-col-nums 6-15 \
+                   --out {params.dir}/refRefPCscores
+            """
+
+else:
+    rule runPcaOnReferencePanel:
+        log:
+            OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
+        container:
+            "docker://gfanz/plink2:latest"
+        conda:
+            "../../envs/ancNreport.yml"
+        envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
+        threads: 8
+        resources:
+            nodes=1,
+            mem_mb=32000,
+            runtime=2880,
+        input:
+            pgen=OUT_DIR / "full" / "f1.b38.pgen",
+            pvar=OUT_DIR / "full" / "f1.b38.pvar",
+            psam=OUT_DIR / "full" / "f1.b38.psam",
+            ldPgen=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
+            ldPvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
+            ldPsam=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
+        output:
+            eigen=OUT_DIR / "01-globalAncestry" / "ref.eigenvec",
+            projected=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+            projectedref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+            tempDir=temp(directory(OUT_DIR / "01-globalAncestry" / "intermediates")),
+        params:
+            method=config.get("relatedness", {}).get("method", "king"),
+            grm=config.get("relatedness", {}).get("method", "king"),
+            input_prefix=OUT_DIR / "full" / "f1.b38",
+            dir=str(OUT_DIR / "01-globalAncestry"),
+            ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
+        shell:
+            """
+            echo "PCA: "
+            mkdir -p {output.tempDir}
+
+            # Filter pruned ref panel to shared SNPs and LDprune
+            plink2 --pfile {params.input_prefix} --write-snplist \
+                --maf 0.05 \
+                --chr 1-22 \
+                --allow-extra-chr \
+                --threads {threads} \
+                --out {params.dir}/intermediates/study_snps
+
+
+            # calculate ld on ref intersection with sample with common frequency
+            # compute PCA refrence only
+            plink2 --pfile {params.ref} \
+                   --freq counts \
+                   --threads {threads} \
+                   --extract {params.dir}/intermediates/study_snps.snplist \
+                   --pca allele-wts vcols=chrom,ref,alt \
+                   --out {params.dir}/ref \
+                   --allow-no-sex
+
+            echo "Project sample onto the reference PCs."
+            plink2 --pfile {params.input_prefix} \
+                   --chr 1-22 \
+                   --allow-extra-chr \
+                   --read-freq {params.dir}/ref.acount \
+                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
+                   --score-col-nums 6-15 \
+                   --out {params.dir}/sampleRefPCscores
+            echo "Project ref onto the reference PCs."
+
+            plink2 --pfile {params.ref} \
+                   --read-freq {params.dir}/ref.acount \
+                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
+                   --score-col-nums 6-15 \
+                   --out {params.dir}/refRefPCscores
+            """

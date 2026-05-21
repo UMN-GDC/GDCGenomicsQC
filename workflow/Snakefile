@@ -109,9 +109,9 @@ rule all:
 
 
 if input_is_per_chromosome():
-    ruleorder: convertPlinkPerChromosome > mergeChromosomesAndFilter
+    ruleorder: convertPlinkPerChromosome > concatLdPruned
 else:
-    ruleorder: convertPlinkSingleFile > mergeChromosomesAndFilter
+    ruleorder: convertPlinkSingleFile
 ruleorder: convertPgenToVcf > compressAndIndexVcf
 
 # include: "rules/trainGnomix.smk"

@@ -43,12 +43,15 @@ rule convertPlinkPerChromosome:
         mem_mb=32000,
         runtime=240,
     output:
-        pgen=temp(OUT_DIR / "{subset}" / "f1_{CHR}.pgen"),
-        pvar=temp(OUT_DIR / "{subset}" / "f1_{CHR}.pvar"),
-        psam=temp(OUT_DIR / "{subset}" / "f1_{CHR}.psam"),
+        pgen=OUT_DIR / "{subset}" / "f1_{CHR}.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1_{CHR}.pvar",
+        psam=OUT_DIR / "{subset}" / "f1_{CHR}.psam",
+        LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pgen",
+        LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pvar",
+        LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.psam",
         tempDir=temp(
             directory(
-                OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "initial_filter"
+                OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "convert_filter"
             )
         ),
         smiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.smiss"),
@@ -57,6 +60,7 @@ rule convertPlinkPerChromosome:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
     params:
+        scripts_dir=SCRIPTS_DIR,
         format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
         chrom_input=lambda wc: config.get("INPUT", "").format(CHR=wc.CHR),
         thin=config.get("thin", False),
@@ -64,6 +68,7 @@ rule convertPlinkPerChromosome:
         max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
         qual_min=config.get("convertNfilt", {}).get("qual_min"),
         output_prefix=lambda wildcards, output: output.pgen.replace(".pgen", ""),
+        ld_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / f"f1.ldpruned_{wildcards.CHR}"),
     shell:
         """
 mkdir -p {output.tempDir}
@@ -129,10 +134,15 @@ plink2 --pfile {output.tempDir}/intermediate_2 \
        --set-all-var-ids 'chr@:#:$r:$a' \
        --make-pgen \
        --threads {threads} \
-       --out {params.output_prefix}
+       --out {output.tempDir}/intermediate_3
+
+bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_3 {params.output_prefix} {threads} {output.tempDir}
 
 mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
 mv {output.tempDir}/intermediate_0.smiss {output.smiss}
+for ext in pgen pvar psam; do
+    mv {params.output_prefix}.LDpruned.$ext {params.ld_prefix}.$ext
+done
 """
 
 

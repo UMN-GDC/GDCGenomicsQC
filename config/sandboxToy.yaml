@@ -120,8 +120,9 @@ internalPCA:
     color_by: null
     phenotype_file: null
 
+build: "GRCh38"
+
 ancestry:
-    build: "GRCh38"
     threshold: 0.8
     model: "pca"
     ancestry_file: null

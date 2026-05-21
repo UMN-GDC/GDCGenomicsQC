@@ -52,6 +52,15 @@ chromosomes:
     List of chromosomes to process.
     Example: [1, 2, 3] or [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
+build:
+  type: str
+  default: "GRCh38"
+  enum: ["GRCh38", "GRCh37", "hg19"]
+  description: |
+    Genome build of the input study data.
+    If not GRCh38, the study data is lifted over to GRCh38 via CrossMap.
+    Supported conversions: GRCh37, hg19 → GRCh38.
+
 SEX_CHECK:
   type: bool
   default: false
@@ -93,14 +102,6 @@ ancestry:
       type: str
       default: "pca"
       enum: ["pca", "umap", "vae", "rfmix"]
-    build:
-      type: str
-      default: "GRCh38"
-      enum: ["GRCh38", "GRCh37", "hg19"]
-      description: |
-        Genome build of the input study data.
-        If not GRCh38, the study data is lifted over to GRCh38 via CrossMap.
-        Supported conversions: GRCh37, hg19 → GRCh38.
     ancestry_file:
       type: str
       nullable: true

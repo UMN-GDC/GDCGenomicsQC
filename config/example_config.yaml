@@ -78,9 +78,11 @@ internalPCA:
 # =============================================================================
 # Ancestry Estimation
 # =============================================================================
+build: "GRCh38"
+
 ancestry:
-    # Build of the input study data (GRCh38 = no CrossMap, others trigger liftover)
-    build: "GRCh38"
+    threshold: 0.8
+    model: "pca"
 
     # Minimum posterior probability for ancestry assignment (0-1)
     threshold: 0.8
