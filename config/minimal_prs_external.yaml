@@ -1,0 +1,54 @@
+INPUT: "/projects/standard/gdc/public/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
+OUT_DIR: "/scratch.global/coffm049/r25Pipeline"
+REF: "/projects/standard/gdc/public/Ref"
+local-storage-prefix: "/scratch.global/coffm049/tmp"
+
+chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+
+# =============================================================================
+# PRS Pipeline Inputs (External Mode - No QC)
+# =============================================================================
+prsPipeline:
+    iid_col: "IID"
+    fid_col: "FID"
+    
+    # REQUIRED: Point to your pre-computed genotype and GWAS files
+    external:
+        target_bed: "/path/to/your/genotype.bed"
+        target_bim: "/path/to/your/genotype.bim"
+        target_fam: "/path/to/your/genotype.fam"
+        target_sumstats: "/path/to/your/sumstats.txt"
+        target_pheno: "/path/to/your/phenotypes.txt"
+        
+        # Optional for multi-ancestry PRS:
+        # anc2_bed: null
+        # training_sumstats: null
+        # training_pheno: null
+        # pcs: null
+
+
+# =============================================================================
+# PRS Methods Configuration
+# =============================================================================
+prsMethods:
+  single_ct:
+    enabled: false
+  single_prsice:
+    enabled: true
+  single_prscs:
+    enabled: false
+  single_ldpred2:
+    enabled: false
+  single_lassosum2:
+    enabled: false
+  multi_ctsleb:
+    enabled: false
+  multi_prscsx:
+    enabled: false
+  multi_ldpred2:
+    enabled: false
+  multi_prosper:
+    enabled: false
+  multi_sdprs:
+    enabled: false

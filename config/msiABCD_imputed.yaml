@@ -1,8 +1,10 @@
 # Project-wide paths
-vcf_template: "/spaces/regulated/abcd-ref-data/dairc/concat/genetics/genotype_microarray/imputed/chr{CHR}_dose.vcf.gz"
-OUT_DIR: "/scratch.global/coffm049/r25pipeline"
+INPUT: "/spaces/regulated/abcd-ref-data/dairc/concat/genetics/genotype_microarray/imputed/chr{CHR}_dose.vcf.gz"
+OUT_DIR: "/scratch.global/coffm049/r25outputs/abcd_imputed"
 REF: "/projects/standard/gdc/public/Ref"
-local-storage-prefix: "/scratch.global/coffm049/GDCGenomicsQC/workflow/.snakemake/storage"
+local-storage-prefix: "/scratch.global/coffm049/tmp"
+
+chromosomes: [1,2,3,4,5,6,7,8,9,10,11,12,13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
 
 convertNfilt:
@@ -28,6 +30,12 @@ thin: false
 
 # SNP Heritability Estimation
 snpHerit:
+
+    #"/shared/archive_release/abcd/dairc/rawdata/phenotype/nc_y_nihtb.tsv"
+    #"/shared/archive_release/abcd/dairc/rawdata/phenotype/mr_y_smri__vol__aseg.tsv"
+    #"/shared/archive_release/abcd/dairc/rawdata/phenotype/ab_p_demo.tsv"
+    #"/shared/archive_release/abcd/dairc/rawdata/phenotype/ab_g_stc.tsv"
+    
     # For estimating heritability on "full" subset (all samples), use:
     # - internalPCA method: "plink2" (recommended) or "both"
     # - GRM will come from PCAIR if method includes "pcair"
@@ -36,79 +44,109 @@ snpHerit:
     # Pre-computed GRM prefix (prefix.grm.bin, prefix.grm.id, prefix.grm.N.bin)
     # Options:
     #   - null: MASH will compute GRM automatically from PCA
-    #   - "/path/to/output/full/pcair_grm" (if PCAIR ran with GRM)
-    #   - "/path/to/output/full/unrelated_grm" (from relatedness step)
-    grm_prefix: null
+    #   - "/scratch.global/GDC/r25outputs/ABCD/full/pcair_grm" (if PCAIR ran with GRM)
+    #   - "/scratch.global/GDC/r25outputs/ABCD/full/unrelated_grm" (from relatedness step)
+    grm_prefix: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/full/f1.b38.ldpruned.unrelated"
     
     # Pre-computed eigenvector file for GRM construction
     # Options:
     #   - null: MASH will compute eigenvectors from PCA
-    #   - "/path/to/output/full/internal_pca_plink2.eigenvec" (if method=plink2)
-    pca_input: null
+    #   - "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec" (if method=plink2)
+    pca_input: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/full/internal_pca_plink2.eigenvec"
 
-    # Phenotype file(s) — single path or list of paths
+    # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID
-    pheno: null
-
-    # Covariate file(s) — single path or list of paths (required when pheno is specified)
+    pheno: 
+      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/nc_y_nihtb.tsv"
+      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/mr_y_smri__vol__aseg.tsv"
+    
+    # Path to covariate file(s) (required when pheno is specified)
+    # Can be a single file path or list for multiple files
     # Format: CSV/TSV with columns: FID, IID, <covariates>
-    covar: null
-
+    covar: 
+      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_g_stc.tsv"
+      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_p_demo.tsv"
+  
     # Output filename for heritability estimates (CSV format)
-    out: null
+    out: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/herit_fixed.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
-    method: "AdjHE"
+    method: "AdjHE_fixed"
 
-    # Number of principal components — integer or list of integers
-    # Examples: 10  or  [5, 10, 20]
-    npc: 10
+    # Number of principal components to use as covariates
+    # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
+    npc: [5, 15]
 
-    # Phenotype column(s) — column name string or list of column name strings
-    # Examples: "BMI"  or  ["BMI", "Height"]
-    mpheno: 1
+    # Phenotype column(s) to analyze
+    # Integer or array: 1 = third column (after FID, IID)
+    mpheno:
+      - "mr_y_smri__vol__aseg__cd__lh_sum"
+      - "mr_y_smri__vol__aseg__pt__lh_sum"
+      - "mr_y_smri__vol__aseg__pl__lh_sum"
+      - "mr_y_smri__vol__aseg__ag__lh_sum"
+      - "mr_y_smri__vol__aseg__hc__lh_sum"
+      - "mr_y_smri__vol__aseg__ab__lh_sum"
+      - "mr_y_smri__vol__aseg__cd__rh_sum"
+      - "mr_y_smri__vol__aseg__pt__rh_sum"
+      - "mr_y_smri__vol__aseg__pl__rh_sum"
+      - "mr_y_smri__vol__aseg__ag__rh_sum"
+      - "mr_y_smri__vol__aseg__hc__rh_sum"
+      - "mr_y_smri__vol__aseg__ab__rh_sum"
+      - "mr_y_smri__vol__aseg__whb_sum"
+      - "mr_y_smri__vol__aseg__icv_sum"
+      - "nc_y_nihtb__picvcb__uncor_score"
+      - "nc_y_nihtb__flnkr__uncor_score"
+      - "nc_y_nihtb__lswmt__uncor_score"
+      - "nc_y_nihtb__crdst__uncor_score"
+      - "nc_y_nihtb__pttcp__uncor_score"
+      - "nc_y_nihtb__picsq__uncor_score"
+      - "nc_y_nihtb__readr__uncor_score"
+      - "nc_y_nihtb__comp__fluid__uncor_score"
+      - "nc_y_nihtb__comp__cryst__uncor_score"
+      - "nc_y_nihtb__comp__tot__uncor_score"
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
-    qcovar: null
+    qcovar:
+      - "ab_p_demo_age"
 
     # Discrete/categorical covariate column names (passed via --covar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with <35 unique values)
-    covar_discrete: null
-
+    covar_discrete:
+      - "ab_g_stc__cohort_sex"
     # Column name to use as random effect (for AdjHE with site effects)
     RV: null
 
     # Loop through covariates, including all previous covariates in each iteration
     loop_covars: false
 
-    # Use naive estimator (default: false for AdjHE)
-    Naive: false
-
     # Run SAdj-HE (standardized) instead of UAdj-HE (unstandardized)
     std: false
 
     # Rows to process at once when restoring GCTA GRM binary file
     k: null
+    # Use naive estimator (default: false for AdjHE)
+    Naive: false
 
     # Filter phenotype data (e.g., "age>30", "sex==1")
-    pheno_filter: null
+    pheno_filter: "session_id==ses-00A"
 
     # Filter covariate data (e.g., "site==1", "age>=18")
-    covar_filter: null
+    covar_filter: "session_id==ses-00A"
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
-    iid_col: "IID"
+    iid_col: "participant_id"
 
     # Column name for family ID in phenotype/covariate files (case-insensitive match)
-    fid_col: "FID"
+    fid_col: "ab_g_stc__design_id__fam"
 
 # Tool settings
 localAncestry:
-    RFMIX: false
+    RFMIX: true
     test: false
     thin_subjects: 0.1
+    chromosomes: null  # Use pipeline chromosomes if null, or specify list e.g. [13, 14, 15]
     figures: "figures"
 
 internalPCA:
@@ -118,13 +156,13 @@ internalPCA:
     color_by: null
     phenotype_file: null
 
-build: "GRCh38"
-
 ancestry:
+    build: "GRCh38"
     threshold: 0.8
     model: "pca"
     ancestry_file: null
 
+conda-frontend: mamba
 phenotypeSimulation:
     # Ancestries to simulate for
     ancestries: ["AFR", "EUR"]
@@ -203,13 +241,4 @@ prsMethods:
     enabled: false
   multi_sdprs:
     enabled: false
-
-# Environment module names for HPC env-modules deployment.
-plink_module: "plink/2.00-alpha-091019"
-bcftools_module: "bcftools/1.2"
-shapeit_module: "shapeit/4.2.2"
-rfmix_module: "rfmix/09599c1"
-samtools_module: "samtools/1.21"
-R_module: null
-crossmap_module: null
 
