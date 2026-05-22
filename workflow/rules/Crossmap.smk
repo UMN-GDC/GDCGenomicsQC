@@ -119,21 +119,22 @@ rule crossmapLdPrunedToB38:
         LDpsam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.psam",
         tempDir=temp(directory(OUT_DIR / "{subset}" / "intermediates" / "crossmap_ld")),
     params:
+        ld_prefix=lambda wildcards, input: input.LDpgen[:-5],
         output_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / "f1.b38.ldpruned"),
     run:
         _build = config.get("build", "GRCh38")
         if _build == "GRCh38":
             shell("""
                 mkdir -p {output.tempDir}
-                plink2 --pfile {input.LDpgen[:-5]} \
+                plink2 --pfile {params.ld_prefix} \
                        --make-pgen \
                        --out {params.output_prefix}
             """)
         else:
             shell("""
                 mkdir -p {output.tempDir}
-                awk '$1 !~ /^#/ {{print $3}}' {input.LDpvar[:-5]}.pvar > {output.tempDir}/ldpruned_vars.txt
-                plink2 --pfile {input.LDpgen[:-5]} \
+                awk '$1 !~ /^#/ {{print $3}}' {params.ld_prefix}.pvar > {output.tempDir}/ldpruned_vars.txt
+                plink2 --pfile {params.ld_prefix} \
                        --extract {output.tempDir}/ldpruned_vars.txt \
                        --make-pgen \
                        --out {params.output_prefix}
