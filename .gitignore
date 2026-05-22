@@ -10,20 +10,10 @@ AGENTS.md
 
 */.wget-hsts
 */_build/*
-config/*.yaml
-config/*.yml
 !docs/images/*.svg
 !docs/images/*.mmd
 !docs/*.svg
 !docs/*.mmd
-!config/sandboxABCD.yaml
-!config/sandboxToy.yaml
-!config/msiABCD.yaml
-!config/msiToy.yaml
-!config/msiToy_noPredict.yaml
-!config/toy.yaml
-!config/config.schema.yaml
-!config/example_config.yaml
 !envs/*.yml
 !envs/*.yaml
 !config/example.config
