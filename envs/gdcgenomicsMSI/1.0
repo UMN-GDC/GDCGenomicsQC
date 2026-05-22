@@ -25,10 +25,11 @@ prepend-path PATH $snakemake_env/bin
 set basedir [file dirname [info script]]
 prepend-path PATH $basedir/bin
 
+setenv SINGULARITY_TMPDIR /projects/standard/gdc/shared/singularity_tmp
+setenv APPTAINER_TMPDIR /projects/standard/gdc/shared/singularity_tmp
 setenv APPTAINER_CACHEDIR /projects/standard/gdc/shared/singularity_images
 setenv SINGULARITY_CACHEDIR /projects/standard/gdc/shared/singularity_images
 setenv SNAKEMAKE_APPTAINER_PREFIX /projects/standard/gdc/shared/singularity_images
 setenv SNAKEMAKE_SINGULARITY_PREFIX /projects/standard/gdc/shared/singularity_images
-
 
 
