@@ -46,13 +46,13 @@ snpHerit:
     #   - null: MASH will compute GRM automatically from PCA
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/pcair_grm" (if PCAIR ran with GRM)
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/unrelated_grm" (from relatedness step)
-    grm_prefix: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/full/f1.b38.ldpruned.unrelated"
+    grm_prefix: "/scratch.global/coffm049/r25outputs/abcd_imputed/full/f1.b38.ldpruned.unrelated"
     
     # Pre-computed eigenvector file for GRM construction
     # Options:
     #   - null: MASH will compute eigenvectors from PCA
     #   - "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec" (if method=plink2)
-    pca_input: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/full/internal_pca_plink2.eigenvec"
+    pca_input: "/scratch.global/coffm049/r25outputs/abcd_imputed/full/internal_pca_plink2.eigenvec"
 
     # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
@@ -67,9 +67,10 @@ snpHerit:
     covar: 
       - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_g_stc.tsv"
       - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_p_demo.tsv"
+      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_g_dyn.tsv"
   
     # Output filename for heritability estimates (CSV format)
-    out: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/herit_fixed.csv"
+    out: "/scratch.global/coffm049/r25outputs/abcd_imputed/full/herit/imputed_AdjHE_fixed.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE_fixed"
@@ -115,6 +116,7 @@ snpHerit:
     # If null and covar provided, MASH auto-detects (columns with <35 unique values)
     covar_discrete:
       - "ab_g_stc__cohort_sex"
+      - "ab_g_dyn__design_site"
     # Column name to use as random effect (for AdjHE with site effects)
     RV: null
 
