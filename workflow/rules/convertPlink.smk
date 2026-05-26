@@ -125,6 +125,7 @@ plink2 --pfile {output.tempDir}/intermediate_0 \
 
 plink2 --pfile {output.tempDir}/intermediate_1 \
        --fa {input.fasta} \
+       --sort-vars
        --ref-from-fa force \
        --make-pgen \
        --threads {threads} \
@@ -207,20 +208,23 @@ if not INPUT_IS_PER_CHROMOSOME:
             echo "Input is a single file: $SINGLE_INPUT"
 
             if [ "$FORMAT" = "bed" ]; then
-                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_00
+                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             elif [ "$FORMAT" = "vcf" ]; then
-                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_00
+                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             else
-                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_00
+                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             fi
 
-            plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta} --ref-from-fa force --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
+            plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta}  --ref-from-fa force --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
             plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_2
 
             bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads} {output.tempDir}
-
-            mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
-            mv {output.tempDir}/intermediate_0.smiss {output.smiss}
+            mkdir -p {output.tempDir}
+            mv {output.tempDir}/intermediate_00.vmiss {output.vmiss}
+            mv {output.tempDir}/intermediate_00.smiss {output.smiss}
             for ext in pgen pvar psam; do
                 mv {params.output_prefix}.LDpruned.$ext {params.output_prefix}.ldpruned.$ext
             done
