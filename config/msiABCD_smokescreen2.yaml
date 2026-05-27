@@ -71,10 +71,10 @@ snpHerit:
       - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_g_dyn.tsv"
   
     # Output filename for heritability estimates (CSV format)
-    out: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/full/herit/smoke_Covbat2.csv"
+    out: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/full/herit/smoke_Combat2.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
-    method: "Covbat"
+    method: "Combat"
 
     # Number of principal components to use as covariates
     # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
@@ -83,30 +83,11 @@ snpHerit:
     # Phenotype column(s) to analyze
     # Integer or array: 1 = third column (after FID, IID)
     mpheno:
-      - "mr_y_smri__vol__aseg__cd__lh_sum"
-      - "mr_y_smri__vol__aseg__pt__lh_sum"
-      - "mr_y_smri__vol__aseg__pl__lh_sum"
-      - "mr_y_smri__vol__aseg__ag__lh_sum"
-      - "mr_y_smri__vol__aseg__hc__lh_sum"
-      - "mr_y_smri__vol__aseg__ab__lh_sum"
-      - "mr_y_smri__vol__aseg__cd__rh_sum"
-      - "mr_y_smri__vol__aseg__pt__rh_sum"
-      - "mr_y_smri__vol__aseg__pl__rh_sum"
-      - "mr_y_smri__vol__aseg__ag__rh_sum"
-      - "mr_y_smri__vol__aseg__hc__rh_sum"
-      - "mr_y_smri__vol__aseg__ab__rh_sum"
-      - "mr_y_smri__vol__aseg__whb_sum"
-      - "mr_y_smri__vol__aseg__icv_sum"
-      - "nc_y_nihtb__picvcb__uncor_score"
-      - "nc_y_nihtb__flnkr__uncor_score"
-      - "nc_y_nihtb__lswmt__uncor_score"
-      - "nc_y_nihtb__crdst__uncor_score"
-      - "nc_y_nihtb__pttcp__uncor_score"
-      - "nc_y_nihtb__picsq__uncor_score"
-      - "nc_y_nihtb__readr__uncor_score"
-      - "nc_y_nihtb__comp__fluid__uncor_score"
-      - "nc_y_nihtb__comp__cryst__uncor_score"
-      - "nc_y_nihtb__comp__tot__uncor_score"
+      - "mr_y_smri__vol__aseg__th__lh_sum"
+      - "mr_y_smri__vol__aseg__th__rh_sum"
+      - "mr_y_smri__vol__aseg__bs_sum"
+      - "mr_y_smri__vol__aseg__vdc__lh_sum"
+      - "mr_y_smri__vol__aseg__vdc__rh_sum"
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
@@ -120,7 +101,7 @@ snpHerit:
       
       
     # Column name to use as random effect (for AdjHE with site effects)
-    RV: "ab_g_dyn__design_site"
+    RV: "ab_g_dyn__design_site" 
 
     # Loop through covariates, including all previous covariates in each iteration
     loop_covars: false
@@ -131,7 +112,7 @@ snpHerit:
     # Rows to process at once when restoring GCTA GRM binary file
     k: null
     # Use naive estimator (default: false for AdjHE)
-    Naive: false
+    Naive: true
 
     # Filter phenotype data (e.g., "age>30", "sex==1")
     pheno_filter: "session_id==ses-00A"
