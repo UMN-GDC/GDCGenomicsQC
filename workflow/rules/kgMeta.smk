@@ -10,12 +10,15 @@ checkpoint kgMeta:
         highcovPed=protected(REF / "1000G_highcoverage" / "pedigree.txt"),
         gr38fastagz=protected(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"),
         gr38fasta=protected(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
+        gr38fasta2=protected(REF / "hg38.fa"),
+        gr38fastagz2=protected(REF / "hg38.fa.gz"),
         shapemap=protected(REF / "1000G_highcoverage" / "genetic_maps.b38.tar.gz"),
         crossmap=protected(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
     params:
         highcovPop="https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/20130606_g1k_3202_samples_ped_population.txt",
         highcovPed="https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt",
-        fasta="https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+        fasta1="https://ftp.ensembl.org/pub/release-111/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+	fasta2="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz",
         shapemap="https://github.com/odelaneau/shapeit4/raw/refs/heads/master/maps/genetic_maps.b38.tar.gz",
         highcovPgen=REF / "1000G_highcoverage" / "1000G_highCoveragephased",
         crossmap="https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz",
@@ -26,12 +29,14 @@ checkpoint kgMeta:
         wget -O {output.highcovPop} {params.highcovPop}
         wget -O {output.highcovPed} {params.highcovPed}
         wget -O {output.gr38fastagz} {params.fasta}
+        wget -O {output.gr38fastagz2} {params.fasta2}
 
         wget -O {output.shapemap} {params.shapemap}
         mkdir -p {REF}/gmaps
         tar -xzf {output.shapemap} -C {REF}/gmaps
 
         gunzip -c {output.gr38fastagz} > {output.gr38fasta}
+        gunzip -c {output.gr38fastagz2} > {output.gr38fasta2}
 
 
         wget -O {output.crossmap} {params.crossmap}
