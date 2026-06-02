@@ -89,7 +89,7 @@ if SNP_HERIT_ACTIVE:
         resources:
             nodes=1,
             mem_mb=32000,
-            runtime=2880,
+            runtime=720,
         input:
             argfile=rules.prepareSnpHeritArgfile.output.argfile,
         output:

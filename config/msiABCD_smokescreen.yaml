@@ -59,8 +59,8 @@ snpHerit:
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID
     pheno: 
-      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/nc_y_nihtb.tsv"
       - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/mr_y_smri__vol__aseg.tsv"
+      #- "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/nc_y_nihtb.tsv"
     
     # Path to covariate file(s) (required when pheno is specified)
     # Can be a single file path or list for multiple files
@@ -72,14 +72,14 @@ snpHerit:
     
   
     # Output filename for heritability estimates (CSV format)
-    out: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/full/herit/smoke_full_SWD.csv"
+    out: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/full/herit/smoke_16_GCTA.csv"
     # Column name to use as random effect (for AdjHE with site effects)
-    RV: "ab_g_dyn__design_site"
+    RV: null
 
     Naive: false
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
-    method: "SWD"
+    method: "GCTA"
 
     # Discrete/categorical covariate column names (passed via --covar to GCTA)
     # If null and covar provided, MASH auto-detects (columns with <35 unique values)
@@ -88,7 +88,7 @@ snpHerit:
 
     # Number of principal components to use as covariates
     # Integer: use top N PCs; Array [3, 5, 10]: run estimates for each value
-    npc: [0, 1, 2]
+    npc: [2,5]
 
     # Phenotype column(s) to analyze
     # Integer or array: 1 = third column (after FID, IID)
@@ -107,16 +107,6 @@ snpHerit:
       - "mr_y_smri__vol__aseg__ab__rh_sum"
       - "mr_y_smri__vol__aseg__whb_sum"
       - "mr_y_smri__vol__aseg__icv_sum"
-      - "nc_y_nihtb__picvcb__uncor_score"
-      - "nc_y_nihtb__flnkr__uncor_score"
-      - "nc_y_nihtb__lswmt__uncor_score"
-      - "nc_y_nihtb__crdst__uncor_score"
-      - "nc_y_nihtb__pttcp__uncor_score"
-      - "nc_y_nihtb__picsq__uncor_score"
-      - "nc_y_nihtb__readr__uncor_score"
-      - "nc_y_nihtb__comp__fluid__uncor_score"
-      - "nc_y_nihtb__comp__cryst__uncor_score"
-      - "nc_y_nihtb__comp__tot__uncor_score"
       - "mr_y_smri__vol__aseg__th__lh_sum"
       - "mr_y_smri__vol__aseg__th__rh_sum"
       - "mr_y_smri__vol__aseg__bs_sum"
@@ -143,7 +133,9 @@ snpHerit:
     pheno_filter: "session_id==ses-00A"
 
     # Filter covariate data — string (e.g., "site==1") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
-    covar_filter: "session_id==ses-00A"
+    #covar_filter: ["session_id==ses-00A", "ab_g_dyn__design_site==16"]
+    covar_filter: ["session_id==ses-00A", "ab_g_stc__cohort_ethnrace__aou___7==TRUE"]
+    
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
     iid_col: "participant_id"

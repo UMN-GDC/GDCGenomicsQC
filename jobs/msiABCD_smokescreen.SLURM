@@ -2,7 +2,7 @@
 #SBATCH --job-name=smoke_master
 #SBATCH --output=smoke_%j.log
 #SBATCH --mem=1G
-#SBATCH --time=72:00:00
+#SBATCH --time=3:00:00
 
 module use "/scratch.global/coffm049/GDCGenomicsQC/envs"
 module load gdcgenomicsMSI
