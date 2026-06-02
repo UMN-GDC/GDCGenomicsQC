@@ -129,10 +129,10 @@ snpHerit:
     # Use naive estimator (default: false for AdjHE)
     Naive: false
 
-    # Filter phenotype data (e.g., "age>30", "sex==1")
+    # Filter phenotype data — string (e.g., "age>30") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
     pheno_filter: "session_id==ses-00A"
 
-    # Filter covariate data (e.g., "site==1", "age>=18")
+    # Filter covariate data — string (e.g., "site==1") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
     covar_filter: "session_id==ses-00A"
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)

@@ -302,15 +302,15 @@ snpHerit:
       default: null
       description: Rows to process at once when restoring GCTA GRM binary file
     pheno_filter:
-      type: str
+      type: any
       nullable: true
       default: null
-      description: Filter phenotype data (e.g., "age>30", "sex==1")
+      description: Filter phenotype data — string (e.g., "age>30") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
     covar_filter:
-      type: str
+      type: any
       nullable: true
       default: null
-      description: Filter covariate data (e.g., "site==1", "age>=18")
+      description: Filter covariate data — string (e.g., "site==1") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
 
 prsMethods:
   type: dict
