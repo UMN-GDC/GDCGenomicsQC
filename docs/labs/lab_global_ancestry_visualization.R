@@ -1,0 +1,59 @@
+# Lab: Visualizing and Working with Global Ancestry Outputs
+#
+# Interact with output files from the Global Ancestry Classification Pipeline.
+# Work with posterior probabilities, ancestry classifications, and confusion matrices.
+#
+# Prerequisites:
+# - Completed ancestry classification tutorial (outputs in OUT_DIR/01-globalAncestry/)
+# - R (>= 4.0) with tidyverse installed
+# - Set OUT_DIR to your pipeline output directory
+
+library(tidyverse)
+
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
+global_anc_dir <- file.path(OUT_DIR, "01-globalAncestry")
+
+# Load posterior probabilities (PCA model example)
+post_prob_path <- file.path(global_anc_dir, "posterior_probabilities.tsv")
+if (file.exists(post_prob_path)) {
+  post_prob <- read_tsv(post_prob_path)
+  glimpse(post_prob)
+}
+
+# Load ancestry classifications
+class_path <- file.path(global_anc_dir, "ancestry_classifications.tsv")
+if (file.exists(class_path)) {
+  class <- read_tsv(class_path)
+  glimpse(class)
+}
+
+# Join and pivot datasets for visualization
+if (exists("post_prob") && exists("class")) {
+  anc_data <- post_prob %>%
+    left_join(class, by = "IID") %>%
+    mutate(ancestry = str_sub(IID, 1, 3))
+  glimpse(anc_data)
+}
+
+table(anc_data$ancestry, anc_data$umap_predicted)
+table(anc_data$ancestry, anc_data$pca_predicted)
+
+# Visualize: per-sample posterior probabilities
+anc_data %>%
+  pivot_longer(
+    cols = pca_EUR:pca_AFR,
+    names_to = "supposed_ancestry",
+    values_to = "posterior_prob"
+  ) %>%
+  slice_head(n = 50, by = ancestry) %>%
+  ggplot(aes(x = reorder(IID, posterior_prob), y = posterior_prob, fill = supposed_ancestry)) +
+  geom_col(width = 1) +
+  labs(
+    title = "Per-Sample Posterior Probabilities for Global Ancestry (PCA)",
+    x = "Sample ID",
+    y = "Posterior Probability",
+    fill = "Ancestry"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(), panel.grid = element_blank()) +
+  facet_wrap(~ancestry, scales = "free_x")

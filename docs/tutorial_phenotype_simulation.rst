@@ -100,7 +100,7 @@ This step requires the following input files:
 
    * - Input File
      - Description
-   * - ``OUT_DIR/{ANC}/initialFilter.pgen``
+   * - ``OUT_DIR/{ANC}/f1.b38.pgen``
      - Sample genotypes per ancestry (from QC pipeline)
    * - ``ancestry_file`` (optional)
      - User-provided ancestry labels (see :doc:`tutorial_ancestry_classification`)

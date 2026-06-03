@@ -231,21 +231,21 @@ Step 2: Run Initial QC
       .. code-block:: bash
 
           cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config_qc.yaml full/initialFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
 
    .. tab:: Sandbox
 
       .. code-block:: bash
 
           cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config_qc.yaml full/initialFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
 
    .. tab:: Other HPCs
 
       .. code-block:: bash
 
           cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config_qc.yaml full/initialFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
 
    .. tab:: Local Snakemake
 
@@ -254,7 +254,7 @@ Step 2: Run Initial QC
           cd GDCGenomicsQC/workflow
           snakemake --profile=../profiles/hpc \
               --configfile ../config_qc.yaml \
-              full/initialFilter.pgen \
+              full/f1.pgen \
               -j 10
 
 The Initial QC stage performs:
@@ -273,19 +273,19 @@ Step 3: Run Standard QC
 
       .. code-block:: bash
 
-          gdcgenomicsqc --configfile ../config_qc.yaml full/standardFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
 
    .. tab:: Sandbox
 
       .. code-block:: bash
 
-          gdcgenomicsqc --configfile ../config_qc.yaml full/standardFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
 
    .. tab:: Other HPCs
 
       .. code-block:: bash
 
-          gdcgenomicsqc --configfile ../config_qc.yaml full/standardFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
 
    .. tab:: Local Snakemake
 
@@ -293,7 +293,7 @@ Step 3: Run Standard QC
 
           snakemake --profile=../profiles/hpc \
               --configfile ../config_qc.yaml \
-              full/standardFilter.pgen \
+              full/f1.b38.f2.pgen \
               -j 10
 
 The Standard QC stage applies additional filters:
@@ -314,19 +314,19 @@ After ancestry classification, run QC on specific ancestry groups:
 
       .. code-block:: bash
 
-          gdcgenomicsqc --configfile ../config_qc.yaml EUR/standardFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
 
    .. tab:: Sandbox
 
       .. code-block:: bash
 
-          gdcgenomicsqc --configfile ../config_qc.yaml EUR/standardFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
 
    .. tab:: Other HPCs
 
       .. code-block:: bash
 
-          gdcgenomicsqc --configfile ../config_qc.yaml EUR/standardFilter.pgen -j 10
+          gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
 
    .. tab:: Local Snakemake
 
@@ -334,7 +334,7 @@ After ancestry classification, run QC on specific ancestry groups:
 
           snakemake --profile=../profiles/hpc \
               --configfile ../config_qc.yaml \
-              EUR/standardFilter.pgen \
+              EUR/f1.b38.f2.pgen \
               -j 10
 
 Available subsets are dynamically determined from classification results.
@@ -409,9 +409,9 @@ The QC pipeline generates many intermediate files for detailed analysis:
 +-----------------------------------+----------------------------------------+
 | File                              | Description                            |
 +===================================+========================================+
-| ``initialFilter.pgen/.pvar/.psam``| Merged, filtered dataset               |
+| ``f1.pgen/.pvar/.psam``           | Merged, filtered dataset               |
 +-----------------------------------+----------------------------------------+
-| ``initialFilter.LDpruned.*``      | LD-pruned dataset for PCA/relatedness |
+| ``f1.ldpruned.*``                | LD-pruned dataset for PCA/relatedness |
 +-----------------------------------+----------------------------------------+
 | ``initial.smiss``                 | Sample missingness table              |
 +-----------------------------------+----------------------------------------+
@@ -423,9 +423,9 @@ The QC pipeline generates many intermediate files for detailed analysis:
 +-----------------------------------+----------------------------------------+
 | File                              | Description                            |
 +===================================+========================================+
-| ``standardFilter.pgen/.pvar/.psam``| Final filtered dataset                |
+| ``f1.b38.f2.pgen/.pvar/.psam``    | Final filtered dataset                |
 +-----------------------------------+----------------------------------------+
-| ``standardFilter.LDpruned.*``     | Final LD-pruned dataset               |
+| ``f1.b38.f2.ldpruned.*``         | Final LD-pruned dataset               |
 +-----------------------------------+----------------------------------------+
 | ``MAF_check.afreq``               | Allele frequency table                |
 +-----------------------------------+----------------------------------------+

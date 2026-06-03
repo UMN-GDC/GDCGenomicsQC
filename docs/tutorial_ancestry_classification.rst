@@ -145,7 +145,7 @@ This step requires the following input files:
      - Reference panel with population labels (IID, pop, superpop columns)
    * - ``REF/1000G_highcoverage/1000G_highCoveragephased.pruned.pgen``
      - LD-pruned, unrelated reference genotypes for PCA projection
-   * - ``OUT_DIR/full/initialFilter.pgen`` (or ``_CHR.pgen``)
+   * - ``OUT_DIR/full/f1.pgen`` (or ``f1_{CHR}.pgen``)
      - Initial QC-filtered sample genotypes
 
 **Input from Previous Steps:**
@@ -585,7 +585,7 @@ After completing this tutorial, you can:
 
 **The ancestry classification outputs enable:**
 
-- Ancestry-specific QC filters (``EUR/standardFilter.pgen``, ``AFR/standardFilter.pgen``, etc.)
+- Ancestry-specific QC filters (``EUR/f1.b38.f2.pgen``, ``AFR/f1.b38.f2.pgen``, etc.)
 - Per-ancestry heritability estimation
 - Stratified GWAS analyses
 

@@ -364,14 +364,14 @@ Run only specific parts of the pipeline by specifying the rule name:
     snakemake --profile=../profiles/hpc --configfile ../config/config.yaml classifyAncestry
 
     # Run only initial QC
-    snakemake --profile=../profiles/hpc --configfile ../config/config.yaml initialFilter
+    snakemake --profile=../profiles/hpc --configfile ../config/config.yaml full/f1.pgen
 
     # Run only RFMix
     snakemake --profile=../profiles/hpc --configfile ../config/config.yaml RFMIX
 
 Common rule targets include:
 
-- ``initialFilter`` - Initial sample/SNP quality control
+- ``full/f1.pgen`` - Initial sample/SNP quality control
 - ``convertPlinkPerChromosome`` - Per-chromosome conversion and filtering
 - ``convertPlinkSingleFile`` - Single file conversion and filtering
 - ``king`` - Relatedness estimation

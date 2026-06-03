@@ -122,7 +122,7 @@ Required Input Files
 
    * - Input File
      - Description
-   * - ``OUT_DIR/{ANC}/standardFilter.pgen``
+   * - ``OUT_DIR/{ANC}/f1.b38.f2.pgen``
      - QC-filtered, ancestry-subsetted genotypes
    * - ``summary_statistics.tsv``
      - GWAS summary stats (user-provided)
@@ -392,7 +392,7 @@ If running multi-ancestry methods, also specify the second ancestry:
 
 **Pipeline-generated files:** If you've run the QC pipeline first, typical paths are:
 
-- Genotypes: ``OUT_DIR/{ANC}/standardFilter.bed`` (after Standard QC)
+- Genotypes: ``OUT_DIR/{ANC}/f1.b38.f2.pgen`` (after Standard QC)
 - For GRM: ``OUT_DIR/{ANC}/unrelated.grm.bin`` (from Relatedness step)
 
 **GWAS format:** Tab-separated with columns: SNP, A1, A2, BETA, SE, P

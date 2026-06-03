@@ -111,7 +111,7 @@ Required Input Files
 
    * - Input File
      - Description
-   * - ``OUT_DIR/{ANC}/standardFilter.pgen``
+   * - ``OUT_DIR/{ANC}/f1.b38.f2.pgen``
      - QC-filtered, ancestry-subsetted genotypes (training + target)
    * - ``training_summary_statistics.tsv``
      - GWAS summary stats for training ancestries

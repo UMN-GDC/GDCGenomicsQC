@@ -194,7 +194,7 @@ User-provided arguments typically include:
 
 - ``--configfile``: Path to configuration YAML
 - ``-j``: Number of parallel jobs
-- Specific rule targets (e.g., ``full/initialFilter.pgen``)
+- Specific rule targets (e.g., ``full/f1.pgen``)
 
 Testing Changes
 ---------------

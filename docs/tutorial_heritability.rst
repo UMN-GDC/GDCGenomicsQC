@@ -119,7 +119,7 @@ This step requires the following input files:
 
    * - Input File
      - Description
-   * - ``OUT_DIR/{ANC}/initialFilter.pgen``
+   * - ``OUT_DIR/{ANC}/f1.b38.pgen``
      - Sample genotypes per ancestry (from QC pipeline)
    * - ``phenotype.tsv`` (user-provided)
      - Phenotype values (format: IID, pheno1, pheno2...)
