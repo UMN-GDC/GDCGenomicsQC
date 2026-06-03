@@ -7,6 +7,10 @@
 # - Completed PRS pipeline run with output in output_path
 # - R (>= 4.0) with tidyverse and corrplot installed
 
+conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
+.libPaths(unique(c(.Library.site, .Library)))
+.libPaths(c(conda_env, .libPaths()))
+
 library(tidyverse)
 library(data.table)
 

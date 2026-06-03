@@ -9,6 +9,10 @@
 # - R (>= 4.0) with tidyverse installed: install.packages("tidyverse")
 # - Set OUT_DIR to your pipeline output directory
 
+conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
+.libPaths(unique(c(.Library.site, .Library)))
+.libPaths(c(conda_env, .libPaths()))
+
 library(tidyverse)
 
 OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
