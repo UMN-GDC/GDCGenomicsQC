@@ -16,6 +16,7 @@ AGENTS.md
 !docs/*.mmd
 !envs/*.yml
 !envs/*.yaml
+!config/lassoABCD_smokescreen.yaml
 !config/example.config
 !.readthedocs.yaml
 !profiles/*/example_config.yaml
