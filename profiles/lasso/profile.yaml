@@ -1,0 +1,13 @@
+executor: slurm
+
+jobs: 15
+use-singularity: true
+singularity-prefix: /shared/home/coffm049/singularityimages
+apptainer-prefix: /shared/home/coffm049/singularityimages
+singularity-args: "--bind /shared"
+software-deployment-method: [apptainer]
+latency-wait: 60
+
+default-resources:
+  mem_mb: 4000
+  runtime: 60
