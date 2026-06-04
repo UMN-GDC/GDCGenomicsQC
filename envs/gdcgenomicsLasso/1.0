@@ -21,9 +21,10 @@ set basedir [file dirname [info script]]
 prepend-path PATH $basedir/bin
 
 # Point Singularity/Apptainer to it
-setenv SINGULARITY_TMPDIR /scratch.global/GDC/singularity_tmp
-setenv APPTAINER_TMPDIR /scratch.global/GDC/singularity_tmp
-setenv APPTAINER_CACHEDIR /scratch.global/GDC/singularityimages
-setenv SINGULARITY_CACHEDIR /scratch.global/GDC/singularityimages
-setenv SNAKEMAKE_APPTAINER_PREFIX /scratch.global/GDC/singularityimages
-setenv SNAKEMAKE_SINGULARITY_PREFIX /scratch.global/GDC/singularityimages
+# 
+setenv SINGULARITY_TMPDIR /shared/home/coffm049/singularity_tmp
+setenv APPTAINER_TMPDIR /shared/home/coffm049/singularity_tmp
+setenv APPTAINER_CACHEDIR /shared/home/coffm049/singularityimages
+setenv SINGULARITY_CACHEDIR /shared/home/coffm049/singularityimages
+setenv SNAKEMAKE_APPTAINER_PREFIX /shared/home/coffm049/singularityimages
+setenv SNAKEMAKE_SINGULARITY_PREFIX /shared/home/coffm049/singularityimages
