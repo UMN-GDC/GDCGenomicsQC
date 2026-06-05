@@ -47,7 +47,7 @@ plink --bfile $OUTDIR.QC6 --hwe HWE1 --make-bed --out $OUTDIR.QC7a
 plink --bfile $OUTDIR.QC7a --hwe HWE2 --hwe-all --make-bed --out $OUTDIR.QC7
 
 # Heterozygosity check:
-plink --bfile $OUTDIR.QC7 --exclude $REF/data/inversion.txt --range --indep-pairwise 50 5 0.2 --out indepSNP
+plink --bfile $OUTDIR.QC7 --exclude range $REF/data/inversion.txt --indep-pairwise 50 5 0.2 --out indepSNP
 plink --bfile $OUTDIR.QC7 --extract indepSNP.prune.in --het --out R_check
 Rscript --no-save $REF/src/heterozygosity_outliers_list.R 
 sed 's/"// g' fail-het-qc.txt | awk '{print$1, $2}'> het_fail_ind.txt 

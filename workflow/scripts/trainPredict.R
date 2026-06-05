@@ -26,6 +26,34 @@ args <- parser$parse_args()
 
 set.seed(args$rseed)
 
+read_vae_coords <- function(path) {
+    vae_df <- read_table(path, col_names = TRUE, show_col_types = FALSE)
+    names(vae_df) <- make.names(names(vae_df), unique = TRUE)
+
+    iid_candidates <- c("IID", "SampleID", "sample_id", "sample", "id", "ID")
+    iid_col <- iid_candidates[iid_candidates %in% names(vae_df)][1]
+    if (is.na(iid_col)) {
+        iid_col <- names(vae_df)[ncol(vae_df)]
+    }
+
+    names(vae_df)[names(vae_df) == iid_col] <- "IID"
+    names(vae_df) <- ifelse(names(vae_df) == "IID", "IID", paste0("vae_", names(vae_df)))
+
+    if (!("vae_mean1" %in% names(vae_df)) || !("vae_mean2" %in% names(vae_df))) {
+        numeric_cols <- names(vae_df)[vapply(vae_df, is.numeric, logical(1))]
+        numeric_cols <- setdiff(numeric_cols, "IID")
+        if (length(numeric_cols) < 2) {
+            stop("VAE coordinate file must contain IID plus at least two numeric latent-coordinate columns.")
+        }
+        vae_df$vae_mean1 <- vae_df[[numeric_cols[1]]]
+        vae_df$vae_mean2 <- vae_df[[numeric_cols[2]]]
+    }
+
+    vae_df |>
+        select(IID, starts_with("vae_")) |>
+        distinct(IID, .keep_all = TRUE)
+}
+
 fit_and_predict_ancestry_models <- function(
     ref_labels,
     eigen_ref,
@@ -58,6 +86,7 @@ fit_and_predict_ancestry_models <- function(
 
     pc_probs <- predict(pcMod, sampleDF, type = "prob")
     result_df <- sampleDF |> select(IID) |> as_tibble()
+    sample_coords_df <- sampleDF
 
     for (anc in ancestries) {
         result_df[[paste0("pca_", anc)]] <- pc_probs[, anc]
@@ -81,6 +110,8 @@ fit_and_predict_ancestry_models <- function(
 
         sampleDF_umap <- sampleDF |>
             inner_join(umap_sample_df, by = "IID")
+        sample_coords_df <- sample_coords_df |>
+            left_join(umap_sample_df, by = "IID")
 
         umap_probs <- predict(umapMod, sampleDF_umap, type = "prob")
 
@@ -98,10 +129,8 @@ fit_and_predict_ancestry_models <- function(
     has_vae <- FALSE
     if (!is.null(vae_ref)) {
         has_vae <- TRUE
-        vae_ref_df <- read_table(vae_ref, col_names = TRUE)
-        colnames(vae_ref_df) <- paste0("vae_", colnames(vae_ref_df))
-        colnames(vae_ref_df)[length(colnames(vae_ref_df))] <- "IID"
-        ref <- full_join(ref, vae_ref_df, by = c("IID")) |> drop_na()
+        vae_ref_df <- read_vae_coords(vae_ref)
+        ref <- full_join(ref, vae_ref_df, by = c("IID")) |> drop_na(vae_mean1, vae_mean2)
 
         vaeMod <- randomForest::randomForest(
             formula = factor(POP) ~ vae_mean1 + vae_mean2,
@@ -113,6 +142,8 @@ fit_and_predict_ancestry_models <- function(
 
         sampleDF_vae <- sampleDF |>
             inner_join(vae_sample_df, by = "IID")
+        sample_coords_df <- sample_coords_df |>
+            left_join(vae_sample_df, by = "IID")
 
         if (nrow(sampleDF_vae) == 0) {
             warning("VAE coordinates not found in sample data. Skipping VAE prediction.")
@@ -153,7 +184,7 @@ fit_and_predict_ancestry_models <- function(
 
     list(
         probabilities = result_df,
-        sample_coords = sampleDF,
+        sample_coords = sample_coords_df,
         ref_data = ref,
         ancestries = ancestries,
         has_umap = has_umap,

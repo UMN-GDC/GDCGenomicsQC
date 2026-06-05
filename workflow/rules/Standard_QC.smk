@@ -52,6 +52,8 @@ if INPUT_IS_PER_CHROMOSOME:
 
             plink2 --pfile {output.tempDir}/step1 --maf 0.01 --make-pgen --out {output.tempDir}/step2 --threads {threads}
 
+            plink2 --pfile {output.tempDir}/step2 --hardy --out {output.tempDir}/step2 --threads {threads}
+            awk '$9 < 1e-5' {output.tempDir}/step2.hardy > {params.output_dir}/zoomhwe.hwe
             plink2 --pfile {output.tempDir}/step2 --hwe 1e-6 --make-pgen --out {output.tempDir}/step3a --threads {threads}
             plink2 --pfile {output.tempDir}/step3a --hwe 1e-10 --make-pgen --out {output.tempDir}/step3 --threads {threads}
 
@@ -106,7 +108,7 @@ else:
             ref=config.get("REF", "/path/to/ref"),
             output_dir=lambda wildcards, input: OUT_DIR / wildcards.subset,
             sex_check=config.get("SEX_CHECK", False),
-            input_prefix=lambda wildcards, input: input.LDpgen[:-5],
+            input_prefix=lambda wildcards, input: input.pgen[:-5],
             relatedness=config.get("relatedness", {}).get("method", "king"),
             scripts_dir=SCRIPTS_DIR,
         shell:
@@ -122,9 +124,9 @@ else:
               plink2 --pfile {params.input_prefix} --remove {params.output_dir}/sex_discrepancy.txt --make-pgen --out {output.tempDir}/pastSex --threads {threads}
             else
               echo "Ignoring Sex check"
-              cp {input.LDpgen} {output.tempDir}/pastSex.pgen
-              cp {input.LDpvar} {output.tempDir}/pastSex.pvar
-              cp {input.LDpsam} {output.tempDir}/pastSex.psam
+              cp {input.pgen} {output.tempDir}/pastSex.pgen
+              cp {input.pvar} {output.tempDir}/pastSex.pvar
+              cp {input.psam} {output.tempDir}/pastSex.psam
             fi
             bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
 

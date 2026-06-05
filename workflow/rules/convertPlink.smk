@@ -125,7 +125,7 @@ plink2 --pfile {output.tempDir}/intermediate_0 \
 
 plink2 --pfile {output.tempDir}/intermediate_1 \
        --fa {input.fasta} \
-       --sort-vars
+       --sort-vars \
        --ref-from-fa force \
        --make-pgen \
        --threads {threads} \
