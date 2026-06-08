@@ -16,9 +16,6 @@ A Polygenic Risk Score (PRS) is a single value that estimates an individual's ge
 The PRS Equation For an individual $j$, the score $PRS_j$ is calculated as:$$PRS_j = \sum_{i=1}^{n} \hat{\beta}_i G_{ij}$$Where:
 
 -   $\hat{\beta}_i$: The effect size (weight) of SNP $i$ from the discovery GWAS.
-
-<!-- -->
-
 -   $G_{ij}$: The dosage (0, 1, or 2) of the risk allele for SNP $i$ in individual $j$.
 
 ### The Challenge of Diversity
@@ -63,11 +60,23 @@ To run the pipeline, you need:
 
     ```         
     # my_project.conf 
-    summary_stats_file="/path/to/your/gwas_stats.tsv" 
-    bim_file_path="/path/to/your/genotypes.bim" 
-    study_sample="/path/to/your/genotype_prefix"
-    output_path="/path/to/results" 
-    n_total_gwas=31968
+    # --- Paths ---
+    summary_stats_file="/scratch.global/GDC/r25outputs/toy/prs_inputs/AFR_EUR/gwas/training_sumstats_singlePRS.txt"
+    bim_file_path="/scratch.global/GDC/r25outputs/toy/simulations/AFR_EUR/EUR_simulation.bim"
+    study_sample="/scratch.global/GDC/r25outputs/toy/simulations/AFR_EUR/EUR_simulation"
+    output_path="/scratch.global/baron063/r25outputs/toy"
+    path_repo="/scratch.global/baron063/prs_pipeline"
+    skip_ss_generation=0
+    n_total_gwas=300
+    ld_matrix_dir="${output_path}/prs_pipeline/ld_matrix"
+    # --- Parameters ---
+    gwas_pca_eigenvec_file="/scratch.global/GDC/r25outputs/toy/01-globalAncestry/sample_coords.tsv"
+    phenotype_info_file="/scratch.global/baron063/R25_testing/sample_pheno.txt"
+
+    RUN_CT=true
+    RUN_LDPRED2=true
+    RUN_LASSOSUM2=true
+    RUN_PRSice2=true
     ```
 
 ### Exercise: Inspecting the Config
@@ -75,6 +84,38 @@ To run the pipeline, you need:
 Open your `my_project.conf` file. Note the `n_total_gwas` parameter.
 
 **Question:** Why do Bayesian methods like LDpred2 need the total sample size of the discovery GWAS? *Answer: To distinguish between a small effect size and a lack of statistical power in the discovery set.*
+
+### Running the Pipeline
+
+Once your config file is ready, use `sandbox_singularity_runner.sh` to execute the pipeline inside a pre-built Singularity container. Full documentation is at `docs/sandbox_singularity_runner.md` in the `prs_pipeline` repo.
+
+**1. Pull the container image:**
+
+``` bash
+apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prsv2:latest
+```
+
+**2. Run locally (sandbox mode — for testing):**
+
+``` bash
+bash /path/to/prs_pipeline/sandbox_singularity_runner.sh --C my_project.conf -c -l -s
+```
+
+**3. Submit to SLURM (production):**
+
+``` bash
+sbatch /path/to/prs_pipeline/sandbox_singularity_runner.sh --C my_project.conf -c -l -s -P
+```
+
+| Flag | Method                   |
+|------|--------------------------|
+| `-c` | Clumping + Thresholding  |
+| `-l` | LDpred2                  |
+| `-s` | lassosum2                |
+| `-P` | PRSice-2 (requires `-c`) |
+| `-B` | Binary phenotype flag    |
+
+Expected runtime for toy data (3 chromosomes, \~500 samples): \~10–20 min locally, \~5–10 min on SLURM. Full-scale runs with all chromosomes and 10K+ samples can take several hours.
 
 # 3. Comparing PRS Methodologies
 
@@ -102,7 +143,7 @@ Each method outputs results to `{output_path}/prs_pipeline/`:
 |------------|--------------------------------------------|
 | C+T        | `CT/CT_prs_results.txt`                    |
 | LDpred2    | `LDpred2/prs_method_individual_scores.txt` |
-| lassosum2  | `lassosum2/prs_method_final_best_prs.csv`     |
+| lassosum2  | `lassosum2/prs_method_final_best_prs.csv`  |
 | PRSice-2   | `PRSice2/prs_method/PRSice2_outputs.best`  |
 
 ## **PRS Score Columns**
@@ -113,7 +154,7 @@ The relevant PRS score columns for each method:
 |------------|-----------------------------------|
 | C+T        | `SCORE` (in `temp/` subdirectory) |
 | LDpred2    | `PRS_inf` or `PRS_grid`           |
-| lassosum2  | `Best_PRS_Score`                           |
+| lassosum2  | `Best_PRS_Score`                  |
 | PRSice-2   | `PRS`                             |
 
 ### Step 4.1: Load the Data
@@ -122,7 +163,7 @@ Replace `output_path` with the directory where your pipeline results are stored.
 
 Code snippet
 
-``` {r}
+```{r}
 # Load necessary packages
 library(data.table)
 library(tidyverse)
@@ -153,7 +194,7 @@ We want to see how much the methods agree on individual risk rankings.
 
 Code snippet
 
-``` {r}
+```{r}
 # Combine scores into a single data frame
 # Note: Ensure you are matching by Individual ID (IID)
 combined_scores <- data.frame(
@@ -178,7 +219,7 @@ To calculate the $R^2$, we need a phenotype file. Usually, this file follows the
 
 R
 
-``` {r}
+```{r}
 # Load Phenotype and Covariate data
 # Assuming a file with columns: FID, IID, Pheno, Age, Sex, PC1, PC2...
 pheno_path <- file.path(output_path, "study_sample_pheno.txt")
@@ -202,7 +243,7 @@ We calculate the $R^2$ by comparing two models:
 
 The Incremental $R^2$ is $R^2_{Full} - R^2_{Null}$.
 
-``` {r}
+```{r}
 # Define the base covariates
 covariates <- "Age + Sex + PC1 + PC2 + PC3 + PC4 + PC5" # Ideally something like this
 covariates <- "Sex"
@@ -246,7 +287,7 @@ print(r2_results)
 
 A simple bar chart is the standard way to show which method "won" for this specific sample.
 
-``` {r}
+```{r}
 # Visualization using ggplot2
 ggplot(r2_results, aes(x = reorder(Method, -Incremental_R2), y = Incremental_R2, fill = Method)) +
   geom_bar(stat = "identity", color = "black", show.legend = FALSE) +
@@ -264,7 +305,7 @@ ggplot(r2_results, aes(x = reorder(Method, -Incremental_R2), y = Incremental_R2,
 
 It is also helpful for students to see the raw correlation for the top-performing method (e.g., LDpred2).
 
-``` {r}
+```{r}
 # Visualizing the fit for LDpred2
 ggplot(final_data, aes(x = LDpred2, y = Pheno)) +
   geom_point(alpha = 0.3, color = "steelblue") +
