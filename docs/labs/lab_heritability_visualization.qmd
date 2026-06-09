@@ -1,31 +1,39 @@
-# Lab: Visualizing and Working with SNP Heritability Outputs
-#
-# Interact with output files from the SNP Heritability Estimation Pipeline.
-# Work with per-ancestry heritability estimates, standard errors, and compare methods.
-#
-# Prerequisites:
-# - Completed heritability tutorial (outputs in OUT_DIR/03-snpHeritability/)
-# - R (>= 4.0) with tidyverse installed
-# - Set OUT_DIR to your pipeline output directory
+---
+title: "Lab: Visualizing and Working with SNP Heritability Outputs"
+---
 
+Interact with output files from the SNP Heritability Estimation Pipeline.
+Work with per-ancestry heritability estimates, standard errors, and compare methods.
+
+**Prerequisites:**
+- Completed heritability tutorial (outputs in `OUT_DIR/03-snpHeritability/`)
+- R (>= 4.0) with tidyverse installed
+- Set `OUT_DIR` to your pipeline output directory
+
+```{r setup}
 conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
 .libPaths(unique(c(.Library.site, .Library)))
 .libPaths(c(conda_env, .libPaths()))
-
 library(tidyverse)
 
 OUT_DIR <- "/path/to/your/pipeline/output"
 herit_dir <- file.path(OUT_DIR, "03-snpHeritability")
+```
 
-# Load heritability estimates (MASH output - CSV format with header)
+## Load heritability estimates
+
+```{r}
 subset <- "AFR"
 herit_path <- file.path(herit_dir, subset, "03-snpHeritability", "mash_output.csv")
 if (file.exists(herit_path)) {
   herit <- read_csv(herit_path)
   glimpse(herit)
 }
+```
 
-# Calculate 95% confidence intervals
+## Calculate 95% confidence intervals
+
+```{r}
 if (exists("herit")) {
   herit <- herit %>%
     mutate(
@@ -34,8 +42,11 @@ if (exists("herit")) {
     )
   print(herit)
 }
+```
 
-# Forest plot of heritability per ancestry
+## Forest plot of heritability per ancestry
+
+```{r}
 if (exists("herit")) {
   ggplot(herit, aes(x = reorder(Ancestry, h2), y = h2, color = method)) +
     geom_point(size = 3) +
@@ -50,11 +61,15 @@ if (exists("herit")) {
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
+```
 
-# Identify ancestries with significant heritability (p < 0.05)
+## Identify ancestries with significant heritability
+
+```{r}
 if (exists("herit")) {
   sig_herit <- herit %>%
     filter(p_value < 0.05) %>%
     arrange(p_value)
   print(sig_herit)
 }
+```

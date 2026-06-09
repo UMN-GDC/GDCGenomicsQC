@@ -1,46 +1,60 @@
-# Lab: Visualizing and Working with Local Ancestry Outputs
-#
-# Interact with output files from the Local Ancestry Pipeline (RFMix).
-# Work with local ancestry tracts, per-SNP ancestry calls, and posterior probabilities.
-#
-# Prerequisites:
-# - Pipeline run with localAncestry: RFMIX: true in config
-# - Local ancestry outputs present in OUT_DIR/02-localAncestry/
-# - R (>= 4.0) with tidyverse installed
-# - Set OUT_DIR to your pipeline output directory
+---
+title: "Lab: Visualizing and Working with Local Ancestry Outputs"
+---
 
+Interact with output files from the Local Ancestry Pipeline (RFMix).
+Work with local ancestry tracts, per-SNP ancestry calls, and posterior probabilities.
+
+**Prerequisites:**
+- Pipeline run with `localAncestry: RFMIX: true` in config
+- Local ancestry outputs present in `OUT_DIR/02-localAncestry/`
+- R (>= 4.0) with tidyverse installed
+- Set `OUT_DIR` to your pipeline output directory
+
+```{r setup}
 conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
 .libPaths(unique(c(.Library.site, .Library)))
 .libPaths(c(conda_env, .libPaths()))
-
 library(tidyverse)
 
 OUT_DIR <- "/path/to/your/pipeline/output"
 local_anc_dir <- file.path(OUT_DIR, "02-localAncestry")
 chr <- 20
+```
 
-# Load RFMix global ancestry
+## Load RFMix global ancestry
+
+```{r}
 anc_full_path <- file.path(local_anc_dir, "ancestry_full.txt")
 if (file.exists(anc_full_path)) {
   anc_full <- read_tsv(anc_full_path)
   glimpse(anc_full)
 }
+```
 
-# Load per-chromosome MSP file
+## Load per-chromosome MSP file
+
+```{r}
 msp_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.msp.tsv"))
 if (file.exists(msp_path)) {
   msp <- read_tsv(msp_path)
   glimpse(msp)
 }
+```
 
-# Load per-chromosome fragment file (ancestry tracts)
+## Load per-chromosome fragment file (ancestry tracts)
+
+```{r}
 fb_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.fb.tsv"))
 if (file.exists(fb_path)) {
   fb <- read_tsv(fb_path)
   glimpse(fb)
 }
+```
 
-# Load per-SNP local ancestry
+## Load per-SNP local ancestry
+
+```{r}
 snp_la_path <- file.path(local_anc_dir, "per_snp_local_ancestry.tsv")
 if (file.exists(snp_la_path)) {
   snp_la <- read_tsv(snp_la_path,
@@ -48,9 +62,12 @@ if (file.exists(snp_la_path)) {
                   "prob_AFR", "prob_EUR", "prob_AMR"))
   glimpse(snp_la)
 }
+```
 
+## Manhattan plot of local ancestry
+
+```{r}
 if (exists("snp_la")) {
-  # Manhattan plot of local ancestry (per-SNP posterior prob for EUR)
   ggplot(snp_la, aes(x = BP, y = prob_EUR, color = as.factor(CHR))) +
     geom_point(size = 0.5, alpha = 0.7) +
     facet_wrap(~CHR, scales = "free_x", nrow = 2) +
@@ -63,11 +80,15 @@ if (exists("snp_la")) {
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
+```
 
-# Identify samples with high African ancestry proportion using ancestry_full.txt
+## Identify samples with high African ancestry proportion
+
+```{r}
 if (exists("anc_full")) {
   high_afr <- anc_full %>%
     filter(AFR > 0.2) %>%
     arrange(desc(AFR))
   print(high_afr)
 }
+```
