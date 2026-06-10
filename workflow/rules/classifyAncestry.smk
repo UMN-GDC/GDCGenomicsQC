@@ -20,7 +20,7 @@ checkpoint estimateGlobalAncestry:
         umap_sample=OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
         rfmix_global=OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
     output:
-        pos_prob=OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
+        pos_prob=OUT_DIR / "01-globalAncestry" / "        classificationProbabilities.tsv",
         sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
         ref_coords=OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
     params:
@@ -60,7 +60,7 @@ checkpoint classifySamplesByAncestry:
         mem_mb=16000,
         runtime=60,
     input:
-        pos_prob=get_posterior_probs,
+        pos_prob=get_classification_probs,
         sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
         ref_coords=OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
     output:
@@ -85,9 +85,9 @@ checkpoint classifySamplesByAncestry:
         """
 
 
-rule plot_posterior_ridge:
+rule plot_classification_ridge:
     log:
-        OUT_DIR / "logs" / "plot_posterior_ridge.log",
+        OUT_DIR / "logs" / "plot_classification_ridge.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
     conda:
@@ -99,10 +99,10 @@ rule plot_posterior_ridge:
         mem_mb=8000,
         runtime=30,
     input:
-        prob_file=OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
+        prob_file=OUT_DIR / "01-globalAncestry" / "        classificationProbabilities.tsv",
     output:
         ridge_plot=report(
-            OUT_DIR / "01-globalAncestry" / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
+            OUT_DIR / "01-globalAncestry" / f"        classificationProbability_stacked_{ANCESTRY_MODEL}.svg",
             caption="../../report/ancestry_ridgelines.rst",
             category="Global ancestry",
         ),

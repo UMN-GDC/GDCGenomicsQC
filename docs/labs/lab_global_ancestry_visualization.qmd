@@ -1,14 +1,53 @@
 ---
-title: "Lab: Visualizing and Working with Global Ancestry Outputs"
+title: "Lab: Visualizing Global Ancestry Outputs"
 ---
 
-Interact with output files from the Global Ancestry Classification Pipeline.
-Work with posterior probabilities, ancestry classifications, and confusion matrices.
+## Overview
 
-**Prerequisites:**
-- Completed ancestry classification tutorial (outputs in `OUT_DIR/01-globalAncestry/`)
-- R (>= 4.0) with tidyverse installed
-- Set `OUT_DIR` to your pipeline output directory
+After QC, the pipeline projects study samples onto a PCA reference panel (1000 Genomes), then uses random forest models trained on PCA, UMAP, and VAE coordinates to predict global ancestry. The output includes per-sample classification probabilities from each model and a hard classification.
+
+Because the genotypes are **synthetic** — resampled from 1000 Genomes haplotypes and available on Dataverse — the population structure mirrors the original 1KG reference. This means **ancestry separation is very clean**: the reference populations are well-differentiated, and study samples that are simple resamples from those populations will have unambiguous ancestry assignments.
+
+## Goals & Expectations
+
+Frame your exploration around these questions:
+
+1. **Classification probabilities** — Do most samples have a classification probability >0.9 for a single ancestry? How many are admixed (split probabilities)?
+2. **Confusion matrices** — Do the random forest predictions agree with the known ancestry labels derived from sample IDs?
+3. **Method agreement** — Do PCA-based, UMAP-based, and VAE-based predictions agree, or are there systematic differences?
+4. **Uncertainty** — Are there samples with prediction percentage below 80% that get labeled "Other"?
+
+Given the **synthetic origin**, you should expect **near-perfect classification**: samples should almost always map cleanly to their source population, with very few "Other" calls.
+
+## Inputs & Outputs
+
+- **Inputs:** LD-pruned, crossmapped study PGEN (`f1.b38.ldpruned.*`); 1KG reference PCA coordinates; study PCA projections (`pca_projections.tsv`); optional UMAP/VAE coordinates; optional RFMix global ancestry proportions.
+- **Outputs:** `classificationProbabilities.tsv` (per-sample per-model ancestry probabilities), `ancestry_classifications.tsv` (hard calls with 80% threshold), `study.{name}.unrelated.comm.popu` (final ancestry labels for downstream).
+- **Pipeline direction:** The hard classifications in `.comm.popu` feed into ancestry-stratified analyses — heritability estimation, PRS, and downstream association testing.
+
+## Upstream Pipeline Steps
+
+Several critical steps must complete before global ancestry prediction can run:
+
+1. **Initial QC** (`initialFilter.sh` via `convertPlinkPerChromosome`) — Removes variants/samples with excessive missingness. Without this, PCA would be distorted by noisy variants.
+2. **Standard QC** (`filterStandard.sh` via `Standard_QC.smk`) — Applies MAF, HWE, and heterozygosity filters. Ensures only high-quality, independent variants enter the ancestry model.
+3. **LD pruning** (`initialFilter.sh` → `concatLdPruned`) — Prunes variants in high LD so that PCA captures **population structure** (which is driven by allele-frequency differences) rather than **linkage structure** (which is driven by local correlation). This is essential for ancestry separation.
+4. **Unrelated sample extraction** (`checkRelatednessExtractUnrelated` via KING) — Removes related samples (pi-hat > 0.0884). The random forest training assumes **independent observations**; related samples would artificially inflate prediction accuracy and bias the model.
+5. **Crossmap** (`crossmapLdPrunedToB38`) — Lifts study variants to the same genome build as the 1KG reference. Without this, PCA coordinates would be incomparable.
+6. **PCA reference projection** (`PCAreference.smk`) — Projects study samples into the 1KG PCA space. Uses per-chromosome extraction + concatenation to avoid OOM on large datasets.
+
+**Why independence matters here:** PCA and random forests both assume samples are independent. LD pruning ensures variant-level independence; KING filtering ensures sample-level independence. Violating either assumption inflates apparent ancestry separation.
+
+## Before You Begin
+
+- **Required files:** `classificationProbabilities.tsv`, `ancestry_classifications.tsv` in `{global_anc_dir}/`
+- **Optional files:** `sample_coords.tsv`, `ref_coords.tsv` (needed for classification-space plots)
+- **Disk space:** < 5 MB for these tables
+- **Expected render time:** < 15 seconds per chunk
+- **Known issue:** If `classificationProbabilities.tsv` is missing, the `estimateGlobalAncestry` checkpoint may not have completed. Run `--target run_classifyAncestry` to force it.
+- **Reference:** The 1KG reference panel used for PCA was built from the 1000 Genomes Project high-coverage 30x whole-genome sequencing data.
+
+## Setup
 
 ```{r setup}
 conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
@@ -20,17 +59,29 @@ OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
 global_anc_dir <- file.path(OUT_DIR, "01-globalAncestry")
 ```
 
-## Load posterior probabilities
+## Classification Probabilities
+
+**File:** `{global_anc_dir}/classificationProbabilities.tsv`
+
+**Format:** TSV with column `IID` followed by one column per ancestry per model (e.g., `pca_EUR`, `umap_EUR`, `vae_EUR`, `rfmix_EUR`). Each value is the classification probability from the corresponding random forest model.
+
+**Pipeline step:** Generated by `workflow/scripts/trainPredict.R` — reads PCA/UMAP/VAE reference coordinates, trains a random forest against known 1KG labels, then applies the model to study-sample coordinates. The `predictAncestry` rule in `predictAncestry.smk` orchestrates this.
 
 ```{r}
-post_prob_path <- file.path(global_anc_dir, "posterior_probabilities.tsv")
-if (file.exists(post_prob_path)) {
-  post_prob <- read_tsv(post_prob_path)
-  glimpse(post_prob)
+class_prob_path <- file.path(global_anc_dir, "classificationProbabilities.tsv")
+if (file.exists(class_prob_path)) {
+  class_prob <- read_tsv(class_prob_path)
+  glimpse(class_prob)
 }
 ```
 
-## Load ancestry classifications
+## Ancestry Classifications
+
+**File:** `{global_anc_dir}/ancestry_classifications.tsv`
+
+**Format:** TSV with columns `IID`, `Ancestry`, `Prediction_Percentage`, and per-method predictions. The hard call is the ancestry with highest probability; if no ancestry exceeds 80%, the sample is labeled "Other".
+
+**Pipeline step:** Generated by `workflow/scripts/classify.R` in the `classifySamples` rule (`predictAncestry.smk`). It reads the classification-probability table and applies the 80% threshold.
 
 ```{r}
 class_path <- file.path(global_anc_dir, "ancestry_classifications.tsv")
@@ -40,42 +91,120 @@ if (file.exists(class_path)) {
 }
 ```
 
-## Join and pivot datasets for visualization
+## Join and Pivot
+
+Combine the two tables and extract a rough ancestry label from the IID for comparison.
 
 ```{r}
-if (exists("post_prob") && exists("class")) {
-  anc_data <- post_prob %>%
+if (exists("class_prob") && exists("class")) {
+  anc_data <- class_prob %>%
     left_join(class, by = "IID") %>%
     mutate(ancestry = str_sub(IID, 1, 3))
   glimpse(anc_data)
 }
 ```
 
-## Confusion matrices
-Let's check on how RF trained off of PC's performs in classifying toy data
+## Confusion Matrices
+
+How well do the UMAP and PCA random forests recover the known population labels?
+
 ```{r}
+table(anc_data$ancestry, anc_data$umap_predicted)
 table(anc_data$ancestry, anc_data$pca_predicted)
 ```
 
-## Visualize: per-sample posterior probabilities
+**Expectation:** Because the data is synthetic and derived from 1KG, the confusion matrices should show **near-0 off-diagonal counts** — every sample assigned to its correct population. Any off-diagonal entries would be notable and worth investigating.
+
+## Classification Probability Bar Plot
+
+For each known ancestry group, plot the per-sample classification probabilities from the PCA model. Each bar is one sample, colored by the ancestry to which the probability corresponds.
 
 ```{r}
 anc_data %>%
   pivot_longer(
     cols = pca_EUR:pca_AFR,
     names_to = "supposed_ancestry",
-    values_to = "posterior_prob"
+    values_to = "classification_prob"
   ) %>%
   slice_head(n = 50, by = ancestry) %>%
-  ggplot(aes(x = reorder(IID, posterior_prob), y = posterior_prob, fill = supposed_ancestry)) +
+  ggplot(aes(x = reorder(IID, classification_prob), y = classification_prob, fill = supposed_ancestry)) +
   geom_col(width = 1) +
   labs(
-    title = "Per-Sample Posterior Probabilities for Global Ancestry (PCA)",
+    title = "Per-Sample Classification Probabilities for Global Ancestry (PCA)",
     x = "Sample ID",
-    y = "Posterior Probability",
+    y = "Classification Probability",
     fill = "Ancestry"
   ) +
   theme_minimal() +
   theme(axis.text.x = element_blank(), panel.grid = element_blank()) +
   facet_wrap(~ancestry, scales = "free_x")
 ```
+
+**Expectation:** Each facet should show a solid bar of a single color at probability ≈ 1.0 for every sample — clean, unambiguous assignments consistent with synthetic data.
+
+## Method Agreement Heatmap
+
+Do the PCA, UMAP, and RFMix classifiers agree? Build a pairwise agreement table.
+
+```{r}
+if (exists("anc_data")) {
+  agreement <- anc_data %>%
+    mutate(
+      pca_umap_agree = pca_predicted == umap_predicted,
+      pca_rfmix_agree = pca_predicted == rfmix_predicted,
+      umap_rfmix_agree = umap_predicted == rfmix_predicted
+    )
+  cat("PCA vs UMAP agreement:", mean(agreement$pca_umap_agree, na.rm = TRUE) * 100, "%\n")
+  cat("PCA vs RFMix agreement:", mean(agreement$pca_rfmix_agree, na.rm = TRUE) * 100, "%\n")
+  cat("UMAP vs RFMix agreement:", mean(agreement$umap_rfmix_agree, na.rm = TRUE) * 100, "%\n")
+}
+```
+
+**Expectation:** With clean synthetic data, agreement should be near 100% across all methods. Disagreements, when they occur, typically happen at ancestry boundaries or for samples with admixed ancestry.
+
+## Confidence by Ancestry
+
+Are some ancestries harder to classify than others? Violin plot of confidence scores per predicted ancestry.
+
+```{r}
+if (exists("anc_data")) {
+  anc_data %>%
+    select(IID, ancestry, ends_with("_confidence")) %>%
+    pivot_longer(cols = -c(IID, ancestry), names_to = "method", values_to = "confidence") %>%
+    mutate(method = str_remove(method, "_confidence")) %>%
+    ggplot(aes(x = ancestry, y = confidence, fill = ancestry)) +
+    geom_violin(alpha = 0.7) +
+    geom_jitter(width = 0.1, alpha = 0.3, size = 0.5) +
+    facet_wrap(~method) +
+    labs(
+      title = "Classification Confidence by Ancestry",
+      x = "Ancestry",
+      y = "Confidence Score"
+    ) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+```
+
+**Expectation:** With synthetic 1KG data, all ancestries should show tight violins near 1.0. In real data, ancestries with smaller reference sample sizes (e.g., SAS, AMR) often show lower and more variable confidence.
+
+## Check Your Understanding
+
+1. **Why are the confusion matrices nearly diagonal?** Would you expect this for a real heterogeneous cohort (e.g., an admixed Latin American population)?
+2. **If the PCA and UMAP classifiers disagree on a sample**, which one would you trust more and why?
+3. **The classification threshold is 80%.** What happens to the trade-off between sensitivity and specificity if you raise it to 95%? Lower it to 60%?
+
+## Troubleshooting
+
+| Problem | Likely Cause | Solution |
+|---------|-------------|----------|
+| `classificationProbabilities.tsv` missing | `estimateGlobalAncestry` checkpoint not triggered | Run `snakemake --target run_classifyAncestry` |
+| All samples classified "Other" | Threshold too high, or RF model failed | Check `classify.R` log; verify model was trained on at least 2 samples per ancestry |
+| VAE probabilities all NA | VAE model file missing or incompatible | VAE is optional; set `ancestry.model: pca` in config to bypass |
+| Confusion matrix shows one dominant class | The 1KG reference is unbalanced (e.g., EUR is largest) | Report per-class accuracy, not overall accuracy |
+
+## Going Further
+
+- **Sensitivity analysis**: Re-run `classify.R` with thresholds from 0.5 to 0.95 and plot the number of "Other" calls vs. threshold. Where is the elbow?
+- **Admixture simulation**: Take two known-ancestry samples and average their PCA coordinates to create a synthetic admixed sample. What does the classifier call it?
+- **Compare random forest models**: Use the `ref_coords.tsv` to train your own classifier (e.g., XGBoost) and compare its confusion matrix to the pipeline's random forest.

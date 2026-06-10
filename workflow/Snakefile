@@ -185,7 +185,7 @@ rule run_classifyAncestry:
         runtime=420,
     input:
         rfmix=lambda wildcards: OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
-        posterior=OUT_DIR / "01-globalAncestry" / "posterior_probabilities.tsv",
+        classification_probability=OUT_DIR / "01-globalAncestry" / "classificationProbabilities.tsv",
 
 
 rule run_ancestryQC:
@@ -278,7 +278,7 @@ rule run_qcPlots:
             if config.get("internalPCA", {}).get("method", "plink2") in ["pcair", "both"]
             else []
         ),
-        OUT_DIR / "01-globalAncestry" / f"posterior_probability_stacked_{ANCESTRY_MODEL}.svg",
+        OUT_DIR / "01-globalAncestry" / f"classificationProbability_stacked_{ANCESTRY_MODEL}.svg",
         OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
 
 

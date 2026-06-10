@@ -97,7 +97,7 @@ def get_ancestry_file(wildcards):
     return OUT_DIR / "01-globalAncestry" / f"keep_{mapped_subset}.txt"
 
 
-def get_posterior_probs(wildcards):
+def get_classification_probs(wildcards):
     if has_provided_ancestry():
         return []
     checkpoint_output = checkpoints.estimateGlobalAncestry.get(**wildcards).output.pos_prob

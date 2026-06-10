@@ -1,7 +1,7 @@
 library(argparse)
 library(tidyverse) |> suppressPackageStartupMessages()
 
-parser <- ArgumentParser(description = "Classify ancestry based on posterior probabilities.")
+parser <- ArgumentParser(description = "Classify ancestry based on classification probabilities.")
 parser$add_argument("--out", type = "character", default = NULL,
     help = "Output directory")
 parser$add_argument("--threshold", type = "double", default = 0.8,
@@ -10,7 +10,7 @@ parser$add_argument("--model", type = "character", default = "pca",
     help = "Model to use for classification (default: pca)")
 args <- parser$parse_args()
 
-prob_df <- read_delim(file.path(args$out, "posterior_probabilities.tsv"), delim = "\t")
+prob_df <- read_delim(file.path(args$out, "classificationProbabilities.tsv"), delim = "\t")
 
 has_umap <- any(colnames(prob_df) %>% str_starts("umap_"))
 has_vae <- any(colnames(prob_df) %>% str_starts("vae_"))
