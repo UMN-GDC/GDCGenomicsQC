@@ -9,6 +9,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Lab Overview
+
+By the end of this lab you should be able to understand how to use the prs_pipeline to get Polygenic Risk Scores and how to interpret your findings. 
+
 # 1. Introduction to Polygenic Risk Scores (PRS)
 
 A Polygenic Risk Score (PRS) is a single value that estimates an individual's genetic liability to a specific trait or disease. It is calculated by summing the risk alleles across the genome, weighted by the effect sizes derived from a Genome-Wide Association Study (GWAS).
@@ -112,7 +116,7 @@ sbatch /path/to/prs_pipeline/sandbox_singularity_runner.sh --C my_project.conf -
 | `-c` | Clumping + Thresholding  |
 | `-l` | LDpred2                  |
 | `-s` | lassosum2                |
-| `-P` | PRSice-2 (requires `-c`) |
+| `-P` | PRSice-2                 |
 | `-B` | Binary phenotype flag    |
 
 Expected runtime for toy data (3 chromosomes, \~500 samples): \~10–20 min locally, \~5–10 min on SLURM. Full-scale runs with all chromosomes and 10K+ samples can take several hours.
