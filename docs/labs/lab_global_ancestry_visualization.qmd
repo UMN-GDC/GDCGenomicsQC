@@ -52,9 +52,8 @@ if (exists("post_prob") && exists("class")) {
 ```
 
 ## Confusion matrices
-
+Let's check on how RF trained off of PC's performs in classifying toy data
 ```{r}
-table(anc_data$ancestry, anc_data$umap_predicted)
 table(anc_data$ancestry, anc_data$pca_predicted)
 ```
 

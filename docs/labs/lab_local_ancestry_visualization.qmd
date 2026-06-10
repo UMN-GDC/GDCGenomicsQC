@@ -16,8 +16,7 @@ conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
 .libPaths(unique(c(.Library.site, .Library)))
 .libPaths(c(conda_env, .libPaths()))
 library(tidyverse)
-
-OUT_DIR <- "/path/to/your/pipeline/output"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
 local_anc_dir <- file.path(OUT_DIR, "02-localAncestry")
 chr <- 20
 ```
@@ -33,21 +32,36 @@ if (file.exists(anc_full_path)) {
 ```
 
 ## Load per-chromosome MSP file
+we will subset this to make it easier to handle in R as an example
+```{bash}
+head /scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.msp.tsv | awk '{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,$15,$16,$17,$18,$19,$19}'
+head /scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.msp.tsv | awk '{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,$15,$16,$17,$18,$19,$19}' > /scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.msp.tsv.temp
+cat /scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.msp.tsv.temp
+```
+
 
 ```{r}
-msp_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.msp.tsv"))
+msp_path <- file.path("/scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.msp.tsv.temp")
 if (file.exists(msp_path)) {
-  msp <- read_tsv(msp_path)
+  msp <- read_table(msp_path, skip = 1)
   glimpse(msp)
 }
 ```
 
 ## Load per-chromosome fragment file (ancestry tracts)
+grab the first couple of positions from a single toy subject
+```{bash}
+head /scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.fb.tsv | awk '{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12}' > /scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.fb.tsv.temp
+cat /scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.fb.tsv.temp
+```
 
+```{bash}
+head -100 /scratch.global/GDC/r25outputs/toy/02-localAncestry/chr20.lai.sis.tsv | awk '{print $1, $2, $3, $4,$5,$6,$7,$8,$9,$10,$3000}'
+```
 ```{r}
-fb_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.fb.tsv"))
+fb_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.fb.tsv.temp"))
 if (file.exists(fb_path)) {
-  fb <- read_tsv(fb_path)
+  fb <- read_table(fb_path, skip = 1)
   glimpse(fb)
 }
 ```

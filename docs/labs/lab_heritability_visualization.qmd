@@ -15,8 +15,7 @@ conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
 .libPaths(unique(c(.Library.site, .Library)))
 .libPaths(c(conda_env, .libPaths()))
 library(tidyverse)
-
-OUT_DIR <- "/path/to/your/pipeline/output"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
 herit_dir <- file.path(OUT_DIR, "03-snpHeritability")
 ```
 

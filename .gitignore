@@ -6,6 +6,9 @@
 *.svg
 *.html
 *.tex
+*.css
+*.js
+docs/labs/*_files
 AGENTS.md
 
 */.wget-hsts
