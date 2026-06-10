@@ -70,7 +70,7 @@ To run the pipeline, you need:
     n_total_gwas=300
     ld_matrix_dir="${output_path}/prs_pipeline/ld_matrix"
     # --- Parameters ---
-    gwas_pca_eigenvec_file="/scratch.global/GDC/r25outputs/toy/01-globalAncestry/sample_coords.tsv"
+    gwas_pca_eigenvec_file="" # For an example of what these look like /scratch.global/GDC/r25outputs/toy/01-globalAncestry/sample_coords.tsv. This is optional since the pipeline generates it if it is missing
     phenotype_info_file="/scratch.global/baron063/R25_testing/sample_pheno.txt"
 
     RUN_CT=true
@@ -169,6 +169,7 @@ library(data.table)
 library(tidyverse)
 # Define your output directory
 output_path <- "/Users/kodydegolier/Documents/GitHub/GDCGenomicsQC/docs/labs/sample_data"
+output_path <- "/scratch.global/baron063/r25outputs/toy/prs_pipeline"
 
 # 1.0 Load Clumping + Thesholding (C+T) Results to determine best R Squared
 ct_results_path <- file.path(output_path, "CT/CT_prs_results.txt")
@@ -176,7 +177,7 @@ ct_results <- fread(ct_results_path)
 threshold <- ct_results[[which.max(ct_results$R2), 1]]
 
 # 1. Load Clumping + Thresholding (C+T) Scores
-ct_path <- file.path(output_path, paste0("CT/temp.", threshold, ".profile"))
+ct_path <- file.path(output_path, paste0("CT/temp/temp.", threshold, ".profile"))
 ct_data <- fread(ct_path)
 
 # 2. Load LDpred2 Scores
@@ -223,6 +224,7 @@ R
 # Load Phenotype and Covariate data
 # Assuming a file with columns: FID, IID, Pheno, Age, Sex, PC1, PC2...
 pheno_path <- file.path(output_path, "study_sample_pheno.txt")
+pheno_path <- "/scratch.global/baron063/R25_testing/sample_pheno.txt"
 pheno_data <- fread(pheno_path)
 colnames(pheno_data) = c("FID", "IID", "Pheno")
 
