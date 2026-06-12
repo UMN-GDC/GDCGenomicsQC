@@ -1,5 +1,12 @@
 ---
 title: "Lab: Visualizing Global Ancestry Outputs"
+author: "Christian Coffman"
+date: "2026-06-12"
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-fold: true
 ---
 
 ## Overview
