@@ -1,6 +1,6 @@
 # Project-wide paths
 INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
-OUT_DIR: "/scratch.global/GDC/r25outputs/toy"
+OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr"
 REF: "/scratch.global/GDC/referenceData"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
 
@@ -39,14 +39,14 @@ snpHerit:
     # Options:
     #   - null: MASH will compute GRM automatically from PCA
     #   - "/path/to/output/full/pcair_grm" (if PCAIR ran with GRM)
-    #   - "/path/to/output/full/unrelated_grm" (from relatedness step)
-    grm_prefix: null
+    #   -  (from relatedness step)
+    grm_prefix: "/path/to/output/full/unrelated_grm"
     
     # Pre-computed eigenvector file for GRM construction
     # Options:
     #   - null: MASH will compute eigenvectors from PCA
-    #   - "/path/to/output/full/internal_pca_plink2.eigenvec" (if method=plink2)
-    pca_input: null
+    #   -  (if method=plink2)
+    pca_input: "/path/to/output/full/internal_pca_plink2.eigenvec"
 
     # Phenotype file(s) — single path or list of paths
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
@@ -57,7 +57,7 @@ snpHerit:
     covar: null
 
     # Output filename for heritability estimates (CSV format)
-    out: null
+    out: "/scratch.global/coffm049/jlkjl"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE"
@@ -93,10 +93,10 @@ snpHerit:
     # Rows to process at once when restoring GCTA GRM binary file
     k: null
 
-    # Filter phenotype data — string (e.g., "age>30") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
+    # Filter phenotype data (e.g., "age>30", "sex==1")
     pheno_filter: null
 
-    # Filter covariate data — string (e.g., "site==1") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
+    # Filter covariate data (e.g., "site==1", "age>=18")
     covar_filter: null
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
