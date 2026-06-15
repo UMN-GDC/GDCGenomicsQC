@@ -43,19 +43,21 @@ To run the pipeline, you need:
 
 1.  **Summary Statistics:** GWAS results containing RSIDs, effect alleles, P-values, and Betas.
 
-     1.  **Summary Statistics File Format** The file needs to have a column header and contain the following columns. If there are multiple listed in `{}` that means that any 1 of the options is recognized but the file cannot contain more than 1 of these overlapping columns.
+    1.  **Summary Statistics File Format** The file needs to have a column header and contain the following columns. If there are multiple listed in `{}` that means that any 1 of the options is recognized but the file cannot contain more than 1 of these overlapping columns.
 
-        -   {rsid, rs_id, rsids}
+    ```         
+    -   {rsid, rs_id, rsids}
 
-        -   {A1, alt, a1}
+    -   {A1, alt, a1}
 
-        -   {p, pval}
+    -   {p, pval}
 
-        -   {sebeta, beta_se}
+    -   {sebeta, beta_se}
 
-        -   beta
+    -   beta
 
-        Chromosome and position are not required — they are pulled from the `.bim` file during alignment. `ref`/`A2` is also derived automatically, so it does not need to be in the input.
+    Chromosome and position are not required — they are pulled from the `.bim` file during alignment. `ref`/`A2` is also derived automatically, so it does not need to be in the input.
+    ```
 
 2.  **Target Genotype Files:** PLINK format (`.bed`, `.bim`, `.fam`).
 
@@ -153,12 +155,12 @@ Each method outputs results to `{output_path}/prs_pipeline/`:
 
 All methods output scores into `test_evaluation/` with a unified `SCORE` column, making comparison straightforward:
 
-| **Method** | **Test Evaluation File**            | **Score Column** |
-|------------|-------------------------------------|------------------|
-| C+T        | `test_evaluation/CT_scores.txt`     | `SCORE`          |
-| LDpred2    | `test_evaluation/LDpred2_grid_scores.txt` | `SCORE`    |
-| lassosum2  | `test_evaluation/lassosum2_scores.txt`    | `SCORE`    |
-| PRSice-2   | `test_evaluation/PRSice2_scores.txt`      | `SCORE`    |
+| **Method** | **Test Evaluation File**                  | **Score Column** |
+|------------|-------------------------------------------|------------------|
+| C+T        | `test_evaluation/CT_scores.txt`           | `SCORE`          |
+| LDpred2    | `test_evaluation/LDpred2_grid_scores.txt` | `SCORE`          |
+| lassosum2  | `test_evaluation/lassosum2_scores.txt`    | `SCORE`          |
+| PRSice-2   | `test_evaluation/PRSice2_scores.txt`      | `SCORE`          |
 
 ### Step 4.1: Load the Data
 
@@ -308,17 +310,17 @@ ggplot(r2_results, aes(x = reorder(Method, -Incremental_R2), y = Incremental_R2,
 
 ### 4.6: Visualizing Predicted vs. Observed (Scatter Plot)
 
-It is also helpful for students to see the raw correlation for the top-performing method (e.g., LDpred2).
+It is also helpful to see the raw correlation for the top-performing method (e.g., CT).
 
 ```{r}
-# Visualizing the fit for LDpred2
-ggplot(final_data, aes(x = LDpred2, y = Pheno)) +
+# Visualizing the fit for CT
+ggplot(final_data, aes(x = CT, y = Pheno)) +
   geom_point(alpha = 0.3, color = "steelblue") +
   geom_smooth(method = "lm", color = "darkred") +
   theme_light() +
   labs(
-    title = "Observed Phenotype vs. LDpred2 Score",
-    x = "Polygenic Risk Score (LDpred2)",
+    title = "Observed Phenotype vs. CT Score",
+    x = "Polygenic Risk Score (CT)",
     y = "Observed Phenotype Value"
   )
 ```
