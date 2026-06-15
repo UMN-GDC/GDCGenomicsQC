@@ -111,10 +111,8 @@ herit_dir <- file.path(OUT_DIR, "03-snpHeritability")
 ```{r}
 subset <- "AFR"
 herit_path <- file.path(herit_dir, subset, "03-snpHeritability", "mash_output.csv")
-if (file.exists(herit_path)) {
-  herit <- read_csv(herit_path)
-  glimpse(herit)
-}
+herit <- read_csv(herit_path)
+glimpse(herit)
 ```
 
 ## Calculate 95% Confidence Intervals
@@ -122,14 +120,12 @@ if (file.exists(herit_path)) {
 Compute approximate CIs using the normal approximation (estimate ± 1.96 × SE).
 
 ```{r}
-if (exists("herit")) {
-  herit <- herit %>%
-    mutate(
-      lower_ci = h2 - 1.96 * SE,
-      upper_ci = h2 + 1.96 * SE
-    )
-  print(herit)
-}
+herit <- herit %>%
+  mutate(
+    lower_ci = h2 - 1.96 * SE,
+    upper_ci = h2 + 1.96 * SE
+  )
+print(herit)
 ```
 
 **Expectation:** The true h² = 0.4 should fall within the 95% CI for most ancestry-method combinations.
@@ -139,21 +135,19 @@ if (exists("herit")) {
 Visualize h² estimates and CIs across ancestries and methods. The horizontal dashed line marks the ground-truth value of 0.4.
 
 ```{r}
-if (exists("herit")) {
-  ggplot(herit, aes(x = reorder(Ancestry, h2), y = h2, color = method)) +
-    geom_point(size = 3) +
-    geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
-    geom_hline(yintercept = 0.4, linetype = "dashed", color = "gray50", linewidth = 1) +
-    labs(
-      title = "SNP Heritability Estimates per Ancestry",
-      subtitle = "Ground truth h² = 0.4 (dashed line)",
-      x = "Ancestry",
-      y = expression("Heritability (h"^2*")"),
-      color = "Method"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-}
+ggplot(herit, aes(x = reorder(Ancestry, h2), y = h2, color = method)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  geom_hline(yintercept = 0.4, linetype = "dashed", color = "gray50", linewidth = 1) +
+  labs(
+    title = "SNP Heritability Estimates per Ancestry",
+    subtitle = "Ground truth h² = 0.4 (dashed line)",
+    x = "Ancestry",
+    y = expression("Heritability (h"^2*")"),
+    color = "Method"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 **Expectation:** Estimates should cluster around 0.4. Confidence intervals should overlap 0.4 for most ancestries. If a method gives consistently biased results, it will be visually apparent here.
@@ -163,12 +157,10 @@ if (exists("herit")) {
 Which ancestry-specific h² estimates are statistically significant (p < 0.05)?
 
 ```{r}
-if (exists("herit")) {
-  sig_herit <- herit %>%
-    filter(p_value < 0.05) %>%
-    arrange(p_value)
-  print(sig_herit)
-}
+sig_herit <- herit %>%
+  filter(p_value < 0.05) %>%
+  arrange(p_value)
+print(sig_herit)
 ```
 
 **Expectation:** Because h² = 0.4 is substantially above zero, most or all ancestry-method combinations should be significant. Non-significant results would indicate insufficient sample size or excessive standard errors for that ancestry group.
@@ -180,44 +172,42 @@ Visualize the genetic relationship matrix to confirm that KING filtering removed
 ```{r}
 grm_id_path <- file.path(OUT_DIR, "relatedness", "f1.b38.ldpruned.unrelated.grm.id")
 grm_bin_path <- file.path(OUT_DIR, "relatedness", "f1.b38.ldpruned.unrelated.grm.bin")
-if (file.exists(grm_bin_path) && file.exists(grm_id_path)) {
-  grm_ids <- read_tsv(grm_id_path, col_names = c("FID", "IID"))
-  n_ids <- nrow(grm_ids)
-  grm_bin <- readBin(grm_bin_path, what = "numeric", n = n_ids * (n_ids + 1) / 2)
+grm_ids <- read_tsv(grm_id_path, col_names = c("FID", "IID"))
+n_ids <- nrow(grm_ids)
+grm_bin <- readBin(grm_bin_path, what = "numeric", n = n_ids * (n_ids + 1) / 2)
 
-  grm_mat <- matrix(0, n_ids, n_ids)
-  idx <- 1
-  for (i in 1:n_ids) {
-    for (j in 1:i) {
-      grm_mat[i, j] <- grm_bin[idx]
-      grm_mat[j, i] <- grm_bin[idx]
-      idx <- idx + 1
-    }
+grm_mat <- matrix(0, n_ids, n_ids)
+idx <- 1
+for (i in 1:n_ids) {
+  for (j in 1:i) {
+    grm_mat[i, j] <- grm_bin[idx]
+    grm_mat[j, i] <- grm_bin[idx]
+    idx <- idx + 1
   }
-
-  n_subsample <- min(200, n_ids)
-  set.seed(42)
-  subsample_idx <- sample(seq_len(n_ids), n_subsample)
-
-  grm_sub <- grm_mat[subsample_idx, subsample_idx]
-
-  grm_sub %>%
-    as_tibble() %>%
-    rowid_to_column("row") %>%
-    pivot_longer(cols = -row, names_to = "col_str", values_to = "GRM") %>%
-    mutate(col = as.integer(str_remove(col_str, "V"))) %>%
-    ggplot(aes(x = col, y = row, fill = GRM)) +
-    geom_tile() +
-    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-    labs(
-      title = "Genetic Relationship Matrix (Subset)",
-      subtitle = paste0(n_subsample, " samples — diagonal should dominate after KING filtering"),
-      x = "Sample",
-      y = "Sample"
-    ) +
-    theme_minimal() +
-    theme(axis.text = element_blank())
 }
+
+n_subsample <- min(200, n_ids)
+set.seed(42)
+subsample_idx <- sample(seq_len(n_ids), n_subsample)
+
+grm_sub <- grm_mat[subsample_idx, subsample_idx]
+
+grm_sub %>%
+  as_tibble() %>%
+  rowid_to_column("row") %>%
+  pivot_longer(cols = -row, names_to = "col_str", values_to = "GRM") %>%
+  mutate(col = as.integer(str_remove(col_str, "V"))) %>%
+  ggplot(aes(x = col, y = row, fill = GRM)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(
+    title = "Genetic Relationship Matrix (Subset)",
+    subtitle = paste0(n_subsample, " samples — diagonal should dominate after KING filtering"),
+    x = "Sample",
+    y = "Sample"
+  ) +
+  theme_minimal() +
+  theme(axis.text = element_blank())
 ```
 
 **Expectation:** The diagonal (self-relationship = ~1) should dominate. Off-diagonal values should cluster near 0. If you see substantial off-diagonal structure, KING filtering may not have been aggressive enough, or the GRM was computed before unrelated extraction.
@@ -227,21 +217,19 @@ if (file.exists(grm_bin_path) && file.exists(grm_id_path)) {
 Is h² significantly different between ancestries? Test pairwise.
 
 ```{r}
-if (exists("herit")) {
-  h2_wide <- herit %>%
-    filter(method == "mash") %>%
-    select(Ancestry, h2, SE)
+h2_wide <- herit %>%
+  filter(method == "mash") %>%
+  select(Ancestry, h2, SE)
 
-  if (nrow(h2_wide) >= 2) {
-    for (i in 1:(nrow(h2_wide) - 1)) {
-      for (j in (i + 1):nrow(h2_wide)) {
-        diff_est <- h2_wide$h2[i] - h2_wide$h2[j]
-        diff_se <- sqrt(h2_wide$SE[i]^2 + h2_wide$SE[j]^2)
-        z <- diff_est / diff_se
-        p <- 2 * pnorm(-abs(z))
-        cat(sprintf("%s vs %s: Δh² = %.3f ± %.3f, p = %.4f\n",
-          h2_wide$Ancestry[i], h2_wide$Ancestry[j], diff_est, diff_se, p))
-      }
+if (nrow(h2_wide) >= 2) {
+  for (i in 1:(nrow(h2_wide) - 1)) {
+    for (j in (i + 1):nrow(h2_wide)) {
+      diff_est <- h2_wide$h2[i] - h2_wide$h2[j]
+      diff_se <- sqrt(h2_wide$SE[i]^2 + h2_wide$SE[j]^2)
+      z <- diff_est / diff_se
+      p <- 2 * pnorm(-abs(z))
+      cat(sprintf("%s vs %s: Δh² = %.3f ± %.3f, p = %.4f\n",
+        h2_wide$Ancestry[i], h2_wide$Ancestry[j], diff_est, diff_se, p))
     }
   }
 }

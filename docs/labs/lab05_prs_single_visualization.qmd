@@ -115,10 +115,8 @@ prs_out_dir <- file.path(OUT_DIR, "prs_inputs", paste0(anc1, "_", anc2))
 
 ```{r}
 prsice_score_path <- file.path(prs_out_dir, "single_prsice", "best_pRS.prs")
-if (file.exists(prsice_score_path)) {
-  prs_scores <- read_tsv(prsice_score_path, col_names = c("FID", "IID", "PRS"))
-  glimpse(prs_scores)
-}
+prs_scores <- read_tsv(prsice_score_path, col_names = c("FID", "IID", "PRS"))
+glimpse(prs_scores)
 ```
 
 ## PRSice-2 Summary
@@ -131,10 +129,8 @@ if (file.exists(prsice_score_path)) {
 
 ```{r}
 prsice_summary_path <- file.path(prs_out_dir, "single_prsice", "summary.csv")
-if (file.exists(prsice_summary_path)) {
-  prsice_summary <- read_csv(prsice_summary_path)
-  glimpse(prsice_summary)
-}
+prsice_summary <- read_csv(prsice_summary_path)
+glimpse(prsice_summary)
 ```
 
 ## LDpred2 Scores
@@ -147,10 +143,8 @@ if (file.exists(prsice_summary_path)) {
 
 ```{r}
 ldpred2_path <- file.path(prs_out_dir, "single_ldpred2", "prs_scores.tsv")
-if (file.exists(ldpred2_path)) {
-  ldpred2_scores <- read_tsv(ldpred2_path)
-  glimpse(ldpred2_scores)
-}
+ldpred2_scores <- read_tsv(ldpred2_path)
+glimpse(ldpred2_scores)
 ```
 
 ## PRS Score Distribution (PRSice-2)
@@ -158,16 +152,14 @@ if (file.exists(ldpred2_path)) {
 Is the score distribution approximately normal, or are there signs of stratification?
 
 ```{r}
-if (exists("prs_scores")) {
-  ggplot(prs_scores, aes(x = PRS)) +
-    geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
-    labs(
-      title = "PRS Score Distribution (PRSice-2)",
-      x = "Polygenic Risk Score",
-      y = "Number of Samples"
-    ) +
-    theme_minimal()
-}
+ggplot(prs_scores, aes(x = PRS)) +
+  geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
+  labs(
+    title = "PRS Score Distribution (PRSice-2)",
+    x = "Polygenic Risk Score",
+    y = "Number of Samples"
+  ) +
+  theme_minimal()
 ```
 
 **Expectation:** With synthetic 1KG-resampled data and a simulated phenotype, the PRS should be approximately normally distributed. If there is bimodality, it could indicate residual population stratification not fully captured by the ancestry adjustment.
@@ -178,23 +170,21 @@ Does the PRS distribution shift across ancestry groups? This is a common sign of
 
 ```{r}
 ancestry_class_path <- file.path(OUT_DIR, "01-globalAncestry", "ancestry_classifications.tsv")
-if (exists("prs_scores") && file.exists(ancestry_class_path)) {
-  anc_labels <- read_tsv(ancestry_class_path)
-  
-  prs_anc <- prs_scores %>%
-    inner_join(anc_labels, by = c("IID" = "IID"))
-  
-  prs_anc %>%
-    ggplot(aes(x = PRS, fill = pca_predicted)) +
-    geom_density(alpha = 0.5) +
-    labs(
-      title = "PRS Distribution by Predicted Ancestry",
-      x = "Polygenic Risk Score (PRSice-2)",
-      y = "Density",
-      fill = "Ancestry"
-    ) +
-    theme_minimal()
-}
+anc_labels <- read_tsv(ancestry_class_path)
+
+prs_anc <- prs_scores %>%
+  inner_join(anc_labels, by = c("IID" = "IID"))
+
+prs_anc %>%
+  ggplot(aes(x = PRS, fill = pca_predicted)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "PRS Distribution by Predicted Ancestry",
+    x = "Polygenic Risk Score (PRSice-2)",
+    y = "Density",
+    fill = "Ancestry"
+  ) +
+  theme_minimal()
 ```
 
 **Expectation:** With synthetic data, the PRS distributions should overlap well across ancestries (the phenotype was simulated with the same genetic architecture for all groups). Shifted distributions would suggest the GWAS summary statistics were ancestry-specific and the LD reference was mismatched.
@@ -204,36 +194,32 @@ if (exists("prs_scores") && file.exists(ancestry_class_path)) {
 Split samples into PRS deciles and plot the mean observed phenotype per decile. A well-calibrated PRS should show a monotonic increasing trend.
 
 ```{r}
-if (exists("prs_scores")) {
-  pheno_path <- file.path(OUT_DIR, "phenotypes.txt")
-  if (file.exists(pheno_path)) {
-    pheno <- read_tsv(pheno_path)
-    
-    prs_w_pheno <- prs_scores %>%
-      inner_join(pheno, by = "IID") %>%
-      mutate(decile = ntile(PRS, 10))
-    
-    decile_summary <- prs_w_pheno %>%
-      group_by(decile) %>%
-      summarise(
-        mean_pheno = mean(Pheno, na.rm = TRUE),
-        se_pheno = sd(Pheno, na.rm = TRUE) / sqrt(n()),
-        .groups = "drop"
-      )
-    
-    decile_summary %>%
-      ggplot(aes(x = decile, y = mean_pheno)) +
-      geom_point(size = 3) +
-      geom_errorbar(aes(ymin = mean_pheno - 1.96 * se_pheno, ymax = mean_pheno + 1.96 * se_pheno), width = 0.3) +
-      geom_smooth(method = "lm", se = FALSE, color = "darkred", linetype = "dashed") +
-      labs(
-        title = "PRS Calibration: Observed Phenotype by PRS Decile",
-        x = "PRS Decile",
-        y = "Mean Observed Phenotype"
-      ) +
-      theme_minimal()
-  }
-}
+pheno_path <- file.path(OUT_DIR, "phenotypes.txt")
+pheno <- read_tsv(pheno_path)
+
+prs_w_pheno <- prs_scores %>%
+  inner_join(pheno, by = "IID") %>%
+  mutate(decile = ntile(PRS, 10))
+
+decile_summary <- prs_w_pheno %>%
+  group_by(decile) %>%
+  summarise(
+    mean_pheno = mean(Pheno, na.rm = TRUE),
+    se_pheno = sd(Pheno, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+decile_summary %>%
+  ggplot(aes(x = decile, y = mean_pheno)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_pheno - 1.96 * se_pheno, ymax = mean_pheno + 1.96 * se_pheno), width = 0.3) +
+  geom_smooth(method = "lm", se = FALSE, color = "darkred", linetype = "dashed") +
+  labs(
+    title = "PRS Calibration: Observed Phenotype by PRS Decile",
+    x = "PRS Decile",
+    y = "Mean Observed Phenotype"
+  ) +
+  theme_minimal()
 ```
 
 **Expectation:** A clear monotonic increase from decile 1 to 10 indicates the PRS is capturing true genetic signal. If the plot is flat, the PRS has no predictive power. If it is non-monotonic (e.g., decile 5 > decile 6), the PRS may be noisy or overfit.

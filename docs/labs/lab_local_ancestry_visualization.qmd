@@ -107,10 +107,8 @@ chr <- 20
 
 ```{r}
 anc_full_path <- file.path(local_anc_dir, "ancestry_full.txt")
-if (file.exists(anc_full_path)) {
-  anc_full <- read_tsv(anc_full_path)
-  glimpse(anc_full)
-}
+anc_full <- read_tsv(anc_full_path)
+glimpse(anc_full)
 ```
 
 ## Per-Chromosome MSP File
@@ -123,10 +121,8 @@ if (file.exists(anc_full_path)) {
 
 ```{r}
 msp_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.msp.tsv"))
-if (file.exists(msp_path)) {
-  msp <- read_tsv(msp_path)
-  glimpse(msp)
-}
+msp <- read_tsv(msp_path)
+glimpse(msp)
 ```
 
 ## Fragment File (Ancestry Tracts)
@@ -139,10 +135,8 @@ if (file.exists(msp_path)) {
 
 ```{r}
 fb_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.fb.tsv"))
-if (file.exists(fb_path)) {
-  fb <- read_tsv(fb_path)
-  glimpse(fb)
-}
+fb <- read_tsv(fb_path)
+glimpse(fb)
 ```
 
 ## Per-SNP Local Ancestry
@@ -155,12 +149,10 @@ if (file.exists(fb_path)) {
 
 ```{r}
 snp_la_path <- file.path(local_anc_dir, "per_snp_local_ancestry.tsv")
-if (file.exists(snp_la_path)) {
-  snp_la <- read_tsv(snp_la_path,
-    col_names = c("SNP", "CHR", "BP", "IID", "predicted_ancestry",
-                  "prob_AFR", "prob_EUR", "prob_AMR"))
-  glimpse(snp_la)
-}
+snp_la <- read_tsv(snp_la_path,
+  col_names = c("SNP", "CHR", "BP", "IID", "predicted_ancestry",
+                "prob_AFR", "prob_EUR", "prob_AMR"))
+glimpse(snp_la)
 ```
 
 ## Manhattan Plot of Local Ancestry
@@ -168,19 +160,17 @@ if (file.exists(snp_la_path)) {
 Visualize per-SNP posterior probability for European ancestry across the genome. Each point is a SNP; color groups chromosomes.
 
 ```{r}
-if (exists("snp_la")) {
-  ggplot(snp_la, aes(x = BP, y = prob_EUR, color = as.factor(CHR))) +
-    geom_point(size = 0.5, alpha = 0.7) +
-    facet_wrap(~CHR, scales = "free_x", nrow = 2) +
-    labs(
-      title = "Per-SNP European Local Ancestry Probability",
-      x = "Base Pair Position",
-      y = "Posterior Probability (EUR)",
-      color = "Chromosome"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-}
+ggplot(snp_la, aes(x = BP, y = prob_EUR, color = as.factor(CHR))) +
+  geom_point(size = 0.5, alpha = 0.7) +
+  facet_wrap(~CHR, scales = "free_x", nrow = 2) +
+  labs(
+    title = "Per-SNP European Local Ancestry Probability",
+    x = "Base Pair Position",
+    y = "Posterior Probability (EUR)",
+    color = "Chromosome"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 **Expectation:** For a sample of predominantly European ancestry, you should see long stretches with prob_EUR near 1.0. Any dips to intermediate values may indicate admixture or phasing uncertainty. With synthetic data, tracts should be clean and probabilities extreme.
@@ -190,12 +180,10 @@ if (exists("snp_la")) {
 Which samples have >20% African ancestry according to RFMix?
 
 ```{r}
-if (exists("anc_full")) {
-  high_afr <- anc_full %>%
-    filter(AFR > 0.2) %>%
-    arrange(desc(AFR))
-  print(high_afr)
-}
+high_afr <- anc_full %>%
+  filter(AFR > 0.2) %>%
+  arrange(desc(AFR))
+print(high_afr)
 ```
 
 **Expectation:** Only samples that are genuinely admixed or from African-ancestry populations should appear here. The synthetic resampling preserves the original 1KG population labels, so these proportions should match the known composition.
@@ -205,26 +193,24 @@ if (exists("anc_full")) {
 Visualize ancestry tracts along a chromosome as colored segments. This karyogram-style plot shows ancestry switches most intuitively.
 
 ```{r}
-if (exists("msp")) {
-  sample_for_tract <- colnames(msp)[grep("^[^.]+\\.\\d+$", colnames(msp))][1:10]
+sample_for_tract <- colnames(msp)[grep("^[^.]+\\.\\d+$", colnames(msp))][1:10]
 
-  msp_long <- msp %>%
-    select(chm, spos, epos, all_of(sample_for_tract)) %>%
-    pivot_longer(cols = all_of(sample_for_tract), names_to = "sample_hap", values_to = "ancestry_code")
+msp_long <- msp %>%
+  select(chm, spos, epos, all_of(sample_for_tract)) %>%
+  pivot_longer(cols = all_of(sample_for_tract), names_to = "sample_hap", values_to = "ancestry_code")
 
-  msp_long %>%
-    mutate(bp_mb = spos / 1e6) %>%
-    ggplot(aes(x = bp_mb, xend = epos / 1e6, y = sample_hap, yend = sample_hap, color = as.factor(ancestry_code))) +
-    geom_segment(linewidth = 3) +
-    labs(
-      title = paste0("Ancestry Tracts on Chromosome ", chr),
-      x = "Position (Mb)",
-      y = "Sample (Haplotype)",
-      color = "Ancestry"
-    ) +
-    theme_minimal() +
-    theme(axis.text.y = element_blank())
-}
+msp_long %>%
+  mutate(bp_mb = spos / 1e6) %>%
+  ggplot(aes(x = bp_mb, xend = epos / 1e6, y = sample_hap, yend = sample_hap, color = as.factor(ancestry_code))) +
+  geom_segment(linewidth = 3) +
+  labs(
+    title = paste0("Ancestry Tracts on Chromosome ", chr),
+    x = "Position (Mb)",
+    y = "Sample (Haplotype)",
+    color = "Ancestry"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_blank())
 ```
 
 **Expectation:** Each sample-haplotype row should show long, contiguous blocks of a single color. Many short alternating blocks suggest phasing errors or genuine admixture. With synthetic 1KG data, tracts should be long and switches rare.
@@ -234,22 +220,20 @@ if (exists("msp")) {
 Compare the RFMix-derived genome-wide ancestry proportions (from `ancestry_full.txt`) with the random forest `rfmix_*` classification probabilities. They should agree closely.
 
 ```{r}
-if (exists("anc_full") && exists("class_prob")) {
-  local_global <- anc_full %>%
-    inner_join(class_prob, by = "IID")
+local_global <- anc_full %>%
+  inner_join(class_prob, by = "IID")
 
-  p_afr <- local_global %>%
-    ggplot(aes(x = AFR, y = rfmix_AFR)) +
-    geom_point(alpha = 0.5) +
-    geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +
-    labs(
-      title = "RFMix Global AFR Proportion vs. Random Forest AFR Probability",
-      x = "RFMix Global Proportion (from ancestry_full.txt)",
-      y = "Random Forest Probability (from classificationProbabilities.tsv)"
-    ) +
-    theme_minimal()
-  print(p_afr)
-}
+p_afr <- local_global %>%
+  ggplot(aes(x = AFR, y = rfmix_AFR)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    title = "RFMix Global AFR Proportion vs. Random Forest AFR Probability",
+    x = "RFMix Global Proportion (from ancestry_full.txt)",
+    y = "Random Forest Probability (from classificationProbabilities.tsv)"
+  ) +
+  theme_minimal()
+print(p_afr)
 ```
 
 **Expectation:** Points should cluster near the y = x line. Systematic deviation suggests one of the two methods is biased. With clean synthetic data, agreement should be high (R² > 0.95).

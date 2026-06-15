@@ -109,10 +109,8 @@ global_anc_dir <- file.path(OUT_DIR, "01-globalAncestry")
 
 ```{r}
 class_prob_path <- file.path(global_anc_dir, "posterior_probabilities.tsv")
-if (file.exists(class_prob_path)) {
-  class_prob <- read_tsv(class_prob_path)
-  glimpse(class_prob)
-}
+class_prob <- read_tsv(class_prob_path)
+glimpse(class_prob)
 ```
 
 ## PCA Projection of Study onto Reference
@@ -129,41 +127,37 @@ Plot the first two PCs — this is the same space used by the random forest clas
 ref_sscore_path <- file.path(global_anc_dir, "refRefPCscores.sscore")
 sample_sscore_path <- file.path(global_anc_dir, "sampleRefPCscores.sscore")
 
-if (file.exists(ref_sscore_path) && file.exists(sample_sscore_path)) {
-  ref_pca <- read_tsv(ref_sscore_path, show_col_types = FALSE)
-  names(ref_pca)[1] <- "IID"
+ref_pca <- read_tsv(ref_sscore_path, show_col_types = FALSE)
+names(ref_pca)[1] <- "IID"
 
-  sample_pca <- read_tsv(sample_sscore_path, show_col_types = FALSE)
-  names(sample_pca)[1] <- "IID"
+sample_pca <- read_tsv(sample_sscore_path, show_col_types = FALSE)
+names(sample_pca)[1] <- "IID"
 
-  pca_cols <- grep("SCORE\\d+_AVG", names(ref_pca), value = TRUE)
-  if (length(pca_cols) >= 2) {
-    ref_pca <- ref_pca |>
-      select(IID, PC1 = all_of(pca_cols[1]), PC2 = all_of(pca_cols[2]))
+pca_cols <- grep("SCORE\\d+_AVG", names(ref_pca), value = TRUE)
+stopifnot("Fewer than 2 PC columns found in sscore file" = length(pca_cols) >= 2)
 
-    sample_pca <- sample_pca |>
-      select(IID, PC1 = all_of(pca_cols[1]), PC2 = all_of(pca_cols[2]))
+ref_pca <- ref_pca |>
+  select(IID, PC1 = all_of(pca_cols[1]), PC2 = all_of(pca_cols[2]))
 
-    labels_path <- file.path(global_anc_dir, "..", "ref", "population.txt")
-    if (file.exists(labels_path)) {
-      labels <- read_tsv(labels_path, col_names = c("IID", "POP"), show_col_types = FALSE)
-      ref_pca <- ref_pca |> inner_join(labels, by = "IID")
-    }
+sample_pca <- sample_pca |>
+  select(IID, PC1 = all_of(pca_cols[1]), PC2 = all_of(pca_cols[2]))
 
-    ref_pca |>
-      ggplot(aes(x = PC1, y = PC2)) +
-      geom_point(data = sample_pca, color = "black", size = 0.8, alpha = 0.5) +
-      geom_point(aes(color = POP), size = 1.5, alpha = 0.8) +
-      labs(
-        title = "Study Samples Projected onto 1KG Reference PCs",
-        subtitle = "Black = study samples, color = 1KG reference populations",
-        x = "PC1",
-        y = "PC2",
-        color = "Population"
-      ) +
-      theme_minimal()
-  }
-}
+labels_path <- file.path(global_anc_dir, "..", "ref", "population.txt")
+labels <- read_tsv(labels_path, col_names = c("IID", "POP"), show_col_types = FALSE)
+ref_pca <- ref_pca |> inner_join(labels, by = "IID")
+
+ref_pca |>
+  ggplot(aes(x = PC1, y = PC2)) +
+  geom_point(data = sample_pca, color = "black", size = 0.8, alpha = 0.5) +
+  geom_point(aes(color = POP), size = 1.5, alpha = 0.8) +
+  labs(
+    title = "Study Samples Projected onto 1KG Reference PCs",
+    subtitle = "Black = study samples, color = 1KG reference populations",
+    x = "PC1",
+    y = "PC2",
+    color = "Population"
+  ) +
+  theme_minimal()
 ```
 
 **Expectation:** Study samples should overlap with the 1KG reference populations they were resampled from. The synthetic 1KG-resampled data should produce clean, well-separated clusters matching the reference panel's known population structure.
@@ -178,10 +172,8 @@ if (file.exists(ref_sscore_path) && file.exists(sample_sscore_path)) {
 
 ```{r}
 class_path <- file.path(global_anc_dir, "ancestry_classifications.tsv")
-if (file.exists(class_path)) {
-  class <- read_tsv(class_path)
-  glimpse(class)
-}
+class <- read_tsv(class_path)
+glimpse(class)
 ```
 
 ## Join and Pivot
@@ -189,12 +181,10 @@ if (file.exists(class_path)) {
 Combine the two tables and extract a rough ancestry label from the IID for comparison.
 
 ```{r}
-if (exists("class_prob") && exists("class")) {
-  anc_data <- class_prob %>%
-    left_join(class, by = "IID") %>%
-    mutate(ancestry = str_sub(IID, 1, 3))
-  glimpse(anc_data)
-}
+anc_data <- class_prob %>%
+  left_join(class, by = "IID") %>%
+  mutate(ancestry = str_sub(IID, 1, 3))
+glimpse(anc_data)
 ```
 
 ## Confusion Matrices
@@ -240,17 +230,11 @@ anc_data %>%
 Do the PCA, UMAP, and RFMix classifiers agree? Build a pairwise agreement table.
 
 ```{r}
-if (exists("anc_data")) {
-  agreement <- anc_data %>%
-    mutate(
-      pca_umap_agree = pca_predicted == umap_predicted,
-      #pca_rfmix_agree = pca_predicted == rfmix_predicted,
-      #umap_rfmix_agree = umap_predicted == rfmix_predicted
-    )
-  cat("PCA vs UMAP agreement:", mean(agreement$pca_umap_agree, na.rm = TRUE) * 100, "%\n")
-  #cat("PCA vs RFMix agreement:", mean(agreement$pca_rfmix_agree, na.rm = TRUE) * 100, "%\n")
-  #cat("UMAP vs RFMix agreement:", mean(agreement$umap_rfmix_agree, na.rm = TRUE) * 100, "%\n")
-}
+agreement <- anc_data %>%
+  mutate(
+    pca_umap_agree = pca_predicted == umap_predicted,
+  )
+cat("PCA vs UMAP agreement:", mean(agreement$pca_umap_agree, na.rm = TRUE) * 100, "%\n")
 ```
 
 **Expectation:** With clean synthetic data, agreement should be near 100% across all methods. Disagreements, when they occur, typically happen at ancestry boundaries or for samples with admixed ancestry.
@@ -260,23 +244,21 @@ if (exists("anc_data")) {
 Are some ancestries harder to classify than others? Violin plot of confidence scores per predicted ancestry.
 
 ```{r}
-if (exists("anc_data")) {
-  anc_data %>%
-    select(IID, ancestry, ends_with("_confidence")) %>%
-    pivot_longer(cols = -c(IID, ancestry), names_to = "method", values_to = "confidence") %>%
-    mutate(method = str_remove(method, "_confidence")) %>%
-    ggplot(aes(x = ancestry, y = confidence, fill = ancestry)) +
-    geom_violin(alpha = 0.7) +
-    geom_jitter(width = 0.1, alpha = 0.3, size = 0.5) +
-    facet_wrap(~method) +
-    labs(
-      title = "Classification Confidence by Ancestry",
-      x = "Ancestry",
-      y = "Confidence Score"
-    ) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-}
+anc_data %>%
+  select(IID, ancestry, ends_with("_confidence")) %>%
+  pivot_longer(cols = -c(IID, ancestry), names_to = "method", values_to = "confidence") %>%
+  mutate(method = str_remove(method, "_confidence")) %>%
+  ggplot(aes(x = ancestry, y = confidence, fill = ancestry)) +
+  geom_violin(alpha = 0.7) +
+  geom_jitter(width = 0.1, alpha = 0.3, size = 0.5) +
+  facet_wrap(~method) +
+  labs(
+    title = "Classification Confidence by Ancestry",
+    x = "Ancestry",
+    y = "Confidence Score"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 **Expectation:** With synthetic 1KG data, all ancestries should show tight violins near 1.0. In real data, ancestries with smaller reference sample sizes (e.g., SAS, AMR) often show lower and more variable confidence.

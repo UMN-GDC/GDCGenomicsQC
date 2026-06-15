@@ -207,18 +207,16 @@ print(high_missing)
 Do HWE p-values follow the expected uniform distribution (most variants should not deviate from HWE in a well-genotyped dataset)?
 
 ```{r}
-if (exists("hwe")) {
-  hwe %>%
-    ggplot(aes(x = P)) +
-    geom_histogram(bins = 50, fill = "purple", alpha = 0.7) +
-    scale_x_log10() +
-    labs(
-      title = "HWE P-Value Distribution",
-      x = "P-value (log scale)",
-      y = "Number of Variants"
-    ) +
-    theme_minimal()
-}
+hwe %>%
+  ggplot(aes(x = P)) +
+  geom_histogram(bins = 50, fill = "purple", alpha = 0.7) +
+  scale_x_log10() +
+  labs(
+    title = "HWE P-Value Distribution",
+    x = "P-value (log scale)",
+    y = "Number of Variants"
+  ) +
+  theme_minimal()
 ```
 
 **Expectation:** Most variants should have p-values near 1.0 (no HWE deviation). A spike near p < 1e-6 would indicate systematic genotyping errors. With synthetic 1KG-resampled data, the distribution should be nearly flat.
@@ -228,18 +226,16 @@ if (exists("hwe")) {
 Are low-frequency variants more prone to HWE deviation? Jointly visualize MAF and HWE to detect problematic variant classes.
 
 ```{r}
-if (exists("hwe") && exists("freq")) {
-  freq %>%
-    inner_join(hwe, by = c("#CHROM" = "#CHROM", "ID" = "ID")) %>%
-    ggplot(aes(x = ALT_FREQS, y = -log10(P))) +
-    geom_point(alpha = 0.3, size = 0.5) +
-    labs(
-      title = "MAF vs. HWE",
-      x = "Alternate Allele Frequency",
-      y = expression(-log[10](HWE ~ P))
-    ) +
-    theme_minimal()
-}
+freq %>%
+  inner_join(hwe, by = c("#CHROM" = "#CHROM", "ID" = "ID")) %>%
+  ggplot(aes(x = ALT_FREQS, y = -log10(P))) +
+  geom_point(alpha = 0.3, size = 0.5) +
+  labs(
+    title = "MAF vs. HWE",
+    x = "Alternate Allele Frequency",
+    y = expression(-log[10](HWE ~ P))
+  ) +
+  theme_minimal()
 ```
 
 **Expectation:** There should be no strong correlation between MAF and HWE deviation. If low-MAF variants show systematically lower HWE p-values, that suggests genotyping errors concentrated in rare variants.
