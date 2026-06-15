@@ -7,11 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
 ```
 
 # Lab Overview
 
-By the end of this lab you should be able to understand how to use the prs_pipeline to get Polygenic Risk Scores and how to interpret your findings. 
+By the end of this lab you should be able to understand how to use the prs_pipeline to get Polygenic Risk Scores and how to interpret your findings.
 
 # 1. Introduction to Polygenic Risk Scores (PRS)
 
@@ -66,16 +67,18 @@ To run the pipeline, you need:
     # my_project.conf 
     # --- Paths ---
     summary_stats_file="/scratch.global/GDC/r25outputs/toy/prs_inputs/AFR_EUR/gwas/training_sumstats_singlePRS.txt"
-    bim_file_path="/scratch.global/GDC/r25outputs/toy/simulations/AFR_EUR/EUR_simulation.bim"
-    study_sample="/scratch.global/GDC/r25outputs/toy/simulations/AFR_EUR/EUR_simulation"
+    bim_file_path="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_train.bim"
+    study_sample="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_train"
     output_path="/scratch.global/baron063/r25outputs/toy"
     path_repo="/scratch.global/baron063/prs_pipeline"
     skip_ss_generation=0
     n_total_gwas=300
     ld_matrix_dir="${output_path}/prs_pipeline/ld_matrix"
-    # --- Parameters ---
-    gwas_pca_eigenvec_file="" # For an example of what these look like /scratch.global/GDC/r25outputs/toy/01-globalAncestry/sample_coords.tsv. This is optional since the pipeline generates it if it is missing
+    gwas_pca_eigenvec_file=""
     phenotype_info_file="/scratch.global/baron063/R25_testing/sample_pheno.txt"
+    test_sample="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_val"
+
+    # --- Parameters ---
 
     RUN_CT=true
     RUN_LDPRED2=true
@@ -111,13 +114,13 @@ bash /path/to/prs_pipeline/sandbox_singularity_runner.sh --C my_project.conf -c 
 sbatch /path/to/prs_pipeline/sandbox_singularity_runner.sh --C my_project.conf -c -l -s -P
 ```
 
-| Flag | Method                   |
-|------|--------------------------|
-| `-c` | Clumping + Thresholding  |
-| `-l` | LDpred2                  |
-| `-s` | lassosum2                |
-| `-P` | PRSice-2                 |
-| `-B` | Binary phenotype flag    |
+| Flag | Method                  |
+|------|-------------------------|
+| `-c` | Clumping + Thresholding |
+| `-l` | LDpred2                 |
+| `-s` | lassosum2               |
+| `-P` | PRSice-2                |
+| `-B` | Binary phenotype flag   |
 
 Expected runtime for toy data (3 chromosomes, \~500 samples): \~10–20 min locally, \~5–10 min on SLURM. Full-scale runs with all chromosomes and 10K+ samples can take several hours.
 
@@ -171,26 +174,31 @@ Code snippet
 # Load necessary packages
 library(data.table)
 library(tidyverse)
-# Define your output directory
-output_path <- "/Users/kodydegolier/Documents/GitHub/GDCGenomicsQC/docs/labs/sample_data"
-output_path <- "/scratch.global/baron063/r25outputs/toy/prs_pipeline"
 
-# 1.0 Load Clumping + Thesholding (C+T) Results to determine best R Squared
-ct_results_path <- file.path(output_path, "CT/CT_prs_results.txt")
-ct_results <- fread(ct_results_path)
-threshold <- ct_results[[which.max(ct_results$R2), 1]]
+# Define your output directory
+output_path <- "/scratch.global/baron063/r25outputs/toy/prs_pipeline"
+test_data_outputs <- file.path(output_path, "test_evaluation") # Important to use the testing data outputs # all others are using the training data so cannot be used for evalution of prs models
+
+## 1.0 Load Clumping + Thesholding (C+T) Results to determine best R Squared
+#ct_results_path <- file.path(output_path, "CT/CT_prs_results.txt")
+#ct_results <- fread(ct_results_path)
+#threshold <- ct_results[[which.max(ct_results$R2), 1]]
 
 # 1. Load Clumping + Thresholding (C+T) Scores
-ct_path <- file.path(output_path, paste0("CT/temp/temp.", threshold, ".profile"))
+ct_path <- file.path(test_data_outputs, "CT_scores.txt")
 ct_data <- fread(ct_path)
 
 # 2. Load LDpred2 Scores
-ldp_path <- file.path(output_path, "LDpred2/prs_method_individual_scores.txt")
+ldp_path <- file.path(test_data_outputs, "LDpred2_grid_scores.txt")
 ldp_data <- fread(ldp_path)
 
 # 3. Load lassosum2 Scores
-lasso_path <- file.path(output_path, "lassosum2/prs_method_final_best_prs.csv")
+lasso_path <- file.path(test_data_outputs, "lassosum2_scores.txt")
 lasso_data <- fread(lasso_path)
+
+# 4. Load PRSice2 Scores
+prsice_path <- file.path(test_data_outputs, "PRSice2_scores.txt")
+prsice_data <- fread(prsice_path)
 ```
 
 ### Step 4.2: Merge and Correlate
@@ -205,8 +213,8 @@ Code snippet
 combined_scores <- data.frame(
   IID = ct_data$IID,
   CT = ct_data$SCORE,
-  LDpred2 = ldp_data$PRS_grid,
-  lassosum2 = lasso_data$Best_PRS_Score
+  LDpred2 = ldp_data$SCORE,
+  lassosum2 = lasso_data$SCORE
 )
 
 # Calculate Pearson Correlation
@@ -227,8 +235,9 @@ R
 ```{r}
 # Load Phenotype and Covariate data
 # Assuming a file with columns: FID, IID, Pheno, Age, Sex, PC1, PC2...
-pheno_path <- file.path(output_path, "study_sample_pheno.txt")
-pheno_path <- "/scratch.global/baron063/R25_testing/sample_pheno.txt"
+pheno_path <- file.path(test_data_outputs, "pheno.txt")
+#pheno_path <- "/scratch.global/baron063/R25_testing/sample_pheno.txt"
+
 pheno_data <- fread(pheno_path)
 colnames(pheno_data) = c("FID", "IID", "Pheno")
 
