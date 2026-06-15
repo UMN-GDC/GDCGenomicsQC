@@ -124,32 +124,25 @@ glimpse(class_prob)
 Plot the first two PCs — this is the same space used by the random forest classifier.
 
 ```{r}
-ref_sscore_path <- file.path(global_anc_dir, "refRefPCscores.sscore")
-sample_sscore_path <- file.path(global_anc_dir, "sampleRefPCscores.sscore")
+sample_pca <- read_tsv(
+  file.path(global_anc_dir, "sampleRefPCscores.sscore")
+  ) |>
+  select(IID = `#IID`, PC1 = PC1_AVG, PC2 = PC2_AVG)
 
-ref_pca <- read_tsv(ref_sscore_path, show_col_types = FALSE)
-names(ref_pca)[1] <- "IID"
+ref_pca <- read_tsv(
+  file.path(global_anc_dir, "refRefPCscores.sscore")) |>
+  select(IID = `#IID`, PC1 = PC1_AVG, PC2 = PC2_AVG)
 
-sample_pca <- read_tsv(sample_sscore_path, show_col_types = FALSE)
-names(sample_pca)[1] <- "IID"
-
-pca_cols <- grep("SCORE\\d+_AVG", names(ref_pca), value = TRUE)
-stopifnot("Fewer than 2 PC columns found in sscore file" = length(pca_cols) >= 2)
-
-ref_pca <- ref_pca |>
-  select(IID, PC1 = all_of(pca_cols[1]), PC2 = all_of(pca_cols[2]))
-
-sample_pca <- sample_pca |>
-  select(IID, PC1 = all_of(pca_cols[1]), PC2 = all_of(pca_cols[2]))
-
-labels_path <- file.path(global_anc_dir, "..", "ref", "population.txt")
-labels <- read_tsv(labels_path, col_names = c("IID", "POP"), show_col_types = FALSE)
+labels <- read_table("/scratch.global/GDC/referenceData/1000G_highcoverage/population.txt") |>
+  select(IID = SampleID, POP = Superpopulation)
 ref_pca <- ref_pca |> inner_join(labels, by = "IID")
 
 ref_pca |>
-  ggplot(aes(x = PC1, y = PC2)) +
+  ggplot(aes(x = PC1, y = PC2, color = POP)) +
   geom_point(data = sample_pca, color = "black", size = 0.8, alpha = 0.5) +
-  geom_point(aes(color = POP), size = 1.5, alpha = 0.8) +
+  geom_density_2d(
+    alpha = 0.6,
+  ) +
   labs(
     title = "Study Samples Projected onto 1KG Reference PCs",
     subtitle = "Black = study samples, color = 1KG reference populations",
@@ -262,6 +255,32 @@ anc_data %>%
 ```
 
 **Expectation:** With synthetic 1KG data, all ancestries should show tight violins near 1.0. In real data, ancestries with smaller reference sample sizes (e.g., SAS, AMR) often show lower and more variable confidence.
+
+
+### Classification over the reference panel
+```{r}
+glimpse(sample_pca)
+
+
+
+inner_join(sample_pca, anc_data, by = "IID") |>
+  ggplot(aes(x = PC1, y = PC2)) +
+  geom_point(size = 0.8, alpha = 0.2, shape = 21, aes(fill = pca_predicted))+
+  geom_density_2d(data = ref_pca,
+    alpha = 0.6,
+    aes(color = POP)
+  )
+  labs(
+    title = "Study Samples Projected onto 1KG Reference PCs",
+    subtitle = "Black = study samples, color = 1KG reference populations",
+    x = "PC1",
+    y = "PC2",
+    color = "Population"
+  ) +
+  theme_minimal()
+```
+
+
 
 ## Check Your Understanding
 
