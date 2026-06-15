@@ -6,6 +6,7 @@ format:
   html:
     toc: true
     toc-location: left
+    toc-depth: 2
     code-fold: true
 ---
 
@@ -45,6 +46,31 @@ Several critical steps must complete before global ancestry prediction can run:
 
 **Why independence matters here:** PCA and random forests both assume samples are independent. LD pruning ensures variant-level independence; KING filtering ensures sample-level independence. Violating either assumption inflates apparent ancestry separation.
 
+## Configuration
+
+Global ancestry behavior is controlled by the `ancestry` section of `config.yaml`. Here is a mock excerpt showing how it fits with surrounding keys:
+
+```yaml
+# config.yaml (mock excerpt — ancestry-related keys only)
+OUT_DIR: "/scratch/.../output"
+REF: "/scratch/.../1000G_reference"
+
+ancestry:
+  model: pca           # latent space: "pca", "umap", "vae", or "rfmix"
+  threshold: 0.8       # min confidence for hard call; below → "uncertain"
+  # Optional: pre-supplied ancestry file (bypasses classifier)
+  # ancestry_file: /path/to/existing_labels.txt
+  # ancestry_file_col: 2
+
+localAncestry:
+  RFMIX: true          # RFMix local ancestry (feeds rfmix_* probabilities)
+```
+
+- **`ancestry.model`**: Which latent space the random forest classifier trains on. PCA is the most robust; UMAP/VAE can capture non-linear structure but are noisier with small sample sizes.
+- **`ancestry.threshold`**: Sensitivity/specificity trade-off. Default 0.8 means a sample needs ≥80% probability for a single ancestry to get a hard call.
+
+The outputs you load below (`classificationProbabilities.tsv`, `ancestry_classifications.tsv`) are direct products of these settings.
+
 ## Before You Begin
 
 - **Required files:** `classificationProbabilities.tsv`, `ancestry_classifications.tsv` in `{global_anc_dir}/`
@@ -56,7 +82,11 @@ Several critical steps must complete before global ancestry prediction can run:
 
 ## Setup
 
-The code chunk below adds a system-level conda R library path so that pre-installed packages (tidyverse, etc.) are found without a local `install.packages()`. The conda environment at `/scratch.global/R25_files/r25_r_env/` contains all required R packages and is shared across users — you do not need to install anything manually.
+The code chunk below adds the conda R library path so that pre-installed packages are found without a local `install.packages()`. The environment at `/scratch.global/R25_files/r25_r_env/` is shared across users and contains all packages used in these labs:
+
+- **tidyverse** (ggplot2, dplyr, tidyr, readr, purrr, stringr, forcats, tibble) — data manipulation and plotting
+- **data.table** — fast file reading via `fread()`
+- **corrplot** — correlation matrix visualization (optional, PRS labs only)
 
 ```{r setup}
 conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'

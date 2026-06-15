@@ -6,6 +6,7 @@ format:
   html:
     toc: true
     toc-location: left
+    toc-depth: 2
     code-fold: true
 ---
 
@@ -46,15 +47,47 @@ Heritability estimation is sensitive to variant quality, LD, and sample structur
 
 **Why independence matters here:** The GRM is a covariance matrix among individuals. If related individuals are included, the off-diagonal GRM elements are non-zero due to recent shared ancestry, not due to the genetic architecture of the trait. This biases h² estimates upward (confounds population structure with heritability).
 
+## Configuration
+
+Heritability estimation uses the `snpHerit` key in `config.yaml`. Here is a mock excerpt showing surrounding context:
+
+```yaml
+# config.yaml (mock excerpt — heritability-related keys only)
+OUT_DIR: "/scratch/.../output"
+REF: "/scratch/.../1000G_reference"
+
+thresholds:
+  maf: 0.01
+  hwe: 1e-6
+
+ancestry:
+  model: pca
+
+snpHerit:
+  grm_prefix: /scratch/.../output/full/f1.b38.ldpruned.unrelated
+  # Path to the GCTA GRM binary files (no extension).
+  # Expected files: .grm.bin, .grm.N.bin, .grm.id
+```
+
+- **`snpHerit.grm_prefix`**: The GRM was built by GCTA `--make-grm` from LD-pruned, crossmapped variants using only unrelated samples. The pipeline concatenates per-chromosome LD-pruned files (`concatLdPruned`), crossmaps them to GRCh38, computes the GRM via `checkRelatednessExtractUnrelated`, then estimates h² per ancestry with MASH.
+- The phenotype was **simulated externally** with known h² = 0.4. In a real study, it would come from clinical measurements.
+
+The `mash_output.csv` below contains the per-ancestry h² estimates derived from this GRM.
+
 ## Before You Begin
 
-- **Required files:** `mash_output.csv` in `{herit_dir}/{subset}/03-snpHeritability/`; GRM binary files (`.grm.bin`, `.grm.N.bin`, `.grm.id`) for the heatmap section
-- **Disk space:** < 1 MB for CSV; GRM files can be 100 MB–2 GB depending on sample size
-- **Expected render time:** < 5 seconds for CSV loading; 10–30 seconds for GRM heatmap (depends on n_samples × n_samples)
-- **Known issue:** If `mash_output.csv` is empty, the MASH solver may have failed to converge. Check the `run_snpHerit` log for error messages about the Cholesky decomposition.
-- **Reference:** The GRM was computed from LD-pruned, crossmapped variants (`f1.b38.ldpruned.*`) using GCTA `--make-grm`. Heritability estimation uses MASH (multi-ancestry scoring of heritability).
+- **Required files:** `mash_output.csv` in `{herit_dir}/{subset}/03-snpHeritability/`; GRM binary files for the heatmap section
+- **Disk space:** < 1 MB for CSV; GRM files can be 100 MB–2 GB
+- **Expected render time:** < 5 seconds for CSV; 10–30 seconds for GRM heatmap (depends on n_samples)
+- **Known issue:** If `mash_output.csv` is empty, the MASH solver may have failed to converge. Check the `run_snpHerit` log.
+- **Reference:** The phenotype was simulated externally with h² = 0.4 to provide a known ground truth.
 
 ## Setup
+
+The code chunk below adds the conda R library path so that pre-installed packages are found without a local `install.packages()`. The environment at `/scratch.global/R25_files/r25_r_env/` is shared across users and contains all packages used in these labs:
+
+- **tidyverse** (ggplot2, dplyr, tidyr, readr, purrr, stringr, forcats, tibble) — data manipulation and plotting
+- **data.table** — fast file reading via `fread()`
 
 ```{r setup}
 conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'

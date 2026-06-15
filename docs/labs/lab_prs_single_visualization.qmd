@@ -6,6 +6,7 @@ format:
   html:
     toc: true
     toc-location: left
+    toc-depth: 2
     code-fold: true
 ---
 
@@ -45,16 +46,51 @@ Building a PRS from summary statistics requires careful data harmonization:
 
 **Why independence matters here:** The GWAS summary statistics are from a study with unrelated samples. The target sample for PRS prediction must also be unrelated — KING filtering runs before ancestry classification. Related samples would give over-optimistic prediction R² because phenotype similarity due to relatedness is not captured by the PRS.
 
+## Configuration
+
+PRS settings are defined in the `prs` section of `config.yaml`. Here is a mock excerpt showing surrounding context:
+
+```yaml
+# config.yaml (mock excerpt — PRS-related keys only)
+OUT_DIR: "/scratch/.../output"
+REF: "/scratch/.../1000G_reference"
+
+ancestry:
+  model: pca
+  threshold: 0.8
+
+prs:
+  methods:
+    - prsice          # C+T (clumping + thresholding) via PRSice-2
+    - ldpred2         # Bayesian point-normal prior via LDpred2
+  ancestry_pairs:
+    - [AFR, EUR]      # train in AFR, test transfer to EUR
+  ld_reference: "/scratch/.../1KG_ld/afr"
+  # Summary statistics (external):
+  # gwas_sumstats: /path/to/simulated_gwas.txt
+```
+
+- **`prs.methods`**: Which PRS methods to run. PRSice-2 tests multiple p-value thresholds and selects the best; LDpred2 uses a grid of prior parameters (p-enrichment, h²).
+- **`prs.ancestry_pairs`**: Defines training→target ancestry pairs. A mismatched LD reference is the most common cause of poor PRS performance.
+- **`prs.ld_reference`**: Ancestry-matched LD reference. Must match the training population.
+
+The GWAS summary statistics were **simulated** with h² = 0.4. The PRS outputs (`best_pRS.prs`, `prs_scores.tsv`) are the result of applying these methods to the synthetic target genotypes.
+
 ## Before You Begin
 
 - **Required files:** `best_pRS.prs`, `summary.csv` in `{prs_out_dir}/single_prsice/`; `prs_scores.tsv` in `{prs_out_dir}/single_ldpred2/`
-- **Optional files:** Ancestry classifications from the global ancestry lab (needed for density-by-ancestry plot)
+- **Optional files:** Ancestry classifications from the global ancestry lab (for the density-by-ancestry plot)
 - **Disk space:** < 100 MB for all PRS score files
 - **Expected render time:** < 5 seconds per chunk
-- **Known issue:** If `best_pRS.prs` is empty, PRSice-2 may have failed because no p-value threshold passed the significance filter. Check `summary.csv` — if all thresholds have R² ≈ 0, the phenotype may be unrelated to the GWAS summary statistics.
-- **Reference:** The GWAS summary statistics were simulated with h² = 0.4 to provide a known ground truth. PRSice-2 uses C+T (clumping + thresholding) and LDpred2 uses a Bayesian point-normal prior.
+- **Known issue:** If `best_pRS.prs` is empty, PRSice-2 may have found no significant threshold. Check `summary.csv` — if all R² ≈ 0, the phenotype may be unrelated to the GWAS.
+- **Reference:** The GWAS summary statistics were simulated with h² = 0.4.
 
 ## Setup
+
+The code chunk below adds the conda R library path so that pre-installed packages are found without a local `install.packages()`. The environment at `/scratch.global/R25_files/r25_r_env/` is shared across users and contains all packages used in these labs:
+
+- **tidyverse** (ggplot2, dplyr, tidyr, readr, purrr, stringr, forcats, tibble) — data manipulation and plotting
+- **data.table** — fast file reading via `fread()`
 
 ```{r setup}
 conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'

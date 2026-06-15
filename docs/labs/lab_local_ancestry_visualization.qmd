@@ -6,6 +6,7 @@ format:
   html:
     toc: true
     toc-location: left
+    toc-depth: 2
     code-fold: true
 ---
 
@@ -44,6 +45,31 @@ Local ancestry inference is one of the most computationally intensive steps. Key
 
 **Why independence matters here:** Phasing assumes unrelated individuals — related samples share long IBD segments that violate the phasing model's independence assumptions. RFMix then compares each study haplotype against reference haplotypes; related study samples would produce artificially long shared tracts.
 
+## Configuration
+
+Local ancestry inference is controlled by the `localAncestry` section of `config.yaml`. Here is a mock excerpt showing surrounding context:
+
+```yaml
+# config.yaml (mock excerpt — local-ancestry-related keys only)
+OUT_DIR: "/scratch/.../output"
+REF: "/scratch/.../1000G_reference"
+
+ancestry:
+  model: pca
+
+localAncestry:
+  RFMIX: true              # enable/disable RFMix (default: false)
+  chromosomes: [1..22]     # chromosomes to process (default: all)
+  # RFMix tuning (optional):
+  # em_iterations: 2
+  # generations: 12
+```
+
+- **`localAncestry.RFMIX`**: When `true`, the pipeline phases with ShapeIt4 then runs RFMix on the unrelated subset. When `false`, the `02-localAncestry/` directory will be empty.
+- **`localAncestry.chromosomes`**: Process a subset to save time during testing. All autosomes is the default.
+
+The outputs below (`ancestry_full.txt`, `chr*.lai.msp.tsv`, `chr*.lai.fb.tsv`, `per_snp_local_ancestry.tsv`) exist only when `RFMIX: true`.
+
 ## Before You Begin
 
 - **Required files:** `ancestry_full.txt`, `chr{chr}.lai.msp.tsv`, `chr{chr}.lai.fb.tsv`, `per_snp_local_ancestry.tsv` in `{local_anc_dir}/`
@@ -53,6 +79,11 @@ Local ancestry inference is one of the most computationally intensive steps. Key
 - **Reference:** RFMix was run with 2 EM steps and the default number of generations (12). The reference panel is 1000 Genomes Phase 3.
 
 ## Setup
+
+The code chunk below adds the conda R library path so that pre-installed packages are found without a local `install.packages()`. The environment at `/scratch.global/R25_files/r25_r_env/` is shared across users and contains all packages used in these labs:
+
+- **tidyverse** (ggplot2, dplyr, tidyr, readr, purrr, stringr, forcats, tibble) — data manipulation and plotting
+- **data.table** — fast file reading via `fread()`
 
 ```{r setup}
 conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
