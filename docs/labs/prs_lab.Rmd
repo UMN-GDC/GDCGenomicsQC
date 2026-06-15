@@ -84,9 +84,7 @@ To run the pipeline, you need:
     RUN_PRSice2=true
     ```
 
-### Exercise: Inspecting the Config
-
-Open your `my_project.conf` file. Note the `n_total_gwas` parameter.
+The configuration file above shows the key parameters you will work with. Note the `n_total_gwas` parameter.
 
 **Question:** Why do Bayesian methods like LDpred2 need the total sample size of the discovery GWAS? *Answer: To distinguish between a small effect size and a lack of statistical power in the discovery set.*
 
@@ -94,7 +92,7 @@ Open your `my_project.conf` file. Note the `n_total_gwas` parameter.
 
 Once your config file is ready, use `sandbox_singularity_runner.sh` to execute the pipeline inside a pre-built Singularity container. Full documentation is at `docs/sandbox_singularity_runner.md` in the `prs_pipeline` repo.
 
-**1. Pull the container image:**
+**1. Pull the container image (already done for you — shown for reference):**
 
 ``` bash
 apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prsv2:latest
