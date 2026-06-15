@@ -43,7 +43,7 @@ To run the pipeline, you need:
 
 1.  **Summary Statistics:** GWAS results containing RSIDs, effect alleles, P-values, and Betas.
 
-    1.  **Summary Statistics File Format** The file needs to have a column header and contain the following columns. If there are multiple listed in `{}` that means that any 1 of the options is recognized but the file cannot contain more than 1 of these overlapping columns.
+     1.  **Summary Statistics File Format** The file needs to have a column header and contain the following columns. If there are multiple listed in `{}` that means that any 1 of the options is recognized but the file cannot contain more than 1 of these overlapping columns.
 
         -   {rsid, rs_id, rsids}
 
@@ -55,9 +55,7 @@ To run the pipeline, you need:
 
         -   beta
 
-        -   ref
-
-        -   chrom
+        Chromosome and position are not required — they are pulled from the `.bim` file during alignment. `ref`/`A2` is also derived automatically, so it does not need to be in the input.
 
 2.  **Target Genotype Files:** PLINK format (`.bed`, `.bim`, `.fam`).
 
@@ -155,14 +153,14 @@ Each method outputs results to `{output_path}/prs_pipeline/`:
 
 ## **PRS Score Columns**
 
-The relevant PRS score columns for each method:
+All methods output scores into `test_evaluation/` with a unified `SCORE` column, making comparison straightforward:
 
-| **Method** | **Score Column**                  |
-|------------|-----------------------------------|
-| C+T        | `SCORE` (in `temp/` subdirectory) |
-| LDpred2    | `PRS_inf` or `PRS_grid`           |
-| lassosum2  | `Best_PRS_Score`                  |
-| PRSice-2   | `PRS`                             |
+| **Method** | **Test Evaluation File**            | **Score Column** |
+|------------|-------------------------------------|------------------|
+| C+T        | `test_evaluation/CT_scores.txt`     | `SCORE`          |
+| LDpred2    | `test_evaluation/LDpred2_grid_scores.txt` | `SCORE`    |
+| lassosum2  | `test_evaluation/lassosum2_scores.txt`    | `SCORE`    |
+| PRSice-2   | `test_evaluation/PRSice2_scores.txt`      | `SCORE`    |
 
 ### Step 4.1: Load the Data
 
@@ -179,11 +177,6 @@ library(tidyverse)
 output_path <- "/scratch.global/baron063/r25outputs/toy/prs_pipeline"
 test_data_outputs <- file.path(output_path, "test_evaluation") # Important to use the testing data outputs # all others are using the training data so cannot be used for evalution of prs models
 
-## 1.0 Load Clumping + Thesholding (C+T) Results to determine best R Squared
-#ct_results_path <- file.path(output_path, "CT/CT_prs_results.txt")
-#ct_results <- fread(ct_results_path)
-#threshold <- ct_results[[which.max(ct_results$R2), 1]]
-
 # 1. Load Clumping + Thresholding (C+T) Scores
 ct_path <- file.path(test_data_outputs, "CT_scores.txt")
 ct_data <- fread(ct_path)
@@ -196,7 +189,7 @@ ldp_data <- fread(ldp_path)
 lasso_path <- file.path(test_data_outputs, "lassosum2_scores.txt")
 lasso_data <- fread(lasso_path)
 
-# 4. Load PRSice2 Scores
+# 4. Load PRSice2 Scores (you will add this to the comparison later)
 prsice_path <- file.path(test_data_outputs, "PRSice2_scores.txt")
 prsice_data <- fread(prsice_path)
 ```
@@ -208,14 +201,13 @@ We want to see how much the methods agree on individual risk rankings.
 Code snippet
 
 ```{r}
-# Combine scores into a single data frame
-# Note: Ensure you are matching by Individual ID (IID)
-combined_scores <- data.frame(
-  IID = ct_data$IID,
-  CT = ct_data$SCORE,
-  LDpred2 = ldp_data$SCORE,
-  lassosum2 = lasso_data$SCORE
-)
+# Merge scores by IID so alignment is robust
+combined_scores <- merge(ct_data[, c("IID", "SCORE")], ldp_data[, c("IID", "SCORE")],
+                         by = "IID", suffixes = c(".ct", ".ld"))
+combined_scores <- merge(combined_scores, lasso_data[, c("IID", "SCORE")],
+                         by = "IID")
+colnames(combined_scores) <- c("IID", "CT", "LDpred2", "lassosum2")
+# Hint: merge in PRSice2 the same way to include it in the comparison
 
 # Calculate Pearson Correlation
 cor_matrix <- cor(combined_scores[, -1], use = "complete.obs")
@@ -285,7 +277,7 @@ calculate_incremental_r2 <- function(prs_col, data) {
   return(r2_full - r2_null)
 }
 
-# Apply to all methods
+# Apply to the three methods (add PRSice2 as an exercise)
 r2_results <- data.frame(
   Method = c("CT", "LDpred2", "lassosum2"),
   Incremental_R2 = c(
@@ -359,6 +351,8 @@ By the end of this lab, you should understand that a PRS is not a single "truth"
 
 1.  Plot the distribution (histogram) of the LDpred2 scores.
 
-2.  If phenotypes are available, calculate the $R^2$ for each method. Which one performs best for your specific sample?
+2.  Add PRSice2 to the `combined_scores` merge and the `r2_results` table. Did it outperform the other methods on your test data?
+
+3.  If phenotypes are available, calculate the $R^2$ for each method. Which one performs best for your specific sample?
 
     """
