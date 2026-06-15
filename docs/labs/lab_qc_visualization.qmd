@@ -5,6 +5,7 @@ date: "2026-06-12"
 format:
   html:
     toc: true
+    toc-expand: 2
     toc-location: left
     code-fold: true
 ---
@@ -29,7 +30,7 @@ Given the synthetic nature of the data, you should expect **clean distributions*
 ## Inputs & Outputs
 
 - **Inputs:** Raw PLINK 2 `.pgen` / `.pvar` / `.psam` filesets from Dataverse (synthetic, 1KG-resampled).
-- **Outputs:** Per-sample missingness (`initial.smiss`), per-variant missingness (`initial.vmiss`), HWE p-values (`zoomhwe.hwe`), and allele frequencies (`MAF_check.afreq`).
+- **Outputs:** Per-sample missingness (`initial.smiss`), per-variant missingness (`initial.vmiss`), HWE p-values (`standardFilter.hardy`), and allele frequencies (`MAF_check.afreq`).
 - **Pipeline direction:** These outputs feed into the next step — Standard QC (`filterStandard.sh`), which uses these metrics to apply hard filters (e.g., `--geno`, `--mind`, `--maf`, `--hwe`).
 
 ## Upstream Pipeline Steps
@@ -40,7 +41,7 @@ The data itself was constructed by **resampling haplotypes from the 1000 Genomes
 
 ## Before You Begin
 
-- **Required files:** `initial.smiss`, `initial.vmiss`, `zoomhwe.hwe`, `MAF_check.afreq` in `{OUT_DIR}/{subset}/`
+- **Required files:** `initial.smiss`, `initial.vmiss`, `standardFilter.hardy`, `MAF_check.afreq` in `{OUT_DIR}/{subset}/`
 - **Disk space:** < 10 MB for these QC metric files
 - **Expected render time:** < 10 seconds per chunk
 - **Known issue:** If `initial.smiss` is empty, re-run `convertPlinkPerChromosome` — the `initialFilter.sh` script may have failed silently.
@@ -89,7 +90,7 @@ glimpse(vmiss)
 
 ## Hardy-Weinberg Equilibrium & Allele Frequency
 
-**File (HWE):** `{OUT_DIR}/{subset}/zoomhwe.hwe`
+**File (HWE):** `{OUT_DIR}/{subset}/standardFilter.hardy`
 
 **Format:** PLINK2 HWE report — columns `#CHROM`, `POS`, `ID`, `REF`, `ALT`, `O(HET)`, `E(HET)`, `P`. Contains only variants that passed the initial missingness filters.
 
@@ -100,7 +101,7 @@ glimpse(vmiss)
 **Pipeline step:** Both generated inside `initialFilter.sh` — `--hardy` for HWE (with a `zoomhwe.hwe` extract of p < 1e-5), and `--freq` for allele frequencies.
 
 ```{r}
-hwe <- read_tsv(file.path(OUT_DIR, subset, "zoomhwe.hwe"))
+hwe <- read_tsv(file.path(OUT_DIR, subset, "standardFilter.hardy"))
 glimpse(hwe)
 
 freq <- read_tsv(file.path(OUT_DIR, subset, "MAF_check.afreq"))
