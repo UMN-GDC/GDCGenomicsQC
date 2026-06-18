@@ -106,6 +106,7 @@ rule convertPgenToVcf:
         pgen=get_input_pgen,
         pvar=get_input_pvar,
         psam=get_input_psam,
+        ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
     output:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
         csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz.csi",
@@ -123,6 +124,10 @@ rule convertPgenToVcf:
                        --export vcf bgz \
                        --out {params.out_dir}/chr{wildcards.CHR}
         rm {params.out_dir}/chr{wildcards.CHR}.temp.* {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
+        bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+        bcftools isec -p {params.out_dir}/chr{wildcards.CHR}.strict -n =2 {params.out_dir}/chr{wildcards.CHR}.vcf.gz {input.ref}
+        mv {params.out_dir}/chr{wildcards.CHR}.strict/0002.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+        rm -rf {params.out_dir}/chr{wildcards.CHR}.strict
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
         """
 
