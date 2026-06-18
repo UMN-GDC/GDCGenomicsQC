@@ -10,6 +10,8 @@
 *.js
 docs/labs/*_files
 AGENTS.md
+test.SLURM
+test.log
 
 */.wget-hsts
 */_build/*
