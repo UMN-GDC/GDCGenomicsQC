@@ -116,11 +116,13 @@ rule convertPgenToVcf:
     shell:
         """
         plink2 --pfile {params.input_prefix} --chr {params.chrom} --allow-extra-chr --make-pgen --out {params.out_dir}/chr{wildcards.CHR}.temp --set-all-var-ids @:#:\\$r:\\$a --snps-only just-acgt
+        awk '!/^#/ && (($4=="A" && $5=="T") || ($4=="T" && $5=="A") || ($4=="C" && $5=="G") || ($4=="G" && $5=="C")) {print $3}' {params.out_dir}/chr{wildcards.CHR}.temp.pvar > {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
         plink2 --pfile {params.out_dir}/chr{wildcards.CHR}.temp \
+                       --exclude {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt \
                        --output-chr chrM \
                        --export vcf bgz \
                        --out {params.out_dir}/chr{wildcards.CHR}
-        rm {params.out_dir}/chr{wildcards.CHR}.temp.*
+        rm {params.out_dir}/chr{wildcards.CHR}.temp.* {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
         """
 
