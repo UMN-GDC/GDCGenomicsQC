@@ -125,9 +125,10 @@ rule convertPgenToVcf:
                        --out {params.out_dir}/chr{wildcards.CHR}
         rm {params.out_dir}/chr{wildcards.CHR}.temp.* {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
-        bcftools isec -p {params.out_dir}/chr{wildcards.CHR}.strict -n =2 {params.out_dir}/chr{wildcards.CHR}.vcf.gz {input.ref}
-        mv {params.out_dir}/chr{wildcards.CHR}.strict/0002.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
-        rm -rf {params.out_dir}/chr{wildcards.CHR}.strict
+        bcftools isec -n =2 -w1 {params.out_dir}/chr{wildcards.CHR}.vcf.gz {input.ref} > {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt
+        bcftools view -T {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt {params.out_dir}/chr{wildcards.CHR}.vcf.gz -Oz -o {params.out_dir}/chr{wildcards.CHR}.tmp.vcf.gz
+        mv {params.out_dir}/chr{wildcards.CHR}.tmp.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+        rm {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
         """
 
