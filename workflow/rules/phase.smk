@@ -164,8 +164,8 @@ rule phaseWithShapeit:
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --mcmc-iterations 1b,1p,1m \
-              --output {output.vcf}
-          #    --reference {input.ref}
+              --output {output.vcf} \
+              --reference {input.ref}
           rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         else
           awk '{{print "chr" $0}}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
@@ -175,8 +175,8 @@ rule phaseWithShapeit:
               --region chr{params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
-              --output {output.vcf}
-          #    --reference {input.ref}
+              --output {output.vcf} \
+              --reference {input.ref}
           rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         fi
         """
