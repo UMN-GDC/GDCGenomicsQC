@@ -115,7 +115,12 @@ rule convertPgenToVcf:
         chrom=get_chrom,
     shell:
         """
-        plink2 --pfile {params.input_prefix} --chr {params.chrom} --allow-extra-chr --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
+        plink2 --pfile {params.input_prefix} --chr {params.chrom} --allow-extra-chr --make-pgen --out {params.out_dir}/chr{wildcards.CHR}.temp --set-all-var-ids @:#:\\$r:\\$a --snps-only just-acgt
+        plink2 --pfile {params.out_dir}/chr{wildcards.CHR}.temp \
+                       --output-chr chrM \
+                       --export vcf bgz \
+                       --out {params.out_dir}/chr{wildcards.CHR}
+        rm {params.out_dir}/chr{wildcards.CHR}.temp.*
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
         """
 
@@ -147,28 +152,28 @@ rule phaseWithShapeit:
         echo "Shapeit Phasing"
 
         if [ "{params.test}" = "True" ] ; then
-          plink2 --vcf {input.vcf} --bp-space 100000 --thin-indiv {params.thin} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}.thinned
+          plink2 --vcf {input.vcf} --bp-space 100000 --thin-indiv {params.thin} --export vcf bgz --out {params.out_dir}/chr{wildcards.CHR}.thinned
           mv {params.out_dir}/chr{wildcards.CHR}.thinned.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
           bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
           echo "Running shapeit4 in test mode"
           shapeit4 \
               --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
               --map {input.gmap} \
-              --reference {input.ref} \
               --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --mcmc-iterations 1b,1p,1m \
-              --output {params.out_dir}/chr{wildcards.CHR}.phased.vcf
+              --output {output.vcf}
+              #--reference {input.ref} \
         else
           shapeit4 \
               --input {input.vcf} \
               --map {input.gmap} \
-              --reference {input.ref} \
               --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
-              --output {params.out_dir}/chr{wildcards.CHR}.phased.vcf
+              --output {output.vcf}
+              #--reference {input.ref} \
         fi
         """
 
