@@ -164,7 +164,7 @@ rule phaseWithShapeit:
               --thread {threads} \
               --mcmc-iterations 1b,1p,1m \
               --output {output.vcf}
-              #--reference {input.ref} \
+              #--reference {input.ref}
         else
           shapeit4 \
               --input {input.vcf} \
@@ -173,7 +173,7 @@ rule phaseWithShapeit:
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --output {output.vcf}
-              #--reference {input.ref} \
+              #--reference {input.ref}
         fi
         """
 
