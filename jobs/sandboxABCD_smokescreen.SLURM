@@ -2,7 +2,7 @@
 #SBATCH --job-name=smk_master
 #SBATCH --output=snakemake_%j.log
 #SBATCH --mem=1G
-#SBATCH --time=3:00:00
+#SBATCH --time=72:00:00
 
 module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
