@@ -117,7 +117,7 @@ rule convertPgenToVcf:
     shell:
         """
         plink2 --pfile {params.input_prefix} --chr {params.chrom} --allow-extra-chr --make-pgen --out {params.out_dir}/chr{wildcards.CHR}.temp --set-all-var-ids @:#:\\$r:\\$a --snps-only just-acgt
-        awk '!/^#/ && (($4=="A" && $5=="T") || ($4=="T" && $5=="A") || ($4=="C" && $5=="G") || ($4=="G" && $5=="C")) {print $3}' {params.out_dir}/chr{wildcards.CHR}.temp.pvar > {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
+        awk '!/^#/ && (($4=="A" && $5=="T") || ($4=="T" && $5=="A") || ($4=="C" && $5=="G") || ($4=="G" && $5=="C")) {{print $3}}' {params.out_dir}/chr{wildcards.CHR}.temp.pvar > {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
         plink2 --pfile {params.out_dir}/chr{wildcards.CHR}.temp \
                        --exclude {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt \
                        --output-chr chrM \
@@ -172,7 +172,8 @@ rule phaseWithShapeit:
               --thread {threads} \
               --mcmc-iterations 1b,1p,1m \
               --output {output.vcf} \
-              --reference {input.ref}
+              --reference {input.ref} \
+              --sequencing
           rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         else
           awk '{{print "chr" $0}}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
@@ -183,7 +184,8 @@ rule phaseWithShapeit:
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --output {output.vcf} \
-              --reference {input.ref}
+              --reference {input.ref} \
+              --sequencing
           rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         fi
         """
