@@ -156,24 +156,28 @@ rule phaseWithShapeit:
           mv {params.out_dir}/chr{wildcards.CHR}.thinned.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
           bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
           echo "Running shapeit4 in test mode"
+          awk '{print "chr" $0}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
           shapeit4 \
               --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
-              --map {input.gmap} \
+              --map {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt \
               --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --mcmc-iterations 1b,1p,1m \
-              --output {output.vcf}
-              #--reference {input.ref}
+              --output {output.vcf} \
+              --reference {input.ref}
+          rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         else
+          awk '{print "chr" $0}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
           shapeit4 \
               --input {input.vcf} \
-              --map {input.gmap} \
+              --map {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt \
               --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
-              --output {output.vcf}
-              #--reference {input.ref}
+              --output {output.vcf} \
+              --reference {input.ref}
+          rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         fi
         """
 
