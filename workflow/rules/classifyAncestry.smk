@@ -77,6 +77,7 @@ checkpoint classifySamplesByAncestry:
             caption="../../report/ancestry_classification.rst",
             category="Global ancestry",
         ),
+        density_plot=OUT_DIR / "01-globalAncestry" / f"classificationProbability_density_{ANCESTRY_MODEL}.svg",
     input:
         pos_prob=get_classification_probs,
         sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
@@ -88,6 +89,7 @@ checkpoint classifySamplesByAncestry:
         script=workflow.source_path("../scripts/classify.R"),
         plot_posterior=workflow.source_path("../scripts/plotPosterior.R"),
         plot_classification=workflow.source_path("../scripts/plotClassification.R"),
+        plot_density=workflow.source_path("../scripts/plotProbabilityDensity.R"),
     shell:
         """
         Rscript {params.script} \
@@ -101,6 +103,11 @@ checkpoint classifySamplesByAncestry:
 
         Rscript {params.plot_classification} \
           --out_dir {params.dir}
+
+        Rscript {params.plot_density} \
+          --prob_file {input.pos_prob} \
+          --out_dir {params.dir} \
+          --model {params.model}
         """
 
 
