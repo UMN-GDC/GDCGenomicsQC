@@ -49,6 +49,13 @@ def get_keep_samples():
     return []
 
 
+def get_keep_variants():
+    path = config.get("keep_variants")
+    if path and Path(path).exists():
+        return ancient(path)
+    return []
+
+
 def uses_rfmix():
     return config.get("localAncestry", {}).get("RFMIX", False)
 

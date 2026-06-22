@@ -60,6 +60,7 @@ rule convertPlinkPerChromosome:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
         keep_samples=get_keep_samples,
+        extract=get_keep_variants,
     params:
         scripts_dir=SCRIPTS_DIR,
         format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
@@ -118,6 +119,10 @@ fi
 
 if [ -n "$KEEP_FILES" ]; then
     CMD="$CMD --keep $KEEP_FILES"
+fi
+
+if [ -n "{input.extract}" ]; then
+    CMD="$CMD --extract {input.extract}"
 fi
 
 if [[ "{params.thin}" == "True" ]]; then
@@ -203,6 +208,7 @@ if not INPUT_IS_PER_CHROMOSOME:
             fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
             keep=get_ancestry_file,
             keep_samples=get_keep_samples,
+            extract=get_keep_variants,
         params:
             format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
             single_input=config.get("INPUT", ""),
@@ -239,16 +245,21 @@ if not INPUT_IS_PER_CHROMOSOME:
                 KEEP_ARG="--keep $KEEP_ARG"
             fi
 
+            EXTRACT_ARG=""
+            if [ -n "{input.extract}" ]; then
+                EXTRACT_ARG="--extract {input.extract}"
+            fi
+
             echo "Input is a single file: $SINGLE_INPUT"
 
             if [ "$FORMAT" = "bed" ]; then
-                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG --out {output.tempDir}/intermediate_00
+                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
                 plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             elif [ "$FORMAT" = "vcf" ]; then
-                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG --out {output.tempDir}/intermediate_00
+                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
                 plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             else
-                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG --out {output.tempDir}/intermediate_00
+                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
                 plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             fi
 

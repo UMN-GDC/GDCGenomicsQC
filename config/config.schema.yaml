@@ -404,6 +404,18 @@ keep_samples:
       sample2
       sample3
 
+keep_variants:
+  type: str
+  nullable: true
+  default: null
+  description: |
+    Path to a text file with variant IDs (one per line) to subset variants at the start.
+    Only variants listed in this file will be kept throughout the pipeline.
+    IDs must match the variant ID format in the input data (e.g., chr:pos:ref:alt).
+    Example format:
+      1:12345:A:G
+      2:67890:T:C
+
 convertNfilt:
   type: dict
   default: {}

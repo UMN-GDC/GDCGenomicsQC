@@ -59,10 +59,6 @@ checkpoint classifySamplesByAncestry:
         nodes=1,
         mem_mb=16000,
         runtime=60,
-    input:
-        pos_prob=get_classification_probs,
-        sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
-        ref_coords=OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
     output:
         classifications=OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
         keep_AFR=OUT_DIR / "01-globalAncestry" / "keep_AFR.txt",
@@ -71,80 +67,40 @@ checkpoint classifySamplesByAncestry:
         keep_EUR=OUT_DIR / "01-globalAncestry" / "keep_EUR.txt",
         keep_SAS=OUT_DIR / "01-globalAncestry" / "keep_SAS.txt",
         keep_Other=OUT_DIR / "01-globalAncestry" / "keep_Other.txt",
+        ridge_plot=report(
+            OUT_DIR / "01-globalAncestry" / f"classificationProbability_stacked_{ANCESTRY_MODEL}.svg",
+            caption="../../report/ancestry_ridgelines.rst",
+            category="Global ancestry",
+        ),
+        class_plot=report(
+            OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
+            caption="../../report/ancestry_classification.rst",
+            category="Global ancestry",
+        ),
+    input:
+        pos_prob=get_classification_probs,
+        sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
+        ref_coords=OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
     params:
         dir=OUT_DIR / "01-globalAncestry",
         threshold=config.get("ancestry", {}).get("threshold", 0.8),
         model=ANCESTRY_MODEL,
         script=workflow.source_path("../scripts/classify.R"),
+        plot_posterior=workflow.source_path("../scripts/plotPosterior.R"),
+        plot_classification=workflow.source_path("../scripts/plotClassification.R"),
     shell:
         """
         Rscript {params.script} \
           --out {params.dir} \
           --threshold {params.threshold} \
           --model {params.model}
+
+        Rscript {params.plot_posterior} \
+          --prob_file {input.pos_prob} \
+          --out_dir {params.dir}
+
+        Rscript {params.plot_classification} \
+          --out_dir {params.dir}
         """
 
 
-rule plot_classification_ridge:
-    log:
-        OUT_DIR / "logs" / "plot_classification_ridge.log",
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda:
-        "../../envs/genomeUtils.yml"
-    envmodules: *([config.get("R_module")] if config.get("R_module") else [])
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=8000,
-        runtime=30,
-    input:
-        prob_file=OUT_DIR / "01-globalAncestry" / "classificationProbabilities.tsv",
-    output:
-        ridge_plot=report(
-            OUT_DIR / "01-globalAncestry" / f"classificationProbability_stacked_{ANCESTRY_MODEL}.svg",
-            caption="../../report/ancestry_ridgelines.rst",
-            category="Global ancestry",
-        ),
-    params:
-        out_dir=OUT_DIR / "01-globalAncestry",
-        script=workflow.source_path("../scripts/plotPosterior.R"),
-    shell:
-        """
-        Rscript {params.script} \
-            --prob_file {input.prob_file} \
-            --out_dir {params.out_dir}
-        """
-
-
-rule plot_classification_space:
-    log:
-        OUT_DIR / "logs" / "plot_classification_space.log",
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda:
-        "../../envs/genomeUtils.yml"
-    envmodules: *([config.get("R_module")] if config.get("R_module") else [])
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=8000,
-        runtime=30,
-    input:
-        classifications=OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
-        sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
-        ref_coords=OUT_DIR / "01-globalAncestry" / "ref_coords.tsv",
-    output:
-        class_plot=report(
-            OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
-            caption="../../report/ancestry_classification.rst",
-            category="Global ancestry",
-        ),
-    params:
-        out_dir=OUT_DIR / "01-globalAncestry",
-        script=workflow.source_path("../scripts/plotClassification.R"),
-    shell:
-        """
-        Rscript {params.script} \
-            --out_dir {params.out_dir}
-        """
