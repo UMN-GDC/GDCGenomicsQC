@@ -36,20 +36,20 @@ if (is.null(args$npc)) {
   npc <- args$npc
 }
 
-mod <- pcs |>
+pcs_scaled <- pcs |>
   select(starts_with("PC")) |>
-  scale() |>
+  scale()
+center <- attr(pcs_scaled, "scaled:center")
+scale_vals <- attr(pcs_scaled, "scaled:scale")
+mod <- pcs_scaled |>
   as.data.frame() |>
   umap(
     n_threads = args$threads,
     n_components = args$ncoords,
     n_neighbors = args$neighbors, ret_mod = T)
-    # n_threads = 1,
-    # n_components = 2,
-    # n_neighbors = 50, ret_mod = T)
 studyUmap <- samplePCs |>
   select(starts_with("PC")) |>
-  scale() |>
+  scale(center = center, scale = scale_vals) |>
   as.data.frame() |>
   umap_transform(model = mod)
 

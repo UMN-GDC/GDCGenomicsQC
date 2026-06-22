@@ -90,11 +90,12 @@ def get_ancestry_file(wildcards):
         return []
     if has_provided_ancestry():
         return ancient(OUT_DIR / "01-globalAncestry" / f"keep_{wildcards.subset}.txt")
+    ckpt = checkpoints.classifySamplesByAncestry.get()
     subset_map = {
         "uncertain": "Other",
     }
     mapped_subset = subset_map.get(wildcards.subset, wildcards.subset)
-    return OUT_DIR / "01-globalAncestry" / f"keep_{mapped_subset}.txt"
+    return getattr(ckpt.output, f"keep_{mapped_subset}")
 
 
 def get_classification_probs(wildcards):
