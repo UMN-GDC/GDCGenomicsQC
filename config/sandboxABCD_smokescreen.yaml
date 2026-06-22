@@ -144,7 +144,7 @@ snpHerit:
 
 # Tool settings
 localAncestry:
-    RFMIX: true
+    RFMIX: false
     test: true
     thin_subjects: 0.1
     chromosomes: null  # Use pipeline chromosomes if null, or specify list e.g. [13, 14, 15]
