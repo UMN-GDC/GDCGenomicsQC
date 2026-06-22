@@ -391,6 +391,19 @@ prsMethods:
           type: bool
           default: false
 
+keep_samples:
+  type: str
+  nullable: true
+  default: null
+  description: |
+    Path to a text file with IIDs (one per line) to subset the data at the start.
+    Only samples listed in this file will be kept throughout the pipeline.
+    Applied on top of ancestry-specific keep files (intersection).
+    Example format:
+      sample1
+      sample2
+      sample3
+
 convertNfilt:
   type: dict
   default: {}

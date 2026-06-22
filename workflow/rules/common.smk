@@ -42,6 +42,13 @@ def _read_ancestry_file():
     return df, iid_col, anc_col
 
 
+def get_keep_samples():
+    path = config.get("keep_samples")
+    if path and Path(path).exists():
+        return ancient(path)
+    return []
+
+
 def uses_rfmix():
     return config.get("localAncestry", {}).get("RFMIX", False)
 
