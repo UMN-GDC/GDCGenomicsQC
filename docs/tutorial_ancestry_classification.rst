@@ -358,10 +358,10 @@ Available subsets are dynamically determined from classification results.
 Interpreting Pipeline Outputs
 ----------------------------
 
-Posterior Probabilities
-~~~~~~~~~~~~~~~~~~~~~~~
+Classification Probabilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**File**: ``01-globalAncestry/posterior_probabilities.tsv``
+**File**: ``01-globalAncestry/classificationProbabilities.tsv``
 
 Sample output:
 
@@ -403,10 +403,10 @@ PLINK-style files for ancestry-specific analyses:
 Visualizations
 ~~~~~~~~~~~~~~
 
-**Stacked Area Plot**: ``posterior_probability_stacked_pca.svg``
+**Stacked Area Plot**: ``classificationProbability_stacked_pca.svg``
 
 - X-axis: Samples sorted by ancestry proportions
-- Y-axis: Stacked posterior probabilities
+- Y-axis: Stacked classification probabilities
 - Identifies homogeneous and admixed individuals
 
 **Classification Space**: ``images/ancestry_classification_space.svg``

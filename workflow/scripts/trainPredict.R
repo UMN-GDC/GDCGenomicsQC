@@ -206,7 +206,7 @@ prob_results <- fit_and_predict_ancestry_models(
 
 prob_results$probabilities |>
     relocate(IID) |>
-    write_delim(file.path(args$out, "posterior_probabilities.tsv"), delim = "\t")
+    write_delim(file.path(args$out, "classificationProbabilities.tsv"), delim = "\t")
 
 prob_results$sample_coords |>
     relocate(IID) |>

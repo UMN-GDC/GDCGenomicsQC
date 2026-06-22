@@ -42,6 +42,20 @@ def _read_ancestry_file():
     return df, iid_col, anc_col
 
 
+def get_keep_samples():
+    path = config.get("keep_samples")
+    if path and Path(path).exists():
+        return ancient(path)
+    return []
+
+
+def get_keep_variants():
+    path = config.get("keep_variants")
+    if path and Path(path).exists():
+        return ancient(path)
+    return []
+
+
 def uses_rfmix():
     return config.get("localAncestry", {}).get("RFMIX", False)
 
@@ -90,14 +104,15 @@ def get_ancestry_file(wildcards):
         return []
     if has_provided_ancestry():
         return ancient(OUT_DIR / "01-globalAncestry" / f"keep_{wildcards.subset}.txt")
+    ckpt = checkpoints.classifySamplesByAncestry.get()
     subset_map = {
         "uncertain": "Other",
     }
     mapped_subset = subset_map.get(wildcards.subset, wildcards.subset)
-    return OUT_DIR / "01-globalAncestry" / f"keep_{mapped_subset}.txt"
+    return getattr(ckpt.output, f"keep_{mapped_subset}")
 
 
-def get_posterior_probs(wildcards):
+def get_classification_probs(wildcards):
     if has_provided_ancestry():
         return []
     checkpoint_output = checkpoints.estimateGlobalAncestry.get(**wildcards).output.pos_prob

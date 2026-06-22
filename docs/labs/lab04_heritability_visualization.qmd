@@ -1,0 +1,259 @@
+---
+title: "Lab: Visualizing SNP Heritability Outputs"
+author: "Christian Coffman"
+date: "2026-06-12"
+format:
+  html:
+    toc: true
+    toc-location: left
+    toc-depth: 2
+    code-fold: true
+    embed-resources: true
+---
+
+## Overview
+
+SNP heritability (h²) estimates the proportion of phenotypic variance explained by genetic variants. The pipeline uses MASH (or GCTA) to estimate h² per ancestry using a GRM computed from LD-pruned, crossmapped variants.
+
+The genotypes are **synthetic** — resampled from 1000 Genomes haplotypes and available on Dataverse. The phenotype is simulated with a **known heritability of 0.4**. This gives you a ground-truth target: the pipeline's estimates should cluster near h² ≈ 0.4 across methods and ancestries.
+
+## Goals & Expectations
+
+Frame your exploration around these questions:
+
+1. **Heritability recovery** — Do the estimated h² values center around the true value of 0.4? How much do they vary across ancestries?
+2. **Method agreement** — Do different estimation methods (e.g., MASH, GCTA-REML) give similar results?
+3. **Statistical significance** — Which ancestry-specific estimates are significantly different from zero (p < 0.05)?
+4. **Confidence intervals** — How wide are the 95% CIs? Do they capture 0.4?
+
+Given the **simulated phenotype** with h² = 0.4, you should expect estimates near 0.4 with modest variation. If estimates are systematically biased upward or downward, that suggests an issue in the GRM construction or the estimation model.
+
+## Inputs & Outputs
+
+- **Inputs:** LD-pruned, crossmapped PGEN (`f1.b38.ldpruned.*`); phenotype file (simulated with h² = 0.4); covariate file (age, sex, PCs); GRM from GCTA.
+- **Outputs:** `mash_output.csv` (per-ancestry h² estimates with SE and p-value).
+- **Pipeline direction:** These estimates quantify how much of the trait variance is genetic. They inform power calculations for GWAS and help prioritize ancestries for PRS modeling.
+
+## Upstream Pipeline Steps
+
+Heritability estimation is sensitive to variant quality, LD, and sample structure. The pipeline runs these steps first:
+
+1. **Initial QC** — Removes variants and samples with high missingness that would bias the GRM.
+2. **Standard QC** (`filterStandard.sh` → `Standard_QC.smk`) — Applies MAF (>1%), HWE (p > 1e-6), and heterozygosity filters. **Low-MAF variants inflate heritability** because their effects are poorly estimated; HWE deviations suggest genotyping error rather than true genetic signal.
+3. **LD pruning** (`concatLdPruned`) — The GRM computed by GCTA assumes **independent genetic markers**. Including correlated SNPs would double-count shared signal and inflate h² estimates.
+4. **Crossmap** (`crossmapLdPrunedToB38`) — Ensures all variants map to the same genome build for consistent GRM computation.
+5. **GRM computation** (`checkRelatednessExtractUnrelated` via `gcta64 --make-grm`) — Computes the genetic relationship matrix from the LD-pruned variants.
+6. **Relatedness filtering** (`king` → `unrelated_ids.txt`) — Removes one individual from each pair with pi-hat > 0.0884. **Related samples inflate heritability** because they share both phenotype and genotype more than expected by chance.
+7. **Phenotype simulation** (external / pre-pipeline) — A phenotype was simulated with **known h² = 0.4** and added to the synthetic genotype data. This provides a ground truth that real studies lack.
+
+**Why independence matters here:** The GRM is a covariance matrix among individuals. If related individuals are included, the off-diagonal GRM elements are non-zero due to recent shared ancestry, not due to the genetic architecture of the trait. This biases h² estimates upward (confounds population structure with heritability).
+
+## Configuration
+
+Heritability estimation uses the `snpHerit` key in `config.yaml`. Here is a mock excerpt showing surrounding context:
+
+```yaml
+# config.yaml (mock excerpt — heritability-related keys only)
+OUT_DIR: "/scratch/.../output"
+REF: "/scratch/.../1000G_reference"
+
+thresholds:
+  maf: 0.01
+  hwe: 1e-6
+
+ancestry:
+  model: pca
+
+snpHerit:
+  grm_prefix: /scratch/.../output/full/f1.b38.ldpruned.unrelated
+  # Path to the GCTA GRM binary files (no extension).
+  # Expected files: .grm.bin, .grm.N.bin, .grm.id
+```
+
+- **`snpHerit.grm_prefix`**: The GRM was built by GCTA `--make-grm` from LD-pruned, crossmapped variants using only unrelated samples. The pipeline concatenates per-chromosome LD-pruned files (`concatLdPruned`), crossmaps them to GRCh38, computes the GRM via `checkRelatednessExtractUnrelated`, then estimates h² per ancestry with MASH.
+- The phenotype was **simulated externally** with known h² = 0.4. In a real study, it would come from clinical measurements.
+
+The `mash_output.csv` below contains the per-ancestry h² estimates derived from this GRM.
+
+## Before You Begin
+
+- **Required files:** `mash_output.csv` in `{herit_dir}/{subset}/03-snpHeritability/`; GRM binary files for the heatmap section
+- **Disk space:** < 1 MB for CSV; GRM files can be 100 MB–2 GB
+- **Expected render time:** < 5 seconds for CSV; 10–30 seconds for GRM heatmap (depends on n_samples)
+- **Known issue:** If `mash_output.csv` is empty, the MASH solver may have failed to converge. Check the `run_snpHerit` log.
+- **Reference:** The phenotype was simulated externally with h² = 0.4 to provide a known ground truth.
+
+## Setup
+
+The code chunk below adds the conda R library path so that pre-installed packages are found without a local `install.packages()`. The environment at `/scratch.global/R25_files/r25_r_env/` is shared across users and contains all packages used in these labs:
+
+- **tidyverse** (ggplot2, dplyr, tidyr, readr, purrr, stringr, forcats, tibble) — data manipulation and plotting
+- **data.table** — fast file reading via `fread()`
+
+```{r setup}
+conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
+.libPaths(unique(c(.Library.site, .Library)))
+.libPaths(c(conda_env, .libPaths()))
+library(tidyverse)
+
+OUT_DIR <- "/path/to/your/pipeline/output"
+herit_dir <- file.path(OUT_DIR, "03-snpHeritability")
+```
+
+## Load Heritability Estimates
+
+**File:** `{herit_dir}/{subset}/03-snpHeritability/mash_output.csv`
+
+**Format:** CSV with columns for ancestry, method, h² estimate, standard error (SE), and p-value. One row per ancestry-method combination.
+
+**Pipeline step:** Generated by the `run_snpHerit` rule in `Snakefile`. It builds a GRM (`checkRelatednessExtractUnrelated` → `concatLdPruned` → `crossmapLdPrunedToB38`), then runs MASH (or GCTA) to estimate variance components per ancestry.
+
+```{r}
+subset <- "AFR"
+herit_path <- file.path(herit_dir, subset, "03-snpHeritability", "mash_output.csv")
+herit <- read_csv(herit_path)
+glimpse(herit)
+```
+
+## Calculate 95% Confidence Intervals
+
+Compute approximate CIs using the normal approximation (estimate ± 1.96 × SE).
+
+```{r}
+herit <- herit %>%
+  mutate(
+    lower_ci = h2 - 1.96 * SE,
+    upper_ci = h2 + 1.96 * SE
+  )
+print(herit)
+```
+
+**Expectation:** The true h² = 0.4 should fall within the 95% CI for most ancestry-method combinations.
+
+## Forest Plot
+
+Visualize h² estimates and CIs across ancestries and methods. The horizontal dashed line marks the ground-truth value of 0.4.
+
+```{r}
+ggplot(herit, aes(x = reorder(Ancestry, h2), y = h2, color = method)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  geom_hline(yintercept = 0.4, linetype = "dashed", color = "gray50", linewidth = 1) +
+  labs(
+    title = "SNP Heritability Estimates per Ancestry",
+    subtitle = "Ground truth h² = 0.4 (dashed line)",
+    x = "Ancestry",
+    y = expression("Heritability (h"^2*")"),
+    color = "Method"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+**Expectation:** Estimates should cluster around 0.4. Confidence intervals should overlap 0.4 for most ancestries. If a method gives consistently biased results, it will be visually apparent here.
+
+## Significant Heritability
+
+Which ancestry-specific h² estimates are statistically significant (p < 0.05)?
+
+```{r}
+sig_herit <- herit %>%
+  filter(p_value < 0.05) %>%
+  arrange(p_value)
+print(sig_herit)
+```
+
+**Expectation:** Because h² = 0.4 is substantially above zero, most or all ancestry-method combinations should be significant. Non-significant results would indicate insufficient sample size or excessive standard errors for that ancestry group.
+
+## GRM Heatmap
+
+Visualize the genetic relationship matrix to confirm that KING filtering removed related samples. A well-filtered GRM should be near-diagonal.
+
+```{r}
+grm_id_path <- file.path(OUT_DIR, "relatedness", "f1.b38.ldpruned.unrelated.grm.id")
+grm_bin_path <- file.path(OUT_DIR, "relatedness", "f1.b38.ldpruned.unrelated.grm.bin")
+grm_ids <- read_tsv(grm_id_path, col_names = c("FID", "IID"))
+n_ids <- nrow(grm_ids)
+grm_bin <- readBin(grm_bin_path, what = "numeric", n = n_ids * (n_ids + 1) / 2)
+
+grm_mat <- matrix(0, n_ids, n_ids)
+idx <- 1
+for (i in 1:n_ids) {
+  for (j in 1:i) {
+    grm_mat[i, j] <- grm_bin[idx]
+    grm_mat[j, i] <- grm_bin[idx]
+    idx <- idx + 1
+  }
+}
+
+n_subsample <- min(200, n_ids)
+set.seed(42)
+subsample_idx <- sample(seq_len(n_ids), n_subsample)
+
+grm_sub <- grm_mat[subsample_idx, subsample_idx]
+
+grm_sub %>%
+  as_tibble() %>%
+  rowid_to_column("row") %>%
+  pivot_longer(cols = -row, names_to = "col_str", values_to = "GRM") %>%
+  mutate(col = as.integer(str_remove(col_str, "V"))) %>%
+  ggplot(aes(x = col, y = row, fill = GRM)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(
+    title = "Genetic Relationship Matrix (Subset)",
+    subtitle = paste0(n_subsample, " samples — diagonal should dominate after KING filtering"),
+    x = "Sample",
+    y = "Sample"
+  ) +
+  theme_minimal() +
+  theme(axis.text = element_blank())
+```
+
+**Expectation:** The diagonal (self-relationship = ~1) should dominate. Off-diagonal values should cluster near 0. If you see substantial off-diagonal structure, KING filtering may not have been aggressive enough, or the GRM was computed before unrelated extraction.
+
+## Per-Ancestry Heritability Comparison
+
+Is h² significantly different between ancestries? Test pairwise.
+
+```{r}
+h2_wide <- herit %>%
+  filter(method == "mash") %>%
+  select(Ancestry, h2, SE)
+
+if (nrow(h2_wide) >= 2) {
+  for (i in 1:(nrow(h2_wide) - 1)) {
+    for (j in (i + 1):nrow(h2_wide)) {
+      diff_est <- h2_wide$h2[i] - h2_wide$h2[j]
+      diff_se <- sqrt(h2_wide$SE[i]^2 + h2_wide$SE[j]^2)
+      z <- diff_est / diff_se
+      p <- 2 * pnorm(-abs(z))
+      cat(sprintf("%s vs %s: Δh² = %.3f ± %.3f, p = %.4f\n",
+        h2_wide$Ancestry[i], h2_wide$Ancestry[j], diff_est, diff_se, p))
+    }
+  }
+}
+```
+
+**Expectation:** With the same underlying simulated phenotype (h² = 0.4), different ancestries should give similar h² estimates. Significant differences would indicate ancestry-specific genetic architecture or technical artifacts (differences in genotyping quality, sample size, or LD structure).
+
+## Check Your Understanding
+
+1. **The ground-truth h² is 0.4, but the pipeline estimates 0.35.** Is this bias or just sampling variation? How would you decide?
+2. **Look at your GRM heatmap. Are there any off-diagonal samples with GRM > 0.05?** What would you do with them if you found them?
+3. **Why does LD pruning matter more for heritability estimation than for global ancestry classification?** (Hint: think about the GRM.)
+
+## Troubleshooting
+
+| Problem | Likely Cause | Solution |
+|---------|-------------|----------|
+| `mash_output.csv` is empty | MASH failed to converge | Check `run_snpHerit` log; try increasing EM iterations or check for collinear covariates |
+| GRM heatmap shows strong off-diagonal structure | KING filtering was skipped or pi-hat threshold too lenient | Verify `relatedness: king: true` in config; check the `unrelated_ids.txt` file size |
+| h² estimate > 1 (or negative) | REML estimate on boundary; small sample size | With N < 100, REML is unreliable; interpret h² cautiously |
+| Different ancestries give very different h² | Possible genuine ancestry-specific architecture, or QC differences | Check if all ancestry groups had the same variant filters applied; check per-ancestry sample sizes |
+
+## Going Further
+
+- **Power analysis**: Given your estimated h² and sample size per ancestry, calculate the minimum detectable effect size for a GWAS at 80% power (using `pwr` package in R).
+- **Compare GCTA-REML to MASH**: If the config runs both methods, compute the correlation between their h² estimates. Which has smaller SEs?
+- **Simulate a null phenotype**: Generate a phenotype with h² = 0, re-run through heritability estimation, and verify that the pipeline correctly estimates h² ≈ 0 with non-significant p-values.

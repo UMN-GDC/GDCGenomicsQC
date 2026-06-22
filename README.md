@@ -421,10 +421,10 @@ The output directory is organized as follows
     - ref.<eigenvec, eigenval> - PCA information on the reference panel
     - <ref, sample>RefPCscores.sscore - projection of sample and reference on the reference PCs
     - umap_<sample, ref>.csv - the UMAP embeddings of the sample and reference
-    - posterior_probabilities.tsv - posterior probability for each ancestry
+    - classificationProbabilities.tsv - classification probability for each ancestry
     - sample_coords.tsv - sample coordinates in latent space
     - ref_coords.tsv - reference coordinates in latent space
-    - posterior_probability_stacked_<model>.svg - ridge plot of ancestry proportions
+    - classificationProbability_stacked_<model>.svg - ridge plot of ancestry proportions
  - 02-localAncestry
     - chr<chr>.lai.<fb, msp, rfmix.Q, sis> - rfmix output specifying posterior probability, most probable LAI label, and chromosome aggregated admixing proportion
     - chr<chr>phased.vcf.gz - the Shapeit4 phased haplotypes

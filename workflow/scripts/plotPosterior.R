@@ -1,9 +1,9 @@
 library(argparse)
 library(tidyverse) |> suppressPackageStartupMessages()
 
-parser <- ArgumentParser(description = "Plot stacked posterior probabilities.")
+parser <- ArgumentParser(description = "Plot stacked classification probabilities.")
 parser$add_argument("--prob_file", type = "character", default = NULL,
-    help = "Path to posterior_probabilities.tsv")
+    help = "Path to classificationProbabilities.tsv")
 parser$add_argument("--out_dir", type = "character", default = NULL,
     help = "Output directory")
 args <- parser$parse_args()
@@ -60,9 +60,9 @@ for (model in available_models) {
             axis.ticks.x = element_blank()
         ) +
         xlab("Subjects") +
-        ylab("Posterior Probability") +
+        ylab("Classification Probability") +
         labs(fill = "Ancestry", title = paste0("Global Ancestry Proportions (", toupper(model), ")"))
 
-    ggsave(file.path(args$out_dir, paste0("posterior_probability_stacked_", model, ".svg")),
+    ggsave(file.path(args$out_dir, paste0("classificationProbability_stacked_", model, ".svg")),
         plot = p, width = 10, height = 7, units = "in")
 }

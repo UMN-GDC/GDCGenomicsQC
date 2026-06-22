@@ -106,6 +106,7 @@ rule convertPgenToVcf:
         pgen=get_input_pgen,
         pvar=get_input_pvar,
         psam=get_input_psam,
+        ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
     output:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
         csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz.csi",
@@ -115,7 +116,19 @@ rule convertPgenToVcf:
         chrom=get_chrom,
     shell:
         """
-        plink2 --pfile {params.input_prefix} --chr {params.chrom} --allow-extra-chr --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}
+        plink2 --pfile {params.input_prefix} --chr {params.chrom} --allow-extra-chr --make-pgen --out {params.out_dir}/chr{wildcards.CHR}.temp --set-all-var-ids @:#:\\$r:\\$a --snps-only just-acgt
+        awk '!/^#/ && (($4=="A" && $5=="T") || ($4=="T" && $5=="A") || ($4=="C" && $5=="G") || ($4=="G" && $5=="C")) {{print $3}}' {params.out_dir}/chr{wildcards.CHR}.temp.pvar > {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
+        plink2 --pfile {params.out_dir}/chr{wildcards.CHR}.temp \
+                       --exclude {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt \
+                       --output-chr chrM \
+                       --export vcf bgz \
+                       --out {params.out_dir}/chr{wildcards.CHR}
+        rm {params.out_dir}/chr{wildcards.CHR}.temp.* {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
+        bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+        bcftools isec -n =2 -w1 {params.out_dir}/chr{wildcards.CHR}.vcf.gz {input.ref} > {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt
+        bcftools view -T {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt {params.out_dir}/chr{wildcards.CHR}.vcf.gz -Oz -o {params.out_dir}/chr{wildcards.CHR}.tmp.vcf.gz
+        mv {params.out_dir}/chr{wildcards.CHR}.tmp.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+        rm {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
         """
 
@@ -147,28 +160,34 @@ rule phaseWithShapeit:
         echo "Shapeit Phasing"
 
         if [ "{params.test}" = "True" ] ; then
-          plink2 --vcf {input.vcf} --bp-space 100000 --thin-indiv {params.thin} --recode vcf bgz --out {params.out_dir}/chr{wildcards.CHR}.thinned
+          plink2 --vcf {input.vcf} --bp-space 100000 --thin-indiv {params.thin} --export vcf bgz --out {params.out_dir}/chr{wildcards.CHR}.thinned
           mv {params.out_dir}/chr{wildcards.CHR}.thinned.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
           bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
           echo "Running shapeit4 in test mode"
+          awk '{{print "chr" $0}}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
           shapeit4 \
               --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
-              --map {input.gmap} \
-              --reference {input.ref} \
-              --region {params.chrom} \
+              --map {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt \
+              --region chr{params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --mcmc-iterations 1b,1p,1m \
-              --output {params.out_dir}/chr{wildcards.CHR}.phased.vcf
+              --output {output.vcf} \
+              --reference {input.ref} \
+              --sequencing
+          rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         else
+          awk '{{print "chr" $0}}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
           shapeit4 \
               --input {input.vcf} \
-              --map {input.gmap} \
-              --reference {input.ref} \
-              --region {params.chrom} \
+              --map {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt \
+              --region chr{params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
-              --output {params.out_dir}/chr{wildcards.CHR}.phased.vcf
+              --output {output.vcf} \
+              --reference {input.ref} \
+              --sequencing
+          rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         fi
         """
 

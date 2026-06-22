@@ -94,8 +94,8 @@ Rscript ${path_to_repo}/src/combine_ids_script.R $WORK $NAME
 cp ancestry_${NAME}.txt $WORK/ancestry_${NAME}.txt
 
 # Copy final result
-cp ancestry_labeled.bed $WORK/GAP_plots/ancestry_GAP_posterior_labeled.bed
-cp ancestry.bed $WORK/GAP_plots/ancestry_GAP_posterior.bed
+cp ancestry_labeled.bed $WORK/GAP_plots/ancestry_GAP_classification_labeled.bed
+cp ancestry.bed $WORK/GAP_plots/ancestry_GAP_classification.bed
 
 
 # Process MSPs for LAP
