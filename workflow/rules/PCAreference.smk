@@ -79,18 +79,22 @@ if INPUT_IS_PER_CHROMOSOME:
                        --make-pgen \
                        --out {output.tempDir}/ref_joint
 
-                # Strip .pvar to 5 columns (remove incompatible INFO headers)
-                awk 'BEGIN{{OFS="\t"}} {{print $1,$2,$3,$4,$5}}' \
-                    {output.tempDir}/ref_joint.pvar > {output.tempDir}/ref_joint.pvar.tmp \
-                    && mv {output.tempDir}/ref_joint.pvar.tmp {output.tempDir}/ref_joint.pvar
-                awk 'BEGIN{{OFS="\t"}} {{print $1,$2,$3,$4,$5}}' \
-                    {output.tempDir}/study_lai.pvar > {output.tempDir}/study_lai.pvar.tmp \
-                    && mv {output.tempDir}/study_lai.pvar.tmp {output.tempDir}/study_lai.pvar
-
-                # Merge study + reference
-                echo "{output.tempDir}/ref_joint" > {output.tempDir}/mergelist_joint.txt
-                echo "{output.tempDir}/study_lai" >> {output.tempDir}/mergelist_joint.txt
-                plink2 --pmerge-list {output.tempDir}/mergelist_joint.txt \
+                # Convert to PLINK1 BED and merge (PLINK2 --pmerge-list not ready for non-concatenating)
+                plink2 --pfile {output.tempDir}/ref_joint \
+                       --make-bed \
+                       --threads {threads} \
+                       --out {output.tempDir}/ref_joint_v1
+                plink2 --pfile {output.tempDir}/study_lai \
+                       --make-bed \
+                       --threads {threads} \
+                       --out {output.tempDir}/study_lai_v1
+                echo "study_lai_v1" > {output.tempDir}/mergelist_joint.txt
+                plink --bfile {output.tempDir}/ref_joint_v1 \
+                      --merge-list {output.tempDir}/mergelist_joint.txt \
+                      --make-bed \
+                      --allow-no-sex \
+                      --out {output.tempDir}/merged_v1
+                plink2 --bfile {output.tempDir}/merged_v1 \
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/merged
@@ -202,18 +206,22 @@ else:
                        --threads {threads} \
                        --out {output.tempDir}/study_joint
 
-                # Strip .pvar to 5 columns (remove incompatible INFO headers)
-                awk 'BEGIN{{OFS="\t"}} {{print $1,$2,$3,$4,$5}}' \
-                    {output.tempDir}/ref_joint.pvar > {output.tempDir}/ref_joint.pvar.tmp \
-                    && mv {output.tempDir}/ref_joint.pvar.tmp {output.tempDir}/ref_joint.pvar
-                awk 'BEGIN{{OFS="\t"}} {{print $1,$2,$3,$4,$5}}' \
-                    {output.tempDir}/study_joint.pvar > {output.tempDir}/study_joint.pvar.tmp \
-                    && mv {output.tempDir}/study_joint.pvar.tmp {output.tempDir}/study_joint.pvar
-
-                # Merge
-                echo "{output.tempDir}/ref_joint" > {output.tempDir}/mergelist_joint.txt
-                echo "{output.tempDir}/study_joint" >> {output.tempDir}/mergelist_joint.txt
-                plink2 --pmerge-list {output.tempDir}/mergelist_joint.txt \
+                # Convert to PLINK1 BED and merge (PLINK2 --pmerge-list not ready for non-concatenating)
+                plink2 --pfile {output.tempDir}/ref_joint \
+                       --make-bed \
+                       --threads {threads} \
+                       --out {output.tempDir}/ref_joint_v1
+                plink2 --pfile {output.tempDir}/study_joint \
+                       --make-bed \
+                       --threads {threads} \
+                       --out {output.tempDir}/study_joint_v1
+                echo "study_joint_v1" > {output.tempDir}/mergelist_joint.txt
+                plink --bfile {output.tempDir}/ref_joint_v1 \
+                      --merge-list {output.tempDir}/mergelist_joint.txt \
+                      --make-bed \
+                      --allow-no-sex \
+                      --out {output.tempDir}/merged_v1
+                plink2 --bfile {output.tempDir}/merged_v1 \
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/merged
