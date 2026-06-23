@@ -93,10 +93,10 @@ if INPUT_IS_PER_CHROMOSOME:
                        --out {output.tempDir}/joint_pca
 
                 # Split eigenvec by IID into ref and sample files
-                awk 'NR==FNR{iids[$2];next} FNR==1 || $2 in iids' \
+                awk 'NR==FNR{{iids[$2];next}} FNR==1 || $2 in iids' \
                     {params.ref}.psam {output.tempDir}/joint_pca.eigenvec \
                     > {params.dir}/refRefPCscores.sscore
-                awk 'NR==FNR{iids[$2];next} FNR==1 || $2 in iids' \
+                awk 'NR==FNR{{iids[$2];next}} FNR==1 || $2 in iids' \
                     {output.tempDir}/study_lai.psam {output.tempDir}/joint_pca.eigenvec \
                     > {params.dir}/sampleRefPCscores.sscore
 
@@ -208,10 +208,10 @@ else:
                        --out {output.tempDir}/joint_pca
 
                 # Split eigenvec by IID into ref and sample files
-                awk 'NR==FNR{iids[$2];next} FNR==1 || $2 in iids' \
+                awk 'NR==FNR{{iids[$2];next}} FNR==1 || $2 in iids' \
                     {params.ref}.psam {output.tempDir}/joint_pca.eigenvec \
                     > {params.dir}/refRefPCscores.sscore
-                awk 'NR==FNR{iids[$2];next} FNR==1 || $2 in iids' \
+                awk 'NR==FNR{{iids[$2];next}} FNR==1 || $2 in iids' \
                     {params.input_prefix}.psam {output.tempDir}/joint_pca.eigenvec \
                     > {params.dir}/sampleRefPCscores.sscore
 
