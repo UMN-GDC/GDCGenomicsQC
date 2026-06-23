@@ -110,7 +110,7 @@ fi
 
 if [ -n "{input.keep_samples}" ]; then
     if [ -n "$KEEP_FILES" ]; then
-        awk 'NR==FNR{a[$1];next} $1 in a' {input.keep_samples} $KEEP_FILES > {output.tempDir}/merged_keep.txt
+        awk 'NR==FNR{{a[$1];next}} $1 in a' {input.keep_samples} $KEEP_FILES > {output.tempDir}/merged_keep.txt
         KEEP_FILES={output.tempDir}/merged_keep.txt
     else
         KEEP_FILES="{input.keep_samples}"
@@ -234,7 +234,7 @@ if not INPUT_IS_PER_CHROMOSOME:
 
             if [ -n "{input.keep_samples}" ]; then
                 if [ -n "$KEEP_ARG" ]; then
-                    awk 'NR==FNR{a[$1];next} $1 in a' {input.keep_samples} $KEEP_ARG > {output.tempDir}/merged_keep.txt
+                    awk 'NR==FNR{{a[$1];next}} $1 in a' {input.keep_samples} $KEEP_ARG > {output.tempDir}/merged_keep.txt
                     KEEP_ARG={output.tempDir}/merged_keep.txt
                 else
                     KEEP_ARG="{input.keep_samples}"
