@@ -79,6 +79,14 @@ if INPUT_IS_PER_CHROMOSOME:
                        --make-pgen \
                        --out {output.tempDir}/ref_joint
 
+                # Strip .pvar to 5 columns (remove incompatible INFO headers)
+                awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5}' \
+                    {output.tempDir}/ref_joint.pvar > {output.tempDir}/ref_joint.pvar.tmp \
+                    && mv {output.tempDir}/ref_joint.pvar.tmp {output.tempDir}/ref_joint.pvar
+                awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5}' \
+                    {output.tempDir}/study_lai.pvar > {output.tempDir}/study_lai.pvar.tmp \
+                    && mv {output.tempDir}/study_lai.pvar.tmp {output.tempDir}/study_lai.pvar
+
                 # Merge study + reference
                 echo "{output.tempDir}/ref_joint" > {output.tempDir}/mergelist_joint.txt
                 echo "{output.tempDir}/study_lai" >> {output.tempDir}/mergelist_joint.txt
@@ -193,6 +201,14 @@ else:
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/study_joint
+
+                # Strip .pvar to 5 columns (remove incompatible INFO headers)
+                awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5}' \
+                    {output.tempDir}/ref_joint.pvar > {output.tempDir}/ref_joint.pvar.tmp \
+                    && mv {output.tempDir}/ref_joint.pvar.tmp {output.tempDir}/ref_joint.pvar
+                awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$4,$5}' \
+                    {output.tempDir}/study_joint.pvar > {output.tempDir}/study_joint.pvar.tmp \
+                    && mv {output.tempDir}/study_joint.pvar.tmp {output.tempDir}/study_joint.pvar
 
                 # Merge
                 echo "{output.tempDir}/ref_joint" > {output.tempDir}/mergelist_joint.txt
