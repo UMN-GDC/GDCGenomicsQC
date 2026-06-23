@@ -1,5 +1,10 @@
 library(argparse)
-library(tidyverse) |> suppressPackageStartupMessages()
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(magrittr)
+library(tibble)
 library(randomForest)
 
 parser <- ArgumentParser(description = "Train ancestry RF models and predict probabilities.")
