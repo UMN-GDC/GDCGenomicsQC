@@ -1,6 +1,6 @@
 library(argparse)
 library(tidyverse) |> suppressPackageStartupMessages()
-suppressPackageStartupMessages(library(randomForest))
+library(randomForest)
 
 parser <- ArgumentParser(description = "Train ancestry RF models and predict probabilities.")
 parser$add_argument("--eigen_ref", type = "character", default = NULL,

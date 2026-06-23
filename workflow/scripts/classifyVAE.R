@@ -1,6 +1,6 @@
 library(argparse)
-library(tidyverse) |> suppressPackageStartupMessages()
-library(randomForest) |> suppressPackageStartupMessages()
+library(tidyverse)
+library(randomForest)
 
 parser <- ArgumentParser(description= "Estimate ancestry off of multiple predictors.")
 parser$add_argument("--pc", type= "character", default = NULL,
