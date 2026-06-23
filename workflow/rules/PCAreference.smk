@@ -3,7 +3,7 @@ if INPUT_IS_PER_CHROMOSOME:
         log:
             OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
         container:
-            "docker://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
         envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
@@ -146,7 +146,7 @@ else:
         log:
             OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
         container:
-            "docker://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
         conda:
             "../../envs/ancNreport.yml"
         envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
