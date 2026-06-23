@@ -72,9 +72,10 @@ if INPUT_IS_PER_CHROMOSOME:
 
             # Compute PCA on reference using shared SNPs
             if [ "{params.pca_estimation}" = "joint" ]; then
-                # Restrict reference to study SNP list
+                # Restrict reference to study SNP list (strip INFO headers)
                 plink2 --pfile {params.ref} \
                        --extract {output.tempDir}/study_snps.snplist \
+                       --set-all-var-ids 'chr@:#:$r:$a' \
                        --make-pgen \
                        --out {output.tempDir}/ref_joint
 
@@ -128,7 +129,6 @@ if INPUT_IS_PER_CHROMOSOME:
                        --out {params.dir}/refRefPCscores
             fi
             """
-
 else:
     rule runPcaOnReferencePanel:
         log:
@@ -182,6 +182,7 @@ else:
                 # Restrict reference to shared study SNPs
                 plink2 --pfile {params.ref} \
                        --extract {params.dir}/intermediates/study_snps.snplist \
+                       --set-all-var-ids 'chr@:#:$r:$a' \
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/ref_joint
