@@ -25,16 +25,9 @@ set.seed(args$seed)
 
 pcs <- data.table::fread(args$eigens)
 samplePCs <- data.table::fread(args$sample)
-#samplePCs <- data.table::fread("../../toyPipeline/01-globalAncestry/sampleRefPCscores.sscore") |> 
 
-if (is.null(args$npc)) {
-  npc <- ncol(pcs) -4
-} else if (args$npc > (ncol(pcs) -4)) {
-  print("Desired number of PCs exceeds dimension of eigenvec file. Selecting all PCs.")
-  npc <- ncol(pcs) - 4
-} else {
-  npc <- args$npc
-}
+pcs_iid <- if ("#IID" %in% colnames(pcs)) pcs[["#IID"]] else pcs[["IID"]]
+sample_iid <- if ("#IID" %in% colnames(samplePCs)) samplePCs[["#IID"]] else samplePCs[["IID"]]
 
 pcs_scaled <- pcs |>
   select(starts_with("PC")) |>
@@ -57,7 +50,7 @@ studyUmap <- samplePCs |>
 mod$embedding |>
   magrittr::set_colnames(paste("UMAP", 1:args$ncoords, sep = "")) |>
   as.data.frame() |>
-  mutate(IID = pcs[,c(`#IID`)]) |>
+  mutate(IID = pcs_iid) |>
   relocate(IID) |>
   data.table::fwrite(file = paste0(args$out, "_ref.csv"),
          row.names = FALSE)
@@ -66,7 +59,7 @@ print(paste0("UMAP coordinates saved to ", args$out))
 studyUmap |>
   magrittr::set_colnames(paste("UMAP", 1:args$ncoords, sep = "")) |>
   as.data.frame() |>
-  mutate(IID = samplePCs[, c(IID)]) |> 
+  mutate(IID = sample_iid) |> 
   relocate(IID) |>
   data.table::fwrite(file = paste0(args$out, "_sample.csv"),
          row.names = FALSE)
