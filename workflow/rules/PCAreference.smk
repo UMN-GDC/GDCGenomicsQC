@@ -83,14 +83,14 @@ if INPUT_IS_PER_CHROMOSOME:
                    --chr {params.chroms} \
                    --allow-extra-chr \
                    --read-freq {params.dir}/ref.acount \
-                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
+                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
                    --score-col-nums 6-15 \
                    --out {params.dir}/sampleRefPCscores
 
             # Project reference onto reference PCs
             plink2 --pfile {params.ref} \
                    --read-freq {params.dir}/ref.acount \
-                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
+                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
                    --score-col-nums 6-15 \
                    --out {params.dir}/refRefPCscores
             """
@@ -156,14 +156,14 @@ else:
                    --chr 1-22 \
                    --allow-extra-chr \
                    --read-freq {params.dir}/ref.acount \
-                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
+                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
                    --score-col-nums 6-15 \
                    --out {params.dir}/sampleRefPCscores
             echo "Project ref onto the reference PCs."
 
             plink2 --pfile {params.ref} \
                    --read-freq {params.dir}/ref.acount \
-                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read \
+                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
                    --score-col-nums 6-15 \
                    --out {params.dir}/refRefPCscores
             """
