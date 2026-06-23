@@ -10,7 +10,7 @@ dependencies:
   - r-base
   - r-tidyverse
   - r-uwot
-  - r-randomforest
+  - r-ranger
   - r-data.table
   - r-argparse
   - r-gt

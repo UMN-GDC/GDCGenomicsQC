@@ -1,5 +1,10 @@
 library(argparse)
-library(tidyverse) |> suppressPackageStartupMessages()
+library(readr)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(magrittr)
+library(ranger)
 
 parser <- ArgumentParser(description = "Plot ancestry classification space.")
 parser$add_argument("--out_dir", type = "character", default = NULL,
@@ -95,7 +100,7 @@ if (!is.null(args$rf_model) && file.exists(args$rf_model) && "pca" %in% rfmix_mo
         }
     }
 
-    probs <- predict(rf_model, grid, type = "prob")
+    probs <- predict(rf_model, grid)$predictions
     grid$max_prob <- apply(probs, 1, max)
 
     contour_list$pca <- grid |>
@@ -117,7 +122,7 @@ if (has_umap && "umap" %in% rfmix_models) {
             umap_2 = seq(y_range[1], y_range[2], length.out = 150)
         )
 
-        probs <- predict(umap_model, grid, type = "prob")
+        probs <- predict(umap_model, grid)$predictions
         grid$max_prob <- apply(probs, 1, max)
 
         contour_list$umap <- grid |>

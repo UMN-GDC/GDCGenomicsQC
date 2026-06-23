@@ -5,7 +5,7 @@ library(tidyr)
 library(stringr)
 library(magrittr)
 library(tibble)
-library(randomForest)
+library(ranger)
 
 parser <- ArgumentParser(description = "Train ancestry RF models and predict probabilities.")
 parser$add_argument("--eigen_ref", type = "character", default = NULL,
@@ -87,9 +87,10 @@ fit_and_predict_ancestry_models <- function(
     colnames(PCs)[-1] <- paste0("pc_", 1:(ncol(PCs) - 1))
     ref <- full_join(ref, PCs, by = c("IID")) |> drop_na(pc_1)
 
-    pcMod <- randomForest::randomForest(
+    pcMod <- ranger::ranger(
         formula = factor(POP) ~ pc_1 + pc_2 + pc_3 + pc_4 + pc_5 + pc_6 + pc_7 + pc_8 + pc_9 + pc_10,
-        data = ref
+        data = ref,
+        probability = TRUE
     )
     saveRDS(pcMod, file.path(out_dir, "RFpc.Rds"))
 
@@ -105,8 +106,7 @@ fit_and_predict_ancestry_models <- function(
     names(sampleDF)[names(sampleDF) == iid_col] <- "IID"
     colnames(sampleDF)[-1] <- paste0("pc_", 1:(ncol(sampleDF) - 1))
 
-    rf_predict_fn <- getFromNamespace("predict.randomForest", "randomForest")
-    pc_probs <- rf_predict_fn(pcMod, sampleDF, type = "prob")
+    pc_probs <- predict(pcMod, sampleDF)$predictions
     result_df <- sampleDF |> select(IID) |> as_tibble()
     sample_coords_df <- sampleDF
 
@@ -121,9 +121,10 @@ fit_and_predict_ancestry_models <- function(
         colnames(umap_ref_df) <- c("IID", str_replace(colnames(umap_ref_df)[-c(1)], "UMAP", "umap_"))
         ref <- full_join(ref, umap_ref_df, by = c("IID")) |> drop_na(umap_1)
 
-        umapMod <- randomForest::randomForest(
+        umapMod <- ranger::ranger(
             formula = factor(POP) ~ umap_1 + umap_2,
-            data = ref
+            data = ref,
+            probability = TRUE
         )
         saveRDS(umapMod, file.path(out_dir, "RFumap.Rds"))
 
@@ -135,7 +136,7 @@ fit_and_predict_ancestry_models <- function(
         sample_coords_df <- sample_coords_df |>
             left_join(umap_sample_df, by = "IID")
 
-        umap_probs <- rf_predict_fn(umapMod, sampleDF_umap, type = "prob")
+        umap_probs <- predict(umapMod, sampleDF_umap)$predictions
 
         umap_result <- sampleDF_umap |>
             select(IID) |>
@@ -154,9 +155,10 @@ fit_and_predict_ancestry_models <- function(
         vae_ref_df <- read_vae_coords(vae_ref)
         ref <- full_join(ref, vae_ref_df, by = c("IID")) |> drop_na(vae_mean1, vae_mean2)
 
-        vaeMod <- randomForest::randomForest(
+        vaeMod <- ranger::ranger(
             formula = factor(POP) ~ vae_mean1 + vae_mean2,
-            data = ref
+            data = ref,
+            probability = TRUE
         )
         saveRDS(vaeMod, file.path(out_dir, "RFvae.Rds"))
 
@@ -171,7 +173,7 @@ fit_and_predict_ancestry_models <- function(
             warning("VAE coordinates not found in sample data. Skipping VAE prediction.")
             has_vae <- FALSE
         } else {
-            vae_probs <- rf_predict_fn(vaeMod, sampleDF_vae, type = "prob")
+            vae_probs <- predict(vaeMod, sampleDF_vae)$predictions
 
             vae_result <- sampleDF_vae |>
                 select(IID) |>
