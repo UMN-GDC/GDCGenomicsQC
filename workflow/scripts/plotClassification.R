@@ -71,8 +71,8 @@ if (nrow(sample_plot_df) > 0) {
     p <- ggplot() +
         stat_density_2d(data = ref_plot_df, aes(x = x, y = y, fill = POP),
             geom = "polygon", alpha = 0.25, contour = TRUE) +
-        geom_point(data = sample_plot_df, aes(x = x, y = y, color = predicted),
-            shape = 21, size = 2, stroke = 0.5) +
+        geom_point(data = sample_plot_df, aes(x = x, y = y, fill = predicted),
+            shape = 21, size = 2, color = "black", stroke = 0.8) +
         facet_wrap(~model, ncol = 1, scales = "free") +
         theme_minimal() +
         theme(legend.position = "bottom")
