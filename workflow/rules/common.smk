@@ -42,14 +42,14 @@ def _read_ancestry_file():
     return df, iid_col, anc_col
 
 
-def get_keep_samples():
+def get_keep_samples(*args, **kwargs):
     path = config.get("keep_samples")
     if path and Path(path).exists():
         return ancient(path)
     return []
 
 
-def get_keep_variants():
+def get_keep_variants(*args, **kwargs):
     path = config.get("keep_variants")
     if path and Path(path).exists():
         return ancient(path)
