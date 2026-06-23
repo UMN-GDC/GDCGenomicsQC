@@ -162,6 +162,7 @@ ancestry:
     threshold: 0.8
     model: "pca"
     ancestry_file: null
+    pca_estimation: "joint"
 
 conda-frontend: mamba
 phenotypeSimulation:
