@@ -100,7 +100,8 @@ fit_and_predict_ancestry_models <- function(
     names(sampleDF)[names(sampleDF) == iid_col] <- "IID"
     colnames(sampleDF)[-1] <- paste0("pc_", 1:(ncol(sampleDF) - 1))
 
-    pc_probs <- randomForest:::predict.randomForest(pcMod, sampleDF, type = "prob")
+    registerS3method("predict", "randomForest", randomForest:::predict.randomForest)
+    pc_probs <- predict(pcMod, sampleDF, type = "prob")
     result_df <- sampleDF |> select(IID) |> as_tibble()
     sample_coords_df <- sampleDF
 
@@ -129,7 +130,8 @@ fit_and_predict_ancestry_models <- function(
         sample_coords_df <- sample_coords_df |>
             left_join(umap_sample_df, by = "IID")
 
-        umap_probs <- randomForest:::predict.randomForest(umapMod, sampleDF_umap, type = "prob")
+        registerS3method("predict", "randomForest", randomForest:::predict.randomForest)
+        umap_probs <- predict(umapMod, sampleDF_umap, type = "prob")
 
         umap_result <- sampleDF_umap |>
             select(IID) |>
@@ -165,7 +167,8 @@ fit_and_predict_ancestry_models <- function(
             warning("VAE coordinates not found in sample data. Skipping VAE prediction.")
             has_vae <- FALSE
         } else {
-            vae_probs <- randomForest:::predict.randomForest(vaeMod, sampleDF_vae, type = "prob")
+            registerS3method("predict", "randomForest", randomForest:::predict.randomForest)
+            vae_probs <- predict(vaeMod, sampleDF_vae, type = "prob")
 
             vae_result <- sampleDF_vae |>
                 select(IID) |>
