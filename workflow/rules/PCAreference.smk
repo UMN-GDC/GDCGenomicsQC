@@ -88,7 +88,7 @@ if INPUT_IS_PER_CHROMOSOME:
                        --make-bed \
                        --threads {threads} \
                        --out {output.tempDir}/study_lai_v1
-                echo "study_lai_v1" > {output.tempDir}/mergelist_joint.txt
+                echo "{output.tempDir}/study_lai_v1" > {output.tempDir}/mergelist_joint.txt
                 plink --bfile {output.tempDir}/ref_joint_v1 \
                       --merge-list {output.tempDir}/mergelist_joint.txt \
                       --make-bed \
@@ -215,7 +215,7 @@ else:
                        --make-bed \
                        --threads {threads} \
                        --out {output.tempDir}/study_joint_v1
-                echo "study_joint_v1" > {output.tempDir}/mergelist_joint.txt
+                echo "{output.tempDir}/study_joint_v1" > {output.tempDir}/mergelist_joint.txt
                 plink --bfile {output.tempDir}/ref_joint_v1 \
                       --merge-list {output.tempDir}/mergelist_joint.txt \
                       --make-bed \
