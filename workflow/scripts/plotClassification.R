@@ -7,8 +7,10 @@ parser$add_argument("--out_dir", type = "character", default = NULL,
 args <- parser$parse_args()
 
 classification_df <- read_delim(file.path(args$out_dir, "ancestry_classifications.tsv"), delim = "\t")
-sample_coords <- read_delim(file.path(args$out_dir, "sample_coords.tsv"), delim = "\t")
-ref_data <- read_delim(file.path(args$out_dir, "ref_coords.tsv"), delim = "\t")
+sample_coords <- read_delim(file.path(args$out_dir, "sample_coords.tsv"), delim = "\t") |>
+    mutate(across(any_of(c("pc_1", "pc_2", "umap_1", "umap_2", "vae_mean1", "vae_mean2")), as.numeric))
+ref_data <- read_delim(file.path(args$out_dir, "ref_coords.tsv"), delim = "\t") |>
+    mutate(across(any_of(c("pc_1", "pc_2", "umap_1", "umap_2", "vae_mean1", "vae_mean2")), as.numeric))
 
 has_umap <- any(str_starts(colnames(sample_coords), "umap_"))
 has_vae <- any(str_starts(colnames(sample_coords), "vae_"))
