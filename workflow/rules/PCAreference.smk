@@ -34,6 +34,7 @@ if INPUT_IS_PER_CHROMOSOME:
             dir=str(OUT_DIR / "01-globalAncestry"),
             ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
             chroms=" ".join(str(c) for c in CHROMOSOMES),
+            pca_estimation=config.get("ancestry", {}).get("pca_estimation", "projection"),
         shell:
             """
             mkdir -p {output.tempDir}
@@ -70,29 +71,62 @@ if INPUT_IS_PER_CHROMOSOME:
                    --out {output.tempDir}/study_lai
 
             # Compute PCA on reference using shared SNPs
-            plink2 --pfile {params.ref} \
-                   --freq counts \
-                   --threads {threads} \
-                   --extract {output.tempDir}/study_snps.snplist \
-                   --pca allele-wts vcols=chrom,ref,alt \
-                   --out {params.dir}/ref \
-                   --allow-no-sex
+            if [ "{params.pca_estimation}" = "joint" ]; then
+                # Restrict reference to study SNP list
+                plink2 --pfile {params.ref} \
+                       --extract {output.tempDir}/study_snps.snplist \
+                       --make-pgen \
+                       --out {output.tempDir}/ref_joint
 
-            # Project study onto reference PCs
-            plink2 --pfile {output.tempDir}/study_lai \
-                   --chr {params.chroms} \
-                   --allow-extra-chr \
-                   --read-freq {params.dir}/ref.acount \
-                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
-                   --score-col-nums 6-15 \
-                   --out {params.dir}/sampleRefPCscores
+                # Merge study + reference
+                echo "{output.tempDir}/ref_joint" > {output.tempDir}/mergelist_joint.txt
+                echo "{output.tempDir}/study_lai" >> {output.tempDir}/mergelist_joint.txt
+                plink2 --pmerge-list {output.tempDir}/mergelist_joint.txt \
+                       --make-pgen \
+                       --threads {threads} \
+                       --out {output.tempDir}/merged
 
-            # Project reference onto reference PCs
-            plink2 --pfile {params.ref} \
-                   --read-freq {params.dir}/ref.acount \
-                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
-                   --score-col-nums 6-15 \
-                   --out {params.dir}/refRefPCscores
+                # Joint PCA
+                plink2 --pfile {output.tempDir}/merged \
+                       --pca 10 \
+                       --threads {threads} \
+                       --out {output.tempDir}/joint_pca
+
+                # Split eigenvec by IID into ref and sample files
+                awk 'NR==FNR{iids[$2];next} FNR==1 || $2 in iids' \
+                    {params.ref}.psam {output.tempDir}/joint_pca.eigenvec \
+                    > {params.dir}/refRefPCscores.sscore
+                awk 'NR==FNR{iids[$2];next} FNR==1 || $2 in iids' \
+                    {output.tempDir}/study_lai.psam {output.tempDir}/joint_pca.eigenvec \
+                    > {params.dir}/sampleRefPCscores.sscore
+
+                # Produce ref.eigenvec (declared output, used by nothing downstream)
+                cp {params.dir}/refRefPCscores.sscore {params.dir}/ref.eigenvec
+            else
+                plink2 --pfile {params.ref} \
+                       --freq counts \
+                       --threads {threads} \
+                       --extract {output.tempDir}/study_snps.snplist \
+                       --pca allele-wts vcols=chrom,ref,alt \
+                       --out {params.dir}/ref \
+                       --allow-no-sex
+
+                # Project study onto reference PCs
+                plink2 --pfile {output.tempDir}/study_lai \
+                       --chr {params.chroms} \
+                       --allow-extra-chr \
+                       --read-freq {params.dir}/ref.acount \
+                       --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
+                       --score-col-nums 6-15 \
+                       --out {params.dir}/sampleRefPCscores
+
+                # Project reference onto reference PCs
+                plink2 --pfile {params.ref} \
+                       --read-freq {params.dir}/ref.acount \
+                       --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
+                       --score-col-nums 6-15 \
+                       --out {params.dir}/refRefPCscores
+            fi
             """
 
 else:
@@ -127,6 +161,7 @@ else:
             input_prefix=OUT_DIR / "full" / "f1.b38",
             dir=str(OUT_DIR / "01-globalAncestry"),
             ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
+            pca_estimation=config.get("ancestry", {}).get("pca_estimation", "projection"),
         shell:
             """
             echo "PCA: "
@@ -142,28 +177,69 @@ else:
 
 
             # calculate ld on ref intersection with sample with common frequency
-            # compute PCA refrence only
-            plink2 --pfile {params.ref} \
-                   --freq counts \
-                   --threads {threads} \
-                   --extract {params.dir}/intermediates/study_snps.snplist \
-                   --pca allele-wts vcols=chrom,ref,alt \
-                   --out {params.dir}/ref \
-                   --allow-no-sex
+            # compute PCA reference only
+            if [ "{params.pca_estimation}" = "joint" ]; then
+                # Restrict reference to shared study SNPs
+                plink2 --pfile {params.ref} \
+                       --extract {params.dir}/intermediates/study_snps.snplist \
+                       --make-pgen \
+                       --threads {threads} \
+                       --out {output.tempDir}/ref_joint
 
-            echo "Project sample onto the reference PCs."
-            plink2 --pfile {params.input_prefix} \
-                   --chr 1-22 \
-                   --allow-extra-chr \
-                   --read-freq {params.dir}/ref.acount \
-                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
-                   --score-col-nums 6-15 \
-                   --out {params.dir}/sampleRefPCscores
-            echo "Project ref onto the reference PCs."
+                # Restrict study to ref variants
+                plink2 --pfile {params.input_prefix} \
+                       --extract {params.ref}.pvar \
+                       --make-pgen \
+                       --threads {threads} \
+                       --out {output.tempDir}/study_joint
 
-            plink2 --pfile {params.ref} \
-                   --read-freq {params.dir}/ref.acount \
-                   --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
-                   --score-col-nums 6-15 \
-                   --out {params.dir}/refRefPCscores
+                # Merge
+                echo "{output.tempDir}/ref_joint" > {output.tempDir}/mergelist_joint.txt
+                echo "{output.tempDir}/study_joint" >> {output.tempDir}/mergelist_joint.txt
+                plink2 --pmerge-list {output.tempDir}/mergelist_joint.txt \
+                       --make-pgen \
+                       --threads {threads} \
+                       --out {output.tempDir}/merged
+
+                # Joint PCA
+                plink2 --pfile {output.tempDir}/merged \
+                       --pca 10 \
+                       --threads {threads} \
+                       --out {output.tempDir}/joint_pca
+
+                # Split eigenvec by IID into ref and sample files
+                awk 'NR==FNR{iids[$2];next} FNR==1 || $2 in iids' \
+                    {params.ref}.psam {output.tempDir}/joint_pca.eigenvec \
+                    > {params.dir}/refRefPCscores.sscore
+                awk 'NR==FNR{iids[$2];next} FNR==1 || $2 in iids' \
+                    {params.input_prefix}.psam {output.tempDir}/joint_pca.eigenvec \
+                    > {params.dir}/sampleRefPCscores.sscore
+
+                # Produce ref.eigenvec (declared output, used by nothing downstream)
+                cp {params.dir}/refRefPCscores.sscore {params.dir}/ref.eigenvec
+            else
+                plink2 --pfile {params.ref} \
+                       --freq counts \
+                       --threads {threads} \
+                       --extract {params.dir}/intermediates/study_snps.snplist \
+                       --pca allele-wts vcols=chrom,ref,alt \
+                       --out {params.dir}/ref \
+                       --allow-no-sex
+
+                echo "Project sample onto the reference PCs."
+                plink2 --pfile {params.input_prefix} \
+                       --chr 1-22 \
+                       --allow-extra-chr \
+                       --read-freq {params.dir}/ref.acount \
+                       --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
+                       --score-col-nums 6-15 \
+                       --out {params.dir}/sampleRefPCscores
+                echo "Project ref onto the reference PCs."
+
+                plink2 --pfile {params.ref} \
+                       --read-freq {params.dir}/ref.acount \
+                       --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
+                       --score-col-nums 6-15 \
+                       --out {params.dir}/refRefPCscores
+            fi
             """

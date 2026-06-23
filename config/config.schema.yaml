@@ -102,6 +102,14 @@ ancestry:
       type: str
       default: "pca"
       enum: ["pca", "umap", "vae", "rfmix"]
+    pca_estimation:
+      type: str
+      default: "projection"
+      enum: ["projection", "joint"]
+      description: |
+        How to compute PCs for ancestry classification.
+        "projection" — compute PCA on 1000G reference only, then project study samples
+        "joint" — compute PCA jointly on merged 1000G + study data, then split
     ancestry_file:
       type: str
       nullable: true

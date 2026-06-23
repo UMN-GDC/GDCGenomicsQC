@@ -102,7 +102,10 @@ checkpoint classifySamplesByAncestry:
           --out_dir {params.dir}
 
         Rscript {params.plot_classification} \
-          --out_dir {params.dir}
+          --out_dir {params.dir} \
+          --threshold {params.threshold} \
+          --model {params.model} \
+          --rf_model {params.dir}/RFpc.Rds
 
         Rscript {params.plot_density} \
           --prob_file {input.pos_prob} \

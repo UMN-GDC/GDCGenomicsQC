@@ -69,9 +69,16 @@ fit_and_predict_ancestry_models <- function(
 
     ancestries <- unique(ref$POP)
 
-    PCs <- read_table(eigen_ref, col_names = TRUE) |>
-        select(-c(ALLELE_CT, NAMED_ALLELE_DOSAGE_SUM))
-    colnames(PCs) <- c("IID", paste0("pc_", 1:(ncol(PCs) - 1)))
+    PCs <- read_table(eigen_ref, col_names = TRUE, show_col_types = FALSE)
+
+    for (col in c("ALLELE_CT", "NAMED_ALLELE_DOSAGE_SUM", "FID")) {
+        if (col %in% colnames(PCs)) {
+            PCs <- PCs |> select(-all_of(col))
+        }
+    }
+
+    names(PCs)[1] <- "IID"
+    colnames(PCs)[-1] <- paste0("pc_", 1:(ncol(PCs) - 1))
     ref <- full_join(ref, PCs, by = c("IID")) |> drop_na(pc_1)
 
     pcMod <- randomForest::randomForest(
@@ -80,9 +87,16 @@ fit_and_predict_ancestry_models <- function(
     )
     saveRDS(pcMod, file.path(out_dir, "RFpc.Rds"))
 
-    sampleDF <- read_table(eigen_sample, col_names = TRUE) |>
-        select(-c(ALLELE_CT, NAMED_ALLELE_DOSAGE_SUM))
-    colnames(sampleDF) <- c("IID", paste0("pc_", 1:(ncol(sampleDF) - 1)))
+    sampleDF <- read_table(eigen_sample, col_names = TRUE, show_col_types = FALSE)
+
+    for (col in c("ALLELE_CT", "NAMED_ALLELE_DOSAGE_SUM", "FID")) {
+        if (col %in% colnames(sampleDF)) {
+            sampleDF <- sampleDF |> select(-all_of(col))
+        }
+    }
+
+    names(sampleDF)[1] <- "IID"
+    colnames(sampleDF)[-1] <- paste0("pc_", 1:(ncol(sampleDF) - 1))
 
     pc_probs <- predict(pcMod, sampleDF, type = "prob")
     result_df <- sampleDF |> select(IID) |> as_tibble()
