@@ -2,8 +2,6 @@ if INPUT_IS_PER_CHROMOSOME:
     rule runPcaOnReferencePanel:
         log:
             OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
-        container:
-            "docker://gfanz/plink2:latest"
         conda:
             "../../envs/ancNreport.yml"
         envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
@@ -145,8 +143,6 @@ else:
     rule runPcaOnReferencePanel:
         log:
             OUT_DIR / "logs" / "runPcaOnReferencePanel.log",
-        container:
-            "docker://gfanz/plink2:latest"
         conda:
             "../../envs/ancNreport.yml"
         envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
