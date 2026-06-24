@@ -16,7 +16,7 @@ has_umap <- any(colnames(prob_df) %>% str_starts("umap_"))
 has_vae <- any(colnames(prob_df) %>% str_starts("vae_"))
 has_rfmix <- any(colnames(prob_df) %>% str_starts("rfmix_"))
 
-result <- prob_df |> select(IID)
+result <- prob_df |> select(IID, any_of("FID"))
 
 for (model in c("pca", "umap", "vae", "rfmix")) {
     prob_cols <- prob_df |> select(starts_with(paste0(model, "_"))) |> colnames()
@@ -48,21 +48,26 @@ for (anc in all_ancestries) {
     keep_df <- result |>
         filter(.data[[predicted_col]] == anc, .data[[confidence_col]] >= args$threshold) |>
         select(IID, any_of("FID"))
-    if (!"FID" %in% colnames(keep_df)) {
-        keep_df <- keep_df |> mutate(FID = IID)
+    if ("FID" %in% colnames(keep_df)) {
+        keep_df |> relocate(FID) |> write_delim(
+            file.path(args$out, paste0("keep_", anc, ".txt")), delim = "\t", col_names = FALSE
+        )
+    } else {
+        keep_df |> select(IID) |> write_delim(
+            file.path(args$out, paste0("keep_", anc, ".txt")), delim = "\t", col_names = FALSE
+        )
     }
-    keep_df |> relocate(FID) |> write_delim(
-        file.path(args$out, paste0("keep_", anc, ".txt")), delim = "\t", col_names = FALSE
-    )
 }
 
 other_df <- result |>
     filter(.data[[confidence_col]] < args$threshold | .data[[predicted_col]] == "uncertain" | is.na(.data[[confidence_col]])) |>
     select(IID, any_of("FID"))
-if (!"FID" %in% colnames(other_df)) {
-    other_df <- other_df |> mutate(FID = IID)
+if ("FID" %in% colnames(other_df)) {
+    other_df |> relocate(FID) |>
+        write_delim(file.path(args$out, "keep_Other.txt"), delim = "\t", col_names = FALSE)
+} else {
+    other_df |> select(IID) |>
+        write_delim(file.path(args$out, "keep_Other.txt"), delim = "\t", col_names = FALSE)
 }
-other_df |> relocate(FID) |>
-    write_delim(file.path(args$out, "keep_Other.txt"), delim = "\t", col_names = FALSE)
 
 
