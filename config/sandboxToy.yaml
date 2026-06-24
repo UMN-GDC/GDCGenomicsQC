@@ -40,13 +40,12 @@ snpHerit:
     #   - null: MASH will compute GRM automatically from PCA
     #   - "/path/to/output/full/pcair_grm" (if PCAIR ran with GRM)
     #   -  (from relatedness step)
-    grm_prefix: "/path/to/output/full/unrelated_grm"
-    
+    grm_prefix: "/scratch.global/GDC/r25outputs/toy_chr/full/f1.b38.ldpruned.unrelated"
     # Pre-computed eigenvector file for GRM construction
     # Options:
     #   - null: MASH will compute eigenvectors from PCA
     #   -  (if method=plink2)
-    pca_input: "/path/to/output/full/internal_pca_plink2.eigenvec"
+    pca_input: "/scratch.global/GDC/r25outputs/toy_chr/EUR/internal_pca_plink2.eigenvec"
 
     # Phenotype file(s) — single path or list of paths
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
@@ -57,14 +56,14 @@ snpHerit:
     covar: null
 
     # Output filename for heritability estimates (CSV format)
-    out: "/scratch.global/coffm049/jlkjl"
+    out: "/scratch.global/GDC/r25outputs/toy_chr/EUR/herit/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
-    method: "AdjHE"
+    method: "GCTA"
 
     # Number of principal components — integer or list of integers
     # Examples: 10  or  [5, 10, 20]
-    npc: 10
+    npc: 5
 
     # Phenotype column(s) — column name string or list of column name strings
     # Examples: "BMI"  or  ["BMI", "Height"]
