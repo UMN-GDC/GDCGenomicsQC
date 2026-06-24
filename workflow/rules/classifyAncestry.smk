@@ -42,7 +42,8 @@ checkpoint estimateGlobalAncestry:
           --labels {input.labels} \
           $rfmix_arg \
           --out {params.dir} \
-          --rseed $RANDOM
+          --rseed $RANDOM \
+          --threads {threads}
         """
 
 

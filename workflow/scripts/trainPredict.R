@@ -24,6 +24,9 @@ parser$add_argument("--rfmix_global", type = "character", default = NULL,
     help = "Filepath to global RFMix ancestry output (ancestry_full.txt)")
 parser$add_argument("--out", type = "character", default = NULL,
     help = "Output directory")
+parser$add_argument("--threads",
+    type = "integer", default = 1,
+    help = "Number of threads (default = 1)")
 parser$add_argument("--rseed",
     type = "integer", default = as.integer(Sys.time()),
     help = "Specify the desired seed. Default system time")
@@ -67,7 +70,8 @@ fit_and_predict_ancestry_models <- function(
     umap_sample = NULL,
     vae_ref = NULL,
     rfmix_global = NULL,
-    out_dir
+    out_dir,
+    threads = 1
 ) {
     ref <- read_table(ref_labels) |>
         select(FID = FamilyID, IID = SampleID, POP = Superpopulation)
@@ -90,7 +94,8 @@ fit_and_predict_ancestry_models <- function(
     pcMod <- ranger::ranger(
         formula = factor(POP) ~ pc_1 + pc_2 + pc_3 + pc_4 + pc_5 + pc_6 + pc_7 + pc_8 + pc_9 + pc_10,
         data = ref,
-        probability = TRUE
+        probability = TRUE,
+        num.threads = threads
     )
     saveRDS(pcMod, file.path(out_dir, "RFpc.Rds"))
 
@@ -106,7 +111,7 @@ fit_and_predict_ancestry_models <- function(
     names(sampleDF)[names(sampleDF) == iid_col] <- "IID"
     colnames(sampleDF)[-1] <- paste0("pc_", 1:(ncol(sampleDF) - 1))
 
-    pc_probs <- predict(pcMod, sampleDF)$predictions
+    pc_probs <- predict(pcMod, sampleDF, num.threads = threads)$predictions
     result_df <- sampleDF |> select(IID) |> as_tibble()
     sample_coords_df <- sampleDF
 
@@ -124,7 +129,8 @@ fit_and_predict_ancestry_models <- function(
         umapMod <- ranger::ranger(
             formula = factor(POP) ~ umap_1 + umap_2,
             data = ref,
-            probability = TRUE
+            probability = TRUE,
+            num.threads = threads
         )
         saveRDS(umapMod, file.path(out_dir, "RFumap.Rds"))
 
@@ -136,7 +142,7 @@ fit_and_predict_ancestry_models <- function(
         sample_coords_df <- sample_coords_df |>
             left_join(umap_sample_df, by = "IID")
 
-        umap_probs <- predict(umapMod, sampleDF_umap)$predictions
+        umap_probs <- predict(umapMod, sampleDF_umap, num.threads = threads)$predictions
 
         umap_result <- sampleDF_umap |>
             select(IID) |>
@@ -158,7 +164,8 @@ fit_and_predict_ancestry_models <- function(
         vaeMod <- ranger::ranger(
             formula = factor(POP) ~ vae_mean1 + vae_mean2,
             data = ref,
-            probability = TRUE
+            probability = TRUE,
+            num.threads = threads
         )
         saveRDS(vaeMod, file.path(out_dir, "RFvae.Rds"))
 
@@ -173,7 +180,7 @@ fit_and_predict_ancestry_models <- function(
             warning("VAE coordinates not found in sample data. Skipping VAE prediction.")
             has_vae <- FALSE
         } else {
-            vae_probs <- predict(vaeMod, sampleDF_vae)$predictions
+            vae_probs <- predict(vaeMod, sampleDF_vae, num.threads = threads)$predictions
 
             vae_result <- sampleDF_vae |>
                 select(IID) |>
@@ -225,7 +232,8 @@ prob_results <- fit_and_predict_ancestry_models(
     umap_sample = args$umap_sample,
     vae_ref = args$vae,
     rfmix_global = args$rfmix_global,
-    out_dir = args$out
+    out_dir = args$out,
+    threads = args$threads
 )
 
 prob_results$probabilities |>
