@@ -128,6 +128,7 @@ ancestry:
 
 phenotypeSimulation:
     # Ancestries to simulate for
+    enabled: true
     ancestries: ["AFR", "EUR"]
     
     # Directory containing simulation output (used by PRS pipeline)

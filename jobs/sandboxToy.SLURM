@@ -7,7 +7,4 @@
 module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 
-gdcgenomicsqc run_classifyAncestry --configfile ../config/sandboxToy.yaml
-gdcgenomicsqc run_ancestryQC --configfile ../config/sandboxToy.yaml
-gdcgenomicsqc run_simulatePhenotype --configfile ../config/sandboxToy.yaml
-gdcgenomicsqc run_snpHerit --configfile ../config/sandboxToy.yaml
+gdcgenomicsqc run_ancestryQC run_simulatePhenotype run_snpHerit --configfile ../config/sandboxToy.yaml
