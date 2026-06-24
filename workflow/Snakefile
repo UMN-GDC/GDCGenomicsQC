@@ -290,41 +290,17 @@ rule run_simulatePhenotype:
         mem_mb=4000,
         runtime=420,
     input:
-        lambda wildcards: expand(
-            OUT_DIR
-            / "simulations"
-            / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
-            / "{anc}_simulation_pheno1.pheno",
-            anc=config.get("phenotypeSimulation", {}).get("ancestries", ["AFR", "EUR"]),
-        ),
-        lambda wildcards: expand(
-            OUT_DIR
-            / "simulations"
-            / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
-            / "{anc}_simulation.eigenvec",
-            anc=config.get("phenotypeSimulation", {}).get("ancestries", ["AFR", "EUR"]),
-        ),
-        lambda wildcards: expand(
-            OUT_DIR
-            / "simulations"
-            / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
-            / "{anc}_simulation.grm.bin",
-            anc=config.get("phenotypeSimulation", {}).get("ancestries", ["AFR", "EUR"]),
-        ),
-        lambda wildcards: expand(
-            OUT_DIR
-            / "simulations"
-            / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
-            / "{anc}_simulation.grm.id",
-            anc=config.get("phenotypeSimulation", {}).get("ancestries", ["AFR", "EUR"]),
-        ),
-        lambda wildcards: expand(
-            OUT_DIR
-            / "simulations"
-            / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
-            / "{anc}_simulation.grm.N.bin",
-            anc=config.get("phenotypeSimulation", {}).get("ancestries", ["AFR", "EUR"]),
-        ),
+        lambda wildcards: (
+            lambda sim_cfg, ancs: expand(
+                OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bed",
+                ancestry=ancs,
+                sim_name=[s["name"] for s in sim_cfg.get("simulations", [])],
+            )
+        )(config.get("phenotypeSimulation", {}), config.get("phenotypeSimulation", {}).get("ancestries", [])) if (
+            config.get("phenotypeSimulation", {}).get("enabled", False)
+            and config.get("phenotypeSimulation", {}).get("ancestries", [])
+            and config.get("phenotypeSimulation", {}).get("simulations", [])
+        ) else [],
 
 
 
@@ -353,13 +329,15 @@ rule run_snpHeritSimulated:
         runtime=420,
     input:
         lambda wildcards: (
-            lambda sc: expand(
-                OUT_DIR / "simulations" / f"{sc['ancestries'][0]}_{sc['ancestries'][1]}" / "{anc}_herit.csv",
-                anc=sc["ancestries"],
+            lambda sim_cfg, ancs: expand(
+                OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "herit.csv",
+                ancestry=ancs,
+                sim_name=[s["name"] for s in sim_cfg.get("simulations", [])],
             )
-        )(config.get("phenotypeSimulation", {})) if (
+        )(config.get("phenotypeSimulation", {}), config.get("phenotypeSimulation", {}).get("ancestries", [])) if (
             config.get("phenotypeSimulation", {}).get("enabled", False)
-            and len(config.get("phenotypeSimulation", {}).get("ancestries", [])) == 2
+            and config.get("phenotypeSimulation", {}).get("ancestries", [])
+            and config.get("phenotypeSimulation", {}).get("simulations", [])
         ) else [],
 
 

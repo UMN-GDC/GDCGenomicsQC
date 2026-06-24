@@ -199,41 +199,74 @@ phenotypeSimulation:
     ancestries:
       type: list
       minitems: 2
-      maxitems: 2
+      description: |
+        List of ancestry names to simulate (e.g. ["AFR", "EUR"]).
+        These must match a subset of the classified ancestry names.
+    input_prefixes:
+      type: dict
+      nullable: true
+      default: null
+      description: |
+        Optional per-ancestry PGEN prefix overrides.
+        Keys are ancestry names, values are base paths (no extension).
+        Example: {AFR: "/path/to/AFR/f1", EUR: "/path/to/EUR/f1"}
     simulations_dir:
       type: str
       nullable: true
       default: null
-      description: Directory containing simulation output (used by PRS pipeline)
+      description: Directory containing pre-computed simulation results (used by PRS)
     prefix:
       type: str
       nullable: true
       default: null
-      description: GRM prefix template for snpHeritSim (use {anc} placeholder)
-    n_sims:
-      type: int
-      default: 10
-    heritability:
-      type: float
-      default: 0.4
-    rho:
-      type: float
-      default: 0.8
-    maf:
-      type: float
-      default: 0.05
-    seed:
-      type: int
-      default: 42
-    skip_thinning:
-      type: bool
-      default: false
-    thin_count_snps:
-      type: int
-      default: 1000000
-    thin_count_inds:
-      type: int
-      default: 10000
+      description: GRM prefix template (legacy, kept for backward compat)
+    simulations:
+      type: list
+      default: []
+      description: |
+        List of simulation configurations. Each entry specifies simulation parameters.
+        corr_matrix dimension must match len(ancestries).
+      items:
+        type: dict
+        schema:
+          name:
+            type: str
+            required: true
+            description: Simulation name (used as subdirectory name)
+          corr_matrix:
+            type: list
+            required: true
+            description: |
+              N×N genetic correlation matrix as a list of lists.
+              Example for 2 ancestries: [[1.0, 0.8], [0.8, 1.0]]
+          ancestries:
+            type: list
+            nullable: true
+            default: null
+            description: |
+              Subset of ancestries for this simulation (defaults to phenotypeSimulation.ancestries).
+              corr_matrix dimension must match this list length.
+          heritability:
+            type: float
+            default: 0.4
+          maf:
+            type: float
+            default: 0.05
+          seed:
+            type: int
+            default: 42
+          n_sims:
+            type: int
+            default: 10
+          skip_thinning:
+            type: bool
+            default: true
+          thin_count_snps:
+            type: int
+            default: 1000000
+          thin_count_inds:
+            type: int
+            default: 10000
 
 snpHerit:
   type: dict

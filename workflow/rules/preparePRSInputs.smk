@@ -1,10 +1,19 @@
 PRS_CONFIG = config.get("prsPipeline", {})
 PRS_SIM_CONFIG = config.get("phenotypeSimulation", {})
 
-# Allow pointing to pre-computed simulation files (for real data or external simulations)
-PRS_SIM_DIR = Path(PRS_SIM_CONFIG.get("simulations_dir") or str(OUT_DIR / "simulations" / f"{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[0]}_{PRS_SIM_CONFIG.get('ancestries', ['AFR', 'EUR'])[1]}"))
-PRS_ANC1 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[0]
-PRS_ANC2 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[1]
+# Get first simulation name for PRS inputs
+PRS_SIM_ANCESTRIES = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])
+PRS_SIMULATIONS = PRS_SIM_CONFIG.get("simulations", [])
+PRS_SIM_NAME = PRS_SIMULATIONS[0]["name"] if PRS_SIMULATIONS else "default"
+
+# Per-ancestry simulation directories (pipeline output)
+def prs_sim_dir(anc):
+    if PRS_SIM_CONFIG.get("simulations_dir"):
+        return Path(PRS_SIM_CONFIG["simulations_dir"])
+    return OUT_DIR / anc / "simulations" / PRS_SIM_NAME
+
+PRS_ANC1 = PRS_SIM_ANCESTRIES[0]
+PRS_ANC2 = PRS_SIM_ANCESTRIES[1]
 PRS_OUT_DIR = Path(
     PRS_CONFIG.get(
         "generated_input_dir",
@@ -26,12 +35,12 @@ rule preparePRSInputs:
         mem_mb=16000,
         runtime=120,
     input:
-        anc1_bed=PRS_SIM_DIR / f"{PRS_ANC1}_simulation.bed",
-        anc1_bim=PRS_SIM_DIR / f"{PRS_ANC1}_simulation.bim",
-        anc1_fam=PRS_SIM_DIR / f"{PRS_ANC1}_simulation.fam",
-        anc2_bed=PRS_SIM_DIR / f"{PRS_ANC2}_simulation.bed",
-        anc2_bim=PRS_SIM_DIR / f"{PRS_ANC2}_simulation.bim",
-        anc2_fam=PRS_SIM_DIR / f"{PRS_ANC2}_simulation.fam",
+        anc1_bed=prs_sim_dir(PRS_ANC1) / "simulated.bed",
+        anc1_bim=prs_sim_dir(PRS_ANC1) / "simulated.bim",
+        anc1_fam=prs_sim_dir(PRS_ANC1) / "simulated.fam",
+        anc2_bed=prs_sim_dir(PRS_ANC2) / "simulated.bed",
+        anc2_bim=prs_sim_dir(PRS_ANC2) / "simulated.bim",
+        anc2_fam=prs_sim_dir(PRS_ANC2) / "simulated.fam",
     output:
         target_sumstats=PRS_OUT_DIR / "gwas" / "target_sumstats.txt",
         training_sumstats=PRS_OUT_DIR / "gwas" / "training_sumstats.txt",
@@ -51,7 +60,8 @@ rule preparePRSInputs:
         prscsx_config=PRS_OUT_DIR / "prs_prscsx_generated.conf",
         single_config=PRS_OUT_DIR / f"prs_single_ancestry_{PRS_ANC1}_generated.conf",
     params:
-        sim_dir=PRS_SIM_DIR,
+        sim_dir_anc1=str(prs_sim_dir(PRS_ANC1)),
+        sim_dir_anc2=str(prs_sim_dir(PRS_ANC2)),
         out_dir=PRS_OUT_DIR,
         anc1=PRS_ANC1,
         anc2=PRS_ANC2,
@@ -64,7 +74,8 @@ rule preparePRSInputs:
     shell:
         """
         bash {params.script} \
-            --sim-dir {params.sim_dir} \
+            --sim-dir-anc1 {params.sim_dir_anc1} \
+            --sim-dir-anc2 {params.sim_dir_anc2} \
             --out-dir {params.out_dir} \
             --anc1 {params.anc1} \
             --anc2 {params.anc2} \

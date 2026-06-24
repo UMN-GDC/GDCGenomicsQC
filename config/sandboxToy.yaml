@@ -88,42 +88,39 @@ phenotypeSimulation:
     # Enable simulation rules
     enabled: true
 
-    # Ancestries to simulate for
-    enabled: true
+    # Which ancestries to simulate (must match classified ancestry names)
     ancestries: ["AFR", "EUR"]
+
+    # Optional: alternate PGEN prefixes per ancestry
+    # Default: OUT_DIR/{ancestry}/f1.pgen
+    input_prefixes:
+        # AFR: "/custom/path/AFR/f1"
+        # EUR: "/custom/path/EUR/f1"
     
-    # Directory containing simulation output (used by PRS pipeline)
-    # Set this when using pre-computed simulation files instead of running simulation
+    # List of simulation configurations
+    simulations:
+        - name: "bivariate_test"
+          # N×N genetic correlation matrix (must match len(ancestries))
+          corr_matrix: [[1.0, 0.8], [0.8, 1.0]]
+          # Target SNP heritability
+          heritability: 0.4
+          # Minimum minor allele frequency for causal SNPs
+          maf: 0.05
+          # Random seed for reproducibility
+          seed: 42
+          # Number of simulation replicates
+          n_sims: 10
+          # Skip SNP/individual thinning (faster for small datasets)
+          skip_thinning: true
+          # Thin settings (used only when skip_thinning=false)
+          thin_count_snps: 1000000
+          thin_count_inds: 10000
+
+    # Directory containing pre-computed simulation outputs (used by PRS)
     simulations_dir: null
-    
-    # GRM prefix template for snpHeritSim (MASH heritability estimation on simulated data)
-    # Use {anc} placeholder for ancestry (e.g., AFR_simulation, EUR_simulation)
-    # The full path will be: simulations_dir/{anc}_simulation
+
+    # Legacy GRM prefix (unused in new architecture)
     prefix: null
-    
-    # Number of simulations
-    n_sims: 10
-    
-    # Target SNP heritability (h²)
-    heritability: 0.4
-    
-    # Genetic correlation between ancestries (-1 to 1)
-    rho: 0.8
-    
-    # Minimum minor allele frequency for causal SNPs
-    maf: 0.05
-    
-    # Random seed for reproducibility
-    seed: 42
-    
-    # Skip thinning of SNPs (faster for small datasets)
-    skip_thinning: true
-    
-    # Number of SNPs to thin to (if not skipping)
-    thin_count_snps: 1000000
-    
-    # Number of individuals to thin to (if not skipping)
-    thin_count_inds: 10000
 
 # PRS Pipeline Inputs
 prsPipeline:

@@ -4,20 +4,26 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  prepare_prs_inputs.sh --sim-dir DIR --out-dir DIR --anc1 AFR --anc2 EUR [--phenotype-index 1] [--gwas-fraction 0.5] [--seed 42]
+  prepare_prs_inputs.sh --sim-dir-anc1 DIR --sim-dir-anc2 DIR --out-dir DIR --anc1 AFR --anc2 EUR [options]
+  (or --sim-dir DIR for legacy single-directory layout)
 
-Creates PRS pipeline inputs from simulated ancestry-specific PLINK files:
-  - gwas/target_sumstats.txt and gwas/training_sumstats.txt for PRS-CSx
-  - gwas/target_sumstats_singlePRS.txt and gwas/training_sumstats_singlePRS.txt for single-ancestry prs_pipeline
-  - anc1_plink_files/<ANC1>_simulation_gwas.{bed,bim,fam}
-  - anc1_plink_files/<ANC1>_simulation_study_sample.{bed,bim,fam}
-  - anc2_plink_files/<ANC2>_simulation_gwas.{bed,bim,fam}
-  - anc2_plink_files/<ANC2>_simulation_study_sample.{bed,bim,fam}
-  - metadata/<ANC>_gwas.pheno and metadata/<ANC>_study.pheno
-USAGE
+Options:
+  --sim-dir DIR       Legacy: directory containing {anc}_simulation.bed/bim/fam
+  --sim-dir-anc1 DIR  Directory containing ANC1 simulated.bed/bim/fam
+  --sim-dir-anc2 DIR  Directory containing ANC2 simulated.bed/bim/fam
+  --out-dir DIR       PRS output directory
+  --anc1 NAME         Ancestry 1 name (default: AFR)
+  --anc2 NAME         Ancestry 2 name (default: EUR)
+  --phenotype-index N Phenotype column index in .fam (default: 1)
+  --gwas-fraction F   Fraction of samples for GWAS (default: 0.5)
+  --seed N            Random seed (default: 42)
+  --fid-col NAME      FID column name (default: FID)
+  --iid-col NAME      IID column name (default: IID)
 }
 
 SIM_DIR=""
+SIM_DIR_ANC1=""
+SIM_DIR_ANC2=""
 OUT_DIR=""
 ANC1="AFR"
 ANC2="EUR"
@@ -32,6 +38,12 @@ while [[ $# -gt 0 ]]; do
     --sim-dir)
       [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
       SIM_DIR="$2"; shift 2 ;;
+    --sim-dir-anc1)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      SIM_DIR_ANC1="$2"; shift 2 ;;
+    --sim-dir-anc2)
+      [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
+      SIM_DIR_ANC2="$2"; shift 2 ;;
     --out-dir)
       [[ $# -ge 2 ]] || { echo "Missing value for $1" >&2; exit 2; }
       OUT_DIR="$2"; shift 2 ;;
@@ -152,7 +164,13 @@ format_single_prs_sumstats() {
 process_ancestry() {
   local anc="$1"
   local subdir="$2"
-  local sim_prefix="$SIM_DIR/${anc}_simulation"
+  local sim_dir="$3"
+  local sim_prefix="${sim_dir}/${anc}_simulation"
+
+  if [[ ! -f "${sim_prefix}.bed" ]]; then
+    # New per-ancestry layout: sim_dir/simulated.bed
+    sim_prefix="${sim_dir}/simulated"
+  fi
   local out_prefix="$OUT_DIR/${subdir}/${anc}_simulation"
   local gwas_prefix="$OUT_DIR/${subdir}/${anc}_simulation_gwas"
   local study_prefix="$OUT_DIR/${subdir}/${anc}_simulation_study_sample"
@@ -178,7 +196,16 @@ process_ancestry() {
   run_glm "$gwas_prefix" "$gwas_pheno" "$glm_prefix"
 }
 
-process_ancestry "$ANC1" "anc1_plink_files"
+if [[ -n "$SIM_DIR_ANC1" && -n "$SIM_DIR_ANC2" ]]; then
+  process_ancestry "$ANC1" "anc1_plink_files" "$SIM_DIR_ANC1"
+  process_ancestry "$ANC2" "anc2_plink_files" "$SIM_DIR_ANC2"
+elif [[ -n "$SIM_DIR" ]]; then
+  process_ancestry "$ANC1" "anc1_plink_files" "$SIM_DIR"
+  process_ancestry "$ANC2" "anc2_plink_files" "$SIM_DIR"
+else
+  echo "Error: must provide --sim-dir-anc1/--sim-dir-anc2 or --sim-dir" >&2
+  exit 2
+fi
 format_sumstats "$OUT_DIR/gwas/${ANC1}_glm" "$OUT_DIR/gwas/target_sumstats.txt"
 format_single_prs_sumstats "$OUT_DIR/gwas/target_sumstats.txt" "$OUT_DIR/gwas/target_sumstats_singlePRS.txt"
 

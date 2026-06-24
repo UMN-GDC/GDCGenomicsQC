@@ -1,25 +1,39 @@
-SIM_CONFIG = config.get("phenotypeSimulation", {})
+import json
 
-sim_ancestries = SIM_CONFIG.get("ancestries", ["AFR", "EUR"])
-if len(sim_ancestries) != 2:
-    raise ValueError("phenotypeSimulation.ancestries must be exactly 2 values")
+SIM_CFG = config.get("phenotypeSimulation", {})
+SIM_ANCESTRIES = SIM_CFG.get("ancestries", [])
+SIM_INPUT_PREFIXES = SIM_CFG.get("input_prefixes", {})
 
-ANC1 = sim_ancestries[0]
-ANC2 = sim_ancestries[1]
+if not SIM_ANCESTRIES:
+    raise ValueError("phenotypeSimulation.ancestries must be specified")
 
-SIM_OUT_DIR = OUT_DIR / "simulations" / f"{ANC1}_{ANC2}"
+def get_sim_input_prefix(anc):
+    if anc in SIM_INPUT_PREFIXES:
+        return SIM_INPUT_PREFIXES[anc]
+    return str(OUT_DIR / anc / "f1")
 
-SIM_INPUT_PREFIXES = SIM_CONFIG.get("input_prefixes", {})
+def get_sim_cfg(sim_name):
+    for s in SIM_CFG.get("simulations", []):
+        if s.get("name") == sim_name:
+            return s
+    return {}
 
-def sim_input(prefixes, anc, ext):
-    if anc in prefixes:
-        return Path(prefixes[anc] + ext)
-    return OUT_DIR / anc / f"f1{ext}"
+_sim_inputs = {}
+for anc in SIM_ANCESTRIES:
+    p = get_sim_input_prefix(anc)
+    _sim_inputs[f"pgen_{anc}"] = Path(p + ".pgen")
+    _sim_inputs[f"pvar_{anc}"] = Path(p + ".pvar")
+    _sim_inputs[f"psam_{anc}"] = Path(p + ".psam")
 
+_sim_outputs = []
+for anc in SIM_ANCESTRIES:
+    _sim_outputs.append(OUT_DIR / anc / "simulations" / "{sim_name}" / "simulated.bed")
+    _sim_outputs.append(OUT_DIR / anc / "simulations" / "{sim_name}" / "simulated.bim")
+    _sim_outputs.append(OUT_DIR / anc / "simulations" / "{sim_name}" / "simulated.fam")
 
-rule simulateBivariatePhenotypes:
+rule simulatePhenotypes:
     log:
-        OUT_DIR / "logs" / "simulateBivariatePhenotypes.log",
+        OUT_DIR / "logs" / "simulatePhenotypes_{sim_name}.log",
     container:
         "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
     conda:
@@ -30,57 +44,30 @@ rule simulateBivariatePhenotypes:
         mem_mb=32000,
         runtime=240,
     input:
-        anc1_pgen=sim_input(SIM_INPUT_PREFIXES, ANC1, ".pgen"),
-        anc1_pvar=sim_input(SIM_INPUT_PREFIXES, ANC1, ".pvar"),
-        anc1_psam=sim_input(SIM_INPUT_PREFIXES, ANC1, ".psam"),
-        anc2_pgen=sim_input(SIM_INPUT_PREFIXES, ANC2, ".pgen"),
-        anc2_pvar=sim_input(SIM_INPUT_PREFIXES, ANC2, ".pvar"),
-        anc2_psam=sim_input(SIM_INPUT_PREFIXES, ANC2, ".psam"),
-
+        **_sim_inputs,
     output:
-        sim_dir=directory(SIM_OUT_DIR),
-        anc1_fam=SIM_OUT_DIR / f"{ANC1}_simulation.fam",
-        anc2_fam=SIM_OUT_DIR / f"{ANC2}_simulation.fam",
-        anc1_bed=SIM_OUT_DIR / f"{ANC1}_simulation.bed",
-        anc1_bim=SIM_OUT_DIR / f"{ANC1}_simulation.bim",
-        anc2_bed=SIM_OUT_DIR / f"{ANC2}_simulation.bed",
-        anc2_bim=SIM_OUT_DIR / f"{ANC2}_simulation.bim",
-    params:
-        n_sims=SIM_CONFIG.get("n_sims", 10),
-        heritability=SIM_CONFIG.get("heritability", 0.4),
-        rho=SIM_CONFIG.get("rho", 0.8),
-        maf=SIM_CONFIG.get("maf", 0.05),
-        seed=SIM_CONFIG.get("seed", 42),
-        skip_thinning=SIM_CONFIG.get("skip_thinning", True),
-        thin_count_snps=SIM_CONFIG.get("thin_count_snps", 1000000),
-        thin_count_inds=SIM_CONFIG.get("thin_count_inds", 10000),
-        anc1=ANC1,
-        anc2=ANC2,
-        script_dir=Path(workflow.basedir) / "scripts",
-    shell:
-        """
-        set -euo pipefail
+        _sim_outputs,
+    run:
+        anc_names = SIM_ANCESTRIES
+        pgen_prefixes = [get_sim_input_prefix(anc) for anc in anc_names]
+        out_dirs = [str(OUT_DIR / anc / "simulations" / wildcards.sim_name) for anc in anc_names]
+        sim = get_sim_cfg(wildcards.sim_name)
 
-        anc1_pfile="{input.anc1_pgen}"
-        anc1_pfile="${{anc1_pfile%.pgen}}"
-        anc2_pfile="{input.anc2_pgen}"
-        anc2_pfile="${{anc2_pfile%.pgen}}"
-
-        Rscript {params.script_dir}/runPhenotypeSimulation.R \
-            --ancestry1 "$anc1_pfile" \
-            --ancestry2 "$anc2_pfile" \
-            --out_dir {output.sim_dir} \
-            --anc1_name {params.anc1} \
-            --anc2_name {params.anc2} \
-            --n_sims {params.n_sims} \
-            --seed {params.seed} \
-            --heritability {params.heritability} \
-            --rho {params.rho} \
-            --maf {params.maf} \
-            --skip_thinning {params.skip_thinning} \
-        --thin_count_snps {params.thin_count_snps} \
-        --thin_count_inds {params.thin_count_inds}
-        """
+        import subprocess
+        subprocess.run([
+            "Rscript", str(SCRIPTS_DIR / "runPhenotypeSimulation.R"),
+            "--anc-names", ",".join(anc_names),
+            "--pgen-prefixes", ",".join(pgen_prefixes),
+            "--out-dirs", ",".join(out_dirs),
+            "--corr-matrix", json.dumps(sim.get("corr_matrix", [])),
+            "--heritability", str(sim.get("heritability", SIM_CFG.get("heritability", 0.4))),
+            "--maf", str(sim.get("maf", SIM_CFG.get("maf", 0.05))),
+            "--seed", str(sim.get("seed", SIM_CFG.get("seed", 42))),
+            "--n_sims", str(sim.get("n_sims", SIM_CFG.get("n_sims", 10))),
+            "--skip_thinning", str(sim.get("skip_thinning", SIM_CFG.get("skip_thinning", True))).lower(),
+            "--thin_count_snps", str(sim.get("thin_count_snps", SIM_CFG.get("thin_count_snps", 1000000))),
+            "--thin_count_inds", str(sim.get("thin_count_inds", SIM_CFG.get("thin_count_inds", 10000))),
+        ], check=True)
 
 
 rule computeSimGRM:
@@ -94,40 +81,15 @@ rule computeSimGRM:
         mem_mb=16000,
         runtime=120,
     input:
-        bed=SIM_OUT_DIR / f"{ANC1}_simulation.bed",
-        bim=SIM_OUT_DIR / f"{ANC1}_simulation.bim",
-        fam=SIM_OUT_DIR / f"{ANC1}_simulation.fam",
+        bed=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bed",
+        bim=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bim",
+        fam=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.fam",
     output:
-        grm_bin=SIM_OUT_DIR / f"{ANC1}_simulation.grm.bin",
-        grm_id=SIM_OUT_DIR / f"{ANC1}_simulation.grm.id",
-        grm_nbin=SIM_OUT_DIR / f"{ANC1}_simulation.grm.N.bin",
+        grm_bin=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.bin",
+        grm_id=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.id",
+        grm_nbin=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.N.bin",
     params:
-        prefix=lambda wildcards, input: str(input.bed)[:-4],
-    shell:
-        """
-        plink2 --bfile {params.prefix} --make-grm-bin --out {params.prefix}
-        """
-
-rule computeSimGRM_anc2:
-    container:
-        "docker://gfanz/plink2:latest"
-    conda:
-        "../../envs/phenotypeSim.yml"
-    threads: 4
-    resources:
-        nodes=1,
-        mem_mb=16000,
-        runtime=120,
-    input:
-        bed=SIM_OUT_DIR / f"{ANC2}_simulation.bed",
-        bim=SIM_OUT_DIR / f"{ANC2}_simulation.bim",
-        fam=SIM_OUT_DIR / f"{ANC2}_simulation.fam",
-    output:
-        grm_bin=SIM_OUT_DIR / f"{ANC2}_simulation.grm.bin",
-        grm_id=SIM_OUT_DIR / f"{ANC2}_simulation.grm.id",
-        grm_nbin=SIM_OUT_DIR / f"{ANC2}_simulation.grm.N.bin",
-    params:
-        prefix=lambda wildcards, input: str(input.bed)[:-4],
+        prefix=lambda w, input: str(input.bed)[:-4],
     shell:
         """
         plink2 --bfile {params.prefix} --make-grm-bin --out {params.prefix}
@@ -145,36 +107,13 @@ rule computeSimPCA:
         mem_mb=16000,
         runtime=120,
     input:
-        bed=SIM_OUT_DIR / f"{ANC1}_simulation.bed",
-        bim=SIM_OUT_DIR / f"{ANC1}_simulation.bim",
-        fam=SIM_OUT_DIR / f"{ANC1}_simulation.fam",
+        bed=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bed",
+        bim=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bim",
+        fam=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.fam",
     output:
-        eigenvec=SIM_OUT_DIR / f"{ANC1}_simulation.eigenvec",
+        eigenvec=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.eigenvec",
     params:
-        prefix=lambda wildcards, input: str(input.bed)[:-4],
-    shell:
-        """
-        plink2 --bfile {params.prefix} --pca --out {params.prefix}
-        """
-
-rule computeSimPCA_anc2:
-    container:
-        "docker://gfanz/plink2:latest"
-    conda:
-        "../../envs/phenotypeSim.yml"
-    threads: 4
-    resources:
-        nodes=1,
-        mem_mb=16000,
-        runtime=120,
-    input:
-        bed=SIM_OUT_DIR / f"{ANC2}_simulation.bed",
-        bim=SIM_OUT_DIR / f"{ANC2}_simulation.bim",
-        fam=SIM_OUT_DIR / f"{ANC2}_simulation.fam",
-    output:
-        eigenvec=SIM_OUT_DIR / f"{ANC2}_simulation.eigenvec",
-    params:
-        prefix=lambda wildcards, input: str(input.bed)[:-4],
+        prefix=lambda w, input: str(input.bed)[:-4],
     shell:
         """
         plink2 --bfile {params.prefix} --pca --out {params.prefix}
@@ -192,28 +131,9 @@ rule extractSimPheno:
         mem_mb=4000,
         runtime=60,
     input:
-        fam=SIM_OUT_DIR / f"{ANC1}_simulation.fam",
+        fam=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.fam",
     output:
-        pheno=SIM_OUT_DIR / f"{ANC1}_simulation_pheno1.pheno",
-    shell:
-        """
-        awk 'BEGIN{{OFS=" "}}{{print $1, $2, $6}}' {input.fam} > {output.pheno}
-        """
-
-rule extractSimPheno_anc2:
-    container:
-        "docker://gfanz/plink2:latest"
-    conda:
-        "../../envs/phenotypeSim.yml"
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=60,
-    input:
-        fam=SIM_OUT_DIR / f"{ANC2}_simulation.fam",
-    output:
-        pheno=SIM_OUT_DIR / f"{ANC2}_simulation_pheno1.pheno",
+        pheno=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated_pheno1.pheno",
     shell:
         """
         awk 'BEGIN{{OFS=" "}}{{print $1, $2, $6}}' {input.fam} > {output.pheno}
