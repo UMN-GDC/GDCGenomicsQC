@@ -11,18 +11,32 @@ if SNP_HERIT_CONFIG:
 
 if SNP_HERIT_ACTIVE:
 
-    rule prepareSnpHeritArgfile:
+    rule estimateSnpHeritability:
+        conda:
+            "../../envs/mash.yml"
+        container:
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
+        envmodules: *([config.get("R_module")] if config.get("R_module") else [])
+        threads: 8
+        resources:
+            nodes=1,
+            mem_mb=32000,
+            runtime=720,
         input:
-            pca=[SNP_HERIT_CONFIG["pca_input"]] if SNP_HERIT_CONFIG.get("pca_input") else [],
-            covar=list(SNP_HERIT_CONFIG["covar"]) if SNP_HERIT_CONFIG.get("covar") else [],
-            pheno=list(SNP_HERIT_CONFIG["pheno"]) if SNP_HERIT_CONFIG.get("pheno") else [],
+            grm_bin=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated.grm.bin",
+            grm_id=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated.grm.id",
+            grm_Nbin=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
+            eigenvec=OUT_DIR / "{ancestry}" / "internal_pca_plink2.eigenvec",
         output:
-            argfile=Path(str(SNP_HERIT_CONFIG["out"]).replace(".csv", ".json")).resolve(),
+            estimates=OUT_DIR / "{ancestry}" / "03-snpHeritability" / "mash_output.csv",
+        params:
+            grm_prefix=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated",
+            out_prefix=OUT_DIR / "{ancestry}" / "03-snpHeritability" / "mash_output",
         run:
             import json
             import os
 
-            pheno_val = input.pheno
+            pheno_val = SNP_HERIT_CONFIG["pheno"]
             if isinstance(pheno_val, list):
                 pheno_list = [str(p) for p in pheno_val]
             else:
@@ -35,14 +49,15 @@ if SNP_HERIT_ACTIVE:
                 mpheno_list = [str(mpheno_val)]
 
             mash_config = {
-                "prefix": str(SNP_HERIT_CONFIG.get("grm_prefix")),
+                "prefix": str(params.grm_prefix),
                 "pheno": pheno_list,
-                "out": str(Path(str(SNP_HERIT_CONFIG["out"])).with_suffix("")),
+                "out": str(params.out_prefix),
                 "npc": [int(SNP_HERIT_CONFIG.get("npc", 10))] if not isinstance(SNP_HERIT_CONFIG.get("npc", 10), list) else [int(n) for n in SNP_HERIT_CONFIG["npc"]],
                 "mpheno": mpheno_list,
                 "Method": SNP_HERIT_CONFIG.get("method", "AdjHE"),
                 "iid_col": SNP_HERIT_CONFIG.get("iid_col", "IID"),
                 "fid_col": SNP_HERIT_CONFIG.get("fid_col", "FID"),
+                "PC": str(input.eigenvec),
             }
 
             covar_from_config = SNP_HERIT_CONFIG.get("covar")
@@ -51,9 +66,6 @@ if SNP_HERIT_ACTIVE:
                     mash_config["covar"] = [str(f) for f in covar_from_config]
                 else:
                     mash_config["covar"] = str(covar_from_config)
-
-            if SNP_HERIT_CONFIG.get("pca_input"):
-                mash_config["PC"] = str(SNP_HERIT_CONFIG["pca_input"])
 
             mash_config["qcovar"] = SNP_HERIT_CONFIG.get("qcovar")
             mash_config["covar_discrete"] = SNP_HERIT_CONFIG.get("covar_discrete")
@@ -73,28 +85,10 @@ if SNP_HERIT_ACTIVE:
             if SNP_HERIT_CONFIG.get("RV"):
                 mash_config["RV"] = SNP_HERIT_CONFIG["RV"]
 
-            os.makedirs(os.path.dirname(str(output.argfile)), exist_ok=True)
-            with open(str(output.argfile), "w") as f:
+            os.makedirs(os.path.dirname(str(output.estimates)), exist_ok=True)
+            argfile = str(output.estimates).replace(".csv", ".json")
+            with open(argfile, "w") as f:
                 json.dump(mash_config, f, indent=2)
 
-    rule estimateSnpHeritability:
-        log:
-            str(Path(str(SNP_HERIT_CONFIG["out"]).replace(".csv", ".log")).resolve()),
-        conda:
-            "../../envs/mash.yml"
-        container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
-        envmodules: *([config.get("R_module")] if config.get("R_module") else [])
-        threads: 8
-        resources:
-            nodes=1,
-            mem_mb=32000,
-            runtime=720,
-        input:
-            argfile=rules.prepareSnpHeritArgfile.output.argfile,
-        output:
-            estimates=str(Path(str(SNP_HERIT_CONFIG["out"])).resolve()),
-        shell:
-            """
-            MASH --argfile {input.argfile} > {log} 2>&1
-            """
+            import subprocess
+            subprocess.run(["MASH", "--argfile", argfile], check=True)

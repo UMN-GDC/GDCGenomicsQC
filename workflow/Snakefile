@@ -335,19 +335,11 @@ rule run_snpHerit:
         runtime=420,
     input:
         lambda wildcards: (
-            [
-                rules.estimateSnpHeritability.output.estimates,
-            ]
+            expand(
+                OUT_DIR / "{anc}" / "03-snpHeritability" / "mash_output.csv",
+                anc=get_ancestries(wildcards) + ["full"],
+            )
             if config.get("snpHerit", {}).get("pheno")
-            else []
-        ),
-        lambda wildcards: (
-            [
-                Path(f"{config.get('snpHerit', {}).get('grm_prefix')}.grm.bin"),
-                Path(f"{config.get('snpHerit', {}).get('grm_prefix')}.grm.id"),
-                Path(f"{config.get('snpHerit', {}).get('grm_prefix')}.grm.N.bin"),
-            ]
-            if config.get("snpHerit", {}).get("grm_prefix")
             else []
         ),
 
@@ -360,22 +352,21 @@ rule run_PCAinternal:
         runtime=420,
     input:
         lambda wildcards: (
-            [
-                OUT_DIR / "full" / "pcair_pcaobj.RDS",
-                OUT_DIR / "full" / "pcrelate_kinship.RDS",
-                OUT_DIR / "full" / "pcair_coordinates.tsv",
-            ]
-            if config.get("internalPCA", {}).get("method", "plink2") in ["pcair", "both"]
-            else []
-        ),
-        lambda wildcards: (
-            [
-                OUT_DIR / "full" / "internal_pca_plink2.eigenvec",
-                OUT_DIR / "full" / "internal_pca_plink2.eigenval",
-            ]
-            if config.get("internalPCA", {}).get("method", "plink2") in ["plink2", "both"]
-            else []
-        ),
+            lambda ancs: (
+                (
+                    expand(OUT_DIR / "{anc}" / "pcair_pcaobj.RDS", anc=ancs) +
+                    expand(OUT_DIR / "{anc}" / "pcrelate_kinship.RDS", anc=ancs) +
+                    expand(OUT_DIR / "{anc}" / "pcair_coordinates.tsv", anc=ancs)
+                    if config.get("internalPCA", {}).get("method", "plink2") in ["pcair", "both"]
+                    else []
+                ) + (
+                    expand(OUT_DIR / "{anc}" / "internal_pca_plink2.eigenvec", anc=ancs) +
+                    expand(OUT_DIR / "{anc}" / "internal_pca_plink2.eigenval", anc=ancs)
+                    if config.get("internalPCA", {}).get("method", "plink2") in ["plink2", "both"]
+                    else []
+                )
+            )
+        )(get_ancestries(wildcards) + ["full"]),
 
 
 rule run_preparePRSInputs:

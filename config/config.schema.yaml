@@ -239,32 +239,18 @@ snpHerit:
   type: dict
   default: {}
   schema:
-    grm_prefix:
-      type: str
-      nullable: true
-      default: null
-      description: Pre-computed GRM prefix (prefix.grm.bin, prefix.grm.id, prefix.grm.N.bin)
-    pca_input:
-      type: str
-      nullable: true
-      default: null
-      description: PCA input - either .RDS (PC-AiR object) or .eigenvec file for PCs
     pheno:
       type: str
       nullable: true
       default: null
-      description: Path to phenotype file(s) — single path or list of paths (supports .parquet, .csv, .tsv, .tab, PLINK format)
+      description: |
+        Path to phenotype file(s) — single path or list of paths (supports .parquet, .csv, .tsv, .tab, PLINK format).
+        Required to activate snpHerit. Runs once per ancestry (auto-detected from classification) plus "full".
     covar:
       type: str
       nullable: true
       default: null
       description: Path to covariate file(s) — single path or list of paths (format CSV/TSV with FID, IID)
-    out:
-      type: str
-      required: true
-      description: |
-        Output path for heritability estimates (CSV format).
-        Required when snpHerit is active.
     method:
       type: str
       default: "AdjHE"
