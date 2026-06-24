@@ -18,6 +18,10 @@ export SINGULARITY_CACHEDIR=/scratch.global/coffm049/apptainer_build_tmp
 apptainer build --fakeroot ancNreport.sif ancNreport.def
 apptainer push ancNreport.sif oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest
 
+
+apptainer build --fakeroot genomeUtils.sif genomeUtils.def
+apptainer push genomeUtils.sif oras://ghcr.io/coffm049/gdcgenomicsqc/genomeutils:latest
+
 apptainer build --fakeroot rfmix.sif rfmix.def
 apptainer push rfmix.sif oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest
 
