@@ -324,11 +324,28 @@ GRM: true  # Generate genetic relationship matrix
 thin: true  # Thin input data
 ```
 
+### Data Subsetting
+
+You can subset samples and variants at the very start of the pipeline:
+
+```yaml
+keep_samples: "/path/to/sample_iids.txt"    # One IID per line — only these samples kept
+keep_variants: "/path/to/variant_ids.txt"   # One variant ID per line — only these variants kept
+```
+
+Samples and variants listed in these files are kept throughout the pipeline. Applied on top of ancestry-specific keep files (intersection).
+
 ### Ancestry Estimation
 ```yaml
 ancestry:
-    threshold: 0.8  # Minimum ancestry proportion
-    model: "pca"  # Options: pca, umap, vae, rfmix
+    threshold: 0.8        # Minimum ancestry proportion
+    model: "pca"          # Options: pca, umap, vae, rfmix
+    pca_estimation: "projection"  # "projection" (default, PCA on ref only) or "joint" (merged ref+study PCA)
+
+    # Optional: bypass ancestry prediction entirely with your own labels
+    ancestry_file: "/path/to/ancestry_labels.tsv"   # Tab-separated, two columns: IID, ancestry_label
+    ancestry_file_sep: "\t"                          # Column separator (default: tab)
+    ancestry_file_col: null                          # Column name or 0-based index for labels
 
 internalPCA:
     plot: true
@@ -417,11 +434,13 @@ The output directory is organized as follows
         - initialFilter - Are fully combined genomes additionally with sample missingness filter
         - standardFilter - additionally filters for inversion regions, hardy-weinberg equilibrium, and check's sex (if specified in the config)
         - standardFilter.LDpruned - additionally is filtered for linkage diseqilibrium and the specified level (default is 500 10 0.1)
- - 01-globalAncestry
+  - 01-globalAncestry
     - ref.<eigenvec, eigenval> - PCA information on the reference panel
     - <ref, sample>RefPCscores.sscore - projection of sample and reference on the reference PCs
     - umap_<sample, ref>.csv - the UMAP embeddings of the sample and reference
     - classificationProbabilities.tsv - classification probability for each ancestry
+    - ancestry_classifications.tsv - predicted ancestry labels and confidence per model
+    - keep_<ANC>.txt - per-ancestry sample lists (FID IID format, for plink2 --keep)
     - sample_coords.tsv - sample coordinates in latent space
     - ref_coords.tsv - reference coordinates in latent space
     - classificationProbability_stacked_<model>.svg - ridge plot of ancestry proportions

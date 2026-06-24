@@ -162,7 +162,12 @@ The ancestry classification pipeline depends on:
     ancestry:
         threshold: 0.8  # Minimum posterior probability for classification
         model: "pca"    # Options: pca, umap, rfmix (vae not yet implemented)
+        pca_estimation: "projection"  # "projection" or "joint" — how PCA is computed
         # Optional: reported_race: "/path/to/reported_race.tsv"
+
+    # Optional: subset samples/variants at the very start of the pipeline
+    keep_samples: "/path/to/sample_iids.txt"     # One IID per line
+    keep_variants: "/path/to/variant_ids.txt"    # One variant ID per line
 
     INPUT: "/path/to/data/chr{CHR}.vcf.gz"
     OUT_DIR: "/path/to/output"
@@ -202,6 +207,11 @@ Create a configuration file for ancestry classification:
     ancestry:
         threshold: 0.8
         model: "pca"  # Options: pca, umap, rfmix (vae not yet implemented)
+        pca_estimation: "projection"  # "projection" or "joint"
+
+    # Optional: subset samples/variants before ancestry classification
+    # keep_samples: "/path/to/sample_iids.txt"
+    # keep_variants: "/path/to/variant_ids.txt"
 
     relatedness:
         method: "king"  # "0" for none, "king" or "primus" for removal
@@ -228,6 +238,11 @@ Key parameters:
 - ``threshold``: Minimum posterior probability for confident classification (default: 0.8)
 - ``model``: Embedding used for classification—``pca``, ``umap``, or ``rfmix``
   (Note: VAE is not yet implemented)
+- ``pca_estimation``: How PCA components are computed:
+  - ``"projection"`` (default): PCA on the 1000G reference panel only, then projects study samples onto those PCs. Fast, reference-consistent.
+  - ``"joint"``: Merges study and reference genotypes, computes PCA jointly, then splits by population. Better for capturing study-specific variation but slower.
+- ``keep_samples``: Path to a file with sample IIDs (one per line) to subset data at the start of the pipeline. Applied on top of ancestry-specific keep files.
+- ``keep_variants``: Path to a file with variant IDs (one per line) to subset variants at the start of the pipeline.
 
 Step 2: Run Classification Pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -400,6 +415,9 @@ PLINK-style files for ancestry-specific analyses:
 - ``keep_AFR.txt``, ``keep_EUR.txt``, etc.
 - ``keep_Other.txt`` (below threshold)
 
+Each keep file has two columns (``FID IID``) as required by ``plink2 --keep``.
+If the input data has no FID column, ``FID`` is set equal to ``IID``.
+
 Visualizations
 ~~~~~~~~~~~~~~
 
@@ -483,9 +501,9 @@ pipeline's ancestry prediction entirely by providing a tab-separated file.
 
 The file should be:
 
-- Tab-separated
+- Tab-separated (or specify a different separator with ``ancestry_file_sep``)
 - Two columns: IID (sample ID), ancestry label
-- No header row
+- No header row (or specify a column name with ``ancestry_file_col``)
 - One line per sample
 
 To use your labels, add to your config:
@@ -496,6 +514,8 @@ To use your labels, add to your config:
         threshold: 0.8
         model: "pca"
         ancestry_file: "/path/to/ancestry_labels.tsv"
+        # Optional: ancestry_file_sep: " "         # for space-separated files
+        # Optional: ancestry_file_col: "Superpopulation"  # column name in header
 
 **How the bypass works:**
 
