@@ -9,5 +9,5 @@ module load gdcgenomicsSandbox
 
 #gdcgenomicsqc --until run_classifyAncestry --configfile ../config/sandboxABCD_imputed.yaml
 #gdcgenomicsqc --until run_rfmix --configfile ../config/sandboxABCD_imputed.yaml
-#gdcgenomicsqc --until run_ancestryQC --configfile ../config/sandboxABCD_imputed.yaml
-gdcgenomicsqc --until run_snpHerit --configfile ../config/sandboxABCD_imputed.yaml
+gdcgenomicsqc --until run_ancestryQC --configfile ../config/sandboxABCD_imputed.yaml
+#gdcgenomicsqc --until run_snpHerit --configfile ../config/sandboxABCD_imputed.yaml --dry-run
