@@ -110,6 +110,7 @@ rule all:
 
 if input_is_per_chromosome():
     ruleorder: convertPlinkPerChromosome > concatLdPruned
+    ruleorder: convertPlinkPerChromosome > concatPgen
 else:
     ruleorder: convertPlinkSingleFile
 ruleorder: convertPgenToVcf > compressAndIndexVcf

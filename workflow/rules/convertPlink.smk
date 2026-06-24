@@ -274,3 +274,50 @@ if not INPUT_IS_PER_CHROMOSOME:
                 mv {params.output_prefix}.LDpruned.$ext {params.output_prefix}.ldpruned.$ext
             done
             """
+
+
+if INPUT_IS_PER_CHROMOSOME:
+    rule concatPgen:
+        log:
+            OUT_DIR / "logs" / "concatPgen_{subset}.log",
+        container:
+            "docker://gfanz/plink2:latest"
+        conda:
+            "../../envs/ancNreport.yml"
+        envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
+        threads: 4
+        resources:
+            nodes=1,
+            mem_mb=16000,
+            runtime=60,
+        output:
+            pgen=OUT_DIR / "{subset}" / "f1.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1.pvar",
+            psam=OUT_DIR / "{subset}" / "f1.psam",
+            tempDir=temp(
+                directory(OUT_DIR / "{subset}" / "intermediates" / "pgen_concat")
+            ),
+        input:
+            pgen=expand(
+                OUT_DIR / "{{subset}}" / "f1_{CHR}.pgen", CHR=CHROMOSOMES
+            ),
+            pvar=expand(
+                OUT_DIR / "{{subset}}" / "f1_{CHR}.pvar", CHR=CHROMOSOMES
+            ),
+            psam=expand(
+                OUT_DIR / "{{subset}}" / "f1_{CHR}.psam", CHR=CHROMOSOMES
+            ),
+        params:
+            output_prefix=lambda wildcards, output: output.pgen[:-5],
+        shell:
+            """
+            mkdir -p {output.tempDir}
+            > {output.tempDir}/mergelist.txt
+            for f in {input.pgen}; do
+                echo "${{f%.pgen}}" >> {output.tempDir}/mergelist.txt
+            done
+            plink2 --pmerge-list {output.tempDir}/mergelist.txt \
+                   --make-pgen \
+                   --threads {threads} \
+                   --out {params.output_prefix}
+            """
