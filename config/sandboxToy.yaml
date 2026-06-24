@@ -40,7 +40,7 @@ snpHerit:
     #   - null: MASH will compute GRM automatically from PCA
     #   - "/path/to/output/full/pcair_grm" (if PCAIR ran with GRM)
     #   -  (from relatedness step)
-    grm_prefix: "/scratch.global/GDC/r25outputs/toy_chr/full/f1.b38.ldpruned.unrelated"
+    grm_prefix: "/scratch.global/GDC/r25outputs/toy_chr/EUR/f1.b38.ldpruned.unrelated"
     # Pre-computed eigenvector file for GRM construction
     # Options:
     #   - null: MASH will compute eigenvectors from PCA
