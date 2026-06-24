@@ -101,7 +101,7 @@ fit_and_predict_ancestry_models <- function(
 
     sampleDF <- read_table(eigen_sample, col_names = TRUE, show_col_types = FALSE)
 
-    for (col in c("ALLELE_CT", "NAMED_ALLELE_DOSAGE_SUM", "FID", "#FID")) {
+    for (col in c("ALLELE_CT", "NAMED_ALLELE_DOSAGE_SUM")) {
         if (col %in% colnames(sampleDF)) {
             sampleDF <- sampleDF |> select(-all_of(col))
         }
@@ -109,10 +109,18 @@ fit_and_predict_ancestry_models <- function(
 
     iid_col <- if ("#IID" %in% colnames(sampleDF)) "#IID" else "IID"
     names(sampleDF)[names(sampleDF) == iid_col] <- "IID"
-    colnames(sampleDF)[-1] <- paste0("pc_", 1:(ncol(sampleDF) - 1))
+
+    fid_col <- if ("#FID" %in% colnames(sampleDF)) "#FID" else if ("FID" %in% colnames(sampleDF)) "FID" else NULL
+    if (!is.null(fid_col)) {
+        names(sampleDF)[names(sampleDF) == fid_col] <- "FID"
+        pc_cols <- setdiff(colnames(sampleDF), c("IID", "FID"))
+        colnames(sampleDF)[colnames(sampleDF) %in% pc_cols] <- paste0("pc_", seq_along(pc_cols))
+    } else {
+        colnames(sampleDF)[-1] <- paste0("pc_", 1:(ncol(sampleDF) - 1))
+    }
 
     pc_probs <- predict(pcMod, sampleDF, num.threads = threads)$predictions
-    result_df <- sampleDF |> select(IID) |> as_tibble()
+    result_df <- sampleDF |> select(IID, any_of("FID")) |> as_tibble()
     sample_coords_df <- sampleDF
 
     for (anc in ancestries) {

@@ -45,19 +45,24 @@ prob_cols <- prob_df |> select(starts_with(paste0(model, "_"))) |> colnames()
 all_ancestries <- gsub(paste0(model, "_"), "", prob_cols)
 
 for (anc in all_ancestries) {
-    result |>
+    keep_df <- result |>
         filter(.data[[predicted_col]] == anc, .data[[confidence_col]] >= args$threshold) |>
-        select(IID) |>
-        mutate(FID = IID) |>
-        select(FID, IID) |>
-        write_delim(file.path(args$out, paste0("keep_", anc, ".txt")), delim = "\t", col_names = FALSE)
+        select(IID, any_of("FID"))
+    if (!"FID" %in% colnames(keep_df)) {
+        keep_df <- keep_df |> mutate(FID = IID)
+    }
+    keep_df |> relocate(FID) |> write_delim(
+        file.path(args$out, paste0("keep_", anc, ".txt")), delim = "\t", col_names = FALSE
+    )
 }
 
-result |>
+other_df <- result |>
     filter(.data[[confidence_col]] < args$threshold | .data[[predicted_col]] == "uncertain" | is.na(.data[[confidence_col]])) |>
-    select(IID) |>
-    mutate(FID = IID) |>
-    select(FID, IID) |>
+    select(IID, any_of("FID"))
+if (!"FID" %in% colnames(other_df)) {
+    other_df <- other_df |> mutate(FID = IID)
+}
+other_df |> relocate(FID) |>
     write_delim(file.path(args$out, "keep_Other.txt"), delim = "\t", col_names = FALSE)
 
 
