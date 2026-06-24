@@ -3,7 +3,7 @@ checkpoint estimateGlobalAncestry:
     log:
         OUT_DIR / "logs" / "estimateGlobalAncestry.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/genomeutils:latest"
     conda:
         "../../envs/genomeUtils.yml"
     envmodules: *([config.get("R_module")] if config.get("R_module") else [])
@@ -51,7 +51,7 @@ checkpoint classifySamplesByAncestry:
     log:
         OUT_DIR / "logs" / "classifySamplesByAncestry.log",
     container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/genomeutils:latest"
     conda:
         "../../envs/genomeUtils.yml"
     envmodules: *([config.get("R_module")] if config.get("R_module") else [])
