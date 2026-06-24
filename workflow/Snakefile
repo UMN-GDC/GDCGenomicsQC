@@ -345,6 +345,24 @@ rule run_snpHerit:
         ),
 
 
+rule run_snpHeritSimulated:
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=420,
+    input:
+        lambda wildcards: (
+            lambda sc: expand(
+                OUT_DIR / "simulations" / f"{sc['ancestries'][0]}_{sc['ancestries'][1]}" / "{anc}_herit.csv",
+                anc=sc["ancestries"],
+            )
+        )(config.get("phenotypeSimulation", {})) if (
+            config.get("phenotypeSimulation", {}).get("enabled", False)
+            and len(config.get("phenotypeSimulation", {}).get("ancestries", [])) == 2
+        ) else [],
+
+
 rule run_PCAinternal:
     threads: 1
     resources:
