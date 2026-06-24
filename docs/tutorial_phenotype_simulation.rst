@@ -10,7 +10,7 @@ estimating SNP heritability using the GDCGenomicsQC pipeline.
 
 **Learning objectives**:
 
-1. Configure phenotype simulation for two ancestry groups
+1. Configure phenotype simulation for multiple ancestry groups
 2. Simulate phenotypes with controlled heritability and cross-ancestry genetic correlation
 3. Run SNP heritability estimation using PC-relate
 4. Compare heritability estimates across ancestries
@@ -83,9 +83,10 @@ controlled genetic architecture for testing heritability estimation methods.
 **Key capabilities:**
 
 - Simulate phenotypes with specified SNP heritability (h²)
-- Control cross-ancestry genetic correlation (ρ)
-- Generate multiple independent simulations
-- Works with user-provided ancestry labels (faster setup)
+- Control cross-ancestry genetic correlation via an N×N correlation matrix
+- Generate multiple independent simulations per configuration
+- Support N ancestries (not limited to 2-way bivariate models)
+- Multiple named simulations per pipeline run
 
 ----
 
@@ -100,7 +101,7 @@ This step requires the following input files:
 
    * - Input File
      - Description
-   * - ``OUT_DIR/{ANC}/f1.b38.pgen``
+   * - ``OUT_DIR/{ANC}/f1.pgen``
      - Sample genotypes per ancestry (from QC pipeline)
    * - ``ancestry_file`` (optional)
      - User-provided ancestry labels (see :doc:`tutorial_ancestry_classification`)
@@ -116,27 +117,26 @@ This step requires the following input files:
 
     phenotypeSimulation:
         enabled: true              # Set to true to run simulation
-        ancestries: ["AFR", "EUR"] # Two ancestry groups to simulate
-        simulations_dir: "/path/to/simulations"  # Output directory
-        n_sims: 10                 # Number of phenotype simulations
-        heritability: 0.4          # SNP heritability (h²)
-        rho: 0.8                   # Cross-ancestry genetic correlation
-        maf: 0.05                  # Minor allele frequency threshold
-        seed: 42                   # Random seed for reproducibility
-        skip_thinning: true        # Skip SNP thinning
-        thin_count_snps: 1000000   # SNPs to thin to (if not skipping)
-        thin_count_inds: 10000     # Individuals to thin to (if not skipping)
+        ancestries: ["AFR", "EUR"] # Ancestry groups to simulate
+        simulations:
+            - name: "sim1"
+              # N×N genetic correlation matrix (size = len(ancestries))
+              corr_matrix: [[1.0, 0.8], [0.8, 1.0]]
+              n_sims: 10           # Number of phenotype simulations
+              heritability: 0.4    # SNP heritability (h²)
+              maf: 0.05            # Minor allele frequency threshold
+              seed: 42             # Random seed for reproducibility
+              skip_thinning: true  # Skip SNP thinning
 
-**Heritability Estimation Config:**
+**Heritability Estimation on Simulated Data:**
 
 .. code-block:: yaml
 
     snpHerit:
-        pheno: "/path/to/phenotype.tsv"  # Phenotype file (IID, pheno)
-        covar: "/path/to/covariates.tsv" # Optional covariates
-        method: "AdjHE"                   # Estimation method
-        npc: 10                          # Number of PCs to include
-        out: "heritability_estimates.txt" # Output file
+        # No phenotype needed — estimateSnpHeritabilitySimulated
+        # uses the simulated phenotype automatically
+        method: "AdjHE"   # Estimation method
+        npc: 10           # Number of PCs to include
 
 **Output Files:**
 
@@ -146,12 +146,12 @@ This step requires the following input files:
 
    * - File
      - Description
-   * - ``simulations/{ANC1}_{ANC2}/{anc}_simulation.bed``
-     - Simulated genotype PLINK files
-   * - ``simulations/{ANC1}_{ANC2}/{anc}_simulation_pheno1.pheno``
-     - Simulated phenotype file
-   * - ``simulations/{ANC1}_{ANC2}/{anc}_simulation_pheno1.estimates``
-     - Heritability estimates from simulation
+   * - ``{ancestry}/simulations/{sim_name}/simulated.bed``
+     - Simulated genotype PLINK files (per ancestry)
+   * - ``{ancestry}/simulations/{sim_name}/simulated_pheno1.pheno``
+     - Simulated phenotype file (per ancestry)
+   * - ``{ancestry}/simulations/{sim_name}/herit.csv``
+     - Heritability estimates from MASH (per ancestry)
 
 ----
 
@@ -198,13 +198,12 @@ Step 2: Create configuration file
     phenotypeSimulation:
         enabled: true
         ancestries: ["AFR", "EUR"]
-        simulations_dir: "/path/to/simulations"
-        n_sims: 10
-        heritability: 0.4
-        rho: 0.8
-        maf: 0.05
-        seed: 42
-        skip_thinning: true
+        simulations:
+            - name: "sim1"
+              corr_matrix: [[1.0, 0.8], [0.8, 1.0]]
+              heritability: 0.4
+              n_sims: 10
+              skip_thinning: true
 
     snpHerit:
         method: "AdjHE"
@@ -223,14 +222,14 @@ Step 3: Run simulation
       .. code-block:: bash
 
           cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config_simulation.yaml simulatePhenotype -j 4
+          gdcgenomicsqc --configfile ../config_simulation.yaml run_simulatePhenotype -j 4
 
    .. tab:: Sandbox
 
       .. code-block:: bash
 
           cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config_simulation.yaml simulatePhenotype -j 4
+          gdcgenomicsqc --configfile ../config_simulation.yaml run_simulatePhenotype -j 4
 
    .. tab:: Local Snakemake
 
@@ -239,24 +238,33 @@ Step 3: Run simulation
           cd GDCGenomicsQC/workflow
           snakemake --profile=../profiles/hpc \
               --configfile ../config_simulation.yaml \
-              simulatePhenotype \
+              run_simulatePhenotype \
               -j 4
 
 Output directory structure:
 
 ::
 
-    simulations/AFR_EUR/
-    ├── AFR_simulation.bed
-    ├── AFR_simulation.bim
-    ├── AFR_simulation.fam
-    ├── AFR_simulation_pheno1.pheno
-    ├── AFR_simulation_pheno1.estimates
-    ├── EUR_simulation.bed
-    ├── EUR_simulation.bim
-    ├── EUR_simulation.fam
-    ├── EUR_simulation_pheno1.pheno
-    └── EUR_simulation_pheno1.estimates
+    AFR/simulations/sim1/
+    ├── simulated.bed
+    ├── simulated.bim
+    ├── simulated.fam
+    ├── simulated_pheno1.pheno
+    ├── simulated.grm.bin
+    ├── simulated.grm.id
+    ├── simulated.grm.N.bin
+    ├── simulated.eigenvec
+    └── herit.csv
+    EUR/simulations/sim1/
+    ├── simulated.bed
+    ├── simulated.bim
+    ├── simulated.fam
+    ├── simulated_pheno1.pheno
+    ├── simulated.grm.bin
+    ├── simulated.grm.id
+    ├── simulated.grm.N.bin
+    ├── simulated.eigenvec
+    └── herit.csv
 
 
 Option B: Using Predicted Ancestry Labels
@@ -290,15 +298,15 @@ Remove the ``ancestry_file`` line and the pipeline will use predicted labels:
 
     phenotypeSimulation:
         ancestries: ["AFR", "EUR"]
-        n_sims: 10
-        heritability: 0.4
-        rho: 0.8
-        seed: 42
+        simulations:
+            - name: "sim1"
+              corr_matrix: [[1.0, 0.8], [0.8, 1.0]]
+              heritability: 0.4
+              n_sims: 10
 
     snpHerit:
         method: "AdjHE"
         npc: 10
-        out: "heritability_estimates.txt"
 
     conda-frontend: mamba
     EOF
@@ -309,7 +317,7 @@ Step 3: Run simulation
 .. code-block:: bash
 
     cd GDCGenomicsQC/workflow
-    gdcgenomicsqc --configfile ../config_simulation_predicted.yaml simulatePhenotype -j 4
+    gdcgenomicsqc --configfile ../config_simulation_predicted.yaml run_simulatePhenotype -j 4
 
 This will run the full ancestry classification pipeline first, then proceed
 to phenotype simulation.
@@ -321,23 +329,25 @@ Simulation Parameters
 +----------------------+-------------+------------------------------------------+
 | Parameter            | Default     | Description                              |
 +======================+=============+==========================================+
-| ``ancestries``       | [AFR, EUR]  | Two ancestry groups to simulate         |
+| ``ancestries``       | [AFR, EUR]  | Ancestry groups to simulate             |
 +----------------------+-------------+------------------------------------------+
-| ``n_sims``           | 10          | Number of phenotype simulations         |
+| ``simulations[].name``| required   | Simulation name (subdirectory name)     |
 +----------------------+-------------+------------------------------------------+
-| ``heritability``     | 0.4         | SNP heritability (h²) for each ancestry|
+| ``simulations[].corr_matrix``| required | N×N genetic correlation matrix       |
 +----------------------+-------------+------------------------------------------+
-| ``rho``              | 0.8         | Cross-ancestry genetic correlation      |
+| ``simulations[].n_sims``| 10        | Number of phenotype simulations         |
 +----------------------+-------------+------------------------------------------+
-| ``maf``              | 0.05        | Minor allele frequency threshold        |
+| ``simulations[].heritability``| 0.4 | SNP heritability (h²) for each ancestry|
 +----------------------+-------------+------------------------------------------+
-| ``seed``             | 42          | Random seed for reproducibility         |
+| ``simulations[].maf`` | 0.05        | Minor allele frequency threshold        |
 +----------------------+-------------+------------------------------------------+
-| ``skip_thinning``    | true        | Skip SNP thinning (faster)             |
+| ``simulations[].seed``| 42          | Random seed for reproducibility         |
 +----------------------+-------------+------------------------------------------+
-| ``thin_count_snps``  | 1000000     | SNPs to thin to (if not skipping)       |
+| ``simulations[].skip_thinning``| true | Skip SNP thinning (faster)             |
 +----------------------+-------------+------------------------------------------+
-| ``thin_count_inds``  | 10000       | Individuals to thin to (if not skipping)|
+| ``simulations[].thin_count_snps``| 1000000 | SNPs to thin to (if not skipping)  |
++----------------------+-------------+------------------------------------------+
+| ``simulations[].thin_count_inds``| 10000 | Individuals to thin to (if not skipping)|
 +----------------------+-------------+------------------------------------------+
 
 ----
@@ -348,7 +358,7 @@ Interpreting Results
 Simulation Results
 ~~~~~~~~~~~~~~~~~~
 
-**File**: ``simulations/AFR_EUR/{anc}_simulation_pheno1.estimates``
+**Per-ancestry file**: ``{ancestry}/simulations/{sim_name}/herit.csv``
 
 Sample output:
 
@@ -360,6 +370,15 @@ Sample output:
 | EUR              | 0.42   | 0.04   |
 +------------------+--------+--------+
 
+**To run heritability estimation on simulated data:**
+
+.. code-block:: bash
+
+    gdcgenomicsqc --configfile config_simulation.yaml run_snpHeritSimulated -j 4
+
+This invokes the ``estimateSnpHeritabilitySimulated`` rule for each
+ancestry × simulation combination.
+
 Expected Results
 ~~~~~~~~~~~~~~~~
 
@@ -367,7 +386,7 @@ Given simulation parameters:
 
 - True h² = 0.4 (specified)
 - Expected estimates: 0.35-0.45 (within sampling error)
-- Cross-ancestry ρ = 0.8
+- Cross-ancestry ρ = 0.8 (from corr_matrix)
 
 Differences between ancestries may reflect:
 
@@ -394,7 +413,7 @@ Vary these parameters to understand the methods:
 1. **Heritability**: Test h² = 0.1, 0.3, 0.5, 0.7
    - How does estimation accuracy change?
 
-2. **Cross-ancestry correlation**: Test ρ = 0.3, 0.5, 0.8, 1.0
+2. **Cross-ancestry correlation**: Test different values in corr_matrix
    - What happens when ρ = 1 (identical genetic architecture)?
 
 3. **Sample size**: Vary ``thin_count_inds``
@@ -405,6 +424,9 @@ Vary these parameters to understand the methods:
 
 5. **MAF threshold**: Test maf = 0.01, 0.05, 0.10
    - Impact of rare variant inclusion
+
+6. **N-ancestry**: Add a third ancestry group
+   - Requires a 3×3 corr_matrix
 
 ----
 
@@ -450,6 +472,7 @@ After completing this tutorial, you have explored:
 - GWAS on simulated phenotypes with known true effects
 - Compare heritability estimates across different ancestry groups
 - Test different heritability estimation methods and PC covariates
+- Add a third ancestry group with a 3×3 corr_matrix
 
 **See also:**
 

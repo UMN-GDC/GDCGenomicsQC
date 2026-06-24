@@ -365,15 +365,16 @@ localAncestry:
 ### Phenotype Simulation
 ```yaml
 phenotypeSimulation:
+    enabled: true
     ancestries: ["AFR", "EUR"]
-    n_sims: 10
-    heritability: 0.4
-    rho: 0.8
-    maf: 0.05
-    seed: 42
-    skip_thinning: true
-    thin_count_snps: 1000000
-    thin_count_inds: 10000
+    simulations:
+        - name: "sim1"
+          corr_matrix: [[1.0, 0.8], [0.8, 1.0]]
+          n_sims: 10
+          heritability: 0.4
+          maf: 0.05
+          seed: 42
+          skip_thinning: true
 ```
 
 ### SNP Heritability
@@ -417,8 +418,9 @@ The pipeline includes the following rules:
 | `classifyAncestry` | Classify ancestry with multiple models |
 | `Phase` | Phase genotypes with SHAPEIT4 |
 | `RFMIX` | Local ancestry inference with RFMIX |
-| `simulatePhenotype` | Simulate phenotypes for GWAS |
-| `snpHerit` | Estimate SNP heritability |
+| `run_simulatePhenotype` | Simulate phenotypes (per-ancestry per-simulation outputs) |
+| `run_snpHeritSimulated` | Estimate SNP heritability on simulated data |
+| `snpHerit` | Estimate SNP heritability on real phenotype data |
 
 ![GDC_pipeline_overview](https://github.com/UMN-GDC/GDCGenomicsQC/assets/140092486/e7f11909-9ab8-4def-90e5-c5f67c28a4bb)
 
