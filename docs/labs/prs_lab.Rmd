@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(message = FALSE)
 ```
 
-# Lab Overview
+# Single Ancestry PRS Lab Overview
 
 By the end of this lab you should be able to understand how to use the prs_pipeline to get Polygenic Risk Scores and how to interpret your findings.
 
@@ -57,11 +57,15 @@ To run the pipeline, you need:
     -   beta
 
     Chromosome and position are not required — they are pulled from the `.bim` file during alignment. `ref`/`A2` is also derived automatically, so it does not need to be in the input.
+
+    TODO: show a header of one
     ```
 
-2.  **Target Genotype Files:** PLINK format (`.bed`, `.bim`, `.fam`).
+2.  **Target Genotype Files:** PLINK format (`.bed`, `.bim`, `.fam`) split into distinct train and test splits.
 
-3.  **Configuration File:** A `.conf` file defining paths and parameters.
+TODO: add the splitting part here, overview of the script and how to run it. Add assignment to generate there own split of the data.
+
+1.  **Configuration File:** A `.conf` file defining paths and parameters.
 
     ```         
     # my_project.conf 
@@ -69,11 +73,11 @@ To run the pipeline, you need:
     summary_stats_file="/scratch.global/GDC/r25outputs/toy/prs_inputs/AFR_EUR/gwas/training_sumstats_singlePRS.txt"
     bim_file_path="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_train.bim"
     study_sample="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_train"
-    output_path="/scratch.global/baron063/r25outputs/toy"
+    output_path="/scratch.global/baron063/r25outputs/toy" # Change the labs config output path
     path_repo="/scratch.global/baron063/prs_pipeline"
     skip_ss_generation=0
     n_total_gwas=300
-    ld_matrix_dir="${output_path}/prs_pipeline/ld_matrix"
+    ld_matrix_dir="${output_path}/prs_pipeline/ld_matrix" # Output directory | or input if previously ran prs_pipeline
     gwas_pca_eigenvec_file=""
     phenotype_info_file="/scratch.global/baron063/R25_testing/sample_pheno.txt"
     test_sample="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_val"
@@ -84,6 +88,8 @@ To run the pipeline, you need:
     RUN_LDPRED2=true
     RUN_LASSOSUM2=true
     RUN_PRSice2=true
+
+    TODO: need a sample pheno file, ld_matrix, be more specific what is generated, what is required for them to provide
     ```
 
 The configuration file above shows the key parameters you will work with. Note the `n_total_gwas` parameter.
@@ -91,6 +97,10 @@ The configuration file above shows the key parameters you will work with. Note t
 **Question:** Why do Bayesian methods like LDpred2 need the total sample size of the discovery GWAS? *Answer: To distinguish between a small effect size and a lack of statistical power in the discovery set.*
 
 ### Running the Pipeline
+
+Once you have distinct training and testing splits of your genomic data you are ready to build your config file.
+
+TODO: **put instructions** here `# Sample call to split genotype files      sbatch /scratch.global/baron063/prs_pipeline/run_split_data.sh  \     -1 /scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_train \     -r /scratch.global/baron063/prs_pipeline  \     -t 70 \     -T 30`
 
 Once your config file is ready, use `sandbox_singularity_runner.sh` to execute the pipeline inside a pre-built Singularity container. Full documentation is at `docs/sandbox_singularity_runner.md` in the `prs_pipeline` repo.
 
@@ -121,6 +131,8 @@ sbatch /path/to/prs_pipeline/sandbox_singularity_runner.sh --C my_project.conf -
 | `-B` | Binary phenotype flag   |
 
 Expected runtime for toy data (3 chromosomes, \~500 samples): \~10–20 min locally, \~5–10 min on SLURM. Full-scale runs with all chromosomes and 10K+ samples can take several hours.
+
+TODO: give an assignment to try to run the pipeline with a single approach
 
 # 3. Comparing PRS Methodologies
 
