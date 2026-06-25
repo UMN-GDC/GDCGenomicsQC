@@ -9,6 +9,47 @@ if SNP_HERIT_CONFIG:
     if method not in valid_methods:
         raise ValueError(f"snpHerit.method must be one of {valid_methods}")
 
+import json
+
+
+def _mash_config(prefix, pheno, out, npc, mpheno, eigenvec,
+                 covar=None, covar_discrete=None, qcovar=None,
+                 pheno_filter=None, covar_filter=None,
+                 loop_covars=False, random_groups=None, Naive=False,
+                 std=None, k=None, RV=None):
+    cfg = {
+        "prefix": str(prefix),
+        "pheno": [str(p) for p in (pheno if isinstance(pheno, list) else [pheno])],
+        "out": str(out),
+        "npc": [int(n) for n in (npc if isinstance(npc, list) else [npc])],
+        "mpheno": [str(m) for m in (mpheno if isinstance(mpheno, list) else [mpheno])],
+        "Method": SNP_HERIT_CONFIG.get("method", "AdjHE"),
+        "iid_col": SNP_HERIT_CONFIG.get("iid_col", "IID"),
+        "fid_col": SNP_HERIT_CONFIG.get("fid_col", "FID"),
+        "PC": str(eigenvec),
+        "loop_covars": loop_covars,
+        "random_groups": RV if RV else None,
+        "Naive": Naive,
+    }
+    if covar:
+        cfg["covar"] = [str(c) for c in covar] if isinstance(covar, list) else str(covar)
+    if covar_discrete:
+        cfg["covar_discrete"] = covar_discrete
+    if qcovar:
+        cfg["qcovar"] = qcovar
+    if pheno_filter:
+        cfg["pheno_filter"] = pheno_filter
+    if covar_filter:
+        cfg["covar_filter"] = covar_filter
+    if std:
+        cfg["std"] = std
+    if k is not None:
+        cfg["k"] = k
+    if RV:
+        cfg["RV"] = RV
+    return json.dumps(cfg, indent=2)
+
+
 if SNP_HERIT_ACTIVE:
 
     rule estimateSnpHeritability:
@@ -30,69 +71,34 @@ if SNP_HERIT_ACTIVE:
         output:
             estimates=OUT_DIR / "{ancestry}" / "03-snpHeritability" / "mash_output.csv",
         params:
-            grm_prefix=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated",
-            out_prefix=OUT_DIR / "{ancestry}" / "03-snpHeritability" / "mash_output",
-        run:
-            import json
-            import os
-
-            pheno_val = SNP_HERIT_CONFIG["pheno"]
-            if isinstance(pheno_val, list):
-                pheno_list = [str(p) for p in pheno_val]
-            else:
-                pheno_list = [str(pheno_val)]
-
-            mpheno_val = SNP_HERIT_CONFIG.get("mpheno", 1)
-            if isinstance(mpheno_val, list):
-                mpheno_list = [str(m) for m in mpheno_val]
-            else:
-                mpheno_list = [str(mpheno_val)]
-
-            mash_config = {
-                "prefix": str(params.grm_prefix),
-                "pheno": pheno_list,
-                "out": str(params.out_prefix),
-                "npc": [int(SNP_HERIT_CONFIG.get("npc", 10))] if not isinstance(SNP_HERIT_CONFIG.get("npc", 10), list) else [int(n) for n in SNP_HERIT_CONFIG["npc"]],
-                "mpheno": mpheno_list,
-                "Method": SNP_HERIT_CONFIG.get("method", "AdjHE"),
-                "iid_col": SNP_HERIT_CONFIG.get("iid_col", "IID"),
-                "fid_col": SNP_HERIT_CONFIG.get("fid_col", "FID"),
-                "PC": str(input.eigenvec),
-            }
-
-            covar_from_config = SNP_HERIT_CONFIG.get("covar")
-            if covar_from_config:
-                if isinstance(covar_from_config, list):
-                    mash_config["covar"] = [str(f) for f in covar_from_config]
-                else:
-                    mash_config["covar"] = str(covar_from_config)
-
-            mash_config["qcovar"] = SNP_HERIT_CONFIG.get("qcovar")
-            mash_config["covar_discrete"] = SNP_HERIT_CONFIG.get("covar_discrete")
-            if SNP_HERIT_CONFIG.get("pheno_filter"):
-                mash_config["pheno_filter"] = SNP_HERIT_CONFIG["pheno_filter"]
-            if SNP_HERIT_CONFIG.get("covar_filter"):
-                mash_config["covar_filter"] = SNP_HERIT_CONFIG["covar_filter"]
-
-            mash_config["loop_covars"] = SNP_HERIT_CONFIG.get("loop_covars", False)
-            mash_config["random_groups"] = SNP_HERIT_CONFIG.get("RV", None) if SNP_HERIT_CONFIG.get("RV") else None
-            mash_config["Naive"] = SNP_HERIT_CONFIG.get("Naive", False)
-
-            if SNP_HERIT_CONFIG.get("std"):
-                mash_config["std"] = SNP_HERIT_CONFIG["std"]
-            if SNP_HERIT_CONFIG.get("k") is not None:
-                mash_config["k"] = SNP_HERIT_CONFIG["k"]
-            if SNP_HERIT_CONFIG.get("RV"):
-                mash_config["RV"] = SNP_HERIT_CONFIG["RV"]
-
-            os.makedirs(os.path.dirname(str(output.estimates)), exist_ok=True)
-            argfile = str(output.estimates).replace(".csv", ".json")
-            with open(argfile, "w") as f:
-                json.dump(mash_config, f, indent=2)
-
-            import subprocess
-            subprocess.run(["MASH", "--argfile", argfile], check=True)
-
+            argfile=OUT_DIR / "{ancestry}" / "03-snpHeritability" / "mash_output.json",
+            mash_config=lambda w: _mash_config(
+                prefix=OUT_DIR / w.ancestry / "f1.b38.ldpruned.unrelated",
+                pheno=SNP_HERIT_CONFIG["pheno"],
+                out=OUT_DIR / w.ancestry / "03-snpHeritability" / "mash_output",
+                npc=SNP_HERIT_CONFIG.get("npc", 10),
+                mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
+                eigenvec=OUT_DIR / w.ancestry / "internal_pca_plink2.eigenvec",
+                covar=SNP_HERIT_CONFIG.get("covar"),
+                qcovar=SNP_HERIT_CONFIG.get("qcovar"),
+                covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),
+                pheno_filter=SNP_HERIT_CONFIG.get("pheno_filter"),
+                covar_filter=SNP_HERIT_CONFIG.get("covar_filter"),
+                loop_covars=SNP_HERIT_CONFIG.get("loop_covars", False),
+                random_groups=SNP_HERIT_CONFIG.get("RV"),
+                Naive=SNP_HERIT_CONFIG.get("Naive", False),
+                std=SNP_HERIT_CONFIG.get("std"),
+                k=SNP_HERIT_CONFIG.get("k"),
+                RV=SNP_HERIT_CONFIG.get("RV"),
+            ),
+        shell:
+            """
+            mkdir -p "$(dirname {output.estimates})"
+            cat > {params.argfile} << 'EOF'
+{params.mash_config}
+EOF
+            MASH --argfile {params.argfile}
+            """
 
 SIM_CFG = config.get("phenotypeSimulation", {})
 if SIM_CFG.get("enabled", False):
@@ -125,55 +131,31 @@ if SIM_CFG.get("enabled", False):
         output:
             estimates=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "herit.csv",
         params:
-            grm_prefix=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated",
-            out_prefix=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "herit",
-        run:
-            import json
-            import os
-
-            mpheno_val = SNP_HERIT_CONFIG.get("mpheno", 1)
-            if isinstance(mpheno_val, list):
-                mpheno_list = [str(m) for m in mpheno_val]
-            else:
-                mpheno_list = [str(mpheno_val)]
-
-            mash_config = {
-                "prefix": str(params.grm_prefix),
-                "pheno": [str(input.pheno)],
-                "out": str(params.out_prefix),
-                "npc": [int(SNP_HERIT_CONFIG.get("npc", 10))] if not isinstance(SNP_HERIT_CONFIG.get("npc", 10), list) else [int(n) for n in SNP_HERIT_CONFIG["npc"]],
-                "mpheno": mpheno_list,
-                "Method": SNP_HERIT_CONFIG.get("method", "AdjHE"),
-                "iid_col": SNP_HERIT_CONFIG.get("iid_col", "IID"),
-                "fid_col": SNP_HERIT_CONFIG.get("fid_col", "FID"),
-                "PC": str(input.eigenvec),
-            }
-
-            covar_from_config = SNP_HERIT_CONFIG.get("covar")
-            if covar_from_config:
-                if isinstance(covar_from_config, list):
-                    mash_config["covar"] = [str(f) for f in covar_from_config]
-                else:
-                    mash_config["covar"] = str(covar_from_config)
-
-            mash_config["qcovar"] = SNP_HERIT_CONFIG.get("qcovar")
-            mash_config["covar_discrete"] = SNP_HERIT_CONFIG.get("covar_discrete")
-
-            mash_config["loop_covars"] = SNP_HERIT_CONFIG.get("loop_covars", False)
-            mash_config["random_groups"] = SNP_HERIT_CONFIG.get("RV", None) if SNP_HERIT_CONFIG.get("RV") else None
-            mash_config["Naive"] = SNP_HERIT_CONFIG.get("Naive", False)
-
-            if SNP_HERIT_CONFIG.get("std"):
-                mash_config["std"] = SNP_HERIT_CONFIG["std"]
-            if SNP_HERIT_CONFIG.get("k") is not None:
-                mash_config["k"] = SNP_HERIT_CONFIG["k"]
-            if SNP_HERIT_CONFIG.get("RV"):
-                mash_config["RV"] = SNP_HERIT_CONFIG["RV"]
-
-            os.makedirs(os.path.dirname(str(output.estimates)), exist_ok=True)
-            argfile = str(output.estimates).replace(".csv", ".json")
-            with open(argfile, "w") as f:
-                json.dump(mash_config, f, indent=2)
-
-            import subprocess
-            subprocess.run(["MASH", "--argfile", argfile], check=True)
+            argfile=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "mash_config.json",
+            mash_config=lambda w: _mash_config(
+                prefix=OUT_DIR / w.ancestry / "simulations" / w.sim_name / "simulated",
+                pheno=[OUT_DIR / w.ancestry / "simulations" / w.sim_name / "simulated_pheno1.pheno"],
+                out=OUT_DIR / w.ancestry / "simulations" / w.sim_name / "herit",
+                npc=SNP_HERIT_CONFIG.get("npc", 10),
+                mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
+                eigenvec=OUT_DIR / w.ancestry / "simulations" / w.sim_name / "simulated.eigenvec",
+                covar=SNP_HERIT_CONFIG.get("covar"),
+                qcovar=SNP_HERIT_CONFIG.get("qcovar"),
+                covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),
+                pheno_filter=SNP_HERIT_CONFIG.get("pheno_filter"),
+                covar_filter=SNP_HERIT_CONFIG.get("covar_filter"),
+                loop_covars=SNP_HERIT_CONFIG.get("loop_covars", False),
+                random_groups=SNP_HERIT_CONFIG.get("RV"),
+                Naive=SNP_HERIT_CONFIG.get("Naive", False),
+                std=SNP_HERIT_CONFIG.get("std"),
+                k=SNP_HERIT_CONFIG.get("k"),
+                RV=SNP_HERIT_CONFIG.get("RV"),
+            ),
+        shell:
+            """
+            mkdir -p "$(dirname {output.estimates})"
+            cat > {params.argfile} << 'EOF'
+{params.mash_config}
+EOF
+            MASH --argfile {params.argfile}
+            """
