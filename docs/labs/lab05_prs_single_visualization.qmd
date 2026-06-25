@@ -13,258 +13,77 @@ format:
 
 ## Overview
 
-Polygenic risk scores (PRS) aggregate the effects of many genetic variants into a single score that predicts phenotype. The pipeline supports multiple PRS methods (PRSice-2, LDpred2) and compares their performance.
+Polygenic risk scores (PRS) aggregate the effects of many genetic variants into a single score that predicts phenotype. The pipeline runs PRSice-2 (clumping + thresholding) and LDpred2 (Bayesian point-normal prior). With a phenotype simulated at h² = 0.4, the PRS should capture a meaningful fraction of that signal.
 
-The genotypes are **synthetic** — resampled from 1000 Genomes haplotypes and available on Dataverse. The phenotype is simulated with a **known heritability of 0.4**, so the PRS should capture a meaningful fraction of that signal. However, because the ancestry is well-delineated, models fit in one ancestry may transfer less well to another.
-
-## Goals & Expectations
-
-Frame your exploration around these questions:
-
-1. **Score distribution** — Is the PRS approximately normally distributed, or are there multiple modes suggesting stratification?
-2. **Summary metrics** — What is the best-fit p-value threshold (PRSice-2) or the best-performing LDpred2 model? How much variance does each method explain?
-3. **Method comparison** — Do PRSice-2 and LDpred2 produce correlated scores? Which method performs better?
-4. **Signal capture** — Given h² = 0.4, what fraction of that heritability does the best PRS capture?
-
-With **synthetic data** and a well-controlled simulation, you should expect the PRS to explain a substantial portion of the 0.4 heritability — possibly in the range of R² = 0.1–0.3 depending on sample size and method.
-
-## Inputs & Outputs
-
-- **Inputs:** GWAS summary statistics (one ancestry); LD reference panel (from 1KG); target-study PGEN after QC; sample ancestry assignments from the global ancestry step.
-- **Outputs:** `best_pRS.prs` (PRSice-2 best-fit scores), `summary.csv` (threshold scan results), `prs_scores.tsv` (LDpred2 multi-model scores).
-- **Pipeline direction:** The PRS scores are the final output — they can be tested for association with the phenotype to evaluate prediction accuracy.
-
-## Upstream Pipeline Steps
-
-Building a PRS from summary statistics requires careful data harmonization:
-
-1. **Standard QC** — PRS computation uses variant effect sizes; low-quality variants with badly estimated effects add noise.
-2. **Global ancestry classification** (`predictAncestry.smk`) — Determines which 1KG population to use as the LD reference. **Mismatched ancestry between the GWAS and the LD reference is a common source of PRS bias.**
-3. **GWAS summary statistics** (external or simulated) — The effect-size estimates come from a single-ancestry GWAS. The synthetic data uses a simulated GWAS with h² = 0.4.
-4. **LD reference panel** (1KG, ancestry-matched) — PRS methods need an LD matrix to account for SNP correlations. Using a mismatched reference inflates or deflates PRS accuracy.
-5. **Clumping + thresholding** (PRSice-2) — Removes correlated SNPs (clumping) and tests multiple p-value thresholds to find the most predictive variant set.
-6. **LDpred2 model fitting** — Uses a Bayesian point-normal prior to adjust GWAS effect sizes for LD. The prior parameters (p-enrichment, h²) are tuned via a grid search.
-
-**Why independence matters here:** The GWAS summary statistics are from a study with unrelated samples. The target sample for PRS prediction must also be unrelated — KING filtering runs before ancestry classification. Related samples would give over-optimistic prediction R² because phenotype similarity due to relatedness is not captured by the PRS.
-
-## Configuration
-
-PRS settings are defined in the `prs` section of `config.yaml`. Here is a mock excerpt showing surrounding context:
+## Input
 
 ```yaml
-# config.yaml (mock excerpt — PRS-related keys only)
-OUT_DIR: "/scratch/.../output"
-REF: "/scratch/.../1000G_reference"
-
-ancestry:
-  model: pca
-  threshold: 0.8
-
-prs:
-  methods:
-    - prsice          # C+T (clumping + thresholding) via PRSice-2
-    - ldpred2         # Bayesian point-normal prior via LDpred2
-  ancestry_pairs:
-    - [AFR, EUR]      # train in AFR, test transfer to EUR
-  ld_reference: "/scratch/.../1KG_ld/afr"
-  # Summary statistics (external):
-  # gwas_sumstats: /path/to/simulated_gwas.txt
+# sandboxToy.yaml lines 139-148
+prsMethods:
+  single_ct:
+    enabled: false
+  single_prsice:
+    enabled: true
+  single_prscs:
+    enabled: false
+  single_ldpred2:
+    enabled: true
 ```
 
-- **`prs.methods`**: Which PRS methods to run. PRSice-2 tests multiple p-value thresholds and selects the best; LDpred2 uses a grid of prior parameters (p-enrichment, h²).
-- **`prs.ancestry_pairs`**: Defines training→target ancestry pairs. A mismatched LD reference is the most common cause of poor PRS performance.
-- **`prs.ld_reference`**: Ancestry-matched LD reference. Must match the training population.
+Only methods with `enabled: true` run. PRSice-2 tests multiple p-value thresholds and picks the best; LDpred2 scans a grid of prior parameters. For the full PRS pipeline reference, see the [PRS Tutorial](../tutorial_prs.rst).
 
-The GWAS summary statistics were **simulated** with h² = 0.4. The PRS outputs (`best_pRS.prs`, `prs_scores.tsv`) are the result of applying these methods to the synthetic target genotypes.
+## Output
 
-## Before You Begin
+### PRSice-2 Scores
 
-- **Required files:** `best_pRS.prs`, `summary.csv` in `{prs_out_dir}/single_prsice/`; `prs_scores.tsv` in `{prs_out_dir}/single_ldpred2/`
-- **Optional files:** Ancestry classifications from the global ancestry lab (for the density-by-ancestry plot)
-- **Disk space:** < 100 MB for all PRS score files
-- **Expected render time:** < 5 seconds per chunk
-- **Known issue:** If `best_pRS.prs` is empty, PRSice-2 may have found no significant threshold. Check `summary.csv` — if all R² ≈ 0, the phenotype may be unrelated to the GWAS.
-- **Reference:** The GWAS summary statistics were simulated with h² = 0.4.
-
-## Setup
-
-The code chunk below adds the conda R library path so that pre-installed packages are found without a local `install.packages()`. The environment at `/scratch.global/R25_files/r25_r_env/` is shared across users and contains all packages used in these labs:
-
-- **tidyverse** (ggplot2, dplyr, tidyr, readr, purrr, stringr, forcats, tibble) — data manipulation and plotting
-- **data.table** — fast file reading via `fread()`
-
-```{r setup}
-conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
-.libPaths(unique(c(.Library.site, .Library)))
-.libPaths(c(conda_env, .libPaths()))
+```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
-
-OUT_DIR <- "/path/to/your/pipeline/output"
-anc1 <- "AFR"
-anc2 <- "EUR"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
+anc1 <- "AFR"; anc2 <- "EUR"
 prs_out_dir <- file.path(OUT_DIR, "prs_inputs", paste0(anc1, "_", anc2))
-```
 
-## PRS Scores (PRSice-2)
-
-**File:** `{prs_out_dir}/single_prsice/best_pRS.prs`
-
-**Format:** Space-delimited with columns `FID`, `IID`, `PRS`. One row per sample. The score is computed at the best-fit p-value threshold selected by PRSice-2.
-
-**Pipeline step:** Generated by the PRSice-2 invocation in the PRS pipeline rules (conceptual grouping: `prs.smk` or analogous). PRSice-2 tests multiple p-value thresholds on the clumped+pruned summary statistics and selects the one maximizing R².
-
-```{r}
-prsice_score_path <- file.path(prs_out_dir, "single_prsice", "best_pRS.prs")
-prs_scores <- read_tsv(prsice_score_path, col_names = c("FID", "IID", "PRS"))
+prs_scores <- read_tsv(file.path(prs_out_dir, "single_prsice", "best_pRS.prs"),
+                        col_names = c("FID", "IID", "PRS"))
 glimpse(prs_scores)
-```
 
-## PRSice-2 Summary
-
-**File:** `{prs_out_dir}/single_prsice/summary.csv`
-
-**Format:** CSV with columns for p-value threshold, number of SNPs, R², p-value, and coefficient. Shows how performance varies across thresholds.
-
-**Pipeline step:** Generated by PRSice-2 alongside the best-score file.
-
-```{r}
-prsice_summary_path <- file.path(prs_out_dir, "single_prsice", "summary.csv")
-prsice_summary <- read_csv(prsice_summary_path)
-glimpse(prsice_summary)
-```
-
-## LDpred2 Scores
-
-**File:** `{prs_out_dir}/single_ldpred2/prs_scores.tsv`
-
-**Format:** TSV with columns `IID` and one column per LDpred2 model (different prior parameters). LDpred2 uses a Bayesian approach with a point-normal prior on effect sizes.
-
-**Pipeline step:** Generated by the LDpred2 R script in the PRS pipeline. It uses the LD reference to adjust summary statistics and compute posterior mean effect sizes.
-
-```{r}
-ldpred2_path <- file.path(prs_out_dir, "single_ldpred2", "prs_scores.tsv")
-ldpred2_scores <- read_tsv(ldpred2_path)
-glimpse(ldpred2_scores)
-```
-
-## PRS Score Distribution (PRSice-2)
-
-Is the score distribution approximately normal, or are there signs of stratification?
-
-```{r}
 ggplot(prs_scores, aes(x = PRS)) +
   geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
-  labs(
-    title = "PRS Score Distribution (PRSice-2)",
-    x = "Polygenic Risk Score",
-    y = "Number of Samples"
-  ) +
+  labs(x = "Polygenic Risk Score", y = "Number of Samples",
+       title = "PRS Score Distribution (PRSice-2)") +
+  theme_minimal()
+
+prsice_summary <- read_csv(file.path(prs_out_dir, "single_prsice", "summary.csv"))
+glimpse(prsice_summary)
+
+prsice_summary |>
+  ggplot(aes(x = Threshold, y = R.square)) +
+  geom_line(color = "steelblue") +
+  geom_point(color = "steelblue") +
+  labs(x = "P-value Threshold", y = expression(R^2),
+       title = "PRSice-2 Threshold Scan") +
   theme_minimal()
 ```
 
-**Expectation:** With synthetic 1KG-resampled data and a simulated phenotype, the PRS should be approximately normally distributed. If there is bimodality, it could indicate residual population stratification not fully captured by the ancestry adjustment.
+### LDpred2 Scores
 
-## PRS Density by Ancestry
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+ldpred2_scores <- read_tsv(file.path(prs_out_dir, "single_ldpred2", "prs_scores.tsv"))
+glimpse(ldpred2_scores)
 
-Does the PRS distribution shift across ancestry groups? This is a common sign of residual stratification.
-
-```{r}
-ancestry_class_path <- file.path(OUT_DIR, "01-globalAncestry", "ancestry_classifications.tsv")
-anc_labels <- read_tsv(ancestry_class_path)
-
-prs_anc <- prs_scores %>%
-  inner_join(anc_labels, by = c("IID" = "IID"))
-
-prs_anc %>%
-  ggplot(aes(x = PRS, fill = pca_predicted)) +
+ldpred2_scores |>
+  select(IID, contains("auto")) |>
+  pivot_longer(-IID, names_to = "model", values_to = "PRS") |>
+  ggplot(aes(x = PRS, fill = model)) +
   geom_density(alpha = 0.5) +
-  labs(
-    title = "PRS Distribution by Predicted Ancestry",
-    x = "Polygenic Risk Score (PRSice-2)",
-    y = "Density",
-    fill = "Ancestry"
-  ) +
+  labs(x = "PRS", y = "Density", fill = "Model",
+       title = "LDpred2 Auto Model Scores") +
   theme_minimal()
 ```
 
-**Expectation:** With synthetic data, the PRS distributions should overlap well across ancestries (the phenotype was simulated with the same genetic architecture for all groups). Shifted distributions would suggest the GWAS summary statistics were ancestry-specific and the LD reference was mismatched.
+## Discussion
 
-## Calibration Decile Plot
+1. **Given h² = 0.4, what fraction of that heritability does the best PRS capture?** (Look at the R² in summary.csv.)
+2. **Why would cross-ancestry transfer (training in AFR, testing in EUR) typically give lower R²?** What biological factors drive the drop?
+3. **PRSice-2 vs. LDpred2 — which method gives higher R²?** Why might the Bayesian approach outperform C+T?
 
-Split samples into PRS deciles and plot the mean observed phenotype per decile. A well-calibrated PRS should show a monotonic increasing trend.
-
-```{r}
-pheno_path <- file.path(OUT_DIR, "phenotypes.txt")
-pheno <- read_tsv(pheno_path)
-
-prs_w_pheno <- prs_scores %>%
-  inner_join(pheno, by = "IID") %>%
-  mutate(decile = ntile(PRS, 10))
-
-decile_summary <- prs_w_pheno %>%
-  group_by(decile) %>%
-  summarise(
-    mean_pheno = mean(Pheno, na.rm = TRUE),
-    se_pheno = sd(Pheno, na.rm = TRUE) / sqrt(n()),
-    .groups = "drop"
-  )
-
-decile_summary %>%
-  ggplot(aes(x = decile, y = mean_pheno)) +
-  geom_point(size = 3) +
-  geom_errorbar(aes(ymin = mean_pheno - 1.96 * se_pheno, ymax = mean_pheno + 1.96 * se_pheno), width = 0.3) +
-  geom_smooth(method = "lm", se = FALSE, color = "darkred", linetype = "dashed") +
-  labs(
-    title = "PRS Calibration: Observed Phenotype by PRS Decile",
-    x = "PRS Decile",
-    y = "Mean Observed Phenotype"
-  ) +
-  theme_minimal()
-```
-
-**Expectation:** A clear monotonic increase from decile 1 to 10 indicates the PRS is capturing true genetic signal. If the plot is flat, the PRS has no predictive power. If it is non-monotonic (e.g., decile 5 > decile 6), the PRS may be noisy or overfit.
-
-## Cross-Ancestry Transfer Exercise
-
-*Train a PRS in one ancestry and apply it to another.* Does prediction accuracy drop?
-
-```{r}
-# Requires PRS scores computed separately per ancestry.
-# This is a conceptual exercise — code depends on your file structure.
-#
-# 1. Identify EUR and AFR samples from ancestry_classifications.tsv
-# 2. For EUR-trained PRS, compute R² in:
-#    a) EUR hold-out samples (same-ancestry transfer)
-#    b) AFR samples (cross-ancestry transfer)
-# 3. Repeat for AFR-trained PRS
-# 4. Report the R² ratio: cross / same
-#
-# Expected: cross-ancestry R² is typically 40–70% of same-ancestry R²
-# due to differences in LD structure and allele frequencies.
-cat("Cross-ancestry PRS transfer analysis:\n")
-cat("See the 'Going Further' section for implementation details.\n")
-```
-
-**Expectation:** The cross-ancestry R² should be lower than same-ancestry R². The magnitude of the drop depends on the genetic distance between the training and target populations (larger for AFR→EUR or EAS→EUR than for EUR→SAS). With synthetic 1KG data, the drop should be measurable but not catastrophic.
-
-## Check Your Understanding
-
-1. **The calibration plot shows decile 1 with mean phenotype above decile 2.** Is this sampling noise or a sign of a poorly calibrated PRS? How would you test?
-2. **If the PRS distribution differs between EUR and AFR samples**, does that mean the PRS is biased, or does it reflect true differences in genetic architecture?
-3. **Why does the LDpred2 Bayesian approach usually outperform C+T?** What assumptions does C+T make that LDpred2 relaxes?
-
-## Troubleshooting
-
-| Problem | Likely Cause | Solution |
-|---------|-------------|----------|
-| `best_pRS.prs` is empty | PRSice-2 found no significant threshold | Check `summary.csv` — if all R² ≈ 0, the GWAS may have no true signals; verify the simulated h² was correctly applied |
-| All PRS scores are identical | Clumping removed all SNPs | The LD reference may be mismatched to the target; check chromosome consistency between reference and target |
-| LDpred2 scores loaded as character | Numeric conversion issue with read_tsv | Use `type_convert()` or `mutate(across(-IID, as.numeric))` |
-| Decile plot is flat | PRS has no predictive power | Verify the GWAS summary statistics have at least some genome-significant SNPs; check that the LD reference population matches the GWAS population |
-
-## Going Further
-
-- **P-value threshold scan**: Plot R² vs. p-value threshold from `summary.csv`. Does PRSice-2 find a clear optimal threshold, or is the surface flat?
-- **Best LDpred2 model**: Load all LDpred2 grid columns and identify which prior (p-enrichment, h²) gives the best R². Is it close to the true h² = 0.4?
-- **Multi-ancestry PRS** (requires `prs_multi` config): Compare the single-ancestry PRS (this lab) to the multi-ancestry metaPRS. Does combining ancestries improve prediction R²?
-- **Null simulation**: Shuffle the phenotype vector, re-run PRS, and verify that R² ≈ 0. Repeat 100 times to estimate the empirical null distribution.
+See the [PRS Tutorial](../tutorial_prs.rst) for cross-ancestry transfer exercises, multi-ancestry metaPRS comparison, and null simulations.

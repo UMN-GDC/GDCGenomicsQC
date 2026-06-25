@@ -13,248 +13,79 @@ format:
 
 ## Overview
 
-Local ancestry deconvolves the two haplotypes at each genomic position into their ancestral origins. The pipeline uses RFMix (via the `phase.smk` and `ancestry.smk` rules) to phase genotypes and infer ancestry tracts. The key outputs include global ancestry proportions (`ancestry_full.txt`), per-chromosome ancestry tracts in MSP format, and per-SNP local ancestry calls.
+Local ancestry deconvolves the two haplotypes at each genomic position into their ancestral origins. The pipeline phases with ShapeIt4 then runs RFMix to infer ancestry tracts along each chromosome. This is the most computationally intensive step (phasing is the bottleneck), but the outputs are intuitive: ancestry blocks along each chromosome, per-SNP posterior probabilities, and genome-wide ancestry proportions.
 
-The genotypes are **synthetic** — resampled from 1000 Genomes haplotypes and available on Dataverse. Because the underlying haplotypes have clear population labels, local ancestry assignments should be **highly confident**, with long contiguous tracts and few switch errors.
-
-## Goals & Expectations
-
-Frame your exploration around these questions:
-
-1. **Global ancestry proportions** — Do the RFMix-derived global proportions match the per-sample ancestry composition expected from the known population structure?
-2. **Local ancestry tracts** — Are tracts long and contiguous, or are there many short fragments suggesting phasing uncertainty?
-3. **Per-SNP posterior probabilities** — Do most SNPs have posterior probability > 0.9 for a single ancestry?
-4. **High-proportion samples** — Which samples have elevated African ancestry (>20%)? Does this match their known label?
-
-Given the **synthetic origin** and the clean 1KG reference, you should expect **long ancestry blocks** and **high-confidence calls** with minimal uncertainty.
-
-## Inputs & Outputs
-
-- **Inputs:** Phased study PGEN/VCF (from ShapeIt4); 1000 Genomes phased reference panel; RFMix configuration (number of generations, EM iterations).
-- **Outputs:** `ancestry_full.txt` (genome-wide ancestry proportions per sample), `chr{chr}.lai.msp.tsv` (per-chromosome ancestry tracts), `chr{chr}.lai.fb.tsv` (forwards-backwards probabilities), `per_snp_local_ancestry.tsv` (combined SNP-level calls).
-- **Pipeline direction:** The global ancestry proportions (`ancestry_full.txt`) feed back into the global ancestry classification step (as the `rfmix_` posterior probabilities). The per-SNP calls can be used for downstream local-ancestry-aware analyses.
-
-## Upstream Pipeline Steps
-
-Local ancestry inference is one of the most computationally intensive steps. Key upstream dependencies:
-
-1. **Initial QC + Standard QC** — RFMix requires high-quality variants. Low-quality variants create false-positive ancestry switches.
-2. **Unrelated sample extraction** (`extractUnrelatedSubjects` in `phase.smk`) — Removes related samples before phasing and RFMix. **Related samples share long haplotypes by descent**, which would be misidentified as shared ancestry tracts.
-3. **Phasing with ShapeIt4** (`phaseShapeIt4` in `phase.smk`) — RFMix requires **phased haplotypes** as input (not unphased genotypes). ShapeIt4 uses a reference panel and statistical models to infer the most likely haplotype phase. Phase errors propagate directly to ancestry-switch errors.
-4. **Crossmap** — Ensures study variants and reference variants use the same genome build and reference allele.
-5. **Per-chromosome processing** — Both phasing and RFMix run per chromosome to avoid memory exhaustion on large datasets.
-
-**Why independence matters here:** Phasing assumes unrelated individuals — related samples share long IBD segments that violate the phasing model's independence assumptions. RFMix then compares each study haplotype against reference haplotypes; related study samples would produce artificially long shared tracts.
-
-## Configuration
-
-Local ancestry inference is controlled by the `localAncestry` section of `config.yaml`. Here is a mock excerpt showing surrounding context:
+## Input
 
 ```yaml
-# config.yaml (mock excerpt — local-ancestry-related keys only)
-OUT_DIR: "/scratch/.../output"
-REF: "/scratch/.../1000G_reference"
-
-ancestry:
-  model: pca
-
+# sandboxToy.yaml lines 66-71
 localAncestry:
-  RFMIX: true              # enable/disable RFMix (default: false)
-  chromosomes: [1..22]     # chromosomes to process (default: all)
-  # RFMix tuning (optional):
-  # em_iterations: 2
-  # generations: 12
+    RFMIX: false
+    chromosomes: [20, 21]
 ```
 
-- **`localAncestry.RFMIX`**: When `true`, the pipeline phases with ShapeIt4 then runs RFMix on the unrelated subset. When `false`, the `02-localAncestry/` directory will be empty.
-- **`localAncestry.chromosomes`**: Process a subset to save time during testing. All autosomes is the default.
+When `RFMIX: true`, the pipeline runs phasing + RFMix on the specified chromosomes (use all autosomes for production). See the [Multi-Ancestry PRS Tutorial](../tutorial_prs_multi.rst) for the full local ancestry pipeline reference.
 
-The outputs below (`ancestry_full.txt`, `chr*.lai.msp.tsv`, `chr*.lai.fb.tsv`, `per_snp_local_ancestry.tsv`) exist only when `RFMIX: true`.
+## Output
 
-## Before You Begin
+### Global Ancestry Proportions
 
-- **Required files:** `ancestry_full.txt`, `chr{chr}.lai.msp.tsv`, `chr{chr}.lai.fb.tsv`, `per_snp_local_ancestry.tsv` in `{local_anc_dir}/`
-- **Disk space:** MSP files can be several GB per chromosome (11K × 377M variants); the `per_snp_local_ancestry.tsv` is a summarized subset
-- **Expected render time:** 30–60 seconds for MSP loading; < 5 seconds for aggregated files
-- **Known issue:** The forward-backward `.fb.tsv` files can be very large — if loading fails, try reading only the first chromosome or using `data.table::fread` with `nrows`
-- **Reference:** RFMix was run with 2 EM steps and the default number of generations (12). The reference panel is 1000 Genomes Phase 3.
-
-## Setup
-
-The code chunk below adds the conda R library path so that pre-installed packages are found without a local `install.packages()`. The environment at `/scratch.global/R25_files/r25_r_env/` is shared across users and contains all packages used in these labs:
-
-- **tidyverse** (ggplot2, dplyr, tidyr, readr, purrr, stringr, forcats, tibble) — data manipulation and plotting
-- **data.table** — fast file reading via `fread()`
-
-```{r setup}
-conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
-.libPaths(unique(c(.Library.site, .Library)))
-.libPaths(c(conda_env, .libPaths()))
+```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
-
-OUT_DIR <- "/path/to/your/pipeline/output"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 local_anc_dir <- file.path(OUT_DIR, "02-localAncestry")
-chr <- 20
-```
 
-## Global Ancestry Proportions
-
-**File:** `{local_anc_dir}/ancestry_full.txt`
-
-**Format:** TSV with one row per sample. Columns include `IID` followed by one column per ancestry (e.g., `AFR`, `EUR`, `AMR`). Each value is the genome-wide proportion of that ancestry averaged across both haplotypes.
-
-**Pipeline step:** Generated by `workflow/scripts/rfmix_to_ancestry.R` (consolidated from gai.R) in the `run_rfmix` aggregate rule (`ancestry.smk`). It reads all per-chromosome `.msp.tsv` files, computes segment-length-weighted ancestry proportions, and writes the global table.
-
-```{r}
-anc_full_path <- file.path(local_anc_dir, "ancestry_full.txt")
-anc_full <- read_tsv(anc_full_path)
+anc_full <- read_tsv(file.path(local_anc_dir, "ancestry_full.txt"))
 glimpse(anc_full)
-```
 
-## Per-Chromosome MSP File
-
-**File:** `{local_anc_dir}/chr{chr}.lai.msp.tsv`
-
-**Format:** RFMix "most recent shared ancestor" output. Each row is a genomic segment; columns include `chm`, `spos`, `epos`, `snps`, and one column per haplotype per sample with the ancestry integer code.
-
-**Pipeline step:** Generated by RFMix (via `shapeit4` + `rfmix`) in the `run_rfmix` rule. The per-chromosome phasing is done by `phase.smk` (`phaseShapeit4`), followed by RFMix on the unrelated subset.
-
-```{r}
-msp_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.msp.tsv"))
-msp <- read_tsv(msp_path)
-glimpse(msp)
-```
-
-## Fragment File (Ancestry Tracts)
-
-**File:** `{local_anc_dir}/chr{chr}.lai.fb.tsv`
-
-**Format:** Forwards-backwards posterior probabilities from RFMix. One row per SNP per sample, with columns for the probability of each ancestry at that SNP.
-
-**Pipeline step:** Generated alongside the MSP file by RFMix. Used internally by `rfmix_to_ancestry.R` to compute per-SNP ancestry calls.
-
-```{r}
-fb_path <- file.path(local_anc_dir, paste0("chr", chr, ".lai.fb.tsv"))
-fb <- read_tsv(fb_path)
-glimpse(fb)
-```
-
-## Per-SNP Local Ancestry
-
-**File:** `{local_anc_dir}/per_snp_local_ancestry.tsv`
-
-**Format:** Combined output across all chromosomes. Columns: `SNP`, `CHR`, `BP`, `IID`, `predicted_ancestry`, `prob_AFR`, `prob_EUR`, `prob_AMR`.
-
-**Pipeline step:** Generated by a post-processing step in the `run_rfmix` rule that collapses the fragment files into a single per-SNP calls table.
-
-```{r}
-snp_la_path <- file.path(local_anc_dir, "per_snp_local_ancestry.tsv")
-snp_la <- read_tsv(snp_la_path,
-  col_names = c("SNP", "CHR", "BP", "IID", "predicted_ancestry",
-                "prob_AFR", "prob_EUR", "prob_AMR"))
-glimpse(snp_la)
-```
-
-## Manhattan Plot of Local Ancestry
-
-Visualize per-SNP posterior probability for European ancestry across the genome. Each point is a SNP; color groups chromosomes.
-
-```{r}
-ggplot(snp_la, aes(x = BP, y = prob_EUR, color = as.factor(CHR))) +
-  geom_point(size = 0.5, alpha = 0.7) +
-  facet_wrap(~CHR, scales = "free_x", nrow = 2) +
-  labs(
-    title = "Per-SNP European Local Ancestry Probability",
-    x = "Base Pair Position",
-    y = "Posterior Probability (EUR)",
-    color = "Chromosome"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-**Expectation:** For a sample of predominantly European ancestry, you should see long stretches with prob_EUR near 1.0. Any dips to intermediate values may indicate admixture or phasing uncertainty. With synthetic data, tracts should be clean and probabilities extreme.
-
-## Samples with High African Ancestry
-
-Which samples have >20% African ancestry according to RFMix?
-
-```{r}
-high_afr <- anc_full %>%
-  filter(AFR > 0.2) %>%
-  arrange(desc(AFR))
+high_afr <- anc_full |> filter(AFR > 0.2) |> arrange(desc(AFR))
 print(high_afr)
 ```
 
-**Expectation:** Only samples that are genuinely admixed or from African-ancestry populations should appear here. The synthetic resampling preserves the original 1KG population labels, so these proportions should match the known composition.
+### Ancestry Tracts (MSP)
 
-## Ancestry Tract Track Plot
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+chr <- 20
+msp <- read_tsv(file.path(local_anc_dir, paste0("chr", chr, ".lai.msp.tsv")))
+glimpse(msp)
 
-Visualize ancestry tracts along a chromosome as colored segments. This karyogram-style plot shows ancestry switches most intuitively.
-
-```{r}
 sample_for_tract <- colnames(msp)[grep("^[^.]+\\.\\d+$", colnames(msp))][1:10]
 
-msp_long <- msp %>%
-  select(chm, spos, epos, all_of(sample_for_tract)) %>%
-  pivot_longer(cols = all_of(sample_for_tract), names_to = "sample_hap", values_to = "ancestry_code")
-
-msp_long %>%
-  mutate(bp_mb = spos / 1e6) %>%
+msp |>
+  select(chm, spos, epos, all_of(sample_for_tract)) |>
+  pivot_longer(cols = all_of(sample_for_tract), names_to = "sample_hap", values_to = "ancestry_code") |>
+  mutate(bp_mb = spos / 1e6) |>
   ggplot(aes(x = bp_mb, xend = epos / 1e6, y = sample_hap, yend = sample_hap, color = as.factor(ancestry_code))) +
   geom_segment(linewidth = 3) +
-  labs(
-    title = paste0("Ancestry Tracts on Chromosome ", chr),
-    x = "Position (Mb)",
-    y = "Sample (Haplotype)",
-    color = "Ancestry"
-  ) +
+  labs(x = "Position (Mb)", y = "Sample (Haplotype)", color = "Ancestry",
+       title = paste0("Ancestry Tracts on Chromosome ", chr)) +
   theme_minimal() +
   theme(axis.text.y = element_blank())
 ```
 
-**Expectation:** Each sample-haplotype row should show long, contiguous blocks of a single color. Many short alternating blocks suggest phasing errors or genuine admixture. With synthetic 1KG data, tracts should be long and switches rare.
+### Per-SNP Local Ancestry
 
-## Local vs. Global Concordance
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+snp_la <- read_tsv(file.path(local_anc_dir, "per_snp_local_ancestry.tsv"),
+  col_names = c("SNP", "CHR", "BP", "IID", "predicted_ancestry",
+                "prob_AFR", "prob_EUR", "prob_AMR"))
+glimpse(snp_la)
 
-Compare the RFMix-derived genome-wide ancestry proportions (from `ancestry_full.txt`) with the random forest `rfmix_*` classification probabilities. They should agree closely.
-
-```{r}
-local_global <- anc_full %>%
-  inner_join(class_prob, by = "IID")
-
-p_afr <- local_global %>%
-  ggplot(aes(x = AFR, y = rfmix_AFR)) +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +
-  labs(
-    title = "RFMix Global AFR Proportion vs. Random Forest AFR Probability",
-    x = "RFMix Global Proportion (from ancestry_full.txt)",
-    y = "Random Forest Probability (from classificationProbabilities.tsv)"
-  ) +
-  theme_minimal()
-print(p_afr)
+snp_la |>
+  ggplot(aes(x = BP, y = prob_EUR, color = as.factor(CHR))) +
+  geom_point(size = 0.5, alpha = 0.7) +
+  facet_wrap(~CHR, scales = "free_x", nrow = 2) +
+  labs(x = "Base Pair Position", y = "Posterior Probability (EUR)",
+       color = "Chromosome",
+       title = "Per-SNP European Local Ancestry Probability") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-**Expectation:** Points should cluster near the y = x line. Systematic deviation suggests one of the two methods is biased. With clean synthetic data, agreement should be high (R² > 0.95).
+## Discussion
 
-## Check Your Understanding
+1. **Samples with many short ancestry tracts — is this real admixture or a phasing artifact?** How would you distinguish them?
+2. **If most samples are assigned a single ancestry**, does that mean RFMix failed or that the population is genuinely unadmixed? Check the reference panel composition.
+3. **How do the global ancestry proportions from `ancestry_full.txt` compare to the RFMix posterior probabilities from the classification step?** (See lab03.)
 
-1. **Refix a sample with multiple ancestry switches on chr20.** Is this biologically real (recent admixture) or an artifact (phasing error)? How would you distinguish them?
-2. **Which is more robust to phasing errors: the segment-length-weighted global ancestry from `.msp.tsv` or the Q-mean from `.rfmix.Q` files?** Why?
-3. **If the local ancestry tracts show very short blocks (< 1 Mb) for most samples**, what does that suggest about the RFMix parameters or the reference panel?
-
-## Troubleshooting
-
-| Problem | Likely Cause | Solution |
-|---------|-------------|----------|
-| `.fb.tsv` is too large to load | FB files are chr × samples × SNPs | Use `data.table::fread` with `nrows = 10000`, or load only one chromosome |
-| MSP file has no ancestry columns | RFMix failed silently | Check `run_rfmix` log; verify the phased VCF and reference panel are on the same build |
-| Global proportions don't sum to 1 | Numerical precision in segment-length weights | The `rfmix_to_ancestry.R` script sums proportions; slight deviations (< 0.01) are expected |
-| Tract plot shows only one color | All samples assigned a single ancestry | Check if RFMix received only one reference population; verify the `.ref.Classes.txt` file |
-
-## Going Further
-
-- **Recombination hotspot detection**: Count ancestry switches per Mb for each sample. Do switch rates correlate with known recombination hotspots (e.g., from HapMap)?
-- **Per-SNP ancestry at known genes**: Extract local ancestry calls at a gene of interest (e.g., `LCT` on chr2). Do samples with European ancestry at that locus have a different phenotype distribution?
-- **Compare RFMix to FLARE**: In the literature, FLARE and RFMix give similar local ancestry calls. If you have FLARE output, compute the per-SNP concordance rate between the two methods.
+See the [Multi-Ancestry PRS Tutorial](../tutorial_prs_multi.rst) for troubleshooting, parameter tuning (generations, EM iterations), and comparing RFMix to other local ancestry methods.

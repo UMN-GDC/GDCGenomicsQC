@@ -13,282 +13,127 @@ format:
 
 ## Overview
 
-Quality control is the first step in any genomic analysis. The pipeline runs `initialFilter.sh` (per-chromosome via `convertPlinkPerChromosome`) to compute per-sample and per-variant metrics like missingness, allele frequency, and Hardy-Weinberg equilibrium. These metrics determine which variants and samples survive to downstream analysis.
+Before any downstream analysis, you need to know your data is clean. Per-sample and per-variant missingness, allele frequency distributions, and Hardy-Weinberg equilibrium p-values reveal genotyping errors, poor-quality DNA samples, and batch effects.
 
-The data you are working with are **synthetic genotypes** — simulated by resampling haplotypes from the 1000 Genomes Project reference panel. Because they are derived from known populations, the underlying population structure is clean and ancestry separation is strong. The synthetic PLINK filesets are publicly available on **Dataverse**.
+The data are **synthetic** — resampled from 1000 Genomes haplotypes — so the distributions should look textbook-perfect: tight peaks near 0% missingness, the classic U-shaped AF spectrum, and uniform HWE p-values.
 
-## Goals & Expectations
+## Input
 
-Frame your exploration around these questions, which the visualizations will help you answer:
-
-1. **Sample missingness** — Are most samples well-genotyped (>98% call rate)? What fraction would be flagged at a 2% or 10% threshold?
-2. **Variant missingness** — Do the vast majority of variants have complete or near-complete genotyping? How many would fail a 2% threshold?
-3. **Allele frequency** — Does the distribution show the classic U-shape (many rare and many common variants, fewer at intermediate frequency)? Does this hold across chromosomes?
-4. **Hardy-Weinberg equilibrium** — Are there variants with extreme departure from HWE that might indicate genotyping error?
-
-Given the synthetic nature of the data, you should expect **clean distributions** with few outliers — the resampling process does not introduce the artefactual missingness or genotyping errors found in real studies.
-
-## Inputs & Outputs
-
-- **Inputs:** Raw PLINK 2 `.pgen` / `.pvar` / `.psam` filesets from Dataverse (synthetic, 1KG-resampled).
-- **Outputs:** Per-sample missingness (`initial.smiss`), per-variant missingness (`initial.vmiss`), HWE p-values (`standardFilter.hardy`), and allele frequencies (`MAF_check.afreq`).
-- **Pipeline direction:** These outputs feed into the next step — Standard QC (`applyStandardQualityControl` or `filterStandard.sh`), which uses these metrics to apply hard filters (e.g., `--geno`, `--mind`, `--maf`, `--hwe`).
-
-## Upstream Pipeline Steps
-
-This is the **first analysis step** in the pipeline — no Snakemake rules run before `initialFilter.sh`. The only prerequisite is downloading the synthetic genotypes from Dataverse and placing them at the configured input path.
-
-The data itself was constructed by **resampling haplotypes from the 1000 Genomes Project**. This means the variants and their frequencies mirror a real, well-characterized reference panel, which is why you can expect clean QC distributions.
-
-## Configuration
-
-The QC thresholds used by the pipeline are set in `config.yaml`. Here is a mock excerpt showing how the relevant keys sit within the broader config:
+The pipeline's QC thresholds are set partly in the config and partly hardcoded in the filtering scripts. The config controls the conversion-stage filters:
 
 ```yaml
-# config.yaml (mock excerpt — only QC-related keys shown)
-INPUT: "/scratch/.../synthetic_data/{CHR}"   # input PGEN pattern
-OUT_DIR: "/scratch/.../output"               # top-level output directory
-REF: "/scratch/.../1000G_reference"          # reference panel path
+# sandboxToy.yaml lines 2-19
+INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
+OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr"
+chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-thresholds:
-  geno: 0.02       # --geno: max variant missingness (0.02 = 2%)
-  mind: 0.02       # --mind: max sample missingness (0.02 = 2%)
-  maf: 0.01        # --maf: minor allele frequency cutoff (0.01 = 1%)
-  hwe: 1e-6        # --hwe: Hardy-Weinberg equilibrium p-value cutoff
+convertNfilt:
+    info_r2_min: 0.9
+    filter_pass: true
+    qual_min: null
 ```
 
-These values are passed to `initialFilter.sh` and `filterStandard.sh`. Changing them will alter the output files you are loading below. The visualizations will help you decide whether the defaults are appropriate.
+The hard MAF (0.01), HWE (1e-6), and missingness (0.02) thresholds are in `workflow/scripts/filterStandard.sh` and `workflow/rules/Standard_QC.smk`. The full pipeline reference is in the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst).
 
-## Before You Begin
+## Output
 
-- **Required files:** `initial.smiss`, `initial.vmiss`, `standardFilter.hardy`, `MAF_check.afreq` in `{OUT_DIR}/{subset}/`
-- **Disk space:** < 10 MB for these QC metric files
-- **Expected render time:** < 10 seconds per chunk
-- **Known issue:** If `initial.smiss` is empty, re-run `convertPlinkPerChromosome` — the `initialFilter.sh` script may have failed silently.
-- **Reference:** The `--hardy` flag in PLINK2 produces a `.hardy` extension (not `.hwe`). The file `standardFilter.hardy` may be in a temporary directory; if missing, run the `plotHWE` rule, or use `zoomhwe.hwe` for the extreme tail.
+### Sample Missingness
 
-## Setup
-
-The code chunk below adds the conda R library path so that pre-installed packages are found without a local `install.packages()`. The environment at `/scratch.global/R25_files/r25_r_env/` is shared across users and contains all packages used in these labs:
-
-- **tidyverse** (ggplot2, dplyr, tidyr, readr, purrr, stringr, forcats, tibble) — data manipulation and plotting
-- **data.table** — fast file reading via `fread()`
-- **corrplot** — correlation matrix visualization (optional, PRS labs only)
-
-```{r setup}
-conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
-.libPaths(unique(c(.Library.site, .Library)))
-.libPaths(c(conda_env, .libPaths()))
+```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
-
-OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr2"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 subset <- "full"
-# chromosomes <- 13:22  # uncomment for per-chromosome mode
-```
 
-## Sample Missingness
-
-**File:** `{OUT_DIR}/{subset}/initial.smiss`
-
-**Format:** PLINK2 sample-missingness report — one row per sample with columns `#IID`, `F_MISS` (fraction missing), `N_MISS` (count missing), `N_OBS` (count observed).
-
-**Pipeline step:** Generated by `plink2 --pfile ... --missing sample-only` inside `workflow/scripts/initialFilter.sh`, which is called by the `convertPlinkPerChromosome` rule in `convertPlink.smk`.
-
-```{r}
 smiss <- read_tsv(file.path(OUT_DIR, subset, "initial.smiss"))
 glimpse(smiss)
-```
 
-## Variant Missingness
-
-**File:** `{OUT_DIR}/{subset}/initial.vmiss`
-
-**Format:** PLINK2 variant-missingness report — one row per variant with columns `#CHROM`, `POS`, `ID`, `REF`, `ALT`, `F_MISS`, `N_MISS`, `N_OBS`.
-
-**Pipeline step:** Generated by `plink2 --pfile ... --missing variant-only` in the same `initialFilter.sh` script.
-
-```{r}
-vmiss <- read_tsv(file.path(OUT_DIR, subset, "initial.vmiss"))
-glimpse(vmiss)
-```
-
-## Hardy-Weinberg Equilibrium & Allele Frequency
-
-**File (HWE):** `{OUT_DIR}/{subset}/standardFilter.hardy`
-
-**Format:** PLINK2 HWE report — columns `#CHROM`, `POS`, `ID`, `REF`, `ALT`, `O(HET)`, `E(HET)`, `P`. Contains variants after MAF filtering from Standard QC.
-
-**File (AF):** `{OUT_DIR}/{subset}/MAF_check.afreq`
-
-**Format:** PLINK2 allele-frequency report — columns `#CHROM`, `ID`, `REF`, `ALT`, `ALT_FREQS`, `OBS_CT`.
-
-**Pipeline step:** Both generated by `applyStandardQualityControl` / `filterStandard.sh` — `--hardy` for HWE (with `zoomhwe.hwe` extract of p < 1e-5), and `--freq` for allele frequencies.
-
-```{r}
-hwe <- read_tsv(file.path(OUT_DIR, subset, "standardFilter.hardy"))
-glimpse(hwe)
-
-freq <- read_tsv(file.path(OUT_DIR, subset, "MAF_check.afreq"))
-glimpse(freq)
-```
-
-## Sample Missingness Histogram
-
-Are most samples clustered near 0% missingness? The dashed red lines mark 2% and 10% thresholds — typical soft and hard cutoffs in QC pipelines.
-
-```{r}
 ggplot(smiss, aes(x = F_MISS * 100)) +
   geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
   geom_vline(xintercept = c(2, 10), color = "red", linetype = "dashed") +
-  labs(
-    title = "Sample Missingness Distribution",
-    x = "Missing Genotypes (%)",
-    y = "Number of Samples"
-  ) +
+  labs(x = "Missing Genotypes (%)", y = "Number of Samples",
+       title = "Sample Missingness Distribution") +
   theme_minimal()
 ```
 
-**Expectation:** Given the synthetic data origin, nearly all samples should fall well below 2% missingness. Real datasets typically show a long right tail.
+### Variant Missingness
 
-## Variant Missingness Histogram
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+vmiss <- read_tsv(file.path(OUT_DIR, subset, "initial.vmiss"))
+glimpse(vmiss)
 
-Do most variants have high call rates?
-
-```{r}
 ggplot(vmiss, aes(x = F_MISS * 100)) +
   geom_histogram(bins = 30, fill = "darkgreen", alpha = 0.7) +
   geom_vline(xintercept = 2, color = "red", linetype = "dashed") +
-  labs(
-    title = "Variant Missingness Distribution",
-    x = "Missing Calls (%)",
-    y = "Number of Variants"
-  ) +
+  labs(x = "Missing Calls (%)", y = "Number of Variants",
+       title = "Variant Missingness Distribution") +
   theme_minimal()
 ```
 
-**Expectation:** Again, synthetic data should produce a tight peak near 0%. Few, if any, variants should exceed the 2% threshold.
+### Allele Frequency
 
-## Allele Frequency Distribution
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+freq <- read_tsv(file.path(OUT_DIR, subset, "MAF_check.afreq"))
+glimpse(freq)
 
-Does the allele-frequency spectrum show the textbook U-shape? Are there differences when faceted by chromosome?
-
-```{r}
 freq %>%
   ggplot(aes(x = ALT_FREQS)) +
-  geom_histogram() +
+  geom_histogram(bins = 40, fill = "coral", alpha = 0.7) +
+  labs(x = "Alternate Allele Frequency", y = "Count",
+       title = "Allele Frequency Spectrum") +
   theme_minimal()
 
 freq %>%
   ggplot(aes(x = ALT_FREQS)) +
-  geom_histogram() +
-  theme_minimal() +
-  facet_wrap(~`#CHROM`)
+  geom_histogram(bins = 40, fill = "coral", alpha = 0.7) +
+  facet_wrap(~`#CHROM`) +
+  labs(x = "Alternate Allele Frequency", y = "Count",
+       title = "Allele Frequency by Chromosome") +
+  theme_minimal()
 ```
 
-**Expectation:** Because the genotypes are resampled from 1KG (a diverse, well-characterized panel), you should see elevated counts at both extremes (rare variants with AF near 0, common variants with AF near 1) and fewer variants in the middle. Chromosomes should look broadly similar.
+### Hardy-Weinberg Equilibrium
 
-## High-Missingness Samples
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+hwe <- read_tsv(file.path(OUT_DIR, subset, "standardFilter.hardy"))
+glimpse(hwe)
 
-Which samples, if any, would be flagged by a 2% missingness threshold?
-
-```{r}
-high_missing <- smiss %>%
-  filter(F_MISS > 0.02) %>%
-  arrange(desc(F_MISS))
-print(high_missing)
-```
-
-**Expectation:** With synthetic data, this list should be very short or empty. In a real study, this is where sample-level QC failures (poor DNA quality, failed genotyping) would appear.
-
-## HWE P-Value Distribution
-
-Do HWE p-values follow the expected uniform distribution (most variants should not deviate from HWE in a well-genotyped dataset)?
-
-```{r}
 hwe %>%
   ggplot(aes(x = P)) +
   geom_histogram(bins = 50, fill = "purple", alpha = 0.7) +
   scale_x_log10() +
-  labs(
-    title = "HWE P-Value Distribution",
-    x = "P-value (log scale)",
-    y = "Number of Variants"
-  ) +
+  labs(x = "P-value (log scale)", y = "Number of Variants",
+       title = "HWE P-Value Distribution") +
   theme_minimal()
 ```
 
-**Expectation:** Most variants should have p-values near 1.0 (no HWE deviation). A spike near p < 1e-6 would indicate systematic genotyping errors. With synthetic 1KG-resampled data, the distribution should be nearly flat.
+### MAF vs HWE
 
-## MAF vs. HWE
-
-Are low-frequency variants more prone to HWE deviation? Jointly visualize MAF and HWE to detect problematic variant classes.
-
-```{r}
+```{r, message=FALSE, warning=FALSE, error=FALSE}
 freq %>%
   inner_join(hwe, by = c("#CHROM" = "#CHROM", "ID" = "ID")) %>%
   ggplot(aes(x = ALT_FREQS, y = -log10(P))) +
   geom_point(alpha = 0.3, size = 0.5) +
-  labs(
-    title = "MAF vs. HWE",
-    x = "Alternate Allele Frequency",
-    y = expression(-log[10](HWE ~ P))
-  ) +
+  labs(x = "Alternate Allele Frequency",
+       y = expression(-log[10](HWE ~ P)),
+       title = "MAF vs. HWE") +
   theme_minimal()
 ```
 
-**Expectation:** There should be no strong correlation between MAF and HWE deviation. If low-MAF variants show systematically lower HWE p-values, that suggests genotyping errors concentrated in rare variants.
+### Apply Thresholds
 
-## Apply Your Own Thresholds
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+thresholds <- list(geno = 0.02, mind = 0.02, maf = 0.01, hwe = 1e-6)
 
-How many variants and samples survive if you change the standard QC thresholds? The pipeline defaults are:
-
-| Filter | Threshold |
-|--------|-----------|
-| `--geno` (variant missingness) | 0.02 (2%) |
-| `--mind` (sample missingness) | 0.02 (2%) |
-| `--maf` | 0.01 |
-| `--hwe` | 1e-6 |
-
-Calculate how many variants pass each threshold:
-
-```{r}
-thresholds <- list(
-  geno = 0.02,
-  mind = 0.02,
-  maf = 0.01,
-  hwe = 1e-6
-)
-
-n_var_pass_geno <- vmiss %>% filter(F_MISS <= thresholds$geno) %>% nrow()
-n_var_pass_hwe <- hwe %>% filter(P >= thresholds$hwe) %>% nrow()
-n_var_pass_maf <- freq %>% filter(ALT_FREQS >= thresholds$maf & ALT_FREQS <= (1 - thresholds$maf)) %>% nrow()
-n_samp_pass_mind <- smiss %>% filter(F_MISS <= thresholds$mind) %>% nrow()
-
-cat("Variants passing --geno 0.02:", n_var_pass_geno, "\n")
-cat("Variants passing --hwe 1e-6:", n_var_pass_hwe, "\n")
-cat("Variants passing --maf 0.01:", n_var_pass_maf, "\n")
-cat("Samples passing --mind 0.02:", n_samp_pass_mind, "\n")
+cat("Variants passing --geno 0.02:", vmiss %>% filter(F_MISS <= thresholds$geno) %>% nrow(), "\n")
+cat("Variants passing --hwe 1e-6:", hwe %>% filter(P >= thresholds$hwe) %>% nrow(), "\n")
+cat("Variants passing --maf 0.01:", freq %>% filter(ALT_FREQS >= thresholds$maf & ALT_FREQS <= (1 - thresholds$maf)) %>% nrow(), "\n")
+cat("Samples passing --mind 0.02:", smiss %>% filter(F_MISS <= thresholds$mind) %>% nrow(), "\n")
 ```
 
-**Expectation:** With synthetic data, nearly all variants and samples should pass these thresholds. In a real dataset, you would see larger drop-offs — especially for MAF and HWE.
+## Discussion
 
-## Check Your Understanding
+1. **Why does the allele-frequency histogram show a U-shape?** What does that tell you about the genetic diversity of the 1KG reference panel?
+2. **If a dataset had a spike of HWE p-values near 0**, what are two possible explanations?
+3. **Sample vs. variant missingness**: which is more concerning when both exceed 5%?
 
-1. **Why does the allele-frequency histogram show a U-shape?** What does this tell you about the genetic diversity of the 1KG reference panel?
-2. **If a dataset has a spike of HWE p-values near 0**, what are two possible explanations? How would you distinguish them?
-3. **Sample missingness vs. variant missingness**: which is more concerning when both are elevated (>5%) in the same dataset?
-
-## Troubleshooting
-
-| Problem | Likely Cause | Solution |
-|---------|-------------|----------|
-| `initial.smiss` is empty | `initialFilter.sh` failed | Check `convertPlinkPerChromosome` log; the script requires write permissions in the output directory |
-| All HWE p-values are 0 | PLINK2 `--hardy` wrote `.hardy` not `.hwe` | Look for `zoomhwe.hardy`; the pipeline now uses `--hardy` consistently |
-| MAF histogram flat | `MAF_check.afreq` contains only post-filter variants | The Standard QC may have applied a `--maf` flag; verify the config file |
-| Sample missingness shows a long tail | Genuine QC issue in real data | With synthetic data this should not happen; if it does, re-download from Dataverse |
-
-## Going Further
-
-- **Compare chromosomes**: Do some chromosomes have consistently higher missingness or lower MAF? This could indicate assembly issues on specific chromosomes.
-- **Stratify by ancestry**: Re-run the missingness histograms grouped by the ancestry labels from the global ancestry lab. Do some ancestries have systematically higher missingness?
-- **Simulate a genotyping error**: Manually set 10% of a sample's genotypes to missing and re-run `plink2 --missing` — does your visualization easily flag that sample?
+See the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst) for troubleshooting and deep dives into file formats and pipeline internals.

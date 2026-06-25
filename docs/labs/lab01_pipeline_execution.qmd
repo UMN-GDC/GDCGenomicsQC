@@ -1,5 +1,5 @@
 ---
-title: "Lab: Running the Pipeline to Generate Outputs"
+title: "Lab: Running the Pipeline"
 author: "Christian Coffman"
 date: "2026-06-12"
 format:
@@ -13,361 +13,151 @@ format:
 
 ## Overview
 
-This lab describes how to execute the GDCGenomicsQC Snakemake pipeline to produce all outputs used in the companion visualization labs. Each section maps a Snakemake target to the files needed by a specific lab:
+Snakemake is a workflow manager — it figures out the order of operations (the DAG), submits jobs to the HPC, handles failures, and locks in reproducibility with containers and conda environments. Without it, you'd be writing SLURM arrays, tracking file dependencies by hand, and praying you didn't forget a step.
 
-| Lab | Target | Key outputs |
-|-----|--------|-------------|
-| QC Visualization | `run_initialQC` | `initial.smiss`, `initial.vmiss`, `zoomhwe.hwe`, `MAF_check.afreq` |
-| Global Ancestry | `run_classifyAncestry` (auto-resolves PCA) | `classificationProbabilities.tsv`, `ancestry_classifications.tsv` |
-| Local Ancestry | `run_rfmix` | `ancestry_full.txt`, `chr*.lai.msp.tsv`, `chr*.lai.fb.tsv` |
-| Heritability | `run_snpHerit` | `mash_output.csv` (full + per-ancestry) |
-| PRS Single | `run_singleAncestryPRSPipelines` | `best_pRS.prs`, `prs_scores.tsv` |
+**Why this matters for genomics research:**
 
-The data are **synthetic genotypes** resampled from 1000 Genomes haplotypes, available on Dataverse. A phenotype was simulated with known heritability h² = 0.4 to provide a ground truth.
+Every genomic analysis follows the same pattern: QC → PCA → classification → downstream modeling. The steps are well-known, but implementing them robustly across datasets, compute environments, and collaborators is where the real work lies. Snakemake converts that implementation work into a **config file** — the pipeline handles the rest.
 
-## Goals & Expectations
+GDCGenomicsQC wraps all of that into a three-abstraction system so you can focus on your research question instead of the plumbing.
 
-1. **Reproducibility** — Can you reproduce the same outputs by running the pipeline with a single Snakemake command?
-2. **Resource awareness** — Which targets are the most resource-intensive (runtime, memory, disk)?
-3. **Selective execution** — Can you run only the targets needed for a specific analysis without recomputing upstream steps?
-4. **Configuration** — How does each config key affect which targets are available and what they produce?
+**For collaborative science:**
 
-## Prerequisites
+The same pipeline design that makes your work reproducible also makes it *extensible*. When a collaborator develops a new ancestry-adjustment method, or a consortium adds a new PRS method, they contribute a new rule file — nothing else breaks. The module abstraction (`module load gdcgenomicsSandbox`) means anyone with access to the repository gets the entire pipeline with one command. There is no "works on my machine" problem.
 
-- **Snakemake 9.x** installed (via `micromamba` or `conda`)
-- **Pipeline code** cloned from the repository
-- **Synthetic genotypes** downloaded from Dataverse and placed at the path specified in `config.yaml`
-- **1000 Genomes reference panel** available at the `REF` path
+Over time, a collaborative workflow like this becomes more valuable than any single analysis it produces. New datasets can be dropped in, new methods can be stacked on top, and every run leaves a complete, auditable record of what was done.
 
-## Configuration
+## Input — The Three Abstractions
 
-The pipeline is configured through `config.yaml`. A minimal config for producing all lab outputs looks like this:
+### 1. Config — the one file you edit
+
+Everything specific to your dataset lives here. Paths, chromosomes, which analyses to run, and their parameters:
 
 ```yaml
-# config.yaml (mock excerpt — full example)
-INPUT: "/scratch/.../synthetic_data/{CHR}"    # use {CHR} for per-chromosome
-OUT_DIR: "/scratch/.../output"
-REF: "/scratch/.../1000G_reference"
-
-chromosomes: [1..22]
-
-thresholds:
-  geno: 0.02
-  mind: 0.02
-  maf: 0.01
-  hwe: 1e-6
-
-ancestry:
-  model: pca
-  threshold: 0.8
-
-localAncestry:
-  RFMIX: true
-  chromosomes: [1..22]
-
-prs:
-  methods:
-    - prsice
-    - ldpred2
-  ancestry_pairs:
-    - [AFR, EUR]
-  ld_reference: /scratch/.../1KG_ld/afr
+# sandboxToy.yaml lines 2-8
+INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
+OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr"
+REF: "/scratch.global/GDC/referenceData"
+chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 ```
 
-Copy an existing config from `config/` as a starting point:
+#### Input format — the pipeline adapts to your data
+
+The `INPUT` path can point to **any of three formats**:
+
+| Format | Extension | Use case |
+|--------|-----------|----------|
+| VCF / VCF.gz | `.vcf`, `.vcf.gz` | Standard input from sequencing or imputation |
+| PLINK 1 | `.bed` + `.bim` + `.fam` | Legacy or pre-existing datasets |
+| PLINK 2 | `.pgen` + `.pvar` + `.psam` | Native format, smaller, faster I/O |
+
+And **two modes**:
+
+| Mode | `INPUT` pattern | When to use |
+|------|----------------|-------------|
+| Per-chromosome | `...chr{CHR}.vcf.gz` | Large datasets split by chromosome (parallel processing) |
+| Whole-genome | `/path/to/file.bed` | Small datasets, single merged file |
+
+Snakemake auto-detects the format from the file extension and the mode from whether `{CHR}` appears in the path — you don't need to set any additional config keys.
+
+#### Reference panel — the 1000 Genomes anchor
+
+The `REF` path points to a pre-processed 1000 Genomes high-coverage 30x whole-genome sequencing dataset. The pipeline expects this structure:
+
+```
+{REF}/1000G_highcoverage/
+  all_chr.pgen             # merged, LD-pruned PGEN
+  population.txt           # sample → superpopulation labels
+  ref_pca_loadings.txt     # PC allele weights from --pca allele-wts
+  genetic_maps/            # recombination maps for phasing
+  variants/                # per-chromosome variant lists for crossmap
+```
+
+This reference is used at every stage: PCA projection (computing study-sample PCs against 1KG), random forest training (learning ancestry boundaries), and LD reference (PRS and phasing). It is assembled by the `assembleRef` target — downloading raw VCFs from the 1KG server, merging chromosomes, and running LD pruning. The assembly takes several hours but only needs to run once per reference version.
+
+The config toggles entire analysis branches. Set `localAncestry.RFMIX: true` and the pipeline phases with ShapeIt4, runs RFMix, and produces local ancestry tracts — without you writing a single additional command. Add a simulation entry under `phenotypeSimulation.simulations` and the pipeline generates synthetic phenotypes, computes ancestry-specific GRMs, and estimates heritability. Each config key unlocks a new analysis stage.
+
+This is the only file you would ever edit for a new project. The same module, the same rules, a different config.
+
+### 2. Module — loads everything you need
 
 ```bash
-cp config/abcd_config.yaml config/my_config.yaml
-# then edit config/my_config.yaml for your paths
+module use "$HOME/GDCGenomicsQC/envs"
+module load gdcgenomicsSandbox
 ```
 
-## Before You Begin
+One command gives you snakemake, all pipeline rules, HPC profiles, and container definitions. No `pip install`, no hunting for the right `--snakefile` path, no version conflicts between collaborators. The module file at `envs/gdcgenomicsSandbox/bin/gdcgenomicsqc` is a thin wrapper that sets `--directory` (the repo root), `--profile profiles/sandbox` (how to run), and `--snakefile workflow/Snakefile` (what to run). Everything else is passed through.
 
-- **Required:** 1000 Genomes reference panel at `REF` path; synthetic genotypes downloaded from Dataverse
-- **Disk space:** 500 GB–2 TB depending on dataset size (PGEN files, VCFs, GRM binaries)
-- **Expected runtime:** 2–7 days for the full pipeline per 11K × 377M variant dataset; individual targets can run in hours
-- **Profile:** Use `--profile profiles/sandbox` for testing or `--profile profiles/hpc` for production SLURM runs
-- **Dry run first:** Always run `--dry-run` before submitting a long job to verify the DAG
+**Why this matters for reproducibility:** The module lock in the exact Snakemake version. Re-running an analysis six months later — on a different cluster, by a different person — starts with the same two `module` commands. If anything breaks, it breaks consistently, and the fix is shared by everyone.
 
-## Setup
+### 3. Rules — what actually runs (you never touch these)
 
-```{r setup}
-conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
-.libPaths(unique(c(.Library.site, .Library)))
-.libPaths(c(conda_env, .libPaths()))
-library(tidyverse)
-
-OUT_DIR <- "/scratch/.../output"
-CONFIG <- "config/my_config.yaml"
-PROFILE <- "profiles/sandbox"
+```
+workflow/
+  Snakefile                    # entry point — imports all rule files
+  rules/
+    convertPlink.smk           # VCF/BED/PGEN → initial QC → LD pruning
+    Standard_QC.smk            # MAF, HWE, heterozygosity filters
+    PCAreference.smk           # reference PCA → study projection
+    predictAncestry.smk        # random forest classification
+    simulatePhenotype2.smk     # synthetic phenotype generation
+    snpHerit.smk               # heritability estimation
+    prsPipelines.smk           # PRSice-2, LDpred2, etc.
+    phase.smk + ancestry.smk   # ShapeIt4 + RFMix (local ancestry)
 ```
 
-## 1. Assemble the Reference Panel
+Each file is independent — you can add a new rule file without touching the existing ones. This is the key design that makes collaborative extension possible: a consortium member adds `rules/my_new_method.smk`, imports it in the Snakefile, and everyone immediately has access.
 
-Before any analysis, the pipeline verifies the 1000 Genomes reference panel:
+**How it comes together:**
+
+```
+module use envs/  ─┐
+module load        ├── gdcgenomicsqc wrapper ──┬── --profile profiles/sandbox  (where to run)
+gdcgenomicsSandbox ┘                           ├── --snakefile workflow/Snakefile (what to run)
+                                                └── $@ (your targets + --configfile)
+```
+
+## Output — The Single CLI Call
 
 ```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox assembleRef --dry-run
+module use "$HOME/GDCGenomicsQC/envs"
+module load gdcgenomicsSandbox
+gdcgenomicsqc run_classifyAncestry applyStandardQualityControl \
+    --configfile config/sandboxToy.yaml
 ```
 
-This target checks that all expected reference files exist (phased VCFs, population labels, genetic maps). If any are missing, the pipeline will fail early with a clear error.
+Snakemake resolves the full DAG from these two targets — QC → PCA → classification → ancestry-specific QC — and produces every file needed by the downstream labs:
 
-## 2. Initial QC
+| Lab | Key Files |
+|-----|-----------|
+| QC Visualization | `initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy` |
+| Global Ancestry | `classificationProbabilities.tsv`, `ancestry_classifications.tsv`, `sampleRefPCscores.sscore` |
+| Heritability | `{ancestry}/simulations/{sim_name}/herit.csv` |
+| PRS Single | `prs_inputs/{anc1}_{anc2}/single_prsice/best_pRS.prs`, `single_ldpred2/prs_scores.tsv` |
+| Local Ancestry | `ancestry_full.txt`, `chr*.lai.msp.tsv`, `per_snp_local_ancestry.tsv` |
 
-Produces the files for the **QC Visualization lab**:
+For a full SLURM submission (as used to generate the toy_chr outputs), see [`jobs/sandboxToy.SLURM`](https://github.com/UMN-GDC/GDCGenomicsQC/blob/main/jobs/sandboxToy.SLURM).
 
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_initialQC --dry-run
-```
+**What happens when you run it:**
 
-Remove `--dry-run` and adjust the profile to execute:
+1. Snakemake checks which files already exist and which are stale
+2. It builds a DAG of every rule needed to produce the targets
+3. It submits jobs to the HPC (or runs locally, depending on the profile)
+4. If a job fails, it stops with a clear error — fix the issue, re-run, and it picks up where it left off
+5. Every run produces a complete log of what ran, with what inputs, and what outputs
 
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_initialQC --cores 8
-```
+**What happens when a collaborator runs it on their data:**
 
-**What runs:** `convertPlinkPerChromosome` → `initialFilter.sh` → `concatLdPruned` (per chromosome, then concatenates LD-pruned variants).
+They copy the repository, edit the config file with their paths, and run the same command. The pipeline adapts to their dataset size, chromosome count, and available resources automatically through the profile system.
 
-**Outputs:**
-- `{OUT_DIR}/full/initial.smiss` — per-sample missingness
-- `{OUT_DIR}/full/initial.vmiss` — per-variant missingness
-- `{OUT_DIR}/full/zoomhwe.hwe` — HWE p-values
-- `{OUT_DIR}/full/MAF_check.afreq` — allele frequencies
+## Discussion
 
-**Expected runtime:** 1–4 hours for 11K × 377M variants.
+1. **How is this different from writing your own SLURM scripts for each step?** Think about what happens when a step fails halfway through a 50-job array — Snakemake tracks completion per-file, not per-script. A failed `--hwe` step doesn't mean re-running `--maf` and `--geno`.
 
-## 3. Standard QC & Relatedness
+2. **You change `ancestry.threshold` from 0.8 to 0.9.** Does Snakemake re-run the entire pipeline or just the classification step? It checks file modification times and input hashes — only rules whose inputs changed re-run. Downstream analyses (heritability, PRS) that depend on the new classification files will also re-run automatically.
 
-Standard QC applies MAF, HWE, and heterozygosity filters, then computes pairwise kinship:
+3. **How would you contribute this pipeline to a consortium?** You share your config file. The `envs/` directory and the `gdcgenomicsqc` wrapper are already version-controlled. Anyone who clones the repo and edits a config has the full pipeline. If the consortium needs a new analysis module, someone adds a rule file — no one else has to change their workflow.
 
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_initialQC --cores 8
-```
+4. **Why does the rule-file-per-stage design matter?** A collaborator developing a new PRS method writes `rules/my_prs_method.smk` and adds one import line to `Snakefile`. The new method becomes available to everyone immediately, with no merge conflicts, no "my version is different" excuses. The pipeline becomes a shared platform, not a shared script.
 
-(This is included in the same target as initial QC — the dependency chain runs Standard QC and KING relatedness automatically.)
-
-**Outputs:**
-- `{OUT_DIR}/full/f1.b38.f2.pgen` — Standard QC filtered PGEN
-- `{OUT_DIR}/relatedness/unrelated_ids.txt` — unrelated sample list (pi-hat < 0.0884)
-
-## 4. PCA Reference Projection
-
-Projects study samples onto 1000 Genomes reference PCs:
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_pca --cores 8
-```
-
-**What runs:** `PCAreference.smk` — extracts per-chromosome study variants matching the reference, concatenates, then runs `plink2 --pca allele-wts` on the reference and `plink2 --score` to project study samples.
-
-**Outputs:**
-- `{OUT_DIR}/01-globalAncestry/sampleRefPCscores.sscore` — study projections
-- `{OUT_DIR}/01-globalAncestry/refRefPCscores.sscore` — reference PC scores
-- `{OUT_DIR}/01-globalAncestry/umap_ref.csv` / `umap_sample.csv` (if UMAP is configured)
-
-**Expected runtime:** 30 minutes–2 hours.
-
-## 5. Local Ancestry (RFMix)
-
-Runs phasing with ShapeIt4 and local ancestry inference with RFMix:
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_rfmix --cores 8
-```
-
-Requires `localAncestry.RFMIX: true` in the config.
-
-**What runs:** `phase.smk` → `extractUnrelatedSubjects` → `phaseShapeIt4` → `run_rfmix` → `rfmix_to_ancestry.R`.
-
-**Outputs:**
-- `{OUT_DIR}/02-localAncestry/ancestry_full.txt` — genome-wide ancestry proportions
-- `{OUT_DIR}/02-localAncestry/chr{chr}.lai.msp.tsv` — per-chromosome ancestry tracts
-- `{OUT_DIR}/02-localAncestry/chr{chr}.lai.fb.tsv` — forwards-backwards probabilities
-- `{OUT_DIR}/02-localAncestry/chr{chr}.phased.vcf.gz` — phased haplotypes
-
-**Expected runtime:** 1–3 days (phasing is the bottleneck; per-chromosome processing parallelizes).
-
-## 6. Global Ancestry Classification
-
-Trains random forest models and produces hard classifications:
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_classifyAncestry --cores 8
-```
-
-**What runs:** `estimateGlobalAncestry` (trainPredict.R) → `classifySamplesByAncestry` (classify.R) → `plot_classification_ridge`.
-
-**Outputs:**
-- `{OUT_DIR}/01-globalAncestry/classificationProbabilities.tsv` — per-model ancestry probabilities
-- `{OUT_DIR}/01-globalAncestry/ancestry_classifications.tsv` — hard calls with confidence
-- `{OUT_DIR}/01-globalAncestry/sample_coords.tsv` — sample latent coordinates
-- `{OUT_DIR}/01-globalAncestry/ref_coords.tsv` — reference coordinate
-- `{OUT_DIR}/01-globalAncestry/classificationProbability_stacked_{model}.svg` — stacked probability plot
-
-**Expected runtime:** 10–30 minutes.
-
-## 7. Ancestry-Specific QC
-
-Splits the dataset into ancestry-stratified subsets:
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_ancestryQC --cores 8
-```
-
-**What runs:** For each ancestry discovered by the classifier, the pipeline re-runs QC filters within that group, producing ancestry-specific PGEN files.
-
-**Outputs:**
-- `{OUT_DIR}/{ANCESTRY}/f1.b38.f2.pgen` — per-ancestry filtered PGEN
-- `{OUT_DIR}/{ANCESTRY}/` — full per-ancestry QC output directory
-
-**Expected runtime:** 1–4 hours (depends on number of ancestry groups).
-
-## 8. SNP Heritability (Full + Per-Ancestry)
-
-Estimates heritability using the GRM from the full sample and from each ancestry subset:
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_snpHerit --cores 8
-```
-
-**What runs:** Builds the GRM from LD-pruned crossmapped variants (`checkRelatednessExtractUnrelated`), then runs MASH (or GCTA) separately for each ancestry group and for the full dataset.
-
-**How per-ancestry heritability works:**
-The `snpHerit` rule uses the ancestry keep files generated by the classifier. For each ancestry in `{OUT_DIR}/01-globalAncestry/keep_{ANC}.txt`, the pipeline extracts those samples from the full GRM and estimates h² within that subset. The full-sample estimate uses all unrelated samples without ancestry filtering. The GRM and PCA paths are **auto-derived** from the ancestry wildcard — no `grm_prefix` or `pca_input` config needed.
-
-**Outputs:**
-- `{OUT_DIR}/03-snpHeritability/{ANCESTRY}/03-snpHeritability/mash_output.csv` — per-ancestry h²
-- `{OUT_DIR}/relatedness/f1.b38.ldpruned.unrelated.grm.bin` — full-sample GRM
-
-**Expected runtime:** 1–6 hours (GRM computation is the bottleneck; larger ancestries take longer).
-
-::: {.callout-note}
-Snakemake resolves upstream dependencies automatically — `run_snpHerit` alone triggers everything needed: QC → PCA → classification → ancestry QC → heritability. You do not need separate `run_pca`, `run_classifyAncestry`, or `run_ancestryQC` calls.
-:::
-
-## 9. QC Plots
-
-Generates the summary visualization plots:
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_qcPlots --cores 8
-```
-
-**Outputs:**
-- `{OUT_DIR}/full/figures/smiss.svg` — sample missingness
-- `{OUT_DIR}/full/figures/vmiss.svg` — variant missingness
-- `{OUT_DIR}/full/figures/hwe_histogram.svg` — HWE p-value distribution
-- `{OUT_DIR}/full/figures/het_distribution.svg` — heterozygosity
-- `{OUT_DIR}/full/figures/relatedness_histogram.svg` — KING kinship
-- plus the stacked classification plots from step 6.
-
-**Expected runtime:** 5–15 minutes.
-
-## 10. Phenotype Simulation (Optional)
-
-If you want a fresh simulated phenotype (without re-downloading):
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_simulatePhenotype --cores 8
-```
-
-This produces phenotype files and ancestry-specific GRMs for the simulation ancestries. The default simulated heritability is h² = 0.4.
-
-## 11. PRS (Single-Ancestry)
-
-Runs PRSice-2 and LDpred2 for the configured ancestry pairs:
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_singleAncestryPRSPipelines --cores 8
-```
-
-Or run all PRS methods (single + multi-ancestry):
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox run_allPRSPipelines --cores 8
-```
-
-**Outputs:**
-- `{OUT_DIR}/prs_inputs/{ANC1}_{ANC2}/single_prsice/best_pRS.prs` — PRSice-2 scores
-- `{OUT_DIR}/prs_inputs/{ANC1}_{ANC2}/single_prsice/summary.csv` — threshold scan
-- `{OUT_DIR}/prs_inputs/{ANC1}_{ANC2}/single_ldpred2/prs_scores.tsv` — LDpred2 multi-model scores
-
-**Expected runtime:** 2–8 hours (PRSice-2 is fast; LDpred2 MCMC is slower).
-
-## 12. Run Everything
-
-All targets are independent entry points — Snakemake automatically resolves their upstream DAGs. You don't need to list intermediate rules:
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/hpc \
-  --target run_rfmix \
-  --target run_snpHerit \
-  --target run_singleAncestryPRSPipelines \
-  --cores 32
-```
-
-- `run_snpHerit` pulls in QC → PCA → classification → ancestry QC, computing GRM and h² for each ancestry + full sample.
-- `run_rfmix` is an independent branch (phasing → local ancestry inference).
-- `run_singleAncestryPRSPipelines` pulls in simulation (if enabled) → PRS tools.
-
-To run everything (equivalent to the full pipeline):
-
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/hpc --cores 32
-```
-
-(Without a target, the Snakefile uses a default `all` rule that builds the full DAG.)
-
-**Visualising the DAG:** To see which rules will run, use:
-```bash
-snakemake --configfile config/my_config.yaml --profile profiles/sandbox --dag | dot -Tpng > dag.png
-```
-
-## Profiles
-
-| Profile | Use case | Executor |
-|---------|----------|----------|
-| `profiles/sandbox` | Testing, small datasets | Local (`--cores N`) |
-| `profiles/sandbox-moduleFirst` | Testing with env modules | Local + EnvModules |
-| `profiles/hpc` | Production SLURM | SLURM cluster |
-| `profiles/hpc-moduleFirst` | Production SLURM + modules | SLURM + EnvModules |
-| `profiles/interactive` | Interactive sessions | Local (single node) |
-
-## Resource Estimates
-
-| Target | CPUs | Memory | Runtime | Disk I/O |
-|--------|------|--------|---------|----------|
-| `run_initialQC` | 8 | 32 GB | 1–4 h | High (PGEN read/write) |
-| `run_pca` | 8 | 64 GB | 0.5–2 h | Medium |
-| `run_rfmix` (per chr) | 8 | 48 GB | 1–3 d total | High (VCF I/O) |
-| `run_classifyAncestry` | 1 | 16 GB | 10–30 m | Low |
-| `run_ancestryQC` | 8 | 32 GB | 1–4 h | High |
-| `run_snpHerit` | 8 | 64 GB | 1–6 h | Medium (GRM I/O) |
-| `run_singleAncestryPRSPipelines` | 8 | 32 GB | 2–8 h | Medium |
-
-## Check Your Understanding
-
-1. **Which target do you need to run to get `classificationProbabilities.tsv`?** Which upstream targets must have completed first?
-2. **Why is `run_rfmix` the most time-intensive target?** What is the bottleneck (phasing or ancestry inference)?
-3. **If you change `ancestry.threshold` from 0.8 to 0.9**, do you need to re-run everything downstream, or just the classification step?
-4. **Why does heritability estimation run separately per ancestry?** What would happen if you pooled ancestries in the GRM?
-
-## Troubleshooting
-
-| Problem | Likely Cause | Solution |
-|---------|-------------|----------|
-| Snakemake fails with `MissingInputException` for 1KG files | `REF` path is wrong in config | Verify `REF` points to the directory with `1000G_highcoverage/` |
-| `--dry-run` shows nothing to do | Output files already exist and are newer than inputs | Use `--force` or `--delete-all-output` to re-run |
-| Pipeline crashes with OOM on merge step | Chromosome merge requires >128 GB for 377M variants | Use per-chromosome input (`{CHR}` in `INPUT` path); the `concatLdPruned` rule avoids the merge |
-| GRM step fails: `*.grm.bin not found` | The GRM prefix is auto-derived — if the LD-pruned PGEN file is missing upstream | Check that `run_ancestryQC` completed successfully; verify `f1.b38.ldpruned.pgen` exists in the ancestry output dir |
-| SLURM jobs hang indefinitely | Resource limits too low for the dataset | Increase `mem_mb` and `runtime` in the config or profile; check the SLURM partition limits |
-| EnvModules not loading | Module name mismatch in config | Verify the exact module name with `module avail` on the HPC system; update the config key |
-
-## Going Further
-
-- **Granular targets**: Use individual rule names (not aggregate targets) to run specific steps. List all available rules with `snakemake --list`.
-- **DAG visualization**: Generate a DAG with `snakemake --dag | dot -Tpng > dag.png` to understand rule dependencies.
-- **Benchmarking**: Add `--benchmark benchmarks/` to Snakemake to record per-rule resource usage. This helps tune `mem_mb` and `threads` for your dataset.
-- **Profiles from scratch**: Create a custom profile by copying `profiles/sandbox` and editing `config.yaml` inside it. Set cluster submission commands, default resources, and job names.
-- **Resuming failed runs**: Snakemake automatically resumes from the last completed rule. If a job fails, fix the issue and re-run the same command — completed steps are skipped.
-- **Per-ancestry heritability without full re-run**: If you add a new ancestry keep file manually, run `run_snpHerit` — Snakemake detects new inputs via the checkpoint and re-runs only the new ancestry subsets.
+See the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst) for a step-by-step walkthrough of each target and its outputs.
