@@ -7,5 +7,9 @@
 module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 
-gdcgenomicsqc run_classifyAncestry --configfile ../config/sandboxToy.yaml
-gdcgenomicsqc run_ancestryQC run_relatedness run_PCAinternal run_simulatePhenotype run_snpHeritSimulated --configfile ../config/sandboxToy.yaml
+# Full pipeline (uncomment when ready):
+# gdcgenomicsqc run_classifyAncestry --configfile ../config/sandboxToy.yaml
+# gdcgenomicsqc run_ancestryQC run_relatedness run_PCAinternal run_simulatePhenotype run_snpHeritSimulated --configfile ../config/sandboxToy.yaml
+
+# Testing MASH on simulated data (comment out after testing):
+gdcgenomicsqc run_snpHeritSimulated --configfile ../config/sandboxToy.yaml
