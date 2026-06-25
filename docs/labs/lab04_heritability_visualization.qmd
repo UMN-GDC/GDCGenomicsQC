@@ -108,7 +108,7 @@ sim_name <- "bivariate_test"
 ancestries <- c("EUR", "AFR")
 herit <- map_dfr(ancestries, function(a) {
   read_csv(file.path(OUT_DIR, a, "simulations", sim_name, "herit.csv"), show_col_types = FALSE)
-})
+}, .id = "ancestry")
 glimpse(herit)
 ```
 
@@ -119,8 +119,8 @@ Compute approximate CIs using the normal approximation (estimate ± 1.96 × SE).
 ```{r}
 herit <- herit %>%
   mutate(
-    lower_ci = h2 - 1.96 * SE,
-    upper_ci = h2 + 1.96 * SE
+    lower_ci = h2 - 1.96 * sqrt(`var(h2)`),
+    upper_ci = h2 + 1.96 * sqrt(`var(h2)`)
   )
 print(herit)
 ```
@@ -145,17 +145,6 @@ ggplot(herit, aes(x = ancestry, y = h2, color = ancestry)) +
   ylim(0, max(1, max(herit$upper_ci) * 1.2)) +
   theme_minimal()
 ```
-
-## Statistical Significance
-
-Are the h² estimates significantly different from zero (p < 0.05)?
-
-```{r}
-herit %>%
-  filter(p_value < 0.05)
-```
-
-**Expectation:** Because h² = 0.4 is substantially above zero, both estimates should be highly significant. A non-significant result would indicate insufficient sample size or excessive standard error for that ancestry.
 
 ## GRM Heatmap
 
