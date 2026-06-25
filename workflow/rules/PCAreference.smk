@@ -22,9 +22,6 @@ if INPUT_IS_PER_CHROMOSOME:
             psam=lambda wildcards: expand(
                 OUT_DIR / "full" / "f1.b38_{CHR}.psam", CHR=CHROMOSOMES
             ),
-            ldPgen=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
-            ldPvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
-            ldPsam=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
         output:
             eigen=OUT_DIR / "01-globalAncestry" / "ref.eigenvec",
             projected=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
@@ -32,7 +29,7 @@ if INPUT_IS_PER_CHROMOSOME:
             tempDir=temp(directory(OUT_DIR / "01-globalAncestry" / "intermediates")),
         params:
             dir=str(OUT_DIR / "01-globalAncestry"),
-            ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
+            ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased",
             chroms=" ".join(str(c) for c in CHROMOSOMES),
             pca_estimation=config.get("ancestry", {}).get("pca_estimation", "projection"),
             pca_min_maf=config.get("pca_min_maf", 0.05),
@@ -79,27 +76,44 @@ if INPUT_IS_PER_CHROMOSOME:
                    --out {output.tempDir}/study_lai
 
             N_SHARED=$(wc -l < {output.tempDir}/study_lai.pvar 2>/dev/null || echo 0)
-            echo "[PCA] Variants shared between study and reference: $N_SHARED" >> {log} 2>&1
+            echo "[PCA] Variants shared between study and reference (pre-prune): $N_SHARED" >> {log} 2>&1
 
-            # Compute PCA on reference using shared SNPs
+            # LD-prune the shared set
+            plink2 --pfile {output.tempDir}/study_lai \
+                   --indep-pairwise 200 50 0.2 \
+                   --threads {threads} \
+                   --out {output.tempDir}/pruned
+
+            N_PRUNE=$(wc -l < {output.tempDir}/pruned.prune.in 2>/dev/null || echo 0)
+            echo "[PCA] Variants after LD pruning: $N_PRUNE" >> {log} 2>&1
+
+            # Compute PCA on reference using LD-pruned shared SNPs
             if [ "{params.pca_estimation}" = "joint" ]; then
-                # Restrict reference to study SNP list (strip INFO headers)
+                # Restrict reference to pruned SNP list
                 plink2 --pfile {params.ref} \
-                       --extract {output.tempDir}/study_snps.snplist \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --set-all-var-ids 'chr@:#:$r:$a' \
                        --make-pgen \
+                       --threads {threads} \
                        --out {output.tempDir}/ref_joint
 
-                # Convert to PLINK1 BED and merge (PLINK2 --pmerge-list not ready for non-concatenating)
+                # Extract study by pruned SNPs (from merged study_lai)
+                plink2 --pfile {output.tempDir}/study_lai \
+                       --extract {output.tempDir}/pruned.prune.in \
+                       --make-pgen \
+                       --threads {threads} \
+                       --out {output.tempDir}/study_joint
+
+                # Convert to PLINK1 BED and merge
                 plink2 --pfile {output.tempDir}/ref_joint \
                        --make-bed \
                        --threads {threads} \
                        --out {output.tempDir}/ref_joint_v1
-                plink2 --pfile {output.tempDir}/study_lai \
+                plink2 --pfile {output.tempDir}/study_joint \
                        --make-bed \
                        --threads {threads} \
-                       --out {output.tempDir}/study_lai_v1
-                echo "{output.tempDir}/study_lai_v1" > {output.tempDir}/mergelist_joint.txt
+                       --out {output.tempDir}/study_joint_v1
+                echo "{output.tempDir}/study_joint_v1" > {output.tempDir}/mergelist_joint.txt
                 plink --bfile {output.tempDir}/ref_joint_v1 \
                       --merge-list {output.tempDir}/mergelist_joint.txt \
                       --make-bed \
@@ -121,7 +135,7 @@ if INPUT_IS_PER_CHROMOSOME:
                     {params.ref}.psam {output.tempDir}/joint_pca.eigenvec \
                     > {params.dir}/refRefPCscores.sscore
                 awk 'NR==FNR{{iids[$1];next}} FNR==1 || $2 in iids' \
-                    {output.tempDir}/study_lai.psam {output.tempDir}/joint_pca.eigenvec \
+                    {output.tempDir}/study_joint.psam {output.tempDir}/joint_pca.eigenvec \
                     > {params.dir}/sampleRefPCscores.sscore
 
                 # Produce ref.eigenvec (declared output, used by nothing downstream)
@@ -130,13 +144,14 @@ if INPUT_IS_PER_CHROMOSOME:
                 plink2 --pfile {params.ref} \
                        --freq counts \
                        --threads {threads} \
-                       --extract {output.tempDir}/study_snps.snplist \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --pca allele-wts vcols=chrom,ref,alt \
                        --out {params.dir}/ref \
                        --allow-no-sex
 
-                # Project study onto reference PCs
+                # Project study onto reference PCs (using pruned variants)
                 plink2 --pfile {output.tempDir}/study_lai \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --chr {params.chroms} \
                        --allow-extra-chr \
                        --read-freq {params.dir}/ref.acount \
@@ -144,8 +159,9 @@ if INPUT_IS_PER_CHROMOSOME:
                        --score-col-nums 6-15 \
                        --out {params.dir}/sampleRefPCscores
 
-                # Project reference onto reference PCs
+                # Project reference onto reference PCs (using pruned variants)
                 plink2 --pfile {params.ref} \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --read-freq {params.dir}/ref.acount \
                        --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
                        --score-col-nums 6-15 \
@@ -170,9 +186,6 @@ else:
             pgen=OUT_DIR / "full" / "f1.b38.pgen",
             pvar=OUT_DIR / "full" / "f1.b38.pvar",
             psam=OUT_DIR / "full" / "f1.b38.psam",
-            ldPgen=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
-            ldPvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
-            ldPsam=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
         output:
             eigen=OUT_DIR / "01-globalAncestry" / "ref.eigenvec",
             projected=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
@@ -183,7 +196,7 @@ else:
             grm=config.get("relatedness", {}).get("method", "king"),
             input_prefix=OUT_DIR / "full" / "f1.b38",
             dir=str(OUT_DIR / "01-globalAncestry"),
-            ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
+            ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased",
             pca_estimation=config.get("ancestry", {}).get("pca_estimation", "projection"),
             pca_min_maf=config.get("pca_min_maf", 0.05),
         shell:
@@ -196,7 +209,7 @@ else:
                 PCA_MAF_ARG="--maf {params.pca_min_maf}"
             fi
 
-            # Filter pruned ref panel to shared SNPs and LDprune
+            # Write study snplist (MAF-filtered) for intersection with full ref
             plink2 --pfile {params.input_prefix} --write-snplist \
                 $PCA_MAF_ARG \
                 --chr 1-22 \
@@ -207,21 +220,38 @@ else:
             N_STUDY_SNPS=$(wc -l < {params.dir}/intermediates/study_snps.snplist 2>/dev/null || echo 0)
             echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS" >> {log} 2>&1
 
+            # Extract shared variants from full reference
+            plink2 --pfile {params.ref} \
+                   --extract {params.dir}/intermediates/study_snps.snplist \
+                   --make-pgen \
+                   --threads {threads} \
+                   --out {output.tempDir}/study_lai
 
-            # calculate ld on ref intersection with sample with common frequency
-            # compute PCA reference only
+            N_SHARED=$(wc -l < {output.tempDir}/study_lai.pvar 2>/dev/null || echo 0)
+            echo "[PCA] Variants shared between study and reference (pre-prune): $N_SHARED" >> {log} 2>&1
+
+            # LD-prune the shared set
+            plink2 --pfile {output.tempDir}/study_lai \
+                   --indep-pairwise 200 50 0.2 \
+                   --threads {threads} \
+                   --out {output.tempDir}/pruned
+
+            N_PRUNE=$(wc -l < {output.tempDir}/pruned.prune.in 2>/dev/null || echo 0)
+            echo "[PCA] Variants after LD pruning: $N_PRUNE" >> {log} 2>&1
+
+            # PCA on LD-pruned shared variants
             if [ "{params.pca_estimation}" = "joint" ]; then
-                # Restrict reference to shared study SNPs
+                # Restrict reference to pruned SNPs
                 plink2 --pfile {params.ref} \
-                       --extract {params.dir}/intermediates/study_snps.snplist \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --set-all-var-ids 'chr@:#:$r:$a' \
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/ref_joint
 
-                # Restrict study to ref variants
-                plink2 --pfile {params.input_prefix} \
-                       --extract {params.ref}.pvar \
+                # Restrict study to pruned SNPs (from merged study_lai)
+                plink2 --pfile {output.tempDir}/study_lai \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/study_joint
@@ -257,7 +287,7 @@ else:
                     {params.ref}.psam {output.tempDir}/joint_pca.eigenvec \
                     > {params.dir}/refRefPCscores.sscore
                 awk 'NR==FNR{{iids[$1];next}} FNR==1 || $2 in iids' \
-                    {params.input_prefix}.psam {output.tempDir}/joint_pca.eigenvec \
+                    {output.tempDir}/study_joint.psam {output.tempDir}/joint_pca.eigenvec \
                     > {params.dir}/sampleRefPCscores.sscore
 
                 # Produce ref.eigenvec (declared output, used by nothing downstream)
@@ -269,7 +299,7 @@ else:
                 plink2 --pfile {params.ref} \
                        --freq counts \
                        --threads {threads} \
-                       --extract {params.dir}/intermediates/study_snps.snplist \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --pca allele-wts vcols=chrom,ref,alt \
                        --out {params.dir}/ref \
                        --allow-no-sex
@@ -277,17 +307,19 @@ else:
                 N_SHARED=$(awk 'NR>1{{count++}} END{{print count+0}}' {params.dir}/ref.acount 2>/dev/null || echo 0)
                 echo "[PCA] Variants shared between study and reference: $N_SHARED" >> {log} 2>&1
 
-                echo "Project sample onto the reference PCs."
-                plink2 --pfile {params.input_prefix} \
+                echo "Project sample onto the reference PCs (using pruned variants)."
+                plink2 --pfile {output.tempDir}/study_lai \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --chr 1-22 \
                        --allow-extra-chr \
                        --read-freq {params.dir}/ref.acount \
                        --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
                        --score-col-nums 6-15 \
                        --out {params.dir}/sampleRefPCscores
-                echo "Project ref onto the reference PCs."
+                echo "Project ref onto the reference PCs (using pruned variants)."
 
                 plink2 --pfile {params.ref} \
+                       --extract {output.tempDir}/pruned.prune.in \
                        --read-freq {params.dir}/ref.acount \
                        --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
                        --score-col-nums 6-15 \
