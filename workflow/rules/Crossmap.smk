@@ -31,6 +31,7 @@ if INPUT_IS_PER_CHROMOSOME:
                 shell("""
                     mkdir -p {output.tempDir}
                     plink2 --pfile {params.input_prefix} \
+                           --set-all-var-ids 'chr@:#:$r:$a' \
                            --make-pgen \
                            --out {params.output_prefix}
                 """)
@@ -50,7 +51,7 @@ if INPUT_IS_PER_CHROMOSOME:
 
                     plink2 --pfile {params.input_prefix} --extract {output.tempDir}/lifted_snps.txt --make-pgen --out {output.tempDir}/step1
                     plink2 --pfile {output.tempDir}/step1 --update-map {output.tempDir}/new_pos.txt --make-pgen --out {output.tempDir}/step2
-                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --make-pgen --out {params.output_prefix}
+                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --out {params.output_prefix}
                 """)
 
 else:
@@ -87,6 +88,7 @@ else:
                 shell("""
                     mkdir -p {output.tempDir}
                     plink2 --pfile {params.input_prefix} \
+                           --set-all-var-ids 'chr@:#:$r:$a' \
                            --make-pgen \
                            --out {params.output_prefix}
                 """)
@@ -106,7 +108,7 @@ else:
 
                     plink2 --pfile {params.input_prefix} --extract {output.tempDir}/lifted_snps.txt --make-pgen --out {output.tempDir}/step1
                     plink2 --pfile {output.tempDir}/step1 --update-map {output.tempDir}/new_pos.txt --make-pgen --out {output.tempDir}/step2
-                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --make-pgen --out {params.output_prefix}
+                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --out {params.output_prefix}
                 """)
 
 
