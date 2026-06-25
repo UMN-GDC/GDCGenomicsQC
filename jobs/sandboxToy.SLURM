@@ -7,9 +7,6 @@
 module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 
-# Full pipeline (uncomment when ready):
-# gdcgenomicsqc run_classifyAncestry --configfile ../config/sandboxToy.yaml
-# gdcgenomicsqc run_ancestryQC run_relatedness run_PCAinternal run_simulatePhenotype run_snpHeritSimulated --configfile ../config/sandboxToy.yaml
-
-# Testing MASH on simulated data (comment out after testing):
+# Snakemake auto-resolves the DAG from this single target —
+# it builds QC → PCA → classification → ancestry QC → simulation → heritability:
 gdcgenomicsqc run_snpHeritSimulated --configfile ../config/sandboxToy.yaml

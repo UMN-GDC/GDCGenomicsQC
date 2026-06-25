@@ -146,8 +146,6 @@ This step requires the following input files:
         std: false                            # Run SAdj-HE (standardized) vs UAdj-HE
         loop_covars: false                    # Loop through covariates iteratively
         Naive: false                          # Use naive estimator (false for AdjHE)
-        grm_prefix: null                      # Pre-computed GRM prefix (optional)
-        pca_input: null                       # PCA input — .RDS (PC-AiR) or .eigenvec file
 
 **Output Files:**
 
@@ -218,10 +216,6 @@ Key parameters:
 +----------------------+-------------+------------------------------------------+
 | ``mpheno``           | "1"         | Phenotype column name(s) — string or list |
 +----------------------+-------------+------------------------------------------+
-| ``grm_prefix``       | null        | Pre-computed GRM prefix (optional)      |
-+----------------------+-------------+------------------------------------------+
-| ``pca_input``        | null        | PCA input — .RDS (PC-AiR) or .eigenvec |
-+----------------------+-------------+------------------------------------------+
 | ``loop_covars``      | false       | Loop through covariates iteratively     |
 +----------------------+-------------+------------------------------------------+
 | ``Naive``            | false       | Use naive estimator (false for AdjHE)   |
@@ -280,10 +274,6 @@ Heritability Configuration Options
 | ``npc``              | 10          | PCs — integer or list (e.g., [5,10,20]) |
 +----------------------+-------------+------------------------------------------+
 | ``mpheno``           | "1"         | Phenotype column name(s) — string or list|
-+----------------------+-------------+------------------------------------------+
-| ``grm_prefix``       | null        | Pre-computed GRM prefix (optional)      |
-+----------------------+-------------+------------------------------------------+
-| ``pca_input``        | null        | PCA input — .RDS or .eigenvec file      |
 +----------------------+-------------+------------------------------------------+
 | ``loop_covars``      | false       | Loop through covariates iteratively     |
 +----------------------+-------------+------------------------------------------+
@@ -393,28 +383,3 @@ After completing this tutorial, you have explored:
 - :doc:`genomics` - Technical details on heritability methods
 
 
-External Data Inputs
--------------------
-
-Instead of relying on pipeline-generated PCA/GRM outputs, you can provide your own:
-
-.. code-block:: yaml
-
-    snpHerit:
-        pheno: "/path/to/phenotype.tsv"          # Single file, or ["file1.tsv", "file2.tsv"]
-        covar: "/path/to/covariates.tsv"          # Single file, or ["file1.tsv", "file2.tsv"]
-        grm_prefix: "/path/to/your_grm_prefix"   # GRM files: prefix.grm.bin, .grm.id, .grm.N.bin
-        pca_input: "/path/to/your_pca.eigenvec"  # Or .RDS file from PC-AiR
-        mpheno: "BMI"                             # Column name string, or ["BMI", "Height"]
-        npc: 10                                   # Integer, or [5, 10, 20]
-
-**Pipeline-generated files:** If you've run the QC/PCA pipeline first:
-
-- GRM from Relatedness: ``OUT_DIR/{ANC}/unrelated.grm.bin``
-- GRM from PCAiR: ``OUT_DIR/{ANC}/pcair.grm.bin`` (if method includes pcair)
-- Eigenvectors from plink2: ``OUT_DIR/{ANC}/internal_pca_plink2.eigenvec``
-- PC-AiR object: ``OUT_DIR/{ANC}/pcair_pcaobj.RDS``
-
-The ``pca_input`` accepts either:
-- ``.eigenvec`` file (from PLINK2 PCA)
-- ``.RDS`` file (from PC-AiR)

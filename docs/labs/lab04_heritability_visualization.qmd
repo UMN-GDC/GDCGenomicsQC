@@ -64,13 +64,9 @@ thresholds:
 ancestry:
   model: pca
 
-snpHerit:
-  grm_prefix: /scratch/.../output/full/f1.b38.ldpruned.unrelated
-  # Path to the GCTA GRM binary files (no extension).
-  # Expected files: .grm.bin, .grm.N.bin, .grm.id
 ```
 
-- **`snpHerit.grm_prefix`**: The GRM was built by GCTA `--make-grm` from LD-pruned, crossmapped variants using only unrelated samples. The pipeline concatenates per-chromosome LD-pruned files (`concatLdPruned`), crossmaps them to GRCh38, computes the GRM via `checkRelatednessExtractUnrelated`, then estimates h² per ancestry with MASH.
+- The GRM and PCA paths are **auto-derived** from the ancestry wildcard — no `grm_prefix` or `pca_input` config needed. The pipeline concatenates per-chromosome LD-pruned files (`concatLdPruned`), crossmaps them to GRCh38, computes the GRM via `checkRelatednessExtractUnrelated`, then estimates h² per ancestry with MASH.
 - The phenotype was **simulated externally** with known h² = 0.4. In a real study, it would come from clinical measurements.
 
 The `mash_output.csv` files below contain the h² estimates for the **EUR** and **AFR** ancestry subsets.
