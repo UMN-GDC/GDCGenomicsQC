@@ -1,5 +1,7 @@
 if INPUT_IS_PER_CHROMOSOME:
     rule crossmapFullToB38:
+        log:
+            OUT_DIR / "logs" / "crossmapFullToB38_{subset}_{CHR}.log",
         container:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/crossmap:latest"
         conda:
@@ -41,7 +43,7 @@ if INPUT_IS_PER_CHROMOSOME:
                     CrossMap bed {params.chain} {output.tempDir}/study_pos.bed {output.tempDir}/study_hg38.bed
                     N_LIFTED=$(awk 'END{{print NR}}' {output.tempDir}/study_hg38.bed 2>/dev/null || echo 0)
                     N_DROPPED=$((N_INPUT - N_LIFTED))
-                    echo "[CrossMap per-chr] Lifted $N_LIFTED / $N_INPUT variants ($N_DROPPED dropped)"
+                    echo "[CrossMap per-chr] Lifted $N_LIFTED / $N_INPUT variants ($N_DROPPED dropped)" >> {log} 2>&1
                     awk '{{print $4}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/lifted_snps.txt
                     awk '{{print $4, $3}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_pos.txt
                     awk '{{gsub(/^chr/,"",$1); print $4, $1}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_chr.txt
@@ -53,6 +55,8 @@ if INPUT_IS_PER_CHROMOSOME:
 
 else:
     rule crossmapFullToB38:
+        log:
+            OUT_DIR / "logs" / "crossmapFullToB38_{subset}.log",
         container:
             "oras://ghcr.io/coffm049/gdcgenomicsqc/crossmap:latest"
         conda:
@@ -95,7 +99,7 @@ else:
                     CrossMap bed {params.chain} {output.tempDir}/study_pos.bed {output.tempDir}/study_hg38.bed
                     N_LIFTED=$(awk 'END{{print NR}}' {output.tempDir}/study_hg38.bed 2>/dev/null || echo 0)
                     N_DROPPED=$((N_INPUT - N_LIFTED))
-                    echo "[CrossMap single] Lifted $N_LIFTED / $N_INPUT variants ($N_DROPPED dropped)"
+                    echo "[CrossMap single] Lifted $N_LIFTED / $N_INPUT variants ($N_DROPPED dropped)" >> {log} 2>&1
                     awk '{{print $4}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/lifted_snps.txt
                     awk '{{print $4, $3}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_pos.txt
                     awk '{{gsub(/^chr/,"",$1); print $4, $1}}' {output.tempDir}/study_hg38.bed > {output.tempDir}/new_chr.txt

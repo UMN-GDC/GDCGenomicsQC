@@ -66,7 +66,7 @@ if INPUT_IS_PER_CHROMOSOME:
             # Concatenate per-chrom snplists
             cat {output.tempDir}/study_snps_*.snplist > {output.tempDir}/study_snps.snplist
             N_STUDY_SNPS=$(wc -l < {output.tempDir}/study_snps.snplist)
-            echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS"
+            echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS" >> {log} 2>&1
 
             # Concatenate per-chrom extracted variants
             > {output.tempDir}/mergelist.txt
@@ -79,7 +79,7 @@ if INPUT_IS_PER_CHROMOSOME:
                    --out {output.tempDir}/study_lai
 
             N_SHARED=$(wc -l < {output.tempDir}/study_lai.pvar 2>/dev/null || echo 0)
-            echo "[PCA] Variants shared between study and reference: $N_SHARED"
+            echo "[PCA] Variants shared between study and reference: $N_SHARED" >> {log} 2>&1
 
             # Compute PCA on reference using shared SNPs
             if [ "{params.pca_estimation}" = "joint" ]; then
@@ -205,7 +205,7 @@ else:
                 --out {params.dir}/intermediates/study_snps
 
             N_STUDY_SNPS=$(wc -l < {params.dir}/intermediates/study_snps.snplist 2>/dev/null || echo 0)
-            echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS"
+            echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS" >> {log} 2>&1
 
 
             # calculate ld on ref intersection with sample with common frequency

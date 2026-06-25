@@ -159,15 +159,15 @@ plink2 --pfile {output.tempDir}/intermediate_2 \
        --out {output.tempDir}/intermediate_3
 
 # === Allele alignment against reference panel ===
-bash {params.scripts_dir}/align_alleles.sh \
-    {output.tempDir}/intermediate_3.pvar \
-    {input.ref_pvar} \
-    {output.tempDir}/flip_list.txt \
-    {output.tempDir}/align_report.txt
+            bash {params.scripts_dir}/align_alleles.sh \
+                {output.tempDir}/intermediate_3.pvar \
+                {input.ref_pvar} \
+                {output.tempDir}/flip_list.txt \
+                {output.tempDir}/align_report.txt >> {log} 2>&1
 
 if [ -s {output.tempDir}/flip_list.txt ]; then
     N_FLIP=$(wc -l < {output.tempDir}/flip_list.txt)
-    echo "[convertPlink] Flipping $N_FLIP strand-mismatched variants"
+    echo "[convertPlink] Flipping $N_FLIP strand-mismatched variants" >> {log} 2>&1
     plink2 --pfile {output.tempDir}/intermediate_3 \
            --flip {output.tempDir}/flip_list.txt \
            --make-pgen \
@@ -181,7 +181,7 @@ if [ -s {output.tempDir}/flip_list.txt ]; then
            --threads {threads} \
            --out {output.tempDir}/intermediate_4
 else
-    echo "[convertPlink] No strand flips needed"
+    echo "[convertPlink] No strand flips needed" >> {log} 2>&1
     plink2 --pfile {output.tempDir}/intermediate_3 \
            --make-pgen \
            --threads {threads} \
@@ -303,11 +303,11 @@ if not INPUT_IS_PER_CHROMOSOME:
                 {output.tempDir}/intermediate_2.pvar \
                 {input.ref_pvar} \
                 {output.tempDir}/flip_list.txt \
-                {output.tempDir}/align_report.txt
+                {output.tempDir}/align_report.txt >> {log} 2>&1
 
             if [ -s {output.tempDir}/flip_list.txt ]; then
                 N_FLIP=$(wc -l < {output.tempDir}/flip_list.txt)
-                echo "[convertPlink] Flipping $N_FLIP strand-mismatched variants"
+                echo "[convertPlink] Flipping $N_FLIP strand-mismatched variants" >> {log} 2>&1
                 plink2 --pfile {output.tempDir}/intermediate_2 \
                        --flip {output.tempDir}/flip_list.txt \
                        --make-pgen \
@@ -323,7 +323,7 @@ if not INPUT_IS_PER_CHROMOSOME:
                        --memory {resources.mem_mb} \
                        --out {output.tempDir}/intermediate_3
             else
-                echo "[convertPlink] No strand flips needed"
+                echo "[convertPlink] No strand flips needed" >> {log} 2>&1
                 plink2 --pfile {output.tempDir}/intermediate_2 \
                        --make-pgen \
                        --threads {threads} \
