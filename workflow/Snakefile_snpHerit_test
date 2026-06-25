@@ -1,5 +1,0 @@
-from pathlib import Path
-
-OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
-
-include: "rules/snpHerit.smk"
