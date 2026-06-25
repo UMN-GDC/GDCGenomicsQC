@@ -162,13 +162,16 @@ simEffects <- function(out_dirs_list, anc_names_v, herit, corr_mat, maf) {
         }
     }
 
-    betas <- matrix(NA, nrow = nrow(combined), ncol = n)
+    betas <- matrix(0, nrow = nrow(combined), ncol = n)
     for (i in 1:nrow(combined)) {
         cov_mat <- cov_template
+        zero_diag <- FALSE
         for (k in 1:n) {
-            cov_mat[k, k] <- combined[[paste0("sdEff_", k)]][i]
+            sd_val <- combined[[paste0("sdEff_", k)]][i]
+            cov_mat[k, k] <- sd_val^2
+            if (sd_val == 0) zero_diag <- TRUE
         }
-        if (any(is.na(cov_mat)) || any(is.nan(cov_mat))) {
+        if (zero_diag || any(is.na(cov_mat)) || any(is.nan(cov_mat))) {
             betas[i, ] <- rep(0, n)
         } else {
             betas[i, ] <- rmvnorm(n = 1, mean = rep(0, n), sigma = cov_mat)
@@ -178,7 +181,7 @@ simEffects <- function(out_dirs_list, anc_names_v, herit, corr_mat, maf) {
     for (k in 1:n) {
         fc <- paste0("ALT_FREQS_", k)
         ec <- paste0("effs_", k)
-        combined[[ec]] <- betas[, k] * sqrt(2 * combined[[fc]] * (1 - combined[[fc]]))
+        combined[[ec]] <- betas[, k] * sqrt(pmax(0, 2 * combined[[fc]] * (1 - combined[[fc]])))
         esum <- sum(combined[[ec]]^2, na.rm = TRUE)
         if (esum > 0) {
             combined[[ec]] <- combined[[ec]] * sqrt(herit / esum)
