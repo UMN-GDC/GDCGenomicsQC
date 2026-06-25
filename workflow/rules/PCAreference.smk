@@ -42,7 +42,7 @@ if INPUT_IS_PER_CHROMOSOME:
                 PCA_MAF_ARG="--maf {params.pca_min_maf}"
             fi
 
-            # Per-chromosome: write per-chrom study snplists and extract matching variants
+            # Per-chromosome: write per-chrom study snplists
             for chr_f in {input.pgen}; do
                 chr_prefix=${{chr_f%.pgen}}
                 chr_name=$(basename $chr_prefix | sed 's/f1.b38_//')
@@ -53,11 +53,6 @@ if INPUT_IS_PER_CHROMOSOME:
                     --allow-extra-chr \
                     --threads {threads} \
                     --out {output.tempDir}/study_snps_$chr_name
-                plink2 --pfile $chr_prefix \
-                    --extract {params.ref}.pvar \
-                    --make-pgen \
-                    --threads {threads} \
-                    --out {output.tempDir}/study_lai_$chr_name
             done
 
             # Concatenate per-chrom snplists
@@ -65,21 +60,42 @@ if INPUT_IS_PER_CHROMOSOME:
             N_STUDY_SNPS=$(wc -l < {output.tempDir}/study_snps.snplist)
             echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS" >> {log} 2>&1
 
-            # Concatenate per-chrom extracted variants
+            # Strip study snplist to chr:pos for position-based matching
+            awk '{{sub(/:[^:]+:[^:]+$/, "", $1); print $1}}' {output.tempDir}/study_snps.snplist \
+                > {output.tempDir}/study_ids.txt
+
+            # Rename ref to chr:pos IDs and extract by study positions
+            plink2 --pfile {params.ref} \
+                   --set-all-var-ids 'chr@:#' \
+                   --extract {output.tempDir}/study_ids.txt \
+                   --make-pgen \
+                   --threads {threads} \
+                   --out {output.tempDir}/ref_shared
+
+            N_SHARED=$(wc -l < {output.tempDir}/ref_shared.pvar 2>/dev/null || echo 0)
+            echo "[PCA] Variants shared between study and reference (pre-prune): $N_SHARED" >> {log} 2>&1
+
+            # Rename study to chr:pos IDs, extract by positions, remove missing-heavy variants (per-chromosome)
             > {output.tempDir}/mergelist.txt
-            for f in {output.tempDir}/study_lai_*.pgen; do
-                echo "${{f%.pgen}}" >> {output.tempDir}/mergelist.txt
+            for chr_f in {input.pgen}; do
+                chr_prefix=${{chr_f%.pgen}}
+                chr_name=$(basename $chr_prefix | sed 's/f1.b38_//')
+                plink2 --pfile $chr_prefix \
+                       --set-all-var-ids 'chr@:#' \
+                       --extract {output.tempDir}/study_ids.txt \
+                       --geno 0.1 \
+                       --make-pgen \
+                       --threads {threads} \
+                       --out {output.tempDir}/study_shared_$chr_name
+                echo "${{output.tempDir}}/study_shared_$chr_name" >> {output.tempDir}/mergelist.txt
             done
             plink2 --pmerge-list {output.tempDir}/mergelist.txt \
                    --make-pgen \
                    --threads {threads} \
-                   --out {output.tempDir}/study_lai
+                   --out {output.tempDir}/study_shared
 
-            N_SHARED=$(wc -l < {output.tempDir}/study_lai.pvar 2>/dev/null || echo 0)
-            echo "[PCA] Variants shared between study and reference (pre-prune): $N_SHARED" >> {log} 2>&1
-
-            # LD-prune the shared set
-            plink2 --pfile {output.tempDir}/study_lai \
+            # LD-prune the ref shared set
+            plink2 --pfile {output.tempDir}/ref_shared \
                    --indep-pairwise 200 50 0.2 \
                    --threads {threads} \
                    --out {output.tempDir}/pruned
@@ -89,16 +105,15 @@ if INPUT_IS_PER_CHROMOSOME:
 
             # Compute PCA on reference using LD-pruned shared SNPs
             if [ "{params.pca_estimation}" = "joint" ]; then
-                # Restrict reference to pruned SNP list
-                plink2 --pfile {params.ref} \
+                # Restrict ref to pruned SNPs
+                plink2 --pfile {output.tempDir}/ref_shared \
                        --extract {output.tempDir}/pruned.prune.in \
-                       --set-all-var-ids 'chr@:#:$r:$a' \
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/ref_joint
 
-                # Extract study by pruned SNPs (from merged study_lai)
-                plink2 --pfile {output.tempDir}/study_lai \
+                # Restrict study to pruned SNPs
+                plink2 --pfile {output.tempDir}/study_shared \
                        --extract {output.tempDir}/pruned.prune.in \
                        --make-pgen \
                        --threads {threads} \
@@ -141,7 +156,8 @@ if INPUT_IS_PER_CHROMOSOME:
                 # Produce ref.eigenvec (declared output, used by nothing downstream)
                 cp {params.dir}/refRefPCscores.sscore {params.dir}/ref.eigenvec
             else
-                plink2 --pfile {params.ref} \
+                # PCA weights on ref_shared by pruned.in
+                plink2 --pfile {output.tempDir}/ref_shared \
                        --freq counts \
                        --threads {threads} \
                        --extract {output.tempDir}/pruned.prune.in \
@@ -150,7 +166,7 @@ if INPUT_IS_PER_CHROMOSOME:
                        --allow-no-sex
 
                 # Project study onto reference PCs (using pruned variants)
-                plink2 --pfile {output.tempDir}/study_lai \
+                plink2 --pfile {output.tempDir}/study_shared \
                        --extract {output.tempDir}/pruned.prune.in \
                        --chr {params.chroms} \
                        --allow-extra-chr \
@@ -160,7 +176,7 @@ if INPUT_IS_PER_CHROMOSOME:
                        --out {params.dir}/sampleRefPCscores
 
                 # Project reference onto reference PCs (using pruned variants)
-                plink2 --pfile {params.ref} \
+                plink2 --pfile {output.tempDir}/ref_shared \
                        --extract {output.tempDir}/pruned.prune.in \
                        --read-freq {params.dir}/ref.acount \
                        --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
@@ -220,18 +236,32 @@ else:
             N_STUDY_SNPS=$(wc -l < {params.dir}/intermediates/study_snps.snplist 2>/dev/null || echo 0)
             echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS" >> {log} 2>&1
 
-            # Extract shared variants from full reference
+            # Strip study snplist to chr:pos for position-based matching
+            awk '{{sub(/:[^:]+:[^:]+$/, "", $1); print $1}}' {params.dir}/intermediates/study_snps.snplist \
+                > {output.tempDir}/study_ids.txt
+
+            # Rename ref to chr:pos IDs and extract by study positions
             plink2 --pfile {params.ref} \
-                   --extract {params.dir}/intermediates/study_snps.snplist \
+                   --set-all-var-ids 'chr@:#' \
+                   --extract {output.tempDir}/study_ids.txt \
                    --make-pgen \
                    --threads {threads} \
-                   --out {output.tempDir}/study_lai
+                   --out {output.tempDir}/ref_shared
 
-            N_SHARED=$(wc -l < {output.tempDir}/study_lai.pvar 2>/dev/null || echo 0)
+            N_SHARED=$(wc -l < {output.tempDir}/ref_shared.pvar 2>/dev/null || echo 0)
             echo "[PCA] Variants shared between study and reference (pre-prune): $N_SHARED" >> {log} 2>&1
 
-            # LD-prune the shared set
-            plink2 --pfile {output.tempDir}/study_lai \
+            # Rename study to chr:pos IDs, extract by positions, remove missing-heavy variants
+            plink2 --pfile {params.input_prefix} \
+                   --set-all-var-ids 'chr@:#' \
+                   --extract {output.tempDir}/study_ids.txt \
+                   --geno 0.1 \
+                   --make-pgen \
+                   --threads {threads} \
+                   --out {output.tempDir}/study_shared
+
+            # LD-prune the ref shared set
+            plink2 --pfile {output.tempDir}/ref_shared \
                    --indep-pairwise 200 50 0.2 \
                    --threads {threads} \
                    --out {output.tempDir}/pruned
@@ -241,22 +271,21 @@ else:
 
             # PCA on LD-pruned shared variants
             if [ "{params.pca_estimation}" = "joint" ]; then
-                # Restrict reference to pruned SNPs
-                plink2 --pfile {params.ref} \
+                # Restrict ref to pruned SNPs
+                plink2 --pfile {output.tempDir}/ref_shared \
                        --extract {output.tempDir}/pruned.prune.in \
-                       --set-all-var-ids 'chr@:#:$r:$a' \
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/ref_joint
 
-                # Restrict study to pruned SNPs (from merged study_lai)
-                plink2 --pfile {output.tempDir}/study_lai \
+                # Restrict study to pruned SNPs
+                plink2 --pfile {output.tempDir}/study_shared \
                        --extract {output.tempDir}/pruned.prune.in \
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/study_joint
 
-                # Convert to PLINK1 BED and merge (PLINK2 --pmerge-list not ready for non-concatenating)
+                # Convert to PLINK1 BED and merge
                 plink2 --pfile {output.tempDir}/ref_joint \
                        --make-bed \
                        --threads {threads} \
@@ -292,11 +321,9 @@ else:
 
                 # Produce ref.eigenvec (declared output, used by nothing downstream)
                 cp {params.dir}/refRefPCscores.sscore {params.dir}/ref.eigenvec
-
-                N_SHARED=$(awk '!/^#/{{count++}} END{{print count+0}}' {output.tempDir}/merged.pvar 2>/dev/null || echo 0)
-                echo "[PCA] Variants shared between study and reference: $N_SHARED" >> {log} 2>&1
             else
-                plink2 --pfile {params.ref} \
+                # PCA weights on ref_shared by pruned.in
+                plink2 --pfile {output.tempDir}/ref_shared \
                        --freq counts \
                        --threads {threads} \
                        --extract {output.tempDir}/pruned.prune.in \
@@ -308,7 +335,7 @@ else:
                 echo "[PCA] Variants shared between study and reference: $N_SHARED" >> {log} 2>&1
 
                 echo "Project sample onto the reference PCs (using pruned variants)."
-                plink2 --pfile {output.tempDir}/study_lai \
+                plink2 --pfile {output.tempDir}/study_shared \
                        --extract {output.tempDir}/pruned.prune.in \
                        --chr 1-22 \
                        --allow-extra-chr \
@@ -318,7 +345,7 @@ else:
                        --out {params.dir}/sampleRefPCscores
                 echo "Project ref onto the reference PCs (using pruned variants)."
 
-                plink2 --pfile {params.ref} \
+                plink2 --pfile {output.tempDir}/ref_shared \
                        --extract {output.tempDir}/pruned.prune.in \
                        --read-freq {params.dir}/ref.acount \
                        --score {params.dir}/ref.eigenvec.allele 2 5 header-read variance-standardize \
