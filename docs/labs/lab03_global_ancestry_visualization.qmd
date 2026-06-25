@@ -139,10 +139,10 @@ labels <- read_table("/scratch.global/GDC/referenceData/1000G_highcoverage/popul
 ref_pca <- ref_pca |> inner_join(labels, by = "IID")
 
 ggplot() +
-  geom_point(data = sample_pca, aes(x = PC1, y = PC2, color = sim_ancestry),
-             size = 0.8, alpha = 0.5) +
   geom_density_2d(data = ref_pca, aes(x = PC1, y = PC2, color = POP),
-                  alpha = 0.6) +
+                  alpha = 0.4) +
+  geom_point(data = sample_pca, aes(x = PC1, y = PC2, color = sim_ancestry),
+             size = 0.8, alpha = 0.3) +
   labs(
     title = "Study Samples Projected onto 1KG Reference PCs",
     subtitle = "Color = simulated ancestry (first 3 chars of IID); contours = reference populations",
@@ -175,10 +175,10 @@ ref_umap <- read_csv(
   inner_join(labels, by = "IID")
 
 ggplot() +
+  geom_density_2d(data = ref_umap, aes(x = UMAP1, y = UMAP2, color = POP),
+                  alpha = 0.4) +
   geom_point(data = sample_umap, aes(x = UMAP1, y = UMAP2, color = sim_ancestry),
              size = 0.8, alpha = 0.5) +
-  geom_density_2d(data = ref_umap, aes(x = UMAP1, y = UMAP2, color = POP),
-                  alpha = 0.6) +
   labs(
     title = "Study Samples in UMAP Space",
     subtitle = "Color = simulated ancestry; contours = reference populations",
