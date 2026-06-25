@@ -71,7 +71,7 @@ if SNP_HERIT_ACTIVE:
         output:
             estimates=OUT_DIR / "{ancestry}" / "03-snpHeritability" / "mash_output.csv",
         params:
-            argfile=OUT_DIR / "{ancestry}" / "03-snpHeritability" / "mash_output.json",
+            argfile=lambda w: OUT_DIR / w.ancestry / "03-snpHeritability" / "mash_output.json",
             mash_config=lambda w: _mash_config(
                 prefix=OUT_DIR / w.ancestry / "f1.b38.ldpruned.unrelated",
                 pheno=SNP_HERIT_CONFIG["pheno"],
@@ -131,7 +131,7 @@ if SIM_CFG.get("enabled", False):
         output:
             estimates=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "herit.csv",
         params:
-            argfile=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "mash_config.json",
+            argfile=lambda w: OUT_DIR / w.ancestry / "simulations" / w.sim_name / "mash_config.json",
             mash_config=lambda w: _mash_config(
                 prefix=OUT_DIR / w.ancestry / "simulations" / w.sim_name / "simulated",
                 pheno=[OUT_DIR / w.ancestry / "simulations" / w.sim_name / "simulated_pheno1.pheno"],
