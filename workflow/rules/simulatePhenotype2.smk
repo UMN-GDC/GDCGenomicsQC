@@ -31,6 +31,11 @@ for anc in SIM_ANCESTRIES:
     _sim_outputs.append(OUT_DIR / anc / "simulations" / "{sim_name}" / "simulated.bim")
     _sim_outputs.append(OUT_DIR / anc / "simulations" / "{sim_name}" / "simulated.fam")
 
+# Pre-computed params for N ancestries (module-level, no wildcard dependency)
+SIM_ANC_NAMES_STR = ",".join(SIM_ANCESTRIES)
+SIM_PGEN_PREFIXES_STR = ",".join(get_sim_input_prefix(anc) for anc in SIM_ANCESTRIES)
+SIM_SCRIPT_DIR = str(SCRIPTS_DIR)
+
 rule simulatePhenotypes:
     log:
         OUT_DIR / "logs" / "simulatePhenotypes_{sim_name}.log",
@@ -47,27 +52,36 @@ rule simulatePhenotypes:
         **_sim_inputs,
     output:
         _sim_outputs,
-    run:
-        anc_names = SIM_ANCESTRIES
-        pgen_prefixes = [get_sim_input_prefix(anc) for anc in anc_names]
-        out_dirs = [str(OUT_DIR / anc / "simulations" / wildcards.sim_name) for anc in anc_names]
-        sim = get_sim_cfg(wildcards.sim_name)
-
-        import subprocess
-        subprocess.run([
-            "Rscript", str(SCRIPTS_DIR / "runPhenotypeSimulation.R"),
-            "--anc-names", ",".join(anc_names),
-            "--pgen-prefixes", ",".join(pgen_prefixes),
-            "--out-dirs", ",".join(out_dirs),
-            "--corr-matrix", json.dumps(sim.get("corr_matrix", [])),
-            "--heritability", str(sim.get("heritability", SIM_CFG.get("heritability", 0.4))),
-            "--maf", str(sim.get("maf", SIM_CFG.get("maf", 0.05))),
-            "--seed", str(sim.get("seed", SIM_CFG.get("seed", 42))),
-            "--n_sims", str(sim.get("n_sims", SIM_CFG.get("n_sims", 10))),
-            "--skip_thinning", str(sim.get("skip_thinning", SIM_CFG.get("skip_thinning", True))).lower(),
-            "--thin_count_snps", str(sim.get("thin_count_snps", SIM_CFG.get("thin_count_snps", 1000000))),
-            "--thin_count_inds", str(sim.get("thin_count_inds", SIM_CFG.get("thin_count_inds", 10000))),
-        ], check=True)
+    params:
+        anc_names=SIM_ANC_NAMES_STR,
+        pgen_prefixes=SIM_PGEN_PREFIXES_STR,
+        out_dirs=lambda w: ",".join(
+            str(OUT_DIR / anc / "simulations" / w.sim_name) for anc in SIM_ANCESTRIES
+        ),
+        corr_matrix_json=lambda w: json.dumps(get_sim_cfg(w.sim_name).get("corr_matrix", [])),
+        heritability=lambda w: str(get_sim_cfg(w.sim_name).get("heritability", SIM_CFG.get("heritability", 0.4))),
+        maf=lambda w: str(get_sim_cfg(w.sim_name).get("maf", SIM_CFG.get("maf", 0.05))),
+        seed=lambda w: str(get_sim_cfg(w.sim_name).get("seed", SIM_CFG.get("seed", 42))),
+        n_sims=lambda w: str(get_sim_cfg(w.sim_name).get("n_sims", SIM_CFG.get("n_sims", 10))),
+        skip_thinning=lambda w: str(get_sim_cfg(w.sim_name).get("skip_thinning", SIM_CFG.get("skip_thinning", True))).lower(),
+        thin_count_snps=lambda w: str(get_sim_cfg(w.sim_name).get("thin_count_snps", SIM_CFG.get("thin_count_snps", 1000000))),
+        thin_count_inds=lambda w: str(get_sim_cfg(w.sim_name).get("thin_count_inds", SIM_CFG.get("thin_count_inds", 10000))),
+        script_dir=SIM_SCRIPT_DIR,
+    shell:
+        """
+        Rscript {params.script_dir}/runPhenotypeSimulation.R \
+            --anc-names "{params.anc_names}" \
+            --pgen-prefixes "{params.pgen_prefixes}" \
+            --out-dirs "{params.out_dirs}" \
+            --corr-matrix '{params.corr_matrix_json}' \
+            --heritability {params.heritability} \
+            --maf {params.maf} \
+            --seed {params.seed} \
+            --n_sims {params.n_sims} \
+            --skip_thinning {params.skip_thinning} \
+            --thin_count_snps {params.thin_count_snps} \
+            --thin_count_inds {params.thin_count_inds}
+        """
 
 
 rule computeSimGRM:
