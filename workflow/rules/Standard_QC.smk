@@ -50,10 +50,12 @@ if INPUT_IS_PER_CHROMOSOME:
               cp {input.psam} {output.tempDir}/step1.psam
             fi
 
+            plink2 --pfile {output.tempDir}/step1 --freq --out {params.output_dir}/MAF_check_{wildcards.CHR} --threads {threads}
             plink2 --pfile {output.tempDir}/step1 --maf 0.01 --make-pgen --out {output.tempDir}/step2 --threads {threads}
 
             plink2 --pfile {output.tempDir}/step2 --hardy --out {output.tempDir}/step2 --threads {threads}
-            awk '$9 < 1e-5' {output.tempDir}/step2.hardy > {params.output_dir}/zoomhwe.hwe
+            cp {output.tempDir}/step2.hardy {params.output_dir}/step2_{wildcards.CHR}.hardy
+            awk '$9 < 1e-5' {output.tempDir}/step2.hardy > {params.output_dir}/zoomhwe_{wildcards.CHR}.hwe
             plink2 --pfile {output.tempDir}/step2 --hwe 1e-6 --make-pgen --out {output.tempDir}/step3a --threads {threads}
             plink2 --pfile {output.tempDir}/step3a --hwe 1e-10 --make-pgen --out {output.tempDir}/step3 --threads {threads}
 

@@ -234,7 +234,7 @@ For each known ancestry group, plot the per-sample classification probabilities 
 ```{r}
 anc_data %>%
   pivot_longer(
-    cols = starts_with("pca_"),
+    cols = ends_with(c("_AFR", "_AMR", "_EAS", "_EUR", "_SAS")),
     names_to = "supposed_ancestry",
     values_to = "classification_prob"
   ) %>%
