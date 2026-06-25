@@ -2,7 +2,7 @@ import json
 
 SIM_CFG = config.get("phenotypeSimulation", {})
 SIM_ANCESTRIES = SIM_CFG.get("ancestries", [])
-SIM_INPUT_PREFIXES = SIM_CFG.get("input_prefixes", {})
+SIM_INPUT_PREFIXES = SIM_CFG.get("input_prefixes") or {}
 
 if not SIM_ANCESTRIES:
     raise ValueError("phenotypeSimulation.ancestries must be specified")
