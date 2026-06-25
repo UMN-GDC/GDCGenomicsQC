@@ -60,14 +60,13 @@ if INPUT_IS_PER_CHROMOSOME:
             N_STUDY_SNPS=$(wc -l < {output.tempDir}/study_snps.snplist)
             echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS" >> {log} 2>&1
 
-            # Strip study snplist to chr:pos for position-based matching
-            awk '{{sub(/:[^:]+:[^:]+$/, "", $1); print $1}}' {output.tempDir}/study_snps.snplist \
-                > {output.tempDir}/study_ids.txt
+            # Create 1-based BED from study snplist for position-based extraction
+            awk '{{split($1,a,":"); print a[1], a[2], a[2]}}' {output.tempDir}/study_snps.snplist \
+                > {output.tempDir}/study_positions.bed
 
-            # Rename ref to chr:pos IDs and extract by study positions
+            # Extract ref by position (keeps original unique IDs)
             plink2 --pfile {params.ref} \
-                   --set-all-var-ids 'chr@:#' \
-                   --extract {output.tempDir}/study_ids.txt \
+                   --extract range {output.tempDir}/study_positions.bed \
                    --make-pgen \
                    --threads {threads} \
                    --out {output.tempDir}/ref_shared
@@ -75,14 +74,13 @@ if INPUT_IS_PER_CHROMOSOME:
             N_SHARED=$(wc -l < {output.tempDir}/ref_shared.pvar 2>/dev/null || echo 0)
             echo "[PCA] Variants shared between study and reference (pre-prune): $N_SHARED" >> {log} 2>&1
 
-            # Rename study to chr:pos IDs, extract by positions, remove missing-heavy variants (per-chromosome)
+            # Extract study by positions, remove missing-heavy variants (per-chromosome)
             > {output.tempDir}/mergelist.txt
             for chr_f in {input.pgen}; do
                 chr_prefix=${{chr_f%.pgen}}
                 chr_name=$(basename $chr_prefix | sed 's/f1.b38_//')
                 plink2 --pfile $chr_prefix \
-                       --set-all-var-ids 'chr@:#' \
-                       --extract {output.tempDir}/study_ids.txt \
+                       --extract range {output.tempDir}/study_positions.bed \
                        --geno 0.1 \
                        --make-pgen \
                        --threads {threads} \
@@ -236,14 +234,13 @@ else:
             N_STUDY_SNPS=$(wc -l < {params.dir}/intermediates/study_snps.snplist 2>/dev/null || echo 0)
             echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS" >> {log} 2>&1
 
-            # Strip study snplist to chr:pos for position-based matching
-            awk '{{sub(/:[^:]+:[^:]+$/, "", $1); print $1}}' {params.dir}/intermediates/study_snps.snplist \
-                > {output.tempDir}/study_ids.txt
+            # Create 1-based BED from study snplist for position-based extraction
+            awk '{{split($1,a,":"); print a[1], a[2], a[2]}}' {params.dir}/intermediates/study_snps.snplist \
+                > {output.tempDir}/study_positions.bed
 
-            # Rename ref to chr:pos IDs and extract by study positions
+            # Extract ref by position (keeps original unique IDs)
             plink2 --pfile {params.ref} \
-                   --set-all-var-ids 'chr@:#' \
-                   --extract {output.tempDir}/study_ids.txt \
+                   --extract range {output.tempDir}/study_positions.bed \
                    --make-pgen \
                    --threads {threads} \
                    --out {output.tempDir}/ref_shared
@@ -251,10 +248,9 @@ else:
             N_SHARED=$(wc -l < {output.tempDir}/ref_shared.pvar 2>/dev/null || echo 0)
             echo "[PCA] Variants shared between study and reference (pre-prune): $N_SHARED" >> {log} 2>&1
 
-            # Rename study to chr:pos IDs, extract by positions, remove missing-heavy variants
+            # Extract study by positions, remove missing-heavy variants
             plink2 --pfile {params.input_prefix} \
-                   --set-all-var-ids 'chr@:#' \
-                   --extract {output.tempDir}/study_ids.txt \
+                   --extract range {output.tempDir}/study_positions.bed \
                    --geno 0.1 \
                    --make-pgen \
                    --threads {threads} \
