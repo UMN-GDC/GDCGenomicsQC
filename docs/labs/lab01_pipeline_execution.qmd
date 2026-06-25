@@ -15,6 +15,8 @@ format:
 
 Snakemake is a workflow manager — it figures out the order of operations (the DAG), submits jobs to the HPC, handles failures, and locks in reproducibility with containers and conda environments. Without it, you'd be writing SLURM arrays, tracking file dependencies by hand, and praying you didn't forget a step.
 
+After running the pipeline in this lab, the rest of the labs explore how to alter the workflow (adding new rules, changing QC thresholds, toggling analysis branches in the config) and investigate its outputs — every file produced by Snakemake will be loaded and visualized in R.
+
 **Why this matters for genomics research:**
 
 Every genomic analysis follows the same pattern: QC → PCA → classification → downstream modeling. The steps are well-known, but implementing them robustly across datasets, compute environments, and collaborators is where the real work lies. Snakemake converts that implementation work into a **config file** — the pipeline handles the rest.
@@ -117,38 +119,33 @@ gdcgenomicsSandbox ┘                           ├── --snakefile workflow/
                                                 └── $@ (your targets + --configfile)
 ```
 
-## Output — The Single CLI Call
+## Output — The Single Submission
 
-```bash
-module use "$HOME/GDCGenomicsQC/envs"
-module load gdcgenomicsSandbox
-gdcgenomicsqc run_classifyAncestry applyStandardQualityControl \
-    --configfile config/sandboxToy.yaml
-```
+Lab 1 is the only lab that runs Snakemake. Everything after this is R. See [`jobs/sandboxToy.SLURM`](https://github.com/UMN-GDC/GDCGenomicsQC/blob/main/jobs/sandboxToy.SLURM) for how we ran it — `sbatch jobs/sandboxToy.SLURM` submits a master job that launches the full pipeline.
 
-Snakemake resolves the full DAG from these two targets — QC → PCA → classification → ancestry-specific QC — and produces every file needed by the downstream labs:
+Two targets (`run_classifyAncestry applyStandardQualityControl`), one command. Snakemake resolves the full DAG — QC → PCA → UMAP → classification → ancestry-specific QC → phenotype simulation → heritability — and produces everything for the remaining labs:
 
-| Lab | Key Files |
-|-----|-----------|
-| QC Visualization | `initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy` |
-| Global Ancestry | `classificationProbabilities.tsv`, `ancestry_classifications.tsv`, `sampleRefPCscores.sscore` |
-| Heritability | `{ancestry}/simulations/{sim_name}/herit.csv` |
-| PRS Single | `prs_inputs/{anc1}_{anc2}/single_prsice/best_pRS.prs`, `single_ldpred2/prs_scores.tsv` |
-| Local Ancestry | `ancestry_full.txt`, `chr*.lai.msp.tsv`, `per_snp_local_ancestry.tsv` |
+### What each downstream lab uses
 
-For a full SLURM submission (as used to generate the toy_chr outputs), see [`jobs/sandboxToy.SLURM`](https://github.com/UMN-GDC/GDCGenomicsQC/blob/main/jobs/sandboxToy.SLURM).
+| Lab | File(s) loaded in R | How it's used |
+|-----|--------------------|---------------|
+| Lab 2 — QC Viz | `{OUT_DIR}/full/initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy` | Missingness histograms, AF spectrum, HWE checks |
+| Lab 3 — Global Ancestry | `{OUT_DIR}/01-globalAncestry/classificationProbabilities.tsv`, `ancestry_classifications.tsv`, `sampleRefPCscores.sscore` | PCA projection, confusion matrix, classification probabilities |
+| Lab 4 — Heritability | `{OUT_DIR}/{ancestry}/simulations/bivariate_test/herit.csv` per ancestry | h² estimate comparison (EUR vs AFR) |
+| Lab 5 — PRS | `{OUT_DIR}/prs_inputs/{anc1}_{anc2}/single_prsice/best_pRS.prs`, `single_ldpred2/prs_scores.tsv` | Score distribution, threshold scan, method comparison |
+| Lab 6 — Local Ancestry | `{OUT_DIR}/02-localAncestry/ancestry_full.txt`, `chr*.lai.msp.tsv`, `per_snp_local_ancestry.tsv` | Global proportions, ancestry tracts, per-SNP probabilities |
 
-**What happens when you run it:**
+### What happens when it runs
 
 1. Snakemake checks which files already exist and which are stale
-2. It builds a DAG of every rule needed to produce the targets
+2. It builds a DAG of every rule needed to produce the two targets
 3. It submits jobs to the HPC (or runs locally, depending on the profile)
-4. If a job fails, it stops with a clear error — fix the issue, re-run, and it picks up where it left off
+4. If a job fails, it stops with a clear error — fix the issue and re-run; it picks up where it left off
 5. Every run produces a complete log of what ran, with what inputs, and what outputs
 
-**What happens when a collaborator runs it on their data:**
+### What happens when a collaborator runs it on their data
 
-They copy the repository, edit the config file with their paths, and run the same command. The pipeline adapts to their dataset size, chromosome count, and available resources automatically through the profile system.
+They clone the repo, edit a config file with their paths, and submit the same SLURM script. The pipeline adapts to their dataset size, chromosome count, and available resources automatically through the profile system.
 
 ## Discussion
 
