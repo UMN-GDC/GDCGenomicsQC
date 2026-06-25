@@ -34,9 +34,9 @@ snpHerit:
 
     covar: null
 
-    method: "GCTA"
+    method: "AdjHE"
 
-    npc: 5
+    npc: [1,2]
 
     mpheno: 1
 
