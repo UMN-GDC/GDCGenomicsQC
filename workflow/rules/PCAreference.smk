@@ -263,7 +263,7 @@ else:
                 # Produce ref.eigenvec (declared output, used by nothing downstream)
                 cp {params.dir}/refRefPCscores.sscore {params.dir}/ref.eigenvec
 
-                N_SHARED=$(awk '!/^#/{count++} END{print count+0}' {output.tempDir}/merged.pvar 2>/dev/null || echo 0)
+                N_SHARED=$(awk '!/^#/{{count++}} END{{print count+0}}' {output.tempDir}/merged.pvar 2>/dev/null || echo 0)
                 echo "[PCA] Variants shared between study and reference: $N_SHARED" >> {log} 2>&1
             else
                 plink2 --pfile {params.ref} \
@@ -274,7 +274,7 @@ else:
                        --out {params.dir}/ref \
                        --allow-no-sex
 
-                N_SHARED=$(awk 'NR>1{count++} END{print count+0}' {params.dir}/ref.acount 2>/dev/null || echo 0)
+                N_SHARED=$(awk 'NR>1{{count++}} END{{print count+0}}' {params.dir}/ref.acount 2>/dev/null || echo 0)
                 echo "[PCA] Variants shared between study and reference: $N_SHARED" >> {log} 2>&1
 
                 echo "Project sample onto the reference PCs."
