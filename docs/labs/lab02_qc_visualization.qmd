@@ -81,7 +81,7 @@ conda_env <- '/scratch.global/R25_files/r25_r_env/lib/R/library'
 .libPaths(c(conda_env, .libPaths()))
 library(tidyverse)
 
-OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 subset <- "full"
 ```
 
