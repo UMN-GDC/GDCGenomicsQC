@@ -9,4 +9,5 @@ module load gdcgenomicsSandbox
 
 #gdcgenomicsqc --until run_classifyAncestry --configfile ../config/sandboxABCD_smokescreen.yaml
 #gdcgenomicsqc --until run_rfmix --configfile ../config/sandboxABCD_smokescreen.yaml
-gdcgenomicsqc --until run_classifyAncestry run_ancestryQC run_snpHerit --configfile ../config/sandboxABCD_smokescreen.yaml
+#gdcgenomicsqc --until run_classifyAncestry run_ancestryQC run_snpHerit --configfile ../config/sandboxABCD_smokescreen.yaml
+gdcgenomicsqc --until run_classifyAncestry  --configfile ../config/sandboxABCD_smokescreen.yaml
