@@ -150,5 +150,5 @@ rule extractSimPheno:
         pheno=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated_pheno1.pheno",
     shell:
         """
-        awk 'BEGIN{{OFS=" "}}{{print $1, $2, $6}}' {input.fam} > {output.pheno}
+        awk 'BEGIN{{OFS=" "; print "FID", "IID", "1"}}{{print $1, $2, $6}}' {input.fam} > {output.pheno}
         """
