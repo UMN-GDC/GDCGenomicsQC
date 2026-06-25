@@ -125,13 +125,9 @@ bash /path/to/prs_pipeline/run_split_data.sh \
     -t 70 -T 30
 ```
 
-After splitting, generate the actual PLINK files and allele frequencies for the training set:
+After splitting, generate the allele frequencies for the training set:
 
 ``` bash
-plink --bfile /path/to/study_sample \
-    --keep /path/to/study_sample/randomization_ids_anc1/train_samples.txt \
-    --make-bed --out /path/to/train
-
 plink2 --bfile /path/to/train --freq --out /path/to/train
 ```
 
