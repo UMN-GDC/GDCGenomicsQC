@@ -41,7 +41,7 @@ The hard MAF (0.01), HWE (1e-6), and missingness (0.02) thresholds are in `workf
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
-OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
 subset <- "full"
 
 smiss <- read_tsv(file.path(OUT_DIR, subset, "initial.smiss"))
