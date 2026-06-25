@@ -20,10 +20,10 @@ SNP heritability (h²) is the fraction of phenotypic variance explained by genet
 ```yaml
 # sandboxToy.yaml lines 32-50 (relevant snpHerit keys)
 snpHerit:
-    pheno: null
-    method: "AdjHE"
-    npc: [1,2]
-    mpheno: 1
+    pheno: null       # Phenotype file; null = use simulated phenotype from phenotypeSimulation step
+    method: "AdjHE"   # Heritability estimator: "AdjHE" (default, bias-corrected), "GCTA", "PredLMM"
+    npc: [1,2]        # Genetic PCs to include as fixed-effect covariates; list of integers or null
+    mpheno: 1         # Which phenotype column to use (1-indexed); only matters for multi-phenotype files
 ```
 
 The GRM is built from LD-pruned, crossmapped variants. Related samples are removed via KING before estimation (see `relatedness.king_cutoff: 0.0884` in the config). For a complete walkthrough of heritability estimation, see the [Heritability Tutorial](../tutorial_heritability.rst).

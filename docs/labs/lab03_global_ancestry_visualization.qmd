@@ -22,9 +22,9 @@ The pipeline supports multiple latent spaces: PCA (linear), UMAP (non-linear), a
 ```yaml
 # sandboxToy.yaml lines 82-85
 ancestry:
-    threshold: 0.8
-    model: "pca"
-    ancestry_file: null
+    threshold: 0.8        # Minimum posterior probability for a hard classification; samples below this → "Other"
+    model: "pca"           # Latent space for RF: "pca" (linear, fast), "umap" (non-linear, fine-scale), "vae" (deep learning)
+    ancestry_file: null    # Optional path to pre-computed ancestry labels; null = use pipeline classification
 ```
 
 `model` selects the latent space: `"pca"` (linear, fast, well-understood), `"umap"` (non-linear, captures fine-scale structure), or `"vae"` (deep learning, requires VAE coordinates). `threshold` is the minimum posterior probability for a hard call — samples below it are labeled "Other".

@@ -22,15 +22,15 @@ The data are **synthetic** — resampled from 1000 Genomes haplotypes — so the
 The pipeline's QC thresholds are set partly in the config and partly hardcoded in the filtering scripts. The config controls the conversion-stage filters:
 
 ```yaml
-# sandboxToy.yaml lines 2-19
-INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
-OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr"
-chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+# sandboxToy.yaml lines 2-19 (relevant keys)
+INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"  # Genotype input: VCF, PLINK1, or PLINK2 format
+OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr"                      # Top-level output directory
+chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]                 # Chromosomes to process
 
-convertNfilt:
-    info_r2_min: 0.9
-    filter_pass: true
-    qual_min: null
+convertNfilt:                                                          # Conversion-stage filters (VCF → PGEN)
+    info_r2_min: 0.9    # Minimum imputation R² (INFO field); set null to skip; only applies to VCF
+    filter_pass: true   # Keep only variants with FILTER == PASS; false = keep all
+    qual_min: null      # Minimum QUAL score; null = no QUAL filter; numeric value e.g. 30
 ```
 
 The hard MAF (0.01), HWE (1e-6), and missingness (0.02) thresholds are in `workflow/scripts/filterStandard.sh` and `workflow/rules/Standard_QC.smk`. The full pipeline reference is in the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst).

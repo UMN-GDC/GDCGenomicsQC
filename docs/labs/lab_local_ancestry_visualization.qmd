@@ -18,10 +18,10 @@ Local ancestry deconvolves the two haplotypes at each genomic position into thei
 ## Input
 
 ```yaml
-# sandboxToy.yaml lines 66-71
+# sandboxToy.yaml lines 66-71 (relevant keys)
 localAncestry:
-    RFMIX: false
-    chromosomes: [20, 21]
+    RFMIX: false          # Toggle local ancestry analysis: false = skip, true = run ShapeIt4 phasing + RFMix
+    chromosomes: [20, 21] # Which chromosomes to phase and analyze; use pipeline-wide list or custom subset
 ```
 
 When `RFMIX: true`, the pipeline runs phasing + RFMix on the specified chromosomes (use all autosomes for production). See the [Multi-Ancestry PRS Tutorial](../tutorial_prs_multi.rst) for the full local ancestry pipeline reference.

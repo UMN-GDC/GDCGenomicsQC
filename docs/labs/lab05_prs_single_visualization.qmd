@@ -20,13 +20,13 @@ Polygenic risk scores (PRS) aggregate the effects of many genetic variants into 
 ```yaml
 # sandboxToy.yaml lines 139-148
 prsMethods:
-  single_ct:
+  single_ct:          # Clumping + Thresholding (baseline); fast, no LD adjustment
     enabled: false
-  single_prsice:
+  single_prsice:      # PRSice-2: automated threshold scan, picks best R²; good default
     enabled: true
-  single_prscs:
+  single_prscs:       # PRS-CS: Bayesian regression with continuous shrinkage prior; requires external LD reference
     enabled: false
-  single_ldpred2:
+  single_ldpred2:     # LDpred2: Bayesian point-normal + auto model; accounts for LD, good with GWAS summary stats
     enabled: true
 ```
 
