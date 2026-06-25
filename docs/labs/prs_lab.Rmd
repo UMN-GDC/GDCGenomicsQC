@@ -112,9 +112,6 @@ The config above shows the key parameters. Note how `phenotype_info_file` provid
 
     What gets auto-generated: aligned summary statistics, training sample phenotypes, LD matrices (first run), and PRS scores.
 
-
-The configuration file above shows the key parameters you will work with. Note the `n_total_gwas` parameter.
-
 **Question:** Why do Bayesian methods like LDpred2 need the total sample size of the discovery GWAS? *Answer: To distinguish between a small effect size and a lack of statistical power in the discovery set.*
 
 ### Running the Pipeline
@@ -140,7 +137,40 @@ plink2 --bfile /path/to/train --freq --out /path/to/train
 
 **Assignment:** Generate your own split of the data using `run_split_data.sh` with a 70/30 train/test ratio. Use the sample ID files to extract the corresponding PLINK subsets, then compute allele frequencies for the training set.
 
-Once you have distinct training and testing splits of your genomic data you are ready to build your config file. To build a config file use the template shown above or make a text file and add in these key variables replacing with the appropriate paths. If you are missing any of these please see the Full documentation at `docs/sandbox_singularity_runner.md` in the `prs_pipeline` repo. \* summary_stats_file="/full/path_to_summary_stats_file" \* study_sample="/full_path/genomics_plink/training_split_file_excluding_extension[.bed/.bim/.fam]" \* bim_file_path=same path as above just with the .bim extension \* test_sample="/full_path/genomics_plink/testing_split_file_excluding_extension[.bed/.bim/.fam]" \* path_repo="full_path/prs_pipeline/github_repo" \* output_path="/scratch.global/baron063/r25outputs/toy" \# Change the labs config output path \* n_total_gwas= The number of individuals included in the summary stats generation. \* phenotype_info_file="/scratch.global/baron063/R25_testing/sample_pheno.txt" \# This file contains FID IID pheno. \* ld_matrix_dir="\${output_path}/prs_pipeline/ld_matrix" \# **Optional**; Output directory \| or input if previously ran prs_pipeline \* gwas_pca_eigenvec_file="" \# **Optional**; can be found as an output of the GDCQC pipeline.
+### Step 2: Build Your Config File
+
+Once you have distinct training and testing splits, create a `.conf` file with the following variables. Use the example config above as your starting template:
+
+- `summary_stats_file` — path to your GWAS summary statistics
+- `study_sample` — PLINK prefix for the training split (no `.bed`/`.bim`/`.fam` extension)
+- `bim_file_path` — path to the `.bim` file (same location as `study_sample` with extension)
+- `test_sample` — PLINK prefix for the held-out testing split (evaluated after training)
+- `path_repo` — path to your `prs_pipeline` clone
+- `output_path` — directory where all results will be written
+- `n_total_gwas` — sample size of the discovery GWAS
+- `phenotype_info_file` — tab-separated file with columns `FID`, `IID`, `Pheno` (see below)
+- `ld_matrix_dir` — *(optional)* LD matrix directory; speeds up re-runs if previously computed
+- `gwas_pca_eigenvec_file` — *(optional)* PCA eigenvectors from the GDC QC pipeline
+
+**Generating a `phenotype_info_file`:**
+
+If you do not already have a phenotype file, you can create one from your PLINK `.fam` file. The sixth column of a `.fam` file stores the phenotype for each sample:
+
+```bash
+awk '{print $1, $2, $6}' /path/to/train.fam > /path/to/pheno.txt
+```
+
+This produces a tab-separated file:
+
+```         
+FID    IID    Pheno
+Sample1 ID001 1.24
+Sample2 ID002 -0.87
+```
+
+The pipeline auto-detects headers — if the first field is not `FID`, a header is prepended automatically. If you leave `phenotype_info_file` unset, the pipeline falls back to the `.fam` column 6 values automatically.
+
+### Step 3: Run the Pipeline
 
 Once your config file is ready, use `sandbox_singularity_runner.sh` to execute the pipeline inside a pre-built Singularity container. Full documentation is at `docs/sandbox_singularity_runner.md` in the `prs_pipeline` repo.
 
