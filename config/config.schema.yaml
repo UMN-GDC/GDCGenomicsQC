@@ -60,6 +60,16 @@ min_samples_per_ancestry:
     ancestry-specific QC. Subsets below this threshold are silently skipped.
     Set to 0 to process all ancestries regardless of size.
 
+pca_min_maf:
+  type: float
+  default: 0.05
+  nullable: true
+  description: |
+    Minimum allele frequency threshold for variants included in PCA projection
+    against the reference panel. Variants in the study below this MAF are
+    excluded from the study-reference intersection before PCA.
+    Set to null to disable MAF filtering before PCA.
+
 build:
   type: str
   default: "GRCh38"

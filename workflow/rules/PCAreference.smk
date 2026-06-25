@@ -35,9 +35,15 @@ if INPUT_IS_PER_CHROMOSOME:
             ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
             chroms=" ".join(str(c) for c in CHROMOSOMES),
             pca_estimation=config.get("ancestry", {}).get("pca_estimation", "projection"),
+            pca_min_maf=config.get("pca_min_maf", 0.05),
         shell:
             """
             mkdir -p {output.tempDir}
+
+            PCA_MAF_ARG=""
+            if [ -n "{params.pca_min_maf}" ] && [ "{params.pca_min_maf}" != "None" ]; then
+                PCA_MAF_ARG="--maf {params.pca_min_maf}"
+            fi
 
             # Per-chromosome: write per-chrom study snplists and extract matching variants
             for chr_f in {input.pgen}; do
@@ -45,7 +51,7 @@ if INPUT_IS_PER_CHROMOSOME:
                 chr_name=$(basename $chr_prefix | sed 's/f1.b38_//')
                 plink2 --pfile $chr_prefix \
                     --write-snplist \
-                    --maf 0.05 \
+                    $PCA_MAF_ARG \
                     --chr $chr_name \
                     --allow-extra-chr \
                     --threads {threads} \
@@ -59,6 +65,8 @@ if INPUT_IS_PER_CHROMOSOME:
 
             # Concatenate per-chrom snplists
             cat {output.tempDir}/study_snps_*.snplist > {output.tempDir}/study_snps.snplist
+            N_STUDY_SNPS=$(wc -l < {output.tempDir}/study_snps.snplist)
+            echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS"
 
             # Concatenate per-chrom extracted variants
             > {output.tempDir}/mergelist.txt
@@ -69,6 +77,9 @@ if INPUT_IS_PER_CHROMOSOME:
                    --make-pgen \
                    --threads {threads} \
                    --out {output.tempDir}/study_lai
+
+            N_SHARED=$(wc -l < {output.tempDir}/study_lai.pvar 2>/dev/null || echo 0)
+            echo "[PCA] Variants shared between study and reference: $N_SHARED"
 
             # Compute PCA on reference using shared SNPs
             if [ "{params.pca_estimation}" = "joint" ]; then
@@ -174,18 +185,27 @@ else:
             dir=str(OUT_DIR / "01-globalAncestry"),
             ref=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
             pca_estimation=config.get("ancestry", {}).get("pca_estimation", "projection"),
+            pca_min_maf=config.get("pca_min_maf", 0.05),
         shell:
             """
-            echo "PCA: "
+            echo "PCA: single-file mode"
             mkdir -p {output.tempDir}
+
+            PCA_MAF_ARG=""
+            if [ -n "{params.pca_min_maf}" ] && [ "{params.pca_min_maf}" != "None" ]; then
+                PCA_MAF_ARG="--maf {params.pca_min_maf}"
+            fi
 
             # Filter pruned ref panel to shared SNPs and LDprune
             plink2 --pfile {params.input_prefix} --write-snplist \
-                --maf 0.05 \
+                $PCA_MAF_ARG \
                 --chr 1-22 \
                 --allow-extra-chr \
                 --threads {threads} \
                 --out {params.dir}/intermediates/study_snps
+
+            N_STUDY_SNPS=$(wc -l < {params.dir}/intermediates/study_snps.snplist 2>/dev/null || echo 0)
+            echo "[PCA] Study variants passing MAF filter: $N_STUDY_SNPS"
 
 
             # calculate ld on ref intersection with sample with common frequency

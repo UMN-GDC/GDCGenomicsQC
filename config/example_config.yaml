@@ -35,6 +35,11 @@ chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 # Set to 0 to process all ancestries regardless of size.
 min_samples_per_ancestry: 0
 
+# Minimum MAF for variants included in PCA projection against reference panel.
+# Variants below this frequency in the study are excluded before intersecting
+# with the reference. Set to null to skip MAF filtering before PCA.
+pca_min_maf: 0.05
+
 
 # =============================================================================
 # Sample Relatedness Estimation

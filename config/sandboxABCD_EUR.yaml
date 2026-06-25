@@ -41,6 +41,10 @@ ancestry:
 # Subsets below this threshold are silently skipped.
 min_samples_per_ancestry: 50
 
+# Minimum MAF for variants included in PCA projection against reference panel.
+# Set to null to skip MAF filtering before PCA (useful for array data).
+pca_min_maf: 0.05
+
 # Tool settings
 localAncestry:
     RFMIX: false

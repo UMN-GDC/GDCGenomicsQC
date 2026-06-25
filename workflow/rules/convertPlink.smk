@@ -61,6 +61,7 @@ rule convertPlinkPerChromosome:
         keep=get_ancestry_file,
         keep_samples=get_keep_samples,
         extract=get_keep_variants,
+        ref_pvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar"),
     params:
         scripts_dir=SCRIPTS_DIR,
         format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
@@ -157,7 +158,37 @@ plink2 --pfile {output.tempDir}/intermediate_2 \
        --threads {threads} \
        --out {output.tempDir}/intermediate_3
 
-bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_3 {params.output_prefix} {threads} {output.tempDir}
+# === Allele alignment against reference panel ===
+bash {params.scripts_dir}/align_alleles.sh \
+    {output.tempDir}/intermediate_3.pvar \
+    {input.ref_pvar} \
+    {output.tempDir}/flip_list.txt \
+    {output.tempDir}/align_report.txt
+
+if [ -s {output.tempDir}/flip_list.txt ]; then
+    N_FLIP=$(wc -l < {output.tempDir}/flip_list.txt)
+    echo "[convertPlink] Flipping $N_FLIP strand-mismatched variants"
+    plink2 --pfile {output.tempDir}/intermediate_3 \
+           --flip {output.tempDir}/flip_list.txt \
+           --make-pgen \
+           --threads {threads} \
+           --out {output.tempDir}/intermediate_3_flipped
+    plink2 --pfile {output.tempDir}/intermediate_3_flipped \
+           --fa {input.fasta} \
+           --ref-from-fa force \
+           --set-all-var-ids 'chr@:#:$r:$a' \
+           --make-pgen \
+           --threads {threads} \
+           --out {output.tempDir}/intermediate_4
+else
+    echo "[convertPlink] No strand flips needed"
+    plink2 --pfile {output.tempDir}/intermediate_3 \
+           --make-pgen \
+           --threads {threads} \
+           --out {output.tempDir}/intermediate_4
+fi
+
+bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_4 {params.output_prefix} {threads} {output.tempDir}
 
 mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
 mv {output.tempDir}/intermediate_0.smiss {output.smiss}
@@ -209,6 +240,7 @@ if not INPUT_IS_PER_CHROMOSOME:
             keep=get_ancestry_file,
             keep_samples=get_keep_samples,
             extract=get_keep_variants,
+            ref_pvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar"),
         params:
             format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
             single_input=config.get("INPUT", ""),
@@ -266,7 +298,40 @@ if not INPUT_IS_PER_CHROMOSOME:
             plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta}  --ref-from-fa force --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
             plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_2
 
-            bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_2 {params.output_prefix} {threads} {output.tempDir}
+            # === Allele alignment against reference panel ===
+            bash {params.scripts_dir}/align_alleles.sh \
+                {output.tempDir}/intermediate_2.pvar \
+                {input.ref_pvar} \
+                {output.tempDir}/flip_list.txt \
+                {output.tempDir}/align_report.txt
+
+            if [ -s {output.tempDir}/flip_list.txt ]; then
+                N_FLIP=$(wc -l < {output.tempDir}/flip_list.txt)
+                echo "[convertPlink] Flipping $N_FLIP strand-mismatched variants"
+                plink2 --pfile {output.tempDir}/intermediate_2 \
+                       --flip {output.tempDir}/flip_list.txt \
+                       --make-pgen \
+                       --threads {threads} \
+                       --memory {resources.mem_mb} \
+                       --out {output.tempDir}/intermediate_2_flipped
+                plink2 --pfile {output.tempDir}/intermediate_2_flipped \
+                       --fa {input.fasta} \
+                       --ref-from-fa force \
+                       --set-all-var-ids 'chr@:#:$r:$a' \
+                       --make-pgen \
+                       --threads {threads} \
+                       --memory {resources.mem_mb} \
+                       --out {output.tempDir}/intermediate_3
+            else
+                echo "[convertPlink] No strand flips needed"
+                plink2 --pfile {output.tempDir}/intermediate_2 \
+                       --make-pgen \
+                       --threads {threads} \
+                       --memory {resources.mem_mb} \
+                       --out {output.tempDir}/intermediate_3
+            fi
+
+            bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_3 {params.output_prefix} {threads} {output.tempDir}
             mkdir -p {output.tempDir}
             mv {output.tempDir}/intermediate_00.vmiss {output.vmiss}
             mv {output.tempDir}/intermediate_00.smiss {output.smiss}
