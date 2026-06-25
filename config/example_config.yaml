@@ -30,6 +30,11 @@ local-storage-prefix: "/path/to/.snakemake/storage"
 # Chromosomes to process (list of integers)
 chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
+# Minimum samples per ancestry subset to run ancestry-specific QC
+# Subsets below this threshold are silently skipped (no error).
+# Set to 0 to process all ancestries regardless of size.
+min_samples_per_ancestry: 0
+
 
 # =============================================================================
 # Sample Relatedness Estimation

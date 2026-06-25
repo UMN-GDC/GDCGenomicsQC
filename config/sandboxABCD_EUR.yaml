@@ -1,0 +1,124 @@
+# =============================================================================
+# ABCD Study — Self-Reported EUR Ancestry
+# =============================================================================
+# Edit the paths below (marked with FILL_IN) for your dataset.
+
+# Project-wide paths
+INPUT: "__FILL_IN__"  # e.g., "/shared/release/abcd/abcd/concatenated/genetics/genotype_microarray/smokescreen/merged_chroms.bed"
+OUT_DIR: "__FILL_IN__"  # e.g., "/scratch.global/GDC/r25outputs/abcd_eur"
+REF: "/scratch.global/GDC/referenceData"
+local-storage-prefix: "__FILL_IN__"  # e.g., "/scratch.global/$USER/tmp"
+
+chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+convertNfilt:
+    info_r2_min: 0.9
+    filter_pass: true
+    qual_min: null
+
+# QC Settings
+relatedness:
+    method: "king"
+    king_cutoff: 0.0884
+
+SEX_CHECK: false
+GRM: true
+thin: false
+
+# === Ancestry bypass: self-reported EUR labels ===
+# Provide a tab-separated file with IID and ancestry label (EUR for all).
+# Only samples in this file are kept for ancestry-specific QC.
+# Format (no header):
+#   <IID>  EUR
+ancestry:
+    threshold: 0.8
+    model: "pca"
+    ancestry_file: "__FILL_IN__"  # Path to EUR self-report ancestry file
+    ancestry_file_sep: "\t"       # Delimiter in ancestry_file
+    ancestry_file_header: false   # Set true if your file has a header row
+
+# Minimum samples required per ancestry subset to run ancestry-specific QC.
+# Subsets below this threshold are silently skipped.
+min_samples_per_ancestry: 50
+
+# Tool settings
+localAncestry:
+    RFMIX: false
+    test: false
+    thin_subjects: 1.0
+    chromosomes: null
+    figures: "figures"
+
+internalPCA:
+    method: "plink2"
+    npc: 20
+    plot: true
+    color_by: null
+    phenotype_file: null
+
+build: "GRCh37"
+
+# SNP Heritability Estimation
+snpHerit:
+    pheno: null
+    covar: null
+    method: "AdjHE"
+    npc: [1, 2]
+    mpheno: 1
+    qcovar: null
+    covar_discrete: null
+    RV: null
+    loop_covars: false
+    Naive: false
+    std: false
+    k: null
+    pheno_filter: null
+    covar_filter: null
+    iid_col: "IID"
+    fid_col: "FID"
+
+# Phenotype Simulation
+phenotypeSimulation:
+    enabled: false
+    ancestries: ["EUR"]
+    simulations_dir: null
+    prefix: null
+
+# PRS Methods
+prsPipeline:
+    iid_col: "IID"
+    fid_col: "FID"
+
+prsMethods:
+    single_ct:
+        enabled: false
+    single_prsice:
+        enabled: false
+    single_prscs:
+        enabled: false
+    single_ldpred2:
+        enabled: false
+    single_lassosum2:
+        enabled: false
+        iid_col: "IID"
+        fid_col: "FID"
+    multi_ctsleb:
+        enabled: false
+    multi_prscsx:
+        enabled: false
+        ld_ref_dir: ""
+    multi_ldpred2:
+        enabled: false
+    multi_prosper:
+        enabled: false
+    multi_sdprs:
+        enabled: false
+
+# Environment modules
+plink_module: "plink/2.0.0-a7.1"
+bcftools_module: "bcftools/1.23.1"
+shapeit_module: "shapeit/4.2.2"
+rfmix_module: "rfmix/09599c1"
+samtools_module: "samtools/1.21"
+R_module: null
+crossmap_module: null

@@ -52,6 +52,14 @@ chromosomes:
     List of chromosomes to process.
     Example: [1, 2, 3] or [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
+min_samples_per_ancestry:
+  type: int
+  default: 0
+  description: |
+    Minimum number of samples required for an ancestry subset to undergo
+    ancestry-specific QC. Subsets below this threshold are silently skipped.
+    Set to 0 to process all ancestries regardless of size.
+
 build:
   type: str
   default: "GRCh38"

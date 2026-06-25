@@ -60,12 +60,25 @@ def uses_rfmix():
     return config.get("localAncestry", {}).get("RFMIX", False)
 
 
+def get_min_samples():
+    return config.get("min_samples_per_ancestry", 0)
+
+
+def _check_min_samples(ancestries, counts_dict):
+    min_samp = get_min_samples()
+    if min_samp <= 0:
+        return ancestries
+    return sorted([a for a in ancestries if counts_dict.get(a, 0) >= min_samp])
+
+
 def get_provided_ancestries():
     result = _read_ancestry_file()
     if result is None:
         return []
     df, iid_col, anc_col = result
-    return sorted(df[anc_col].unique().tolist())
+    ancestries = df[anc_col].unique().tolist()
+    counts = df[anc_col].value_counts().to_dict()
+    return _check_min_samples(ancestries, counts)
 
 
 def get_provided_ancestry_file_path():
@@ -96,7 +109,21 @@ def get_ancestries(wildcards):
     df = pd.read_csv(ckpt.output.classifications, sep="\t")
     predicted_col = f"{ANCESTRY_MODEL}_predicted"
     ancestries = df[predicted_col].dropna().unique().tolist()
-    return [a for a in ancestries if a != "uncertain"]
+    ancestries = [a for a in ancestries if a != "uncertain"]
+    min_samp = get_min_samples()
+    if min_samp > 0:
+        subset_map = {"uncertain": "Other"}
+        counts = {}
+        for a in ancestries:
+            mapped = subset_map.get(a, a)
+            keep_path = getattr(ckpt.output, f"keep_{mapped}", None)
+            if keep_path and Path(keep_path).exists():
+                with open(keep_path) as f:
+                    counts[a] = sum(1 for _ in f)
+            else:
+                counts[a] = 0
+        ancestries = _check_min_samples(ancestries, counts)
+    return ancestries
 
 
 def get_ancestry_file(wildcards):
