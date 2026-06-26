@@ -6,6 +6,10 @@ if (length(args) != 3) {
   quit(status = 1)
 }
 
+if (!requireNamespace("data.table", quietly = TRUE)) {
+  stop("data.table package is required. Install with install.packages('data.table')", call. = FALSE)
+}
+
 ref_path <- args[1]
 tgt_path <- args[2]
 out_path <- args[3]
@@ -13,27 +17,12 @@ out_path <- args[3]
 # ═══════════════════════════════════════════════════════════════════
 # 1. Read dbSNP reference (txt.gz, UCSC dbSNP table format)
 # ═══════════════════════════════════════════════════════════════════
-# Columns (tab-separated):
-#   1  bin              (skip)
-#   2  chrom            ── keep
-#   3  chromStart (0-based) ── keep; add 1 for 1-based position
-#   4  chromEnd         (skip)
-#   5  name (rsID)      ── keep
-#   6  score            (skip)
-#   7  strand           (skip)
-#   8  refNCBI          (skip)
-#   9  refUCSC          (skip)
-#  10  observed (e.g. "A/G", "-/C")  ── keep
-#  11-19               (skip)
-col_classes <- c("NULL", "character", "integer", "NULL", "character",
-                 "NULL", "NULL", "NULL", "NULL", "character",
-                 rep("NULL", 9))
-
+# Only keep columns 2 (chrom), 3 (chromStart, 0-based), 5 (rsID), 10 (observed)
 cat("Reading dbSNP reference ... ", file = stderr())
-ref <- read.table(gzfile(ref_path, "rt"), header = FALSE, sep = "\t",
-                  colClasses = col_classes, comment.char = "",
-                  quote = "")
-names(ref) <- c("chrom", "pos0", "rsid", "observed")
+ref <- data.table::fread(ref_path, sep = "\t", header = FALSE,
+                         select = c(2, 3, 5, 10),
+                         col.names = c("chrom", "pos0", "rsid", "observed"),
+                         quote = "")
 cat(sprintf("%d rows\n", nrow(ref)), file = stderr())
 
 # 0-based → 1-based
