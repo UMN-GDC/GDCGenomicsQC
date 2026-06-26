@@ -10,24 +10,32 @@ ref_path <- args[1]
 tgt_path <- args[2]
 out_path <- args[3]
 
+# Detect format: PVAR always has a #CHROM header line (may be preceded by ##contig lines)
+detect_pvar <- function(path) {
+  any(grepl("^#CHROM", readLines(path, n = 100, warn = FALSE)))
+}
+is_ref_pvar <- detect_pvar(ref_path)
+is_tgt_pvar <- detect_pvar(tgt_path)
+
 # Read all as character to handle both BIM (CHR ID CM POS REF ALT)
 # and PVAR (#CHROM POS ID REF ALT) formats.
+# fill=TRUE handles ##contig lines (1 field) mixed with data rows (6 fields)
 ref <- read.table(ref_path, header = FALSE, sep = "\t",
-                  colClasses = "character", comment.char = "")
+                  colClasses = "character", comment.char = "", fill = TRUE)
 tgt <- read.table(tgt_path, header = FALSE, sep = "\t",
-                  colClasses = "character", comment.char = "")
+                  colClasses = "character", comment.char = "", fill = TRUE)
 # Strip any comment/header rows (PVAR starts with #CHROM)
 ref <- ref[!grepl("^#", ref[[1]]), ]
 tgt <- tgt[!grepl("^#", tgt[[1]]), ]
 
-# Detect format: BIM (CHR ID CM POS REF ALT, 6 cols) vs PVAR (#CHROM POS ID REF ALT, 5 cols)
+# Assign column names based on detected format
 for (d in c("ref", "tgt")) {
+  is_pvar <- if (d == "ref") is_ref_pvar else is_tgt_pvar
   dat <- get(d)
-  if (ncol(dat) == 6) {
-    names(dat) <- c("chr", "id", "cm", "pos", "ref", "alt")
+  if (is_pvar) {
+    names(dat) <- c("chr", "pos", "id", "ref", "alt", "cm")[1:ncol(dat)]
   } else {
-    names(dat) <- c("chr", "pos", "id", "ref", "alt")
-    dat$cm <- "0"
+    names(dat) <- c("chr", "id", "cm", "pos", "ref", "alt")
   }
   assign(d, dat)
 }
