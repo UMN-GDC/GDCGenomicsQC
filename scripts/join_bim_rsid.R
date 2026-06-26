@@ -2,7 +2,7 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 3) {
-  cat("Usage: Rscript scripts/join_bim_rsid.R <reference.bim> <target.bim> <output.bim>\n", file = stderr())
+  cat("Usage: Rscript scripts/join_bim_rsid.R <dbsnp.txt.gz> <target.bim|pvar> <output.bim>\n", file = stderr())
   quit(status = 1)
 }
 
@@ -10,74 +10,114 @@ ref_path <- args[1]
 tgt_path <- args[2]
 out_path <- args[3]
 
-# Find the #CHROM header line number so we can skip all preceding ## lines
+# ═══════════════════════════════════════════════════════════════════
+# 1. Read dbSNP reference (txt.gz, UCSC dbSNP table format)
+# ═══════════════════════════════════════════════════════════════════
+# Columns (tab-separated):
+#   1  bin              (skip)
+#   2  chrom            ── keep
+#   3  chromStart (0-based) ── keep; add 1 for 1-based position
+#   4  chromEnd         (skip)
+#   5  name (rsID)      ── keep
+#   6  score            (skip)
+#   7  strand           (skip)
+#   8  refNCBI          (skip)
+#   9  refUCSC          (skip)
+#  10  observed (e.g. "A/G", "-/C")  ── keep
+#  11-19               (skip)
+col_classes <- c("NULL", "character", "integer", "NULL", "character",
+                 "NULL", "NULL", "NULL", "NULL", "character",
+                 rep("NULL", 9))
+
+cat("Reading dbSNP reference ... ", file = stderr())
+ref <- read.table(gzfile(ref_path, "rt"), header = FALSE, sep = "\t",
+                  colClasses = col_classes, comment.char = "",
+                  quote = "")
+names(ref) <- c("chrom", "pos0", "rsid", "observed")
+cat(sprintf("%d rows\n", nrow(ref)), file = stderr())
+
+# 0-based → 1-based
+ref$pos <- ref$pos0 + 1L
+ref$chr_norm <- sub("^chr", "", ref$chrom, ignore.case = TRUE)
+
+# Parse observed = "A/G" or "-/C" or "A/C/G" (skip multi-allelic)
+has_slash <- grepl("/", ref$observed)
+ref <- ref[has_slash, ]
+allele1 <- toupper(sub("/.*", "", ref$observed))
+allele2 <- toupper(sub(".*/", "", ref$observed))
+# Keep only exactly 2 distinct alleles
+biallelic <- allele1 != allele2 & !grepl("/", allele1) & !grepl("/", allele2)
+ref <- ref[biallelic, ]
+allele1 <- allele1[biallelic]
+allele2 <- allele2[biallelic]
+
+# Build lookup with both orientations (ref→alt and alt→ref)
+cat("Building lookup table ... ", file = stderr())
+ref_fwd <- data.frame(chr_norm = ref$chr_norm, pos = ref$pos,
+                       ref = allele1, alt = allele2, rsid = ref$rsid,
+                       stringsAsFactors = FALSE)
+ref_rev <- data.frame(chr_norm = ref$chr_norm, pos = ref$pos,
+                       ref = allele2, alt = allele1, rsid = ref$rsid,
+                       stringsAsFactors = FALSE)
+ref <- rbind(ref_fwd, ref_rev)
+rm(ref_fwd, ref_rev, allele1, allele2, biallelic, has_slash)
+
+ref$exact_key <- paste(ref$chr_norm, ref$pos, ref$ref, ref$alt, sep = ":")
+ref$pos_key  <- paste(ref$chr_norm, ref$pos, sep = ":")
+cat(sprintf("%d lookup entries\n", nrow(ref)), file = stderr())
+
+# ═══════════════════════════════════════════════════════════════════
+# 2. Read target (BIM or PVAR)
+# ═══════════════════════════════════════════════════════════════════
 find_header_line <- function(path) {
   lines <- readLines(path, n = 100, warn = FALSE)
   for (i in seq_along(lines)) {
     if (grepl("^#CHROM", lines[i])) return(i)
   }
-  0L  # BIM — no header
+  0L
 }
-ref_hdr <- find_header_line(ref_path)
 tgt_hdr <- find_header_line(tgt_path)
-
-is_ref_pvar <- ref_hdr > 0
 is_tgt_pvar <- tgt_hdr > 0
 
-# For PVAR, skip past #CHROM (all preceding ## lines are ignored too).
-# For BIM, skip=0 reads from line 1.
-ref <- read.table(ref_path, header = FALSE, sep = "\t",
-                  colClasses = "character", comment.char = "",
-                  skip = ref_hdr)
 tgt <- read.table(tgt_path, header = FALSE, sep = "\t",
                   colClasses = "character", comment.char = "",
                   skip = tgt_hdr)
 
-# Assign column names based on detected format
-for (d in c("ref", "tgt")) {
-  is_pvar <- if (d == "ref") is_ref_pvar else is_tgt_pvar
-  dat <- get(d)
-  if (is_pvar) {
-    names(dat) <- c("chr", "pos", "id", "ref", "alt", "cm")[1:ncol(dat)]
-  } else {
-    names(dat) <- c("chr", "id", "cm", "pos", "ref", "alt")
-  }
-  assign(d, dat)
+if (is_tgt_pvar) {
+  names(tgt) <- c("chr", "pos", "id", "ref", "alt", "cm")[1:ncol(tgt)]
+} else {
+  names(tgt) <- c("chr", "id", "cm", "pos", "ref", "alt")
 }
 
-ref$chr_norm <- sub("^chr", "", ref$chr, ignore.case = TRUE)
 tgt$chr_norm <- sub("^chr", "", tgt$chr, ignore.case = TRUE)
-
-ref$exact_key <- paste(ref$chr_norm, ref$pos, toupper(ref$ref), toupper(ref$alt), sep = ":")
-ref$pos_key  <- paste(ref$chr_norm, ref$pos, sep = ":")
 tgt$exact_key <- paste(tgt$chr_norm, tgt$pos, toupper(tgt$ref), toupper(tgt$alt), sep = ":")
 tgt$pos_key  <- paste(tgt$chr_norm, tgt$pos, sep = ":")
 
-# Multi-allelic positions in ref (ambiguous for position-based matching)
+# ═══════════════════════════════════════════════════════════════════
+# 3. Join
+# ═══════════════════════════════════════════════════════════════════
 ambig_pos <- unique(ref$pos_key[duplicated(ref$pos_key)])
 
-# Lookup: exact key → RSID
-exact_map <- setNames(ref$id, ref$exact_key)
+exact_map <- setNames(ref$rsid, ref$exact_key)
+unambig   <- ref[!ref$pos_key %in% ambig_pos, ]
+pos_map   <- setNames(unambig$rsid, unambig$pos_key)
 
-# Lookup: pos key → RSID (unambiguous positions only)
-unambig <- ref[!ref$pos_key %in% ambig_pos, ]
-pos_map <- setNames(unambig$id, unambig$pos_key)
-
-# 1. Exact match
 tgt$rsid <- exact_map[tgt$exact_key]
 
-# 2. Position match (fallback for unmatched, unambiguous positions only)
 no_exact <- is.na(tgt$rsid)
 tgt$rsid[no_exact] <- pos_map[tgt$pos_key[no_exact]]
 
-# Replace unmatched IDs with original (keeps chr:pos:ref:alt or whatever was there)
 tgt$rsid[is.na(tgt$rsid)] <- tgt$id[is.na(tgt$rsid)]
 
-# Write output
+# ═══════════════════════════════════════════════════════════════════
+# 4. Write output
+# ═══════════════════════════════════════════════════════════════════
 write.table(tgt[, c("chr", "rsid", "cm", "pos", "ref", "alt")],
             out_path, sep = "\t", row.names = FALSE, col.names = FALSE, quote = FALSE)
 
-# Report
+# ═══════════════════════════════════════════════════════════════════
+# 5. Report
+# ═══════════════════════════════════════════════════════════════════
 total <- nrow(tgt)
 matched_exact <- sum(!is.na(exact_map[tgt$exact_key]))
 assigned_all  <- sum(tgt$rsid != tgt$id)
