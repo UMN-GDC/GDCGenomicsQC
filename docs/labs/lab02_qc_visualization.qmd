@@ -1,7 +1,7 @@
 ---
 title: "Lab: Visualizing Basic QC Outputs"
 author: "Christian Coffman"
-date: "2026-06-12"
+date: "2026-07-21"
 format:
   html:
     toc: true

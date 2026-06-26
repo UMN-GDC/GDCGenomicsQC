@@ -1,7 +1,7 @@
 ---
 title: "Lab: Running the Pipeline"
 author: "Christian Coffman"
-date: "2026-06-12"
+date: "2026-07-20"
 format:
   html:
     toc: true
@@ -132,8 +132,6 @@ Two targets (`run_classifyAncestry applyStandardQualityControl`), one command. S
 | Lab 2 — QC Viz | `{OUT_DIR}/full/initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy` | Missingness histograms, AF spectrum, HWE checks |
 | Lab 3 — Global Ancestry | `{OUT_DIR}/01-globalAncestry/classificationProbabilities.tsv`, `ancestry_classifications.tsv`, `sampleRefPCscores.sscore` | PCA projection, confusion matrix, classification probabilities |
 | Lab 4 — Heritability | `{OUT_DIR}/{ancestry}/simulations/bivariate_test/herit.csv` per ancestry | h² estimate comparison (EUR vs AFR) |
-| Lab 5 — PRS | `{OUT_DIR}/prs_inputs/{anc1}_{anc2}/single_prsice/best_pRS.prs`, `single_ldpred2/prs_scores.tsv` | Score distribution, threshold scan, method comparison |
-| Lab 6 — Local Ancestry | `{OUT_DIR}/02-localAncestry/ancestry_full.txt`, `chr*.lai.msp.tsv`, `per_snp_local_ancestry.tsv` | Global proportions, ancestry tracts, per-SNP probabilities |
 
 ### What happens when it runs
 
