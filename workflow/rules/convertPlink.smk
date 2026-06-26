@@ -42,20 +42,21 @@ rule convertPlinkPerChromosome:
         nodes=1,
         mem_mb=32000,
         runtime=240,
-    output:
-        pgen=OUT_DIR / "{subset}" / "f1_{CHR}.pgen",
-        pvar=OUT_DIR / "{subset}" / "f1_{CHR}.pvar",
-        psam=OUT_DIR / "{subset}" / "f1_{CHR}.psam",
-        LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pgen",
-        LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pvar",
-        LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.psam",
-        tempDir=temp(
-            directory(
-                OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "convert_filter"
-            )
-        ),
-        smiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.smiss"),
-        vmiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"),
+        output:
+            pgen=OUT_DIR / "{subset}" / "f1_{CHR}.pgen",
+            pvar=OUT_DIR / "{subset}" / "f1_{CHR}.pvar",
+            psam=OUT_DIR / "{subset}" / "f1_{CHR}.psam",
+            original_id_pvar=OUT_DIR / "{subset}" / "f1_{CHR}.original.pvar",
+            LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pgen",
+            LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pvar",
+            LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.psam",
+            tempDir=temp(
+                directory(
+                    OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "convert_filter"
+                )
+            ),
+            smiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.smiss"),
+            vmiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"),
     input:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
@@ -152,6 +153,7 @@ plink2 --pfile {output.tempDir}/intermediate_1 \
        --threads {threads} \
        --out {output.tempDir}/intermediate_2
 
+cp {output.tempDir}/intermediate_2.pvar {output.original_id_pvar}
 plink2 --pfile {output.tempDir}/intermediate_2 \
        --set-all-var-ids 'chr@:#:$r:$a' \
        --make-pgen \
@@ -227,6 +229,7 @@ if not INPUT_IS_PER_CHROMOSOME:
             pgen=OUT_DIR / "{subset}" / "f1.pgen",
             pvar=OUT_DIR / "{subset}" / "f1.pvar",
             psam=OUT_DIR / "{subset}" / "f1.psam",
+            original_id_pvar=OUT_DIR / "{subset}" / "f1.original.pvar",
             LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned.pgen",
             LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned.pvar",
             LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned.psam",
@@ -296,6 +299,7 @@ if not INPUT_IS_PER_CHROMOSOME:
             fi
 
             plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta}  --ref-from-fa force --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
+            cp {output.tempDir}/intermediate_1.pvar {output.original_id_pvar}
             plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_2
 
             # === Allele alignment against reference panel ===

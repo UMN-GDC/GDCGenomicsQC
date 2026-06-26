@@ -21,6 +21,7 @@ if INPUT_IS_PER_CHROMOSOME:
             pgen=OUT_DIR / "{subset}" / "f1.b38_{CHR}.pgen",
             pvar=OUT_DIR / "{subset}" / "f1.b38_{CHR}.pvar",
             psam=OUT_DIR / "{subset}" / "f1.b38_{CHR}.psam",
+            lifted_pvar=OUT_DIR / "{subset}" / "f1.b38_{CHR}.lifted.pvar",
             tempDir=temp(directory(OUT_DIR / "{subset}" / "intermediates" / "crossmap_{CHR}")),
         params:
             input_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / f"f1_{wildcards.CHR}"),
@@ -30,6 +31,7 @@ if INPUT_IS_PER_CHROMOSOME:
             if _build == "GRCh38":
                 shell("""
                     mkdir -p {output.tempDir}
+                    cp {params.input_prefix}.pvar {output.lifted_pvar}
                     plink2 --pfile {params.input_prefix} \
                            --set-all-var-ids 'chr@:#:$r:$a' \
                            --make-pgen \
@@ -51,7 +53,9 @@ if INPUT_IS_PER_CHROMOSOME:
 
                     plink2 --pfile {params.input_prefix} --extract {output.tempDir}/lifted_snps.txt --make-pgen --out {output.tempDir}/step1
                     plink2 --pfile {output.tempDir}/step1 --update-map {output.tempDir}/new_pos.txt --make-pgen --out {output.tempDir}/step2
-                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --out {params.output_prefix}
+                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --make-pgen --out {output.tempDir}/step3_noid
+                    cp {output.tempDir}/step3_noid.pvar {output.lifted_pvar}
+                    plink2 --pfile {output.tempDir}/step3_noid --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --out {params.output_prefix}
                 """)
 
 else:
@@ -77,6 +81,7 @@ else:
             pgen=OUT_DIR / "{subset}" / "f1.b38.pgen",
             pvar=OUT_DIR / "{subset}" / "f1.b38.pvar",
             psam=OUT_DIR / "{subset}" / "f1.b38.psam",
+            lifted_pvar=OUT_DIR / "{subset}" / "f1.b38.lifted.pvar",
             tempDir=temp(directory(OUT_DIR / "{subset}" / "intermediates" / "crossmap")),
         params:
             input_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / "f1"),
@@ -87,6 +92,7 @@ else:
             if _build == "GRCh38":
                 shell("""
                     mkdir -p {output.tempDir}
+                    cp {params.input_prefix}.pvar {output.lifted_pvar}
                     plink2 --pfile {params.input_prefix} \
                            --set-all-var-ids 'chr@:#:$r:$a' \
                            --make-pgen \
@@ -108,9 +114,10 @@ else:
 
                     plink2 --pfile {params.input_prefix} --extract {output.tempDir}/lifted_snps.txt --make-pgen --out {output.tempDir}/step1
                     plink2 --pfile {output.tempDir}/step1 --update-map {output.tempDir}/new_pos.txt --make-pgen --out {output.tempDir}/step2
-                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --out {params.output_prefix}
+                    plink2 --pfile {output.tempDir}/step2 --update-chr {output.tempDir}/new_chr.txt --sort-vars --make-pgen --out {output.tempDir}/step3_noid
+                    cp {output.tempDir}/step3_noid.pvar {output.lifted_pvar}
+                    plink2 --pfile {output.tempDir}/step3_noid --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --out {params.output_prefix}
                 """)
-
 
 rule crossmapLdPrunedToB38:
     container:
