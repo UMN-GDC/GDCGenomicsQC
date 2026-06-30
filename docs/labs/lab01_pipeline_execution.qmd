@@ -88,9 +88,11 @@ module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 ```
 
-One command gives you snakemake, all pipeline rules, HPC profiles, and container definitions. No `pip install`, no hunting for the right `--snakefile` path, no version conflicts between collaborators. The module file at `envs/gdcgenomicsSandbox/bin/gdcgenomicsqc` is a thin wrapper that sets `--directory` (the repo root), `--profile profiles/sandbox` (how to run), and `--snakefile workflow/Snakefile` (what to run). Everything else is passed through.
+One command gives you snakemake, all pipeline rules, HPC profiles, and container definitions. No `pip install`, no hunting for the right `--snakefile` path, no version conflicts between collaborators. The module file at `envs/gdcgenomicsSandbox/bin/gdcgenomicsqc` is a thin wrapper that sets `--directory` (your current directory), `--profile profiles/sandbox` (how to run), and `--snakefile workflow/Snakefile` (what to run). Everything else is passed through.
 
-**Why this matters for reproducibility:** The module lock in the exact Snakemake version. Re-running an analysis six months later — on a different cluster, by a different person — starts with the same two `module` commands. If anything breaks, it breaks consistently, and the fix is shared by everyone.
+**Why this matters for reproducibility:** The module locks in the exact Snakemake version. Re-running an analysis six months later — on a different cluster, by a different person — starts with the same two `module` commands. If anything breaks, it breaks consistently, and the fix is shared by everyone.
+
+**Why this matters for collaboration:** Multiple people can run the pipeline simultaneously from their own directories — `.snakemake/` (locks, logs, job scripts) goes to each user's working directory, not the shared repo. SLURM submission scripts use absolute `--configfile` paths, so they work from any submit directory without collision.
 
 ### 3. Rules — what actually runs (you never touch these)
 

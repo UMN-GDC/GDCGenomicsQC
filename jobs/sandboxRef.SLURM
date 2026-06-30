@@ -7,4 +7,4 @@
 module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 
-gdcgenomicsqc assembleRef --configfile ../config/sandboxABCD.yaml --force
+gdcgenomicsqc assembleRef --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD.yaml" --force

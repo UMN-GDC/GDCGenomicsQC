@@ -43,7 +43,7 @@ Example from ``gdcgenomicsSandbox/bin/gdcgenomicsqc``:
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     WORKFLOW_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-    exec snakemake --directory $WORKFLOW_DIR \
+    exec snakemake --directory "$PWD" \
         --workflow-profile $WORKFLOW_DIR/profiles/hpc/profile.yaml \
         --snakefile $WORKFLOW_DIR/workflow/Snakefile \
         --rerun-incomplete "$@"
@@ -89,7 +89,7 @@ The profile configuration is in ``profiles/hpc/``. Key files:
     WORKFLOW_DIR=/path/to/GDCGenomicsQC
 
     exec snakemake \
-        --directory "$WORKFLOW_DIR" \
+        --directory "$PWD" \
         --cluster "sbatch -p {params.partition} --cpus-per-task={threads} --mem={resources.mem_mb} --time={resources.runtime} --job-name=snake_{rule}" \
         --jobs 100 \
         --snakefile "$WORKFLOW_DIR/workflow/Snakefile" \
@@ -142,7 +142,7 @@ To create a new environment wrapper (e.g., for a new HPC cluster):
     WORKFLOW_DIR=/path/to/GDCGenomicsQC
 
     exec snakemake \
-        --directory "$WORKFLOW_DIR" \
+        --directory "$PWD" \
         --profile "$WORKFLOW_DIR/profiles/hpc" \
         --snakefile "$WORKFLOW_DIR/workflow/Snakefile" \
         --rerun-incomplete \
@@ -185,7 +185,7 @@ Common Snakemake Arguments
 
 Key arguments passed through wrapper:
 
-- ``--directory``: Sets working directory to workflow root
+- ``--directory``: Sets working directory to ``$PWD`` (current directory — keeps `.snakemake/` per-user)
 - ``--profile``: Uses HPC profile for job submission
 - ``--snakefile``: Points to main Snakefile
 - ``--rerun-incomplete``: Re-runs incomplete jobs

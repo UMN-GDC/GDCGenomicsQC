@@ -10,4 +10,4 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKFLOW_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
 
-exec /scratch.global/GDC/envs/snakemake/bin/snakemake --directory $WORKFLOW_DIR --profile $WORKFLOW_DIR/profiles/sandbox --snakefile $WORKFLOW_DIR/workflow/Snakefile --rerun-incomplete "$@"
+exec /scratch.global/GDC/envs/snakemake/bin/snakemake --directory "$PWD" --profile $WORKFLOW_DIR/profiles/sandbox --snakefile $WORKFLOW_DIR/workflow/Snakefile --rerun-incomplete "$@"

@@ -7,6 +7,6 @@
 module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsMSI
 
-#gdcgenomicsqc run_classifyAncestry --configfile ../config/msitoy.yaml
-# gdcgenomicsqc -n all --configfile ../config/msiToy_noPredict.yaml
-gdcgenomicsqc -n run_snpHeritSim --configfile ../config/msiToy.yaml
+#gdcgenomicsqc run_classifyAncestry --configfile "$HOME/GDCGenomicsQC/config/msiToy.yaml"
+# gdcgenomicsqc -n all --configfile "$HOME/GDCGenomicsQC/config/msiToy_noPredict.yaml"
+gdcgenomicsqc -n run_snpHeritSim --configfile "$HOME/GDCGenomicsQC/config/msiToy.yaml"

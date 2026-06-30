@@ -7,4 +7,4 @@
 module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsMSI
 
-gdcgenomicsqc assembleRef --configfile ../config/msiabcd.yaml --force
+gdcgenomicsqc assembleRef --configfile "$HOME/GDCGenomicsQC/config/msiabcd.yaml" --force

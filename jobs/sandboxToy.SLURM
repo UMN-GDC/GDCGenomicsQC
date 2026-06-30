@@ -9,5 +9,5 @@ module load gdcgenomicsSandbox
 
 # Single target — Snakemake auto-resolves the full DAG:
 # QC → PCA → UMAP → classification → ancestry QC → simulation → heritability
-#gdcgenomicsqc run_classifyAncestry run_snpHeritSimulated --configfile ../config/sandboxToy.yaml
-gdcgenomicsqc run_classifyAncestry applyStandardQualityControl --configfile ../config/sandboxToy2.yaml
+#gdcgenomicsqc run_classifyAncestry run_snpHeritSimulated --configfile "$HOME/GDCGenomicsQC/config/sandboxToy.yaml"
+gdcgenomicsqc run_classifyAncestry applyStandardQualityControl --configfile "$HOME/GDCGenomicsQC/config/sandboxToy2.yaml"

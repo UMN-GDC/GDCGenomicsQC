@@ -8,4 +8,4 @@ module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 
 # Runs QC → PCA → ancestry-specific QC for the EUR subset from self-report labels
-gdcgenomicsqc --until run_ancestryQC --configfile ../config/sandboxABCD_EUR.yaml
+gdcgenomicsqc --until run_ancestryQC --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_EUR.yaml"
