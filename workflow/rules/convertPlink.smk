@@ -42,21 +42,21 @@ rule convertPlinkPerChromosome:
         nodes=1,
         mem_mb=32000,
         runtime=240,
-        output:
-            pgen=OUT_DIR / "{subset}" / "f1_{CHR}.pgen",
-            pvar=OUT_DIR / "{subset}" / "f1_{CHR}.pvar",
-            psam=OUT_DIR / "{subset}" / "f1_{CHR}.psam",
-            original_id_pvar=OUT_DIR / "{subset}" / "f1_{CHR}.original.pvar",
-            LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pgen",
-            LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pvar",
-            LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.psam",
-            tempDir=temp(
-                directory(
-                    OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "convert_filter"
-                )
-            ),
-            smiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.smiss"),
-            vmiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"),
+    output:
+        pgen=OUT_DIR / "{subset}" / "f1_{CHR}.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1_{CHR}.pvar",
+        psam=OUT_DIR / "{subset}" / "f1_{CHR}.psam",
+        original_id_pvar=OUT_DIR / "{subset}" / "f1_{CHR}.original.pvar",
+        LDpgen=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pgen",
+        LDpvar=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.pvar",
+        LDpsam=OUT_DIR / "{subset}" / "f1.ldpruned_{CHR}.psam",
+        tempDir=temp(
+            directory(
+                OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "convert_filter"
+            )
+        ),
+        smiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.smiss"),
+        vmiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"),
     input:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
