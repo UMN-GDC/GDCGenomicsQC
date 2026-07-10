@@ -13,27 +13,35 @@ format:
 
 ## Overview
 
-Before any downstream analysis, you need to know your data is clean. Per-sample and per-variant missingness, allele frequency distributions, and Hardy-Weinberg equilibrium p-values reveal genotyping errors, poor-quality DNA samples, and batch effects.
-
-The data are **synthetic** — resampled from 1000 Genomes haplotypes — so the distributions should look textbook-perfect: tight peaks near 0% missingness, the classic U-shaped AF spectrum, and uniform HWE p-values.
+- **QC diagnostics**: first check. Sample/variant missingness, AF distributions, HWE p-values reveal genotyping errors, poor DNA, batch effects before downstream analysis
+- **Data are synthetic**: resampled from 1000 Genomes haplotypes. Expect textbook distributions:
+  - Tight peaks near 0% missingness
+  - U-shaped AF spectrum (many rare + many common variants)
+  - Uniform HWE p-values (no population structure in synthetic sampling)
 
 ## Input
 
-The pipeline's QC thresholds are set partly in the config and partly hardcoded in the filtering scripts. The config controls the conversion-stage filters:
+- **QC thresholds come from two places**:
+  - Config `convertNfilt:` controls VCF-to-PGEN conversion filters:
+    - `info_r2_min: 0.9`: minimum imputation R2, null to skip
+    - `filter_pass: true`: keep only PASS variants
+    - `qual_min: null`: no QUAL filter
+  - Hard thresholds in `workflow/scripts/filterStandard.sh` and `workflow/rules/Standard_QC.smk`:
+    - MAF 0.01, HWE 1e-6, missingness 0.02 (sample + variant)
 
 ```yaml
-# sandboxToy.yaml lines 2-19 (relevant keys)
-INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"  # Genotype input: VCF, PLINK1, or PLINK2 format
+# sandboxToy.yaml lines 2-19
+INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"  # VCF, PLINK1, or PLINK2 format
 OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr"                      # Top-level output directory
 chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]                 # Chromosomes to process
 
-convertNfilt:                                                          # Conversion-stage filters (VCF → PGEN)
-    info_r2_min: 0.9    # Minimum imputation R² (INFO field); set null to skip; only applies to VCF
-    filter_pass: true   # Keep only variants with FILTER == PASS; false = keep all
-    qual_min: null      # Minimum QUAL score; null = no QUAL filter; numeric value e.g. 30
+convertNfilt:                                                          # Conversion-stage filters (VCF -> PGEN)
+    info_r2_min: 0.9    # Minimum imputation R2; null to skip; VCF only
+    filter_pass: true   # Keep only FILTER == PASS
+    qual_min: null      # Minimum QUAL score; null = no filter
 ```
 
-The hard MAF (0.01), HWE (1e-6), and missingness (0.02) thresholds are in `workflow/scripts/filterStandard.sh` and `workflow/rules/Standard_QC.smk`. The full pipeline reference is in the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst).
+- See [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst) for full reference
 
 ## Output
 
@@ -133,7 +141,8 @@ cat("Samples passing --mind 0.02:", smiss %>% filter(F_MISS <= thresholds$mind) 
 
 ### Per-Ancestry QC Diagnostics
 
-After ancestry classification, the pipeline can re-apply QC filters within each predicted ancestry group (e.g., EUR, AFR, AMR). This reveals ancestry-specific patterns — a variant that passes HWE in one population may deviate in another due to population structure.
+- After ancestry classification, pipeline re-applies QC filters per ancestry group (EUR, AFR, AMR). Reveals ancestry-specific patterns masked in pooled analysis. Especially HWE: population structure in full sample produces spurious deviations that disappear when each group is tested separately
+- A variant passing HWE in one population may deviate in another due to: population-specific genotyping artifacts, different AF affecting test power, or genuine selection pressure differences. Per-ancestry diagnostics distinguish these
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 ancestries <- c("EUR", "AFR", "AMR", "EAS", "SAS")
@@ -196,15 +205,15 @@ if (nrow(anc_hwe) > 0) {
 }
 ```
 
-**What to look for:** If one ancestry group shows substantially higher missingness or HWE deviation, it may indicate:
-- Population-specific genotyping artifacts
-- Admixture within the group affecting Hardy-Weinberg assumptions
-- Small sample size making HWE tests unreliable (fewer samples → wider confidence intervals)
+- **What to look for**: if one ancestry group shows higher missingness or HWE deviation, possible causes:
+  - **Population-specific genotyping artifacts**: assay performs differently across ancestral backgrounds (probe bias, differential amplification)
+  - **Admixture affecting HWE**: real deviations from HWE (not genotyping errors) but still trigger the filter
+  - **Small sample size**: fewer samples = wider CIs, less power, more extreme p-values by chance
 
 ## Discussion
 
-1. **Why does the allele-frequency histogram show a U-shape?** What does that tell you about the genetic diversity of the 1KG reference panel?
-2. **If a dataset had a spike of HWE p-values near 0**, what are two possible explanations?
-3. **Sample vs. variant missingness**: which is more concerning when both exceed 5%?
+- **Why does the allele-frequency histogram show a U-shape?** Excess of both rare (new mutations, low-frequency segregating sites) and common (ancestral, high-frequency derived) variants. Expected allele frequency spectrum under neutral evolution with population growth.
+- **If a dataset had a spike of HWE p-values near 0**, two possible explanations: (1) genotyping errors or batch effects causing systematic miscalls, or (2) population structure (multiple ancestries in sample, variants differ in frequency between groups). Per-ancestry diagnostics distinguish these.
+- **Sample vs. variant missingness > 5%: which is more concerning?** High sample missingness = poor DNA/processing failure for that sample. Remove a few bad samples. High variant missingness across many samples = systematic assay problem (bad probe, poor genomic region). Affects every sample for that variant, harder to fix. Both > 5%? Check overlap: are poor variants concentrated in poor samples, or independent issues?
 
 See the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst) for troubleshooting and deep dives into file formats and pipeline internals.

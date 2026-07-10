@@ -13,27 +13,17 @@ format:
 
 ## Overview
 
-Snakemake is a workflow manager — it figures out the order of operations (the DAG), submits jobs to the HPC, handles failures, and locks in reproducibility with containers and conda environments. Without it, you'd be writing SLURM arrays, tracking file dependencies by hand, and praying you didn't forget a step.
+- **Snakemake**: builds DAG from rules, submits HPC jobs, handles failures, locks reproducibility (Apptainer + conda per tool)
+- **Alternative**: hand-written SLURM arrays, manual dependency tracking, fragile orchestration
+- **After this lab**: remaining labs in R. Explore workflow (alter rules, QC thresholds, config toggles). Every Snakemake output visualized
+- **Why this matters**: genomics pattern is QC -> PCA -> classification -> modeling. Hard part: robust across datasets, HPCs, collaborators. Snakemake collapses into a **config file**. Three abstractions (config, module, rules) let you focus on science, not plumbing
+- **Why collaboration**: same design = reproducible + extensible. Collaborator adds rule file, nothing breaks. `module load gdcgenomicsSandbox` = full pipeline for anyone with repo access. New config = new dataset. New rule file = new method
 
-After running the pipeline in this lab, the rest of the labs explore how to alter the workflow (adding new rules, changing QC thresholds, toggling analysis branches in the config) and investigate its outputs — every file produced by Snakemake will be loaded and visualized in R.
+## Input: The Three Abstractions
 
-**Why this matters for genomics research:**
+### 1. Config: the one file you edit
 
-Every genomic analysis follows the same pattern: QC → PCA → classification → downstream modeling. The steps are well-known, but implementing them robustly across datasets, compute environments, and collaborators is where the real work lies. Snakemake converts that implementation work into a **config file** — the pipeline handles the rest.
-
-GDCGenomicsQC wraps all of that into a three-abstraction system so you can focus on your research question instead of the plumbing.
-
-**For collaborative science:**
-
-The same pipeline design that makes your work reproducible also makes it *extensible*. When a collaborator develops a new ancestry-adjustment method, or a consortium adds a new PRS method, they contribute a new rule file — nothing else breaks. The module abstraction (`module load gdcgenomicsSandbox`) means anyone with access to the repository gets the entire pipeline with one command. There is no "works on my machine" problem.
-
-Over time, a collaborative workflow like this becomes more valuable than any single analysis it produces. New datasets can be dropped in, new methods can be stacked on top, and every run leaves a complete, auditable record of what was done.
-
-## Input — The Three Abstractions
-
-### 1. Config — the one file you edit
-
-Everything specific to your dataset lives here. Paths, chromosomes, which analyses to run, and their parameters:
+Everything specific to your dataset: paths, chromosomes, which analyses to run, parameters:
 
 ```yaml
 # sandboxToy.yaml lines 2-8 (relevant keys)
@@ -43,118 +33,109 @@ REF: "/scratch.global/GDC/referenceData"                                # 1000 G
 chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]                 # Subset of autosomes; parallelized per-chromosome in Snakemake
 ```
 
-#### Input format — the pipeline adapts to your data
+#### Input format: the pipeline adapts to your data
 
-The `INPUT` path can point to **any of three formats**:
+`INPUT` points to one of three formats:
 
 | Format | Extension | Use case |
 |--------|-----------|----------|
-| VCF / VCF.gz | `.vcf`, `.vcf.gz` | Standard input from sequencing or imputation |
-| PLINK 1 | `.bed` + `.bim` + `.fam` | Legacy or pre-existing datasets |
-| PLINK 2 | `.pgen` + `.pvar` + `.psam` | Native format, smaller, faster I/O |
+| VCF / VCF.gz | `.vcf`, `.vcf.gz` | Standard sequencing/imputation output |
+| PLINK 1 | `.bed` + `.bim` + `.fam` | Legacy datasets |
+| PLINK 2 | `.pgen` + `.pvar` + `.psam` | Native format, smaller/faster I/O |
 
-And **two modes**:
+Two modes:
 
-| Mode | `INPUT` pattern | When to use |
-|------|----------------|-------------|
-| Per-chromosome | `...chr{CHR}.vcf.gz` | Large datasets split by chromosome (parallel processing) |
-| Whole-genome | `/path/to/file.bed` | Small datasets, single merged file |
+| Mode | `INPUT` pattern | When |
+|------|----------------|------|
+| Per-chromosome | `...chr{CHR}.vcf.gz` | Large datasets, parallel processing |
+| Whole-genome | `/path/to/file.bed` | Small datasets, single file |
 
-Snakemake auto-detects the format from the file extension and the mode from whether `{CHR}` appears in the path — you don't need to set any additional config keys.
+- **Auto-detected**: Snakemake reads file extension (VCF/PLINK1/PLINK2) and checks for `{CHR}` in path. No extra config keys.
 
-#### Reference panel — the 1000 Genomes anchor
+#### Reference panel: the 1000 Genomes anchor
 
-The `REF` path points to a pre-processed 1000 Genomes high-coverage 30x whole-genome sequencing dataset. The pipeline expects this structure:
+`REF` points to a pre-processed 1000 Genomes high-coverage 30x WGS dataset with this structure:
 
-```
-{REF}/1000G_highcoverage/
-  all_chr.pgen             # merged, LD-pruned PGEN
-  population.txt           # sample → superpopulation labels
-  ref_pca_loadings.txt     # PC allele weights from --pca allele-wts
-  genetic_maps/            # recombination maps for phasing
-  variants/                # per-chromosome variant lists for crossmap
-```
+- `{REF}/1000G_highcoverage/all_chr.pgen`: merged LD-pruned PGEN (all 22 autosomes)
+- `{REF}/1000G_highcoverage/population.txt`: sample to superpopulation mapping (AFR, AMR, EAS, EUR, SAS)
+- `{REF}/1000G_highcoverage/ref_pca_loadings.txt`: PC allele weights for projecting study samples into 1KG PCA space
+- `{REF}/1000G_highcoverage/genetic_maps/`: recombination maps for ShapeIt4 phasing
+- `{REF}/1000G_highcoverage/variants/`: per-chromosome variant lists for Crossmap ID rewriting
 
-This reference is used at every stage: PCA projection (computing study-sample PCs against 1KG), random forest training (learning ancestry boundaries), and LD reference (PRS and phasing). It is assembled by the `assembleRef` target — downloading raw VCFs from the 1KG server, merging chromosomes, and running LD pruning. The assembly takes several hours but only needs to run once per reference version.
+Used at every stage:
+- **PCA projection**: study PCs against 1KG space
+- **Random forest**: ancestry boundaries learned from 1KG in projected PC space
+- **LD reference**: for PRS clumping, LDpred2, phasing
+- **Assembled by `assembleRef`**: downloads raw VCFs from 1KG server, merges, LD prunes. Takes hours, run once per reference version, outputs shared by all users
 
-The config toggles entire analysis branches. Set `localAncestry.RFMIX: true` and the pipeline phases with ShapeIt4, runs RFMix, and produces local ancestry tracts — without you writing a single additional command. Add a simulation entry under `phenotypeSimulation.simulations` and the pipeline generates synthetic phenotypes, computes ancestry-specific GRMs, and estimates heritability. Each config key unlocks a new analysis stage.
+- **Config keys unlock analysis branches:**
+  - `localAncestry.RFMIX: true`: phases with ShapeIt4, runs RFMix, produces local ancestry tracts. No additional commands
+  - `phenotypeSimulation.simulations`: generates synthetic phenotypes, GRMs, heritability estimates
+  - Each key opens a new stage. Config is the **only** file you edit per project
+- **Same module, same rules, different config**: the entire data-modeling cycle
 
-This is the only file you would ever edit for a new project. The same module, the same rules, a different config.
-
-### 2. Module — loads everything you need
+### 2. Module: loads everything you need
 
 ```bash
 module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 ```
 
-One command gives you snakemake, all pipeline rules, HPC profiles, and container definitions. No `pip install`, no hunting for the right `--snakefile` path, no version conflicts between collaborators. The module file at `envs/gdcgenomicsSandbox/bin/gdcgenomicsqc` is a thin wrapper that sets `--directory` (your current directory), `--profile profiles/sandbox` (how to run), and `--snakefile workflow/Snakefile` (what to run). Everything else is passed through.
+- **One command**: Snakemake + all pipeline rules + HPC profiles + container definitions. No `pip install`, no hunting for `--snakefile`, no version conflicts
+- **The module file** (`envs/gdcgenomicsSandbox/bin/gdcgenomicsqc`) is a thin bash wrapper setting three defaults:
+  - `--directory "$PWD"`: `.snakemake/` stays in your working directory
+  - `--profile profiles/sandbox`: how to run (local, SLURM)
+  - `--snakefile workflow/Snakefile`: what to run
+  - Everything else (`--configfile`, `--dry-run`, targets) passed through as `$@`
+- **Reproducibility**: module locks exact Snakemake version. Re-run six months later, different cluster, same two `module` commands. Breaks consistently if at all
+- **Collaboration**: multiple users run simultaneously from their own directories. `.snakemake/` (locks, logs, job scripts) per-user, not shared. SLURM scripts use absolute `--configfile` paths, work from any submit directory
 
-**Why this matters for reproducibility:** The module locks in the exact Snakemake version. Re-running an analysis six months later — on a different cluster, by a different person — starts with the same two `module` commands. If anything breaks, it breaks consistently, and the fix is shared by everyone.
+### 3. Rules: what runs (you never touch these)
 
-**Why this matters for collaboration:** Multiple people can run the pipeline simultaneously from their own directories — `.snakemake/` (locks, logs, job scripts) goes to each user's working directory, not the shared repo. SLURM submission scripts use absolute `--configfile` paths, so they work from any submit directory without collision.
+- **Each `workflow/rules/*.smk` is an independent module**:
+  - `Snakefile`: entry point, imports all rule files
+  - `convertPlink.smk`: VCF/BED/PGEN -> initial QC -> LD pruning
+  - `Standard_QC.smk`: MAF, HWE, heterozygosity filters
+  - `PCAreference.smk`: reference PCA -> study projection
+  - `predictAncestry.smk`: random forest classification
+  - `simulatePhenotype2.smk`: synthetic phenotypes
+  - `snpHerit.smk`: heritability estimation
+  - `prsPipelines.smk`: PRSice-2, LDpred2, etc.
+  - `phase.smk` + `ancestry.smk`: ShapeIt4 phasing + RFMix local ancestry
+- **Independently extensible**: add `rules/my_new_method.smk` + one import line in `Snakefile`. Available to everyone, no merge conflicts, no breaking changes
+- **How it comes together**: `module load gdcgenomicsSandbox` -> `gdcgenomicsqc` wrapper -> `--profile` (where to run) + `--snakefile` (what to run) + your targets/configfile -> one command resolves the full DAG, submits HPC jobs, produces all outputs
 
-### 3. Rules — what actually runs (you never touch these)
+## Output: The Single Submission
 
-```
-workflow/
-  Snakefile                    # entry point — imports all rule files
-  rules/
-    convertPlink.smk           # VCF/BED/PGEN → initial QC → LD pruning
-    Standard_QC.smk            # MAF, HWE, heterozygosity filters
-    PCAreference.smk           # reference PCA → study projection
-    predictAncestry.smk        # random forest classification
-    simulatePhenotype2.smk     # synthetic phenotype generation
-    snpHerit.smk               # heritability estimation
-    prsPipelines.smk           # PRSice-2, LDpred2, etc.
-    phase.smk + ancestry.smk   # ShapeIt4 + RFMix (local ancestry)
-```
-
-Each file is independent — you can add a new rule file without touching the existing ones. This is the key design that makes collaborative extension possible: a consortium member adds `rules/my_new_method.smk`, imports it in the Snakefile, and everyone immediately has access.
-
-**How it comes together:**
-
-```
-module use envs/  ─┐
-module load        ├── gdcgenomicsqc wrapper ──┬── --profile profiles/sandbox  (where to run)
-gdcgenomicsSandbox ┘                           ├── --snakefile workflow/Snakefile (what to run)
-                                                └── $@ (your targets + --configfile)
-```
-
-## Output — The Single Submission
-
-Lab 1 is the only lab that runs Snakemake. Everything after this is R. See [`jobs/sandboxToy.SLURM`](https://github.com/UMN-GDC/GDCGenomicsQC/blob/main/jobs/sandboxToy.SLURM) for how we ran it — `sbatch jobs/sandboxToy.SLURM` submits a master job that launches the full pipeline.
-
-Two targets (`run_classifyAncestry applyStandardQualityControl`), one command. Snakemake resolves the full DAG — QC → PCA → UMAP → classification → ancestry-specific QC → phenotype simulation → heritability — and produces everything for the remaining labs:
+- **Lab 1 is the only Snakemake lab**: everything after this is R. We ran it via `sbatch jobs/sandboxToy.SLURM` (see [jobs/sandboxToy.SLURM](https://github.com/UMN-GDC/GDCGenomicsQC/blob/main/jobs/sandboxToy.SLURM))
+- **Two targets** (`run_classifyAncestry applyStandardQualityControl`), one command: Snakemake resolves the full DAG (QC -> PCA -> UMAP -> classification -> ancestry-specific QC -> phenotype simulation -> heritability)
 
 ### What each downstream lab uses
 
 | Lab | File(s) loaded in R | How it's used |
 |-----|--------------------|---------------|
-| Lab 2 — QC Diagnostics | `{OUT_DIR}/{subset}/initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy` | Missingness, AF, HWE checks per subset |
-| Lab 3 — Ancestry Classification | `{OUT_DIR}/01-globalAncestry/classificationProbabilities.tsv`, `ancestry_classifications.tsv`, `sampleRefPCscores.sscore` | PCA projection, confusion matrix, classification probabilities; discussion extends to local ancestry inference |
-| Lab 4 — Heritability | `{OUT_DIR}/{ancestry}/simulations/{sim_name}/herit.csv` per ancestry | h² estimate comparison across ancestry groups |
+| Lab 2, QC Diagnostics | `{OUT_DIR}/{subset}/initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy` | Missingness, AF, HWE per subset |
+| Lab 3, Ancestry Classification | `{OUT_DIR}/01-globalAncestry/classificationProbabilities.tsv`, `ancestry_classifications.tsv`, `sampleRefPCscores.sscore` | PCA projection, confusion matrix, classification probabilities; extends to local ancestry discussion |
+| Lab 4, Heritability | `{OUT_DIR}/{ancestry}/simulations/{sim_name}/herit.csv` per ancestry | h2 comparison across ancestry groups |
 
 ### What happens when it runs
 
-1. Snakemake checks which files already exist and which are stale
-2. It builds a DAG of every rule needed to produce the two targets
-3. It submits jobs to the HPC (or runs locally, depending on the profile)
-4. If a job fails, it stops with a clear error — fix the issue and re-run; it picks up where it left off
-5. Every run produces a complete log of what ran, with what inputs, and what outputs
+- Snakemake checks which outputs exist or are stale; only missing/outdated targets re-execute
+- Builds DAG of all rules needed for the targets, determines optimal order and parallelization
+- Submits jobs to HPC scheduler (or local, depending on profile). One job per rule per chromosome/ancestry
+- Job fails? Pipeline stops with a clear error. Fix and re-run same command. Snakemake skips completed steps
+- Every run produces an auditable log (`.snakemake/log/`): what ran, inputs, outputs, errors
 
-### What happens when a collaborator runs it on their data
+### What happens when a collaborator runs on their data
 
-They clone the repo, edit a config file with their paths, and submit the same SLURM script. The pipeline adapts to their dataset size, chromosome count, and available resources automatically through the profile system.
+- Clone repo, edit one config (INPUT, OUT_DIR, REF, chromosomes), submit same SLURM script
+- Pipeline adapts to dataset size, chromosome count, resources via profile system. No manual SLURM editing, no hardcoded paths
 
 ## Discussion
 
-1. **How is this different from writing your own SLURM scripts for each step?** Think about what happens when a step fails halfway through a 50-job array — Snakemake tracks completion per-file, not per-script. A failed `--hwe` step doesn't mean re-running `--maf` and `--geno`.
-
-2. **You change `ancestry.threshold` from 0.8 to 0.9.** Does Snakemake re-run the entire pipeline or just the classification step? It checks file modification times and input hashes — only rules whose inputs changed re-run. Downstream analyses (heritability, PRS) that depend on the new classification files will also re-run automatically.
-
-3. **How would you contribute this pipeline to a consortium?** You share your config file. The `envs/` directory and the `gdcgenomicsqc` wrapper are already version-controlled. Anyone who clones the repo and edits a config has the full pipeline. If the consortium needs a new analysis module, someone adds a rule file — no one else has to change their workflow.
-
-4. **Why does the rule-file-per-stage design matter?** A collaborator developing a new PRS method writes `rules/my_prs_method.smk` and adds one import line to `Snakefile`. The new method becomes available to everyone immediately, with no merge conflicts, no "my version is different" excuses. The pipeline becomes a shared platform, not a shared script.
+- **How is this different from writing your own SLURM scripts?** Manual SLURM arrays: one failed job in 50 forces restart or manual tracking. Snakemake tracks per-file, not per-script. Failed `--hwe` does not re-run `--maf` and `--geno`. Minimal re-execution.
+- **You change `ancestry.threshold` from 0.8 to 0.9.** Does Snakemake re-run everything or just classification? It checks file modification times and input hashes. Only changed rules re-run. Downstream analyses (heritability, PRS) that depend on the new classification files also re-run automatically.
+- **How would you contribute this pipeline to a consortium?** Share your config file. `envs/` and `gdcgenomicsqc` wrapper are version-controlled. Anyone clones the repo, edits config, runs wrapper = full pipeline. Consortium needs a new module? Someone adds a rule file. No one else changes their workflow.
+- **Why does rule-file-per-stage matter?** New PRS method? Write `rules/my_prs_method.smk`, add one import line to `Snakefile`. No merge conflicts, no "my version is different", no monkey-patching a file someone else is editing. Anyone contributes a module without coordination overhead.
 
 See the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst) for a step-by-step walkthrough of each target and its outputs.

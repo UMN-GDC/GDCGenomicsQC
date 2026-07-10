@@ -13,20 +13,27 @@ format:
 
 ## Overview
 
-SNP heritability (h²) is the fraction of phenotypic variance explained by genetic variants. The pipeline uses MASH (or GCTA) to estimate h² within each ancestry subset. The phenotype was simulated with a **known heritability of 0.4**, giving you a ground-truth target: both ancestry estimates should cluster near 0.4.
+- **SNP heritability (h2)**: fraction of phenotypic variance explained by measured genetic variants. How much of trait variation is due to genotyped SNPs vs environmental/unmeasured factors
+- **Pipeline estimates h2 per ancestry subset** using MASH (or GCTA/PredLMM). GRM built from LD-pruned, crossmapped variants. Related samples removed via KING before estimation
+- **Phenotype simulated with known heritability of 0.4**: ground-truth target. Ancestry-specific estimates should cluster near 0.4 if pipeline is working. Systematic deviation reveals estimator behavior across ancestry groups
 
 ## Input
+
+- **Heritability estimation: `snpHerit` config block:**
 
 ```yaml
 # sandboxToy.yaml lines 32-50 (relevant snpHerit keys)
 snpHerit:
     pheno: null       # Phenotype file; null = use simulated phenotype from phenotypeSimulation step
-    method: "AdjHE"   # Heritability estimator: "AdjHE" (default, bias-corrected), "GCTA", "PredLMM"
-    npc: [1,2]        # Genetic PCs to include as fixed-effect covariates; list of integers or null
-    mpheno: 1         # Which phenotype column to use (1-indexed); only matters for multi-phenotype files
+    method: "AdjHE"   # Heritability estimator: AdjHE (default, bias-corrected), GCTA, PredLMM
+    npc: [1,2]        # Genetic PCs as fixed-effect covariates; list of integers or null
+    mpheno: 1         # Which phenotype column (1-indexed); multiphenotype files only
 ```
 
-The GRM is built from LD-pruned, crossmapped variants. Related samples are removed via KING before estimation (see `relatedness.king_cutoff: 0.0884` in the config). For a complete walkthrough of heritability estimation, see the [Heritability Tutorial](../tutorial_heritability.rst).
+- **`method`**: AdjHE (bias-corrected Haseman-Elston, default), GCTA (REML), PredLMM. AdjHE preferred for multi-ancestry settings, less sensitive to model misspecification than REML
+- **`npc`**: genetic PCs as covariates. Reduces bias from population structure, but too many PCs over-absorb true genetic variance, deflating h2
+- **GRM from LD-pruned, crossmapped variants** after QC. Related samples removed via KING (`relatedness.king_cutoff: 0.0884`) before estimation. Cryptic relatedness inflates GRM off-diagonals, biasing h2 upward
+- See [Heritability Tutorial](../tutorial_heritability.rst) for full walkthrough
 
 ## Output
 
@@ -59,12 +66,12 @@ ggplot(herit, aes(x = ancestry, y = h2, color = ancestry)) +
 
 ## Discussion
 
-1. **The estimate for one ancestry is 0.35 and the other is 0.42.** Is this bias or sampling variation? How would you decide?
-2. **Why does LD pruning matter more for heritability than for ancestry classification?** (Hint: think about what the GRM measures.)
-3. **If the confidence interval includes 0**, what does that mean? Would you trust that estimate?
-4. **How does admixture affect heritability estimation?** In an admixed population, recent admixture creates LD that spans ancestry switch points — this can inflate heritability estimates because the GRM captures both causal signal and admixture-induced covariance. How would you test whether your sample has this issue?
-5. **The narrow-sense heritability (h²) estimate assumes additive genetic effects.** If the true genetic architecture includes dominance or epistasis, would you expect h² to be an over- or underestimate? When would the gap between pedigree-based and SNP-based heritability be largest?
-6. **Sample size differs between ancestry groups.** EUR has 500 samples, AFR has 150. How does sample size affect the standard error of h²? Is it meaningful to compare estimates with very different CIs?
-7. **You add 10 additional genetic PCs as covariates and h² drops from 0.40 to 0.25.** What does that tell you about the relationship between the PCs and the phenotype? When would adjusting for PCs be appropriate vs. over-adjustment?
+- **Estimate 0.35 vs 0.42: bias or sampling variation?** Check CIs first. Overlap (both include 0.4) = sampling noise. No overlap: systematic? Smaller sample size in one group (wider CIs, REML bias in small samples)? One group more admixed (inflates h2 via admixture LD)? Formal test: likelihood ratio test comparing nested models with and without ancestry-specific h2.
+- **Why LD pruning matters more for heritability than ancestry classification.** GRM captures pairwise genetic similarity. LD between nearby variants creates correlated GRM columns, inflating genetic variance estimate. For ancestry classification, PCs driven by large-scale population structure (AF differences), not fine-scale LD. For heritability, LD-induced GRM correlation directly biases variance-component estimate upward. No pruning = h2 captures true signal + LD covariance = upward bias.
+- **CI includes 0: what does this mean?** Estimate not statistically distinguishable from zero. Usually small sample size (low power) or noisy phenotype (low SNR). Do not treat a point estimate with CI spanning 0 as evidence of nonzero heritability. But a wide CI with point estimate of 0.3 is still informative (rules out very high h2) -- report with precision caveat.
+- **How admixture affects heritability.** Recent admixture creates LD spanning ancestry switch points: variants unlinked in ancestral populations become correlated in admixed population. Admixture LD inflates h2 because GRM captures both causal signal and admixture covariance. Test for inflation: (1) include genetic PCs as covariates (absorb admixture structure), (2) compare whole-genome vs within-ancestry-segment GRM, (3) check if h2 increases with proportion of admixed individuals.
+- **Narrow-sense h2 assumes additive effects. Dominance/epistasis present: overestimate or underestimate?** SNP-based h2 underestimates broad-sense heritability when non-additive effects exist. GRM only captures additive genetic covariance. Dominance needs dominance GRM (pipeline does not build one by default). Epistasis needs even more complex models. Gap between pedigree-based (captures all genetic relationships + shared environment) and SNP-based h2 is largest for traits with substantial non-additive architecture (fitness-related traits, known epistatic interactions).
+- **EUR 500 samples, AFR 150. Sample size vs SE of h2? Meaningful to compare estimates with different CIs?** SE scales ~1/sqrt(N). AFR SE ~ sqrt(500/150) = 1.8x EUR SE. Comparison still meaningful if accounting for precision difference. Test EUR vs AFR difference with difference-of-means test (accounts for unequal variances) or report both with CIs. AFR estimate less precise: a 0.07 EUR-AFR difference may be within sampling noise for AFR even if significant for EUR.
+- **Add 10 genetic PCs as covariates: h2 drops from 0.40 to 0.25. What does this mean?** Additional PCs absorbing phenotypic variance correlated with population structure. Two interpretations: (1) PCs capture genuine confounding (correct if population stratification exists) or (2) PCs over-absorb true genetic variance (if causal variants correlate with PC axes). Appropriate adjustment removes confounding without over-correcting. Plot h2 vs number of PCs, look for elbow where additional PCs stop reducing estimate. Rule of thumb: if first 2 PCs explain most ancestry variation and additional PCs don't change estimate, 2 PCs is enough.
 
 See the [Heritability Tutorial](../tutorial_heritability.rst) for GRM heatmap visualization, method comparisons (AdjHE vs GCTA vs PredLMM), and exploration exercises (varying PC count, sample size, covariates).

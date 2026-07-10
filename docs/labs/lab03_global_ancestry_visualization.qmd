@@ -13,23 +13,22 @@ format:
 
 ## Overview
 
-A random forest trained on 1000 Genomes PCA coordinates classifies each sample into a 1KG superpopulation (AFR, AMR, EAS, EUR, SAS). With synthetic data derived from the same reference, assignments should be near 100% accurate — the populations are cleanly separated in PCA space.
-
-The pipeline supports multiple latent spaces: PCA (linear), UMAP (non-linear), and VAE (variational autoencoder). You toggle which model is used with a single config value — no code changes needed.
+- **A random forest trained on 1000 Genomes PCA coordinates** classifies each sample into one of five 1KG superpopulations (AFR, AMR, EAS, EUR, SAS). With synthetic data derived from the same reference, assignments should be near 100% accurate because the populations are cleanly separated in PCA space
+- **The pipeline supports multiple latent spaces**: PCA (linear), UMAP (non-linear), VAE (variational autoencoder, probabilistic, handles missing data). Toggle with single config key (`ancestry.model`). Output file format unchanged across all three, so R code does not change
 
 ## Input
 
 ```yaml
 # sandboxToy.yaml lines 82-85
 ancestry:
-    threshold: 0.8        # Minimum posterior probability for a hard classification; samples below this → "Other"
-    model: "pca"           # Latent space for RF: "pca" (linear, fast), "umap" (non-linear, fine-scale), "vae" (deep learning)
+    threshold: 0.8        # Minimum posterior probability for hard classification; samples below this -> "Other"
+    model: "pca"           # Latent space for RF: "pca" (linear), "umap" (non-linear), "vae" (deep learning)
     ancestry_file: null    # Optional path to pre-computed ancestry labels; null = use pipeline classification
 ```
 
-`model` selects the latent space: `"pca"` (linear, fast, well-understood), `"umap"` (non-linear, captures fine-scale structure), or `"vae"` (deep learning, requires VAE coordinates). `threshold` is the minimum posterior probability for a hard call — samples below it are labeled "Other".
-
-**To switch to UMAP**, change `model: "umap"` and re-run. The pipeline automatically computes the UMAP embedding from the PCA coordinates and trains a new random forest. The output files have the same format — your R code does not change.
+- **`model`**: selects latent space for RF. Options: `"pca"` (linear, fast), `"umap"` (non-linear, fine-scale structure), `"vae"` (deep learning, requires pre-computed VAE coordinates)
+- **`threshold`**: minimum posterior probability for hard call. Below this, samples labeled "Other". Lower threshold = fewer "Other" labels, more misclassifications near ancestry boundaries
+- **Switching models**: one-line config change (`model: "umap"`), re-run. Pipeline computes UMAP from PCA coordinates and trains new RF. Output file format unchanged, so R code does not change
 
 ## Output
 
@@ -113,9 +112,10 @@ anc_data |>
 
 ## Going Further: PCA vs UMAP
 
-The pipeline outputs probability columns for **every model** in a single `classificationProbabilities.tsv`. So even with `model: "pca"`, if UMAP coordinates were provided as input, both `pca_AFR` and `umap_AFR` columns exist. You already have the data to compare them.
+- **All model probabilities in one file**: `classificationProbabilities.tsv` has both `pca_AFR` and `umap_AFR` columns (and others). Even with `model: "pca"`, you can compare both methods side-by-side
+- **No re-run needed**: the data to compare models is already there. Code below extracts EUR probabilities from PCA vs UMAP for the same samples
 
-**To compare PCA and UMAP classification probabilities for the same samples:**
+**Compare PCA and UMAP classification probabilities:**
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 # class_prob already has both pca_ and umap_ columns if UMAP was provided as input
@@ -130,34 +130,36 @@ class_prob |>
   theme_minimal()
 ```
 
-**What to look for:**
-- **PCA** (linear) separates populations that differ along the major axes of genetic variation. Closely related populations (e.g., EUR and SAS) may show overlapping probability distributions.
-- **UMAP** (non-linear) can capture fine-scale structure that PCA compresses into higher PCs. It may assign higher confidence to samples near population boundaries, but it can also overfit to noise in small datasets.
-- **VAE** (deep learning) learns a probabilistic latent space. It handles missing data naturally but requires more compute and tuning.
-
-**When would one outperform another?** For well-separated continental populations, PCA is usually sufficient — the linear separation is clean. For fine-scale structure (e.g., distinguishing Finnish from British within EUR), UMAP's non-linear embedding can find patterns PCA misses. For datasets with substantial missingness, VAE's probabilistic approach is more robust.
+- **Model comparison:**
+  - **PCA** (linear): separates populations along major genetic variation axes. Closely related populations (EUR vs SAS) may have overlapping probabilities because their separation is in higher PCs. Efficient, well-understood, default for well-separated continental populations
+  - **UMAP** (non-linear): captures fine-scale structure PCA compresses into higher PCs by preserving local neighborhoods. Higher confidence near population boundaries, but can overfit to noise in small datasets
+  - **VAE** (deep learning): probabilistic latent space with uncertainty estimates. Handles missing data naturally, but requires much more compute and tuning than PCA/UMAP
+- **When each model wins:**
+  - Well-separated continental populations: PCA sufficient. Clean linear separation
+  - Fine-scale structure (Finnish vs British EUR, Gujarati vs Punjabi SAS): UMAP finds patterns PCA misses by preserving local neighborhoods
+  - Substantial missing data (ancient DNA, low-coverage sequencing): VAE more robust, models observation-level uncertainty instead of requiring complete cases
 
 ## Going Further: Local Ancestry Inference
 
-The global ancestry classification above assigns a single ancestry per *sample*. Local ancestry goes a step further: it assigns an ancestry to each *position along each chromosome*, deconvolving the two haplotypes. The pipeline supports this with ShapeIt4 phasing + RFMix when `localAncestry.RFMIX: true` is set in the config.
-
-**When does local ancestry matter?**
-- A sample classified as AFR/EUR admixed may have long tracts of EUR origin and long tracts of AFR origin — different genes fall in different ancestry contexts.
-- Heritability and PRS methods that assume uniform ancestry per sample will miss these regional effects. A variant in an AFR-derived block may have a different effect size than the same variant in an EUR-derived block.
-- Local ancestry is essential for fine-mapping in admixed populations and for building ancestry-aware PRS.
+- **Global ancestry = one label per sample**. RF gives single posterior probability vector per individual (e.g., 80% AFR, 20% EUR). But an admixed genome is a mosaic: entire chromosomes may be from one population or the other
+- **Local ancestry = ancestry per position**. ShapeIt4 phases haplotypes, RFMix deconvolves which population each segment came from. Output: per-variant, per-haplotype ancestry calls along every chromosome, revealing recombination breakpoints
+- **When local ancestry matters:**
+  - **AFR/EUR admixed sample**: one haplotype entirely EUR on chr1, entirely AFR on chr2. Different genes sit in different LD and MAF contexts depending on ancestral background
+  - **Heritability and PRS assuming uniform ancestry** miss regional effects. Variant in AFR-derived block has different effect size + LD tagging than same variant in EUR-derived block. PRS trained on EUR summary stats performs poorly on AFR-derived segments
+  - **Fine-mapping in admixed populations** needs local ancestry to distinguish truly causal variants from those correlated with a nearby ancestry switch (ancestry confounding, which produces false association signals)
 
 ### Discussion: Local ancestry
 
-1. **Samples with many short ancestry tracts — is this real admixture or a phasing artifact?** How would you distinguish them? (Hint: tract length distribution; short tracts = many generations since admixture.)
-2. **If most samples are assigned a single local ancestry**, does that mean RFMix failed or that the population is genuinely unadmixed? Check the reference panel composition.
-3. **How do the global ancestry proportions from a local ancestry analysis (RFMix) compare to the RF posterior probabilities from the classification step?** Would you expect them to agree?
-4. **How could local ancestry be used to improve PRS in admixed individuals?** If a variant sits in an AFR-derived block, its LD structure matches AFR reference panels, not EUR — how would you choose the LD reference for clumping or LDpred2?
-5. **What happens to phasing accuracy in recently admixed populations?** ShapeIt4 uses a reference panel — if the panel is mostly EUR but your sample is AFR/EUR admixed, which haplotypes will be phased more accurately? How could phasing errors propagate into RFMix ancestry calls?
+- **Many short ancestry tracts: real admixture or phasing artifact?** Tract length distribution is key: short even tracts across all chromosomes = recent admixture (many recombination events since admixture). Long tracts on specific chromosomes = phasing artifact (phaser incorrectly switches haplotypes). Validate by checking tract-length distribution against admixture model (exponential decay with generations) and comparing results across different phasing parameters.
+- **Most samples assigned single local ancestry: RFMix failure or genuinely unadmixed?** Check reference panel. EUR-only panel on EUR samples: single ancestry expected, RFMix correct. Multi-population panel but everyone assigned one ancestry: reference populations too similar, or samples unadmixed but from population not well-represented in reference. Cross-check with global ancestry classification.
+- **Do RFMix genome-wide proportions agree with RF posterior probabilities?** Broadly yes for well-separated populations. RFMix EUR proportion should roughly match RF EUR posterior. Detail differs: RFMix per-position estimates are noisy at ancestry transitions, RF posterior is a sample-level summary influenced by most informative PCs. Systematic disagreement (RFMix 50% EUR vs RF 80% EUR) suggests bias in one method.
+- **How does local ancestry improve PRS in admixed individuals?** Variant in AFR-derived block: LD matches AFR reference, not EUR. Use AFR LD for clumping/LDpred2 for that variant, EUR LD for EUR-derived blocks. Ancestry-aware PRS matches LD reference to local ancestry context per variant, substantially improving prediction accuracy.
+- **Phasing accuracy in recently admixed populations?** ShapeIt4 uses reference panel. Panel mostly EUR + sample AFR/EUR admixed: EUR haplotypes phase more accurately (many EUR haplotypes in reference with similar LD). AFR haplotypes mis-phased more often, especially at ancestry transition points where LD structure switches abruptly. Phasing errors propagate to RFMix: a phasing switch error creates a spurious ancestry switch in RFMix output.
 
 See the [Multi-Ancestry PRS Tutorial](../tutorial_prs_multi.rst) for local ancestry parameter tuning and troubleshooting.
 
 ## Discussion: Global Classification
 
-1. **Why should you expect near-perfect classification with synthetic data?** What would cause off-diagonal entries in a real dataset?
-2. **How does the `threshold` config value affect the confusion matrix?** What happens to samples whose max probability is below 0.8?
-3. **If UMAP gives 99.5% agreement and PCA gives 98%, is that a meaningful improvement?** How would you test whether the difference is real or noise?
+- **Why near-perfect classification with synthetic data?** Resampled from 1000 Genomes haplotypes, same population structure in study and reference. PCA projects synthetic samples directly onto source population clusters. In real data, off-diagonal confusion matrix entries come from: genuine admixture (mixed ancestry falls between clusters), population structure within a superpopulation (Finnish vs British both EUR but may classify differently), and genotyping artifacts shifting PCA coordinates.
+- **How does `threshold` affect the confusion matrix?** Sets minimum posterior probability for hard classification. Below threshold (e.g., 0.8), samples labeled "Other". Lower threshold = fewer "Other" labels, more misclassifications at ancestry boundaries. Higher threshold = more "Other" labels, higher precision for classified samples. Use case determines optimal: clean ancestry strata for heritability -> high threshold. Classify every sample for PRS -> lower threshold, accept boundary misclassifications.
+- **UMAP 99.5% vs PCA 98% agreement: meaningful?** 1.5pp difference could be real or noise. Test: (1) bootstrap confidence intervals for both estimates, overlapping CIs = not significant. (2) Which samples are misclassified? UMAP correctly classifying boundary samples PCA misses = qualitatively meaningful. (3) Is improvement concentrated in specific populations? (UMAP may improve AMR classification, which is admixed between EUR/AFR/SAS in PCA space). A small improvement may be practically irrelevant if downstream conclusions (heritability estimates) do not change.
