@@ -150,6 +150,19 @@ rule run_initialQC:
             if "{CHR}" in config.get("INPUT", "")
             else [OUT_DIR / "full" / "f1.b38.f2.pgen"]
         ),
+        lambda wildcards: (
+            expand(OUT_DIR / "full" / "initial_{CHR}.smiss", CHR=CHROMOSOMES)
+            + expand(OUT_DIR / "full" / "initial_{CHR}.vmiss", CHR=CHROMOSOMES)
+            + expand(OUT_DIR / "full" / "MAF_check_{CHR}.afreq", CHR=CHROMOSOMES)
+            + expand(OUT_DIR / "full" / "standardFilter_{CHR}.hardy", CHR=CHROMOSOMES)
+            if "{CHR}" in config.get("INPUT", "")
+            else [
+                OUT_DIR / "full" / "initial.smiss",
+                OUT_DIR / "full" / "initial.vmiss",
+                OUT_DIR / "full" / "MAF_check.afreq",
+                OUT_DIR / "full" / "standardFilter.hardy",
+            ]
+        ),
 
 rule run_pca:
     threads: 1
