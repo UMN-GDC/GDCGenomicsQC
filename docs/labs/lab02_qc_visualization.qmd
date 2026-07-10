@@ -53,7 +53,7 @@ library(tidyverse)
 OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 subset <- "full"
 
-smiss <- read_tsv(file.path(OUT_DIR, subset, "initial.smiss"))
+smiss <- read_tsv(file.path("/scratch.global/GDC/r25outputs/toy", "full", "initial.smiss"))
 glimpse(smiss)
 
 ggplot(smiss, aes(x = F_MISS * 100)) +
@@ -67,7 +67,8 @@ ggplot(smiss, aes(x = F_MISS * 100)) +
 ### Variant Missingness
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-vmiss <- read_tsv(file.path(OUT_DIR, subset, "initial.vmiss"))
+vmiss <- read_tsv(file.path("/scratch.global/GDC/r25outputs/toy", "full", "initial.vmiss"))
+#vmiss <- read_tsv(file.path(OUT_DIR, subset, "initial.vmiss"))
 glimpse(vmiss)
 
 ggplot(vmiss, aes(x = F_MISS * 100)) +
@@ -81,7 +82,7 @@ ggplot(vmiss, aes(x = F_MISS * 100)) +
 ### Allele Frequency
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-freq <- read_tsv(file.path(OUT_DIR, subset, "MAF_check.afreq"))
+freq <- read_tsv(file.path("/scratch.global/GDC/r25outputs/toy", subset, "MAF_check.afreq"))
 glimpse(freq)
 
 freq %>%
@@ -103,7 +104,7 @@ freq %>%
 ### Hardy-Weinberg Equilibrium
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-hwe <- read_tsv(file.path(OUT_DIR, subset, "standardFilter.hardy"))
+hwe <- read_tsv(file.path("/scratch.global/GDC/r25outputs/toy", subset, "standardFilter.hardy"))
 glimpse(hwe)
 
 hwe %>%
