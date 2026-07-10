@@ -38,6 +38,7 @@ Only methods with `enabled: true` run. PRSice-2 tests multiple p-value threshold
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
+# CHANGE THIS to match your OUT_DIR from the config YAML
 OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 anc1 <- "AFR"; anc2 <- "EUR"
 prs_out_dir <- file.path(OUT_DIR, "prs_inputs", paste0(anc1, "_", anc2))
@@ -85,5 +86,9 @@ ldpred2_scores |>
 1. **Given h² = 0.4, what fraction of that heritability does the best PRS capture?** (Look at the R² in summary.csv.)
 2. **Why would cross-ancestry transfer (training in AFR, testing in EUR) typically give lower R²?** What biological factors drive the drop?
 3. **PRSice-2 vs. LDpred2 — which method gives higher R²?** Why might the Bayesian approach outperform C+T?
+4. **How should PRS be compared across ancestries?** If the EUR PRS has R² = 0.12 and the AFR PRS has R² = 0.04, is the EUR score genuinely more predictive, or are there ascertainment biases at play? (Hint: consider differences in LD structure, MAF distribution, and GWAS discovery sample sizes.)
+5. **What happens when you train a PRS in an admixed population?** If your training set has individuals with mixed ancestry (e.g., AFR/EUR admixture), the PRS weights may capture ancestry-linked tag variants rather than causal effects. How would you detect this in the score distribution?
+6. **The best p-value threshold in PRSice-2 is 0.05 for AFR but 0.005 for EUR.** What does this tell you about the genetic architecture of the trait in each population? Why would the optimal threshold differ?
+7. **If local ancestry is available (see local ancestry lab), how would you use it to build an ancestry-aware PRS?** What would you do differently for a variant that sits in an AFR-derived haplotype block vs. an EUR-derived one?
 
 See the [PRS Tutorial](../tutorial_prs.rst) for cross-ancestry transfer exercises, multi-ancestry metaPRS comparison, and null simulations.

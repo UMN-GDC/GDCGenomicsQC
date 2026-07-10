@@ -32,6 +32,7 @@ When `RFMIX: true`, the pipeline runs phasing + RFMix on the specified chromosom
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
+# CHANGE THIS to match your OUT_DIR from the config YAML
 OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 local_anc_dir <- file.path(OUT_DIR, "02-localAncestry")
 
@@ -86,6 +87,10 @@ snp_la |>
 
 1. **Samples with many short ancestry tracts — is this real admixture or a phasing artifact?** How would you distinguish them?
 2. **If most samples are assigned a single ancestry**, does that mean RFMix failed or that the population is genuinely unadmixed? Check the reference panel composition.
-3. **How do the global ancestry proportions from `ancestry_full.txt` compare to the RFMix posterior probabilities from the classification step?** (See lab03.)
+3. **How do the global ancestry proportions from `ancestry_full.txt` compare to the RFMix posterior probabilities from the classification step?** (See the ancestry lab.)
+4. **How does local ancestry inform heritability analysis?** If a trait-associated variant lies in an AFR-derived haplotype block, its effect size may differ from the same variant in an EUR-derived block. How would you model ancestry-specific effect sizes in a heritability or PRS framework?
+5. **What happens to phasing accuracy in recently admixed populations?** ShapeIt4 uses a reference panel for phasing — if the panel is mostly EUR but your sample is AFR/EUR admixed, which haplotypes will be phased more accurately? How could phasing errors propagate into RFMix ancestry calls?
+6. **The downstream PRS lab uses global ancestry-adjusted scores. How would ancestry-aware PRS differ if you replaced global ancestry with local ancestry at each variant?** Would you expect better prediction in admixed individuals? What additional data would you need?
+7. **If you have trio data (parent-offspring) with local ancestry, how could you distinguish recent admixture (within the last 2–3 generations) from older admixture?** (Hint: tract length distribution is informative — longer tracts mean fewer generations since admixture.)
 
 See the [Multi-Ancestry PRS Tutorial](../tutorial_prs_multi.rst) for troubleshooting, parameter tuning (generations, EM iterations), and comparing RFMix to other local ancestry methods.

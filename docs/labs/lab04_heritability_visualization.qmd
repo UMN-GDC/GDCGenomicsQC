@@ -34,6 +34,7 @@ The GRM is built from LD-pruned, crossmapped variants. Related samples are remov
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
+# CHANGE THIS to match your OUT_DIR from the config YAML
 OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 sim_name <- "bivariate_test"
 
@@ -61,5 +62,9 @@ ggplot(herit, aes(x = ancestry, y = h2, color = ancestry)) +
 1. **The estimate for one ancestry is 0.35 and the other is 0.42.** Is this bias or sampling variation? How would you decide?
 2. **Why does LD pruning matter more for heritability than for ancestry classification?** (Hint: think about what the GRM measures.)
 3. **If the confidence interval includes 0**, what does that mean? Would you trust that estimate?
+4. **How does admixture affect heritability estimation?** In an admixed population, recent admixture creates LD that spans ancestry switch points — this can inflate heritability estimates because the GRM captures both causal signal and admixture-induced covariance. How would you test whether your sample has this issue?
+5. **The narrow-sense heritability (h²) estimate assumes additive genetic effects.** If the true genetic architecture includes dominance or epistasis, would you expect h² to be an over- or underestimate? When would the gap between pedigree-based and SNP-based heritability be largest?
+6. **Sample size differs between ancestry groups.** EUR has 500 samples, AFR has 150. How does sample size affect the standard error of h²? Is it meaningful to compare estimates with very different CIs?
+7. **You add 10 additional genetic PCs as covariates and h² drops from 0.40 to 0.25.** What does that tell you about the relationship between the PCs and the phenotype? When would adjusting for PCs be appropriate vs. over-adjustment?
 
 See the [Heritability Tutorial](../tutorial_heritability.rst) for GRM heatmap visualization, method comparisons (AdjHE vs GCTA vs PredLMM), and exploration exercises (varying PC count, sample size, covariates).

@@ -41,7 +41,8 @@ The hard MAF (0.01), HWE (1e-6), and missingness (0.02) thresholds are in `workf
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
-OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
+# CHANGE THIS to match your OUT_DIR from the config YAML
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 subset <- "full"
 
 smiss <- read_tsv(file.path(OUT_DIR, subset, "initial.smiss"))
@@ -129,6 +130,76 @@ cat("Variants passing --hwe 1e-6:", hwe %>% filter(P >= thresholds$hwe) %>% nrow
 cat("Variants passing --maf 0.01:", freq %>% filter(ALT_FREQS >= thresholds$maf & ALT_FREQS <= (1 - thresholds$maf)) %>% nrow(), "\n")
 cat("Samples passing --mind 0.02:", smiss %>% filter(F_MISS <= thresholds$mind) %>% nrow(), "\n")
 ```
+
+### Per-Ancestry QC Diagnostics
+
+After ancestry classification, the pipeline can re-apply QC filters within each predicted ancestry group (e.g., EUR, AFR, AMR). This reveals ancestry-specific patterns — a variant that passes HWE in one population may deviate in another due to population structure.
+
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+ancestries <- c("EUR", "AFR", "AMR", "EAS", "SAS")
+anc_qc <- map_dfr(set_names(ancestries), function(a) {
+  f <- file.path(OUT_DIR, a, "initial.smiss")
+  if (file.exists(f)) {
+    read_tsv(f, show_col_types = FALSE) |>
+      summarise(
+        N = n(),
+        mean_miss = mean(F_MISS) * 100,
+        pct_above_2pct = mean(F_MISS > 0.02) * 100
+      ) |>
+      mutate(ancestry = a, .before = 1)
+  } else {
+    NULL
+  }
+}, .id = NULL)
+
+if (nrow(anc_qc) > 0) {
+  print(anc_qc)
+
+  ggplot(anc_qc, aes(x = ancestry, y = mean_miss, fill = ancestry)) +
+    geom_col(alpha = 0.7) +
+    labs(x = "Ancestry", y = "Mean Sample Missingness (%)",
+         title = "Sample Missingness by Ancestry") +
+    theme_minimal()
+} else {
+  cat("Per-ancestry QC files not found.\n")
+  cat("Re-run with ancestry-specific QC enabled to see this section.\n")
+}
+```
+
+Similarly, compare the number of variants passing HWE per ancestry:
+
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+anc_hwe <- map_dfr(set_names(ancestries), function(a) {
+  f <- file.path(OUT_DIR, a, "standardFilter.hardy")
+  if (file.exists(f)) {
+    read_tsv(f, show_col_types = FALSE) |>
+      summarise(
+        N = n(),
+        pct_pass_hwe = mean(P >= 1e-6) * 100
+      ) |>
+      mutate(ancestry = a, .before = 1)
+  } else {
+    NULL
+  }
+}, .id = NULL)
+
+if (nrow(anc_hwe) > 0) {
+  print(anc_hwe)
+
+  ggplot(anc_hwe, aes(x = ancestry, y = pct_pass_hwe, fill = ancestry)) +
+    geom_col(alpha = 0.7) +
+    labs(x = "Ancestry", y = "Variants Passing HWE (%)",
+         title = "HWE Filtering Impact by Ancestry") +
+    theme_minimal()
+} else {
+  cat("Per-ancestry HWE files not found.\n")
+}
+```
+
+**What to look for:** If one ancestry group shows substantially higher missingness or HWE deviation, it may indicate:
+- Population-specific genotyping artifacts
+- Admixture within the group affecting Hardy-Weinberg assumptions
+- Small sample size making HWE tests unreliable (fewer samples → wider confidence intervals)
 
 ## Discussion
 
