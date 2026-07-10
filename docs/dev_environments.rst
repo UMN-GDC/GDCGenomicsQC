@@ -235,4 +235,7 @@ See Also
 
 - :doc:`new_hpc_setup` - Setting up on a new HPC
 - :doc:`installation` - Software installation
-- `Snakemake Documentation <https://snakemake.readthedocs.io>`_
+- `Snakemake Documentation <https://snakemake.readthedocs.io>`__
+- `Snakemake Executor Plugins (Slurm) <https://snakemake.readthedocs.io/en/stable/executor_tutorial/standard.html>`__
+- `Snakemake Profiles <https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#profiles>`__
+- `Snakemake Container Integration <https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#containers-and-singularity>`__

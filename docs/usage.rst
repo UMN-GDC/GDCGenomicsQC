@@ -369,16 +369,86 @@ Run only specific parts of the pipeline by specifying the rule name:
     # Run only RFMix
     snakemake --profile=../profiles/hpc --configfile ../config/config.yaml RFMIX
 
-Common rule targets include:
+The pipeline ships dozens of rule targets. Use ``--list-targets`` to discover
+all available endpoints in your build:
 
-- ``full/f1.pgen`` - Initial sample/SNP quality control
-- ``convertPlinkPerChromosome`` - Per-chromosome conversion and filtering
-- ``convertPlinkSingleFile`` - Single file conversion and filtering
-- ``king`` - Relatedness estimation
-- ``estimateAncestry`` - Global ancestry classification
-- ``classifyAncestry`` - Generate ancestry classifications and plots
-- ``RFMIX`` - Local ancestry inference
-- ``phase`` - Phasing with shapeit4
+.. code-block:: bash
+
+    snakemake --configfile ../config/config.yaml --list-targets | less
+
+Unfiltered rule list (``snakemake --list``) shows every rule including
+internal ones; ``--list-targets`` only shows explicitly designated end‑points.
+
+Available targets
+~~~~~~~~~~~~~~~~~
+
+.. csv-table:: Rule Target Reference
+   :header: "Target", "Description"
+   :widths: 40 60
+
+   ``full/f1.pgen``,Initial QC: sample and SNP missingness filtering
+   ``full/initial.smiss``,Sample missingness statistics (``--smissing``)
+   ``full/initial.vmiss``,Variant missingness statistics (``--vmissing``)
+   ``full/initial.sexcheck``,Sex discrepancy check (``--check-sex``)
+   ``full/initial.het``,Heterozygosity check (``--het``)
+   ``full/initial.ibd``,IBD estimation (``--genome``)
+   ``full/MAF_check.afreq``,Allele frequency report (``--freq``)
+   ``full/MAF_check.smiss``,Sample missingness per ancestry group
+   ``full/standardFilter.hardy``,HWE exact test (``--hardy``)
+   ``full/standardFilter.LDpruned``,LD‑pruned variant set
+   ``full/prePhasing.smiss``,Pre‑phasing sample missingness
+   ``full/RelatednessFilter.king.cutoff.id``,KING relatedness filter
+   ``king``,Relatedness estimation via KING
+   ``convertPlinkPerChromosome``,Per‑chromosome format conversion and filtering
+   ``convertPlinkSingleFile``,Single‑file format conversion and filtering
+   ``pcair``,PC‑AiR relatedness estimation
+   ``estimateAncestry``,Global ancestry classification
+   ``classifyAncestry``,Generate ancestry classification plots and reports
+   ``run_classifyAncestry``,Full ancestry classification chain
+   ``applyStandardQualityControl``,Apply MAF/HWE/missingness QC filters
+   ``run_ancestryQC``,Ancestry‑specific quality control
+   ``run_snpHerit``,SNP heritability estimation (GCTA)
+   ``snpHerit``,Heritability (alias)
+   ``simulatePhenotype``,Simulate a quantitative phenotype
+   ``runAllEnabledPRS``,Run all enabled PRS methods
+   ``RFMIX``,Local ancestry inference via RFMix
+   ``phase``,Phasing via ShapeIt4
+   ``assembleRef``,Assemble 1000 Genomes reference panel
+
+QC naming convention
+~~~~~~~~~~~~~~~~~~~~
+
+QC output files follow a predictable naming scheme so you can target any
+intermediate result.  The primary output directory (``{OUT_DIR}/{SUBSET}/``)
+contains files with a suffix pattern:
+
+.. code-block:: text
+
+    {OUT_DIR}/{SUBSET}/{stage}.{suffix}
+
+Where:
+
+* ``{SUBSET}`` — e.g. ``full`` (all samples) or an ancestry group like ``AFR``
+* ``{stage}`` — the QC step, e.g. ``initial``, ``MAF_check``, ``standardFilter``
+* ``{suffix}`` — the PLINK2 output type, e.g. ``pgen``, ``pvar``, ``psam``,
+  ``smiss``, ``vmiss``, ``afreq``, ``hardy``, ``LDpruned``, ``sexcheck``,
+  ``het``, ``ibd``, ``king.cutoff.id``
+
+For example, to get MAF reports for the African subset without rerunning
+earlier steps:
+
+.. code-block:: bash
+
+    snakemake --profile=../profiles/hpc --configfile ../config/config.yaml \
+        AFR/MAF_check.afreq
+
+The same pattern applies to every ancestry group listed in the config
+(e.g., ``AFR``, ``EUR``, ``EAS``, ``SAS``, ``AMR``).  You can discover
+all available file targets for your config with ``--list-targets``.
+
+Running a rule target is just a matter of passing its name (or path) to
+snakemake.  The table above doubles as a quick reference for the most
+commonly used targets.
 
 Generating Reports
 ~~~~~~~~~~~~~~~~~
@@ -414,14 +484,108 @@ Preview what will be executed without running:
 
     snakemake -n --configfile ../config/config.yaml
 
-Debugging
-~~~~~~~~~
+Snakemake Tips & FAQ
+~~~~~~~~~~~~~~~~~~~~
 
-Force re-execution of failed jobs:
+**Lock errors**
+
+If snakemake exits with *"Directory cannot be locked"* or *"Lockfile already
+present"*, a previous run left a lock behind (e.g. after an interrupted job):
 
 .. code-block:: bash
 
-    snakemake --profile=../profiles/hpc --configfile ../config/config.yaml --rerun-triggers mtime
+    snakemake --unlock --configfile ../config/config.yaml
+
+You can also delete ``.snakemake/`` entirely (snakemake recreates it):
+
+.. code-block:: bash
+
+    rm -rf .snakemake/
+
+.. note::
+
+   ``.snakemake/`` is created in your working directory.  With multi‑user
+   deployments each user gets their own copy; unlocking someone else's lock
+   is not possible (or needed).
+
+**Force re‑run a job**
+
+To force a specific rule to re‑execute even if its outputs exist:
+
+.. code-block:: bash
+
+    snakemake --force -R <target> --configfile ../config/config.yaml
+
+Or using the short form:
+
+.. code-block:: bash
+
+    snakemake -f -R <target> --configfile ../config/config.yaml
+
+**Run only up to a certain rule**
+
+Stop the DAG at a specific target (skip everything after it):
+
+.. code-block:: bash
+
+    snakemake --until <target> --configfile ../config/config.yaml
+
+**List all targets**
+
+Show every endpoint the pipeline can produce:
+
+.. code-block:: bash
+
+    snakemake --list-targets --configfile ../config/config.yaml
+
+Show every rule (including internal ones):
+
+.. code-block:: bash
+
+    snakemake --list --configfile ../config/config.yaml
+
+**NFS latency and ``--latency-wait``**
+
+On shared filesystems, a job may finish writing its output but snakemake
+can't see it yet.  Increase the wait time:
+
+.. code-block:: bash
+
+    snakemake --latency-wait 120 --configfile ../config/config.yaml
+
+This is often set in the profile (check ``profiles/hpc/config.yaml``).
+
+**"Waiting for files" or stuck workflow**
+
+If the workflow appears stuck with *"Waiting for files ..."* messages, the
+most common causes are:
+
+1. **NFS latency** — increase ``--latency-wait`` (see above).
+2. **Lock conflict** — another snakemake instance owns the lock; use
+   ``--unlock`` after confirming no other instance is running.
+3. **SLURM queue limits** — too many jobs pending; reduce ``-j``.
+
+**Resume after a failure**
+
+Simply re‑run the same command.  Snakemake skips completed jobs and
+retries only the failed ones.  No special flag is needed.
+
+**Clean up ``.snakemake/`` storage**
+
+The pipeline uses ``local-storage-prefix`` to cache remote inputs.
+Over time it can grow large.  To clean it:
+
+.. code-block:: bash
+
+    rm -rf /path/to/.snakemake/storage
+
+**External documentation**
+
+- `Snakemake workflow management <https://snakemake.readthedocs.io>`__
+- `Snakemake profiles <https://snakemake.readthedocs.io/en/stable/executor_tutorial/standard.html>`__
+- `Apptainer containers in Snakemake <https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#containers>`__
+- `DAG visualization <https://snakemake.readthedocs.io/en/stable/snakefiles/visualization.html>`__
+- `Config files <https://snakemake.readthedocs.io/en/stable/snakefiles/configuration.html>`__
 
 Master SLURM Job
 ---------------
