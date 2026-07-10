@@ -137,10 +137,27 @@ class_prob |>
 
 **When would one outperform another?** For well-separated continental populations, PCA is usually sufficient — the linear separation is clean. For fine-scale structure (e.g., distinguishing Finnish from British within EUR), UMAP's non-linear embedding can find patterns PCA misses. For datasets with substantial missingness, VAE's probabilistic approach is more robust.
 
-## Discussion
+## Going Further: Local Ancestry Inference
+
+The global ancestry classification above assigns a single ancestry per *sample*. Local ancestry goes a step further: it assigns an ancestry to each *position along each chromosome*, deconvolving the two haplotypes. The pipeline supports this with ShapeIt4 phasing + RFMix when `localAncestry.RFMIX: true` is set in the config.
+
+**When does local ancestry matter?**
+- A sample classified as AFR/EUR admixed may have long tracts of EUR origin and long tracts of AFR origin — different genes fall in different ancestry contexts.
+- Heritability and PRS methods that assume uniform ancestry per sample will miss these regional effects. A variant in an AFR-derived block may have a different effect size than the same variant in an EUR-derived block.
+- Local ancestry is essential for fine-mapping in admixed populations and for building ancestry-aware PRS.
+
+### Discussion: Local ancestry
+
+1. **Samples with many short ancestry tracts — is this real admixture or a phasing artifact?** How would you distinguish them? (Hint: tract length distribution; short tracts = many generations since admixture.)
+2. **If most samples are assigned a single local ancestry**, does that mean RFMix failed or that the population is genuinely unadmixed? Check the reference panel composition.
+3. **How do the global ancestry proportions from a local ancestry analysis (RFMix) compare to the RF posterior probabilities from the classification step?** Would you expect them to agree?
+4. **How could local ancestry be used to improve PRS in admixed individuals?** If a variant sits in an AFR-derived block, its LD structure matches AFR reference panels, not EUR — how would you choose the LD reference for clumping or LDpred2?
+5. **What happens to phasing accuracy in recently admixed populations?** ShapeIt4 uses a reference panel — if the panel is mostly EUR but your sample is AFR/EUR admixed, which haplotypes will be phased more accurately? How could phasing errors propagate into RFMix ancestry calls?
+
+See the [Multi-Ancestry PRS Tutorial](../tutorial_prs_multi.rst) for local ancestry parameter tuning and troubleshooting.
+
+## Discussion: Global Classification
 
 1. **Why should you expect near-perfect classification with synthetic data?** What would cause off-diagonal entries in a real dataset?
 2. **How does the `threshold` config value affect the confusion matrix?** What happens to samples whose max probability is below 0.8?
 3. **If UMAP gives 99.5% agreement and PCA gives 98%, is that a meaningful improvement?** How would you test whether the difference is real or noise?
-
-See the [Ancestry Classification Tutorial](../tutorial_ancestry_classification.rst) for working with RFMix posterior probabilities, using a provided ancestry file, and interpreting the UMAP embedding coordinates.

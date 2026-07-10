@@ -125,14 +125,15 @@ gdcgenomicsSandbox ┘                           ├── --snakefile workflow/
 
 Lab 1 is the only lab that runs Snakemake. Everything after this is R. See [`jobs/sandboxToy.SLURM`](https://github.com/UMN-GDC/GDCGenomicsQC/blob/main/jobs/sandboxToy.SLURM) for how we ran it — `sbatch jobs/sandboxToy.SLURM` submits a master job that launches the full pipeline.
 
-Two targets (`run_classifyAncestry applyStandardQualityControl`), one command. Snakemake resolves the full DAG — QC → PCA → UMAP → classification → ancestry-specific QC → phenotype simulation → heritability → PRS — and produces everything for the remaining labs:
+Two targets (`run_classifyAncestry applyStandardQualityControl`), one command. Snakemake resolves the full DAG — QC → PCA → UMAP → classification → ancestry-specific QC → phenotype simulation → heritability — and produces everything for the remaining labs:
 
 ### What each downstream lab uses
 
 | Lab | File(s) loaded in R | How it's used |
 |-----|--------------------|---------------|
-| Lab 2 — QC & Ancestry Diagnostics | `{OUT_DIR}/{subset}/initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy`, `classificationProbabilities.tsv`, `sampleRefPCscores.sscore` | Missingness, AF, HWE checks per subset; PCA projection, classification probabilities |
-| Lab 3 — Downstream Analysis | `{OUT_DIR}/{ancestry}/simulations/{sim_name}/herit.csv`, `{OUT_DIR}/02-localAncestry/ancestry_full.txt` / `*.lai.msp.tsv`, `{OUT_DIR}/prs_inputs/{anc_pairs}/single_prsice/best.pRS.prs` | Heritability comparison, local ancestry tracts, PRS evaluation |
+| Lab 2 — QC Diagnostics | `{OUT_DIR}/{subset}/initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy` | Missingness, AF, HWE checks per subset |
+| Lab 3 — Ancestry Classification | `{OUT_DIR}/01-globalAncestry/classificationProbabilities.tsv`, `ancestry_classifications.tsv`, `sampleRefPCscores.sscore` | PCA projection, confusion matrix, classification probabilities; discussion extends to local ancestry inference |
+| Lab 4 — Heritability | `{OUT_DIR}/{ancestry}/simulations/{sim_name}/herit.csv` per ancestry | h² estimate comparison across ancestry groups |
 
 ### What happens when it runs
 
