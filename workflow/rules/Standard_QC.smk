@@ -20,6 +20,8 @@ if INPUT_IS_PER_CHROMOSOME:
             pgen=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pgen",
             pvar=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pvar",
             psam=OUT_DIR / "{subset}" / "f1.f2_{CHR}.psam",
+            maf=OUT_DIR / "{subset}" / "MAF_check_{CHR}.afreq",
+            hardy=OUT_DIR / "{subset}" / "standardFilter_{CHR}.hardy",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter_{CHR}")
             ),
@@ -54,7 +56,7 @@ if INPUT_IS_PER_CHROMOSOME:
             plink2 --pfile {output.tempDir}/step1 --maf 0.01 --make-pgen --out {output.tempDir}/step2 --threads {threads}
 
             plink2 --pfile {output.tempDir}/step2 --hardy --out {output.tempDir}/step2 --threads {threads}
-            cp {output.tempDir}/step2.hardy {params.output_dir}/step2_{wildcards.CHR}.hardy
+            cp {output.tempDir}/step2.hardy {output.hardy}
             awk '$9 < 1e-5' {output.tempDir}/step2.hardy > {params.output_dir}/zoomhwe_{wildcards.CHR}.hwe
             plink2 --pfile {output.tempDir}/step2 --hwe 1e-6 --make-pgen --out {output.tempDir}/step3a --threads {threads}
             plink2 --pfile {output.tempDir}/step3a --hwe 1e-10 --make-pgen --out {output.tempDir}/step3 --threads {threads}
@@ -103,6 +105,8 @@ else:
             LDpgen=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pgen",
             LDpvar=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pvar",
             LDpsam=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.psam",
+            maf=OUT_DIR / "{subset}" / "MAF_check.afreq",
+            hardy=OUT_DIR / "{subset}" / "standardFilter.hardy",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter")
             ),
@@ -131,6 +135,8 @@ else:
               cp {input.psam} {output.tempDir}/pastSex.psam
             fi
             bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
+
+            cp {output.tempDir}/intermediate_6.hardy {output.hardy}
 
             for ext in pgen pvar psam; do
                 mv {params.output_dir}/standardFilter.$ext {params.output_dir}/f1.b38.f2.$ext

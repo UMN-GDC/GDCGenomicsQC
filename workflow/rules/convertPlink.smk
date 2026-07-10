@@ -55,8 +55,8 @@ rule convertPlinkPerChromosome:
                 OUT_DIR / "{subset}" / "{CHR}" / "intermediates" / "convert_filter"
             )
         ),
-        smiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.smiss"),
-        vmiss=temp(OUT_DIR / "{subset}" / "initial_{CHR}.vmiss"),
+        smiss=OUT_DIR / "{subset}" / "initial_{CHR}.smiss",
+        vmiss=OUT_DIR / "{subset}" / "initial_{CHR}.vmiss",
     input:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
@@ -236,8 +236,8 @@ if not INPUT_IS_PER_CHROMOSOME:
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "initial_filter_single")
             ),
-            smiss=temp(OUT_DIR / "{subset}" / "initial.smiss"),
-            vmiss=temp(OUT_DIR / "{subset}" / "initial.vmiss"),
+            smiss=OUT_DIR / "{subset}" / "initial.smiss",
+            vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
         input:
             fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
             keep=get_ancestry_file,
