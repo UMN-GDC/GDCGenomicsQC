@@ -12,6 +12,8 @@ docs/labs/*_files
 AGENTS.md
 test.SLURM
 test.log
+.opencode/
+openspec/
 
 */.wget-hsts
 */_build/*
