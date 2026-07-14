@@ -410,4 +410,4 @@ After completing this tutorial, you have:
 
 ## Lab Materials
 
-- [Local Ancestry Visualization Lab (R Markdown)](labs/lab_local_ancestry_visualization.Rmd) - Interactive R notebook for visualizing local ancestry outputs
+- [Global Ancestry Visualization Lab (Quarto)](labs/lab03_global_ancestry_visualization.qmd) - Interactive R notebook for visualizing ancestry outputs used in multi-ancestry PRS

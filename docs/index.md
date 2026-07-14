@@ -19,6 +19,8 @@ tutorial_heritability
 tutorial_phenotype_simulation
 tutorial_prs
 tutorial_prs_multi
+tutorial_prs_pipeline
+dev_environments
 ````
 
 ## Getting Started

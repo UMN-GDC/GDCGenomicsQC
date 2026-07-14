@@ -177,6 +177,15 @@ Available profiles:
 
 :::
 :::{tab-item} Local Snakemake (Conda)
+
+For local development without SLURM or environment modules:
+
+```bash
+conda activate snakemake
+cd GDCGenomicsQC/workflow
+snakemake --configfile ../config/config.yaml
+```
+
 :::
 ::::
 
@@ -384,38 +393,68 @@ internal ones; `--list-targets` only shows explicitly designated end-points.
 
 ### Available targets
 
-```{csv-table} Rule Target Reference
-:header: "Target", "Description"
+```{list-table} Rule Target Reference
+:header-rows: 1
 :widths: 40 60
 
-``full/f1.pgen``,Initial QC: sample and SNP missingness filtering
-``full/initial.smiss``,Sample missingness statistics (``--smissing``)
-``full/initial.vmiss``,Variant missingness statistics (``--vmissing``)
-``full/initial.sexcheck``,Sex discrepancy check (``--check-sex``)
-``full/initial.het``,Heterozygosity check (``--het``)
-``full/initial.ibd``,IBD estimation (``--genome``)
-``full/MAF_check.afreq``,Allele frequency report (``--freq``)
-``full/MAF_check.smiss``,Sample missingness per ancestry group
-``full/standardFilter.hardy``,HWE exact test (``--hardy``)
-``full/standardFilter.LDpruned``,LD-pruned variant set
-``full/prePhasing.smiss``,Pre-phasing sample missingness
-``full/RelatednessFilter.king.cutoff.id``,KING relatedness filter
-``king``,Relatedness estimation via KING
-``convertPlinkPerChromosome``,Per-chromosome format conversion and filtering
-``convertPlinkSingleFile``,Single-file format conversion and filtering
-``pcair``,PC-AiR relatedness estimation
-``estimateAncestry``,Global ancestry classification
-``classifyAncestry``,Generate ancestry classification plots and reports
-``run_classifyAncestry``,Full ancestry classification chain
-``applyStandardQualityControl``,Apply MAF/HWE/missingness QC filters
-``run_ancestryQC``,Ancestry-specific quality control
-``run_snpHerit``,SNP heritability estimation (GCTA)
-``snpHerit``,Heritability (alias)
-``simulatePhenotype``,Simulate a quantitative phenotype
-``runAllEnabledPRS``,Run all enabled PRS methods
-``RFMIX``,Local ancestry inference via RFMix
-``phase``,Phasing via ShapeIt4
-``assembleRef``,Assemble 1000 Genomes reference panel
+* - Target
+  - Description
+* - `full/f1.pgen`
+  - Initial QC: sample and SNP missingness filtering
+* - `full/initial.smiss`
+  - Sample missingness statistics (`--smissing`)
+* - `full/initial.vmiss`
+  - Variant missingness statistics (`--vmissing`)
+* - `full/initial.sexcheck`
+  - Sex discrepancy check (`--check-sex`)
+* - `full/initial.het`
+  - Heterozygosity check (`--het`)
+* - `full/initial.ibd`
+  - IBD estimation (`--genome`)
+* - `full/MAF_check.afreq`
+  - Allele frequency report (`--freq`)
+* - `full/MAF_check.smiss`
+  - Sample missingness per ancestry group
+* - `full/standardFilter.hardy`
+  - HWE exact test (`--hardy`)
+* - `full/standardFilter.LDpruned`
+  - LD-pruned variant set
+* - `full/prePhasing.smiss`
+  - Pre-phasing sample missingness
+* - `full/RelatednessFilter.king.cutoff.id`
+  - KING relatedness filter
+* - `king`
+  - Relatedness estimation via KING
+* - `convertPlinkPerChromosome`
+  - Per-chromosome format conversion and filtering
+* - `convertPlinkSingleFile`
+  - Single-file format conversion and filtering
+* - `pcair`
+  - PC-AiR relatedness estimation
+* - `estimateAncestry`
+  - Global ancestry classification
+* - `classifyAncestry`
+  - Generate ancestry classification plots and reports
+* - `run_classifyAncestry`
+  - Full ancestry classification chain
+* - `applyStandardQualityControl`
+  - Apply MAF/HWE/missingness QC filters
+* - `run_ancestryQC`
+  - Ancestry-specific quality control
+* - `run_snpHerit`
+  - SNP heritability estimation (GCTA)
+* - `snpHerit`
+  - Heritability (alias)
+* - `simulatePhenotype`
+  - Simulate a quantitative phenotype
+* - `runAllEnabledPRS`
+  - Run all enabled PRS methods
+* - `RFMIX`
+  - Local ancestry inference via RFMix
+* - `phase`
+  - Phasing via ShapeIt4
+* - `assembleRef`
+  - Assemble 1000 Genomes reference panel
 ```
 
 ### QC naming convention

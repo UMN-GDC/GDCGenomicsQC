@@ -636,7 +636,7 @@ After completing this tutorial, you can:
 
 ## **Lab Materials**
 
-- [Global Ancestry Visualization Lab (R Markdown)](labs/lab_global_ancestry_visualization.Rmd) - Interactive R notebook for visualizing global ancestry outputs
+- [Global Ancestry Visualization Lab (Quarto)](labs/lab03_global_ancestry_visualization.qmd) - Interactive R notebook for visualizing global ancestry outputs
 
 **The ancestry classification outputs enable:**
 

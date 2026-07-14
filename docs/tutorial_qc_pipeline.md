@@ -115,7 +115,7 @@ snakemake --version
 - Reference data configured (see [](tutorial_1kg_assembly.md))
 - Genotype data in VCF, BED, or PGEN format
 
-(dag-visualization)=
+(dag-visualization-qc)=
 
 ### DAG Visualization
 
@@ -733,7 +733,7 @@ After completing this tutorial, proceed to:
 
 ## **Lab Materials**
 
-- [QC Visualization Lab (R Markdown)](labs/lab_qc_visualization.Rmd) - Interactive R notebook for visualizing QC outputs
+- [QC Visualization Lab (Quarto)](labs/lab02_qc_visualization.qmd) - Interactive R notebook for visualizing QC outputs
 
 **See also:**
 
