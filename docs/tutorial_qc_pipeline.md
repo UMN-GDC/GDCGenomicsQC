@@ -1,7 +1,6 @@
-.. _tutorial_qc:
+(tutorial_qc)=
 
-Tutorial: Quality Control Pipeline in Practice
-==============================================
+# Tutorial: Quality Control Pipeline in Practice
 
 This tutorial provides hands-on experience running the quality control (QC)
 pipeline in GDCGenomicsQC. The pipeline implements a two-stage approach:
@@ -17,203 +16,215 @@ Initial QC (sample and variant missingness filtering) followed by Standard QC
 3. Configure QC thresholds for different study designs
 4. Apply ancestry-specific QC workflows
 
-----
+---
 
-Prerequisites
--------------
+## Prerequisites
 
 **Setup:**
 
 Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
 For detailed installation instructions, see:
 
-- :doc:`installation` - Software setup (module, conda, or other methods)
-- :doc:`usage` - Running the pipeline
+- [](installation.md) - Software setup (module, conda, or other methods)
+- [](usage.md) - Running the pipeline
 
-.. tabs::
+::::{tab-set}
+:::{tab-item} MSI HPC
 
-   .. tab:: MSI HPC
+If you're using the MSI HPC cluster:
 
-      If you're using the MSI HPC cluster:
-
-      .. code-block:: bash
-
-           module use /projects/standard/gdc/public/GDCGenomicsQC/envs
-           module load gdcgenomicsMSI
-           conda activate snakemake
+```bash
+module use /projects/standard/gdc/public/GDCGenomicsQC/envs
+module load gdcgenomicsMSI
+conda activate snakemake
+```
 
 Verify installation:
 
-        .. code-block:: bash
+```bash
+snakemake --version
+```
 
-            snakemake --version
+```{note}
+**You do NOT need to clone the repository.** The pipeline is pre-installed
+via the ``gdcgenomicsMSI`` module. Just create your config file and run.
+```
 
-        .. note::
+:::
+:::{tab-item} Sandbox
 
-            **You do NOT need to clone the repository.** The pipeline is pre-installed
-            via the ``gdcgenomicsMSI`` module. Just create your config file and run.
+If you're using the Sandbox environment:
 
-     .. tab:: Sandbox
+```bash
+module use /scratch.global/GDC/GDCGenomicsQC/envs
+module load gdcgenomicsSandbox
+conda activate snakemake
+```
 
-        If you're using the Sandbox environment:
+Verify installation:
 
-        .. code-block:: bash
+```bash
+snakemake --version
+```
 
-            module use /scratch.global/GDC/GDCGenomicsQC/envs
-            module load gdcgenomicsSandbox
-            conda activate snakemake
+```{note}
+**You do NOT need to clone the repository.** The pipeline is pre-installed
+via the ``gdcgenomicsSandbox`` module. Just create your config file and run.
+```
 
-        Verify installation:
+:::
+:::{tab-item} Other HPCs
 
-        .. code-block:: bash
+If your HPC has the GDC module pre-configured:
 
-            snakemake --version
+```bash
+# Replace with your HPC's module path:
+module use /path/to/GDCGenomicsQC/envs
+module load gdcgenomicsMSI
+conda activate snakemake
+```
 
-        .. note::
+Verify installation:
 
-            **You do NOT need to clone the repository.** The pipeline is pre-installed
-            via the ``gdcgenomicsSandbox`` module. Just create your config file and run.
+```bash
+cd GDCGenomicsQC
+snakemake --version
+```
 
-     .. tab:: Other HPCs
+:::
+:::{tab-item} Local Snakemake
 
-       If your HPC has the GDC module pre-configured:
+If you're using your own Snakemake installation:
 
-       .. code-block:: bash
+```bash
+conda activate snakemake
+cd GDCGenomicsQC
+```
 
-           # Replace with your HPC's module path:
-           module use /path/to/GDCGenomicsQC/envs
-           module load gdcgenomicsMSI
-           conda activate snakemake
+Verify installation:
 
-      Verify installation:
+```bash
+snakemake --version
+```
 
-      .. code-block:: bash
-
-          cd GDCGenomicsQC
-          snakemake --version
-
-   .. tab:: Local Snakemake
-
-      If you're using your own Snakemake installation:
-
-      .. code-block:: bash
-
-          conda activate snakemake
-          cd GDCGenomicsQC
-
-      Verify installation:
-
-      .. code-block:: bash
-
-          snakemake --version
+:::
+::::
 
 **Data Requirements:**
 
-- Reference data configured (see :doc:`tutorial_1kg_assembly`)
+- Reference data configured (see [](tutorial_1kg_assembly.md))
 - Genotype data in VCF, BED, or PGEN format
 
-.. _dag-visualization:
+(dag-visualization)=
 
-DAG Visualization
-~~~~~~~~~~~~~~~~
+### DAG Visualization
 
 The pipeline DAG up to the ``run_initialQC`` rule shows the Initial QC workflow:
 
-.. mermaid:: dag_initialQC.mmd
+```{mermaid} dag_initialQC.mmd
+
+```
 
 The rule graph provides a cleaner view of rule dependencies:
 
-.. mermaid:: rulegraph_initialQC.mmd
+```{mermaid} rulegraph_initialQC.mmd
 
-----
+```
 
-Required Input Files
-~~~~~~~~~~~~~~~~~~~~
+---
+
+### Required Input Files
 
 This step requires the following input files:
 
-.. list-table:: QC Pipeline Input Files
-   :widths: 35 65
-   :header-rows: 1
+```{list-table} QC Pipeline Input Files
+:widths: 35 65
+:header-rows: 1
 
-   * - Input File
-     - Description
-   * - ``INPUT: "chr{CHR}.vcf.gz"`` (or .bed/.pgen)
-     - Per-chromosome VCF, BED, or PGEN files with genotype data
-   * - ``REF/1000G_highcoverage/population.txt``
-     - Reference panel population labels (for ancestry QC subsets)
-   * - ``REF/Homo_sapiens.GRCh38.dna.primary_assembly.fa``
-     - Reference genome FASTA (if using reference allele correction)
+* - Input File
+  - Description
+* - ``INPUT: "chr{CHR}.vcf.gz"`` (or .bed/.pgen)
+  - Per-chromosome VCF, BED, or PGEN files with genotype data
+* - ``REF/1000G_highcoverage/population.txt``
+  - Reference panel population labels (for ancestry QC subsets)
+* - ``REF/Homo_sapiens.GRCh38.dna.primary_assembly.fa``
+  - Reference genome FASTA (if using reference allele correction)
+```
 
 **Input Formats Supported:**
 
 The pipeline automatically detects format based on file extension:
 
-+----------+------------------------------------------+
-| Format   | Example Path                             |
-+==========+==========================================+
-| VCF      | ``/data/chr{CHR}.vcf.gz``                |
-| PLINK BED| ``/data/chr{CHR}.bed``                  |
-| PLINK PGEN| ``/data/chr{CHR}.pgen``                |
-| Single file| ``/data/merged.bed`` (no ``{CHR}``)   |
-+----------+------------------------------------------+
+```{list-table}
+:header-rows: 1
+
+* - Format
+  - Example Path
+* - VCF
+  - ``/data/chr{CHR}.vcf.gz``
+* - PLINK BED
+  - ``/data/chr{CHR}.bed``
+* - PLINK PGEN
+  - ``/data/chr{CHR}.pgen``
+* - Single file
+  - ``/data/merged.bed`` (no ``{CHR}``)
+```
 
 **Config Parameters for QC:**
 
-.. code-block:: yaml
+```yaml
+INPUT: "/path/to/data/chr{CHR}.vcf.gz"  # Per-chromosome VCF
+OUT_DIR: "/path/to/output"
+REF: "/path/to/reference"
+local-storage-prefix: "/path/to/.snakemake/storage"
 
-    INPUT: "/path/to/data/chr{CHR}.vcf.gz"  # Per-chromosome VCF
-    OUT_DIR: "/path/to/output"
-    REF: "/path/to/reference"
-    local-storage-prefix: "/path/to/.snakemake/storage"
+chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+# QC thresholds
+relatedness:
+    method: "king"  # "0" for none, "king" for removal
+    king_cutoff: 0.0884
 
-    # QC thresholds
-    relatedness:
-        method: "king"  # "0" for none, "king" for removal
-        king_cutoff: 0.0884
+SEX_CHECK: true  # Enable/disable sex verification
+GRM: true  # Compute genetic relationship matrix
+thin: false
+```
 
-    SEX_CHECK: true  # Enable/disable sex verification
-    GRM: true  # Compute genetic relationship matrix
-    thin: false
+**See also:** [](usage.md) for configuration options, [](installation.md) for software setup.
 
-**See also:** :doc:`usage` for configuration options, :doc:`installation` for software setup.
+---
 
-----
+## Lab Exercise: Running QC Pipeline
 
-Lab Exercise: Running QC Pipeline
-
-Step 1: Create Configuration File
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Step 1: Create Configuration File
 
 Create a configuration file for QC:
 
-.. code-block:: bash
+```bash
+mkdir -p ~/qc_lab
+cd ~/qc_lab
+cat > config_qc.yaml << 'EOF'
+INPUT: "/path/to/data/chr{CHR}.vcf.gz"
+OUT_DIR: "/path/to/output/directory"
+REF: "/path/to/reference/data"
+local-storage-prefix: "/path/to/.snakemake/storage"
 
-    mkdir -p ~/qc_lab
-    cd ~/qc_lab
-    cat > config_qc.yaml << 'EOF'
-    INPUT: "/path/to/data/chr{CHR}.vcf.gz"
-    OUT_DIR: "/path/to/output/directory"
-    REF: "/path/to/reference/data"
-    local-storage-prefix: "/path/to/.snakemake/storage"
+chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-    chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+relatedness:
+    method: "king"  # "0" for none, "king" or "primus" for removal
+    king_cutoff: 0.0884
 
-    relatedness:
-        method: "king"  # "0" for none, "king" or "primus" for removal
-        king_cutoff: 0.0884
+SEX_CHECK: true
+thin: false
+conda-frontend: mamba
 
-    SEX_CHECK: true
-    thin: false
-    conda-frontend: mamba
-    
-    # Internal PCA (optional)
-    internalPCA:
-        method: "plink2"  # "plink2", "pcair", or "both"
-        npc: 20
-    EOF
+# Internal PCA (optional)
+internalPCA:
+    method: "plink2"  # "plink2", "pcair", or "both"
+    npc: 20
+EOF
+```
 
 Key parameters:
 
@@ -221,41 +232,45 @@ Key parameters:
 - ``relatedness.method``: Relatedness filtering method ("0" for none, "king" or "primus" for removal)
 - ``internalPCA.method``: PCA method ("plink2", "pcair", or "both")
 
-Step 2: Run Initial QC
-~~~~~~~~~~~~~~~~~~~~~~~
+### Step 2: Run Initial QC
 
-.. tabs::
+::::{tab-set}
+:::{tab-item} MSI HPC
 
-   .. tab:: MSI HPC
+```bash
+cd GDCGenomicsQC/workflow
+gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
+```
 
-      .. code-block:: bash
+:::
+:::{tab-item} Sandbox
 
-          cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
+```bash
+cd GDCGenomicsQC/workflow
+gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
+```
 
-   .. tab:: Sandbox
+:::
+:::{tab-item} Other HPCs
 
-      .. code-block:: bash
+```bash
+cd GDCGenomicsQC/workflow
+gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
+```
 
-          cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
+:::
+:::{tab-item} Local Snakemake
 
-   .. tab:: Other HPCs
+```bash
+cd GDCGenomicsQC/workflow
+snakemake --profile=../profiles/hpc \
+    --configfile ../config_qc.yaml \
+    full/f1.pgen \
+    -j 10
+```
 
-      .. code-block:: bash
-
-          cd GDCGenomicsQC/workflow
-          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.pgen -j 10
-
-   .. tab:: Local Snakemake
-
-      .. code-block:: bash
-
-          cd GDCGenomicsQC/workflow
-          snakemake --profile=../profiles/hpc \
-              --configfile ../config_qc.yaml \
-              full/f1.pgen \
-              -j 10
+:::
+::::
 
 The Initial QC stage performs:
 
@@ -264,37 +279,41 @@ The Initial QC stage performs:
 3. **Sample missingness (final)**: Removes samples with >2% missingness (``--mind 0.02``)
 4. **LD pruning**: Creates pruned dataset for downstream analyses (``--indep-pairwise 500 10 0.1``)
 
-Step 3: Run Standard QC
-~~~~~~~~~~~~~~~~~~~~~~~
+### Step 3: Run Standard QC
 
-.. tabs::
+::::{tab-set}
+:::{tab-item} MSI HPC
 
-   .. tab:: MSI HPC
+```bash
+gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
+```
 
-      .. code-block:: bash
+:::
+:::{tab-item} Sandbox
 
-          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
+```bash
+gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
+```
 
-   .. tab:: Sandbox
+:::
+:::{tab-item} Other HPCs
 
-      .. code-block:: bash
+```bash
+gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
+```
 
-          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
+:::
+:::{tab-item} Local Snakemake
 
-   .. tab:: Other HPCs
+```bash
+snakemake --profile=../profiles/hpc \
+    --configfile ../config_qc.yaml \
+    full/f1.b38.f2.pgen \
+    -j 10
+```
 
-      .. code-block:: bash
-
-          gdcgenomicsqc --configfile ../config_qc.yaml full/f1.b38.f2.pgen -j 10
-
-   .. tab:: Local Snakemake
-
-      .. code-block:: bash
-
-          snakemake --profile=../profiles/hpc \
-              --configfile ../config_qc.yaml \
-              full/f1.b38.f2.pgen \
-              -j 10
+:::
+::::
 
 The Standard QC stage applies additional filters:
 
@@ -303,44 +322,47 @@ The Standard QC stage applies additional filters:
 3. **Heterozygosity check**: Identifies samples with FWER > 3 standard deviations from mean
 4. **Sex check**: Optionally verifies reported sex matches genetic sex
 
-Step 4: Run Ancestry-Specific QC
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Step 4: Run Ancestry-Specific QC
 
 After ancestry classification, run QC on specific ancestry groups:
 
-.. tabs::
+::::{tab-set}
+:::{tab-item} MSI HPC
 
-   .. tab:: MSI HPC
+```bash
+gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
+```
 
-      .. code-block:: bash
+:::
+:::{tab-item} Sandbox
 
-          gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
+```bash
+gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
+```
 
-   .. tab:: Sandbox
+:::
+:::{tab-item} Other HPCs
 
-      .. code-block:: bash
+```bash
+gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
+```
 
-          gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
+:::
+:::{tab-item} Local Snakemake
 
-   .. tab:: Other HPCs
+```bash
+snakemake --profile=../profiles/hpc \
+    --configfile ../config_qc.yaml \
+    EUR/f1.b38.f2.pgen \
+    -j 10
+```
 
-      .. code-block:: bash
-
-          gdcgenomicsqc --configfile ../config_qc.yaml EUR/f1.b38.f2.pgen -j 10
-
-   .. tab:: Local Snakemake
-
-      .. code-block:: bash
-
-          snakemake --profile=../profiles/hpc \
-              --configfile ../config_qc.yaml \
-              EUR/f1.b38.f2.pgen \
-              -j 10
+:::
+::::
 
 Available subsets are dynamically determined from classification results.
 
-Visualizations
-~~~~~~~~~~~~~~
+### Visualizations
 
 **Reference Space (PCA)**: ``images/PC_reference_space.svg``
 
@@ -352,17 +374,15 @@ Visualizations
 - Reference panel samples in UMAP embedding with density contours
 - Nonlinear visualization of ancestry structure
 
-----
+---
 
-Interpreting Pipeline Outputs
+## Interpreting Pipeline Outputs
 
-Sample Missingness Plot
-~~~~~~~~~~~~~~~~~~~~~~~
+### Sample Missingness Plot
 
 **File**: ``{subset}/figures/smiss.svg``
 
-.. image:: images/smiss.svg
-   :width: 600
+![](images/smiss.svg)
 
 The sample missingness histogram shows the distribution of missing data per individual.
 
@@ -378,13 +398,11 @@ Standard interpretation:
 - **Long right tail**: Problematic samples requiring investigation
 - **Bimodal distribution**: Possible batch effects or technology issues
 
-Variant Missingness Plot
-~~~~~~~~~~~~~~~~~~~~~~~~
+### Variant Missingness Plot
 
 **File**: ``{subset}/figures/vmiss.svg``
 
-.. image:: images/vmiss.svg
-   :width: 600
+![](images/vmiss.svg)
 
 The variant missingness histogram shows the distribution of missing data per SNP.
 
@@ -399,73 +417,95 @@ Standard interpretation:
 - **Concentrated at low values**: Clean variant calling
 - **Long right tail**: Possible strand flip issues, poor quality regions, or structural variants
 
-Unplotted Output Files
-~~~~~~~~~~~~~~~~~~~~~~~
+### Unplotted Output Files
 
 The QC pipeline generates many intermediate files for detailed analysis:
 
 **Initial QC Outputs**:
 
-+-----------------------------------+----------------------------------------+
-| File                              | Description                            |
-+===================================+========================================+
-| ``f1.pgen/.pvar/.psam``           | Merged, filtered dataset               |
-+-----------------------------------+----------------------------------------+
-| ``f1.ldpruned.*``                | LD-pruned dataset for PCA/relatedness |
-+-----------------------------------+----------------------------------------+
-| ``initial.smiss``                 | Sample missingness table              |
-+-----------------------------------+----------------------------------------+
-| ``initial.vmiss``                 | Variant missingness table             |
-+-----------------------------------+----------------------------------------+
+```{list-table}
+:header-rows: 1
+
+* - File
+  - Description
+* - ``f1.pgen/.pvar/.psam``
+  - Merged, filtered dataset
+* - ``f1.ldpruned.*``
+  - LD-pruned dataset for PCA/relatedness
+* - ``initial.smiss``
+  - Sample missingness table
+* - ``initial.vmiss``
+  - Variant missingness table
+```
 
 **Standard QC Outputs**:
 
-+-----------------------------------+----------------------------------------+
-| File                              | Description                            |
-+===================================+========================================+
-| ``f1.b38.f2.pgen/.pvar/.psam``    | Final filtered dataset                |
-+-----------------------------------+----------------------------------------+
-| ``f1.b38.f2.ldpruned.*``         | Final LD-pruned dataset               |
-+-----------------------------------+----------------------------------------+
-| ``MAF_check.afreq``               | Allele frequency table                |
-+-----------------------------------+----------------------------------------+
-| ``zoomhwe.hwe``                   | Variants failing HWE p < 1×10⁻⁵       |
-+-----------------------------------+----------------------------------------+
-| ``indepSNP.prune.in``             | Independent SNPs for heterozygosity   |
-+-----------------------------------+----------------------------------------+
-| ``R_check.het``                   | Heterozygosity rate per sample        |
-+-----------------------------------+----------------------------------------+
-| ``fail-het-qc.txt``               | Samples failing heterozygosity filter |
-+-----------------------------------+----------------------------------------+
-| ``sex_discrepancy.txt``           | Samples with sex check problems       |
-+-----------------------------------+----------------------------------------+
+```{list-table}
+:header-rows: 1
+
+* - File
+  - Description
+* - ``f1.b38.f2.pgen/.pvar/.psam``
+  - Final filtered dataset
+* - ``f1.b38.f2.ldpruned.*``
+  - Final LD-pruned dataset
+* - ``MAF_check.afreq``
+  - Allele frequency table
+* - ``zoomhwe.hwe``
+  - Variants failing HWE p < 1×10⁻⁵
+* - ``indepSNP.prune.in``
+  - Independent SNPs for heterozygosity
+* - ``R_check.het``
+  - Heterozygosity rate per sample
+* - ``fail-het-qc.txt``
+  - Samples failing heterozygosity filter
+* - ``sex_discrepancy.txt``
+  - Samples with sex check problems
+```
 
 **Sample contents of** ``initial.smiss``:
 
-+--------+----------+----------+--------+
-| IID    | FID      | F_MISS   | N_MISS |
-+========+==========+==========+========+
-| S001   | FAM001   | 0.001    | 150    |
-+--------+----------+----------+--------+
-| S002   | FAM001   | 0.008    | 1200   |
-+--------+----------+----------+--------+
+```{list-table}
+:header-rows: 1
+
+* - IID
+  - FID
+  - F_MISS
+  - N_MISS
+* - S001
+  - FAM001
+  - 0.001
+  - 150
+* - S002
+  - FAM001
+  - 0.008
+  - 1200
+```
 
 **Sample contents of** ``R_check.het``:
 
-+--------+----------+--------+--------+
-| IID    | FID      | O.HOM. | N.NM.  |
-+========+==========+========+========+
-| S001   | FAM001   | 2500   | 3000   |
-+--------+----------+----------+--------+
-| S002   | FAM001   | 2450   | 3000   |
-+--------+----------+----------+--------+
+```{list-table}
+:header-rows: 1
+
+* - IID
+  - FID
+  - O.HOM.
+  - N.NM.
+* - S001
+  - FAM001
+  - 2500
+  - 3000
+* - S002
+  - FAM001
+  - 2450
+  - 3000
+```
 
 The heterozygosity rate is calculated as: ``(N.NM. - O.HOM.) / N.NM.``
 
-----
+---
 
-Discussion Points: Multi-Ancestry and Admixed Study Designs
--------------------------------------------------------------
+## Discussion Points: Multi-Ancestry and Admixed Study Designs
 
 These questions explore QC considerations for diverse and admixed populations:
 
@@ -509,17 +549,15 @@ For theoretical foundations—including population genetics principles, statisti
 tests for QC metrics, and best practices for diverse populations—refer to the
 accompanying lecture materials.
 
-----
+---
 
-Data Types Reference
---------------------
+## Data Types Reference
 
 This section provides a high-level overview of the file formats used throughout
 the QC pipeline. Understanding these formats helps interpret pipeline outputs
 and troubleshoot data issues.
 
-Genotype Data Formats
-~~~~~~~~~~~~~~~~~~~~~
+### Genotype Data Formats
 
 **VCF/VCF.gz (Variant Call Format)**
 
@@ -560,8 +598,7 @@ PGEN supports multiple variant encoding schemes within a single file, enabling
 more efficient storage and faster operations on large datasets. The pipeline
 uses PGEN internally for all computations.
 
-Genomic Interval Files
-~~~~~~~~~~~~~~~~~~~~~~
+### Genomic Interval Files
 
 **BED (Genomic Intervals)**
 
@@ -575,20 +612,18 @@ Extended BED formats (6-column, 12-column) include additional fields such
 as name, score, strand, thick start/end, item RGB, and block counts/sizes.
 Used for genomic region definitions, target files, and annotation tracks.
 
-Index Files
-~~~~~~~~~~~
+### Index Files
 
 **CSI Index Files**
 
 Tabix-style index files (``.csi``) that enable random access to compressed
 VCF files. CSI (Coordinate Sorted Index) is an improvement over the older
- TBI format, supporting files with many more variants (up to ~4 billion).
+TBI format, supporting files with many more variants (up to ~4 billion).
 
 When you see ``chr22.vcf.gz.csi``, this index file allows tools to quickly
 locate variants in a specific genomic region without scanning the entire file.
 
-Statistical and Output Files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Statistical and Output Files
 
 **GRM (Genetic Relationship Matrix)**
 
@@ -627,8 +662,7 @@ Used for ancestry visualization, population structure correction, and
 outlier detection. The pipeline generates these files for both internal
 PCA and reference panel projection.
 
-Tabular Data Files
-~~~~~~~~~~~~~~~~~~
+### Tabular Data Files
 
 **TSV (Tab-Separated Values)**
 
@@ -664,39 +698,45 @@ Various PLINK output files in text format:
 
 These files are plain text TSV format and can be inspected directly.
 
-File Format Compatibility
-~~~~~~~~~~~~~~~~~~~~~~~~
+### File Format Compatibility
 
 The pipeline automatically converts between formats as needed:
 
-+---------------------+------------------+------------------+
-| Input Format        | Internal Format  | Output Options   |
-+=====================+==================+==================+
-| VCF.gz              | PGEN             | PGEN, VCF.gz     |
-| BED/BIM/FAM         | PGEN             | PGEN, BED        |
-| PGEN                | PGEN             | PGEN, VCF.gz     |
-+---------------------+------------------+------------------+
+```{list-table}
+:header-rows: 1
+
+* - Input Format
+  - Internal Format
+  - Output Options
+* - VCF.gz
+  - PGEN
+  - PGEN, VCF.gz
+* - BED/BIM/FAM
+  - PGEN
+  - PGEN, BED
+* - PGEN
+  - PGEN
+  - PGEN, VCF.gz
+```
 
 All intermediate computations use PGEN for efficiency. Final outputs can be
 converted to VCF for compatibility with downstream tools.
 
-----
+---
 
-Next Steps
----------
+## Next Steps
 
 After completing this tutorial, proceed to:
 
-- :doc:`tutorial_ancestry_classification` - Classify ancestry using the QC-filtered data
-- :doc:`tutorial_heritability` - Estimate heritability using QC-filtered genotypes
+- [](tutorial_ancestry_classification.md) - Classify ancestry using the QC-filtered data
+- [](tutorial_heritability.md) - Estimate heritability using QC-filtered genotypes
 
-**Lab Materials**
----------------
+## **Lab Materials**
 
 - [QC Visualization Lab (R Markdown)](labs/lab_qc_visualization.Rmd) - Interactive R notebook for visualizing QC outputs
 
 **See also:**
 
-- :doc:`installation` - Software setup (if not already done)
-- :doc:`usage` - Running the full pipeline
-- :doc:`genomics` - Technical details on QC methods
+- [](installation.md) - Software setup (if not already done)
+- [](usage.md) - Running the full pipeline
+- [](genomics.md) - Technical details on QC methods

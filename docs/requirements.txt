@@ -1,4 +1,4 @@
 sphinx-rtd-theme
 sphinxcontrib-mermaid
-sphinx-tabs
-
+myst-parser
+sphinx-design
