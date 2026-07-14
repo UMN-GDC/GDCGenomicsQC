@@ -447,8 +447,6 @@ internal ones; `--list-targets` only shows explicitly designated end-points.
   - Heritability (alias)
 * - `simulatePhenotype`
   - Simulate a quantitative phenotype
-* - `runAllEnabledPRS`
-  - Run all enabled PRS methods
 * - `RFMIX`
   - Local ancestry inference via RFMix
 * - `phase`

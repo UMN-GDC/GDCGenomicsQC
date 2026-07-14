@@ -17,9 +17,6 @@ tutorial_ancestry_classification
 tutorial_1kg_assembly
 tutorial_heritability
 tutorial_phenotype_simulation
-tutorial_prs
-tutorial_prs_multi
-tutorial_prs_pipeline
 dev_environments
 ````
 
@@ -34,8 +31,6 @@ dev_environments
 5. [](tutorial_ancestry_classification.md) - Classify ancestry
 6. [](tutorial_phenotype_simulation.md) - Simulate phenotypes for method testing
 7. [](tutorial_heritability.md) - Estimate heritability (with real phenotypes)
-8. [](tutorial_prs.md) - Run single-ancestry PRS methods
-9. [](tutorial_prs_multi.md) - Run multi-ancestry PRS methods
 
 **Quick Setup (MSI/UMN HPC):**
 
