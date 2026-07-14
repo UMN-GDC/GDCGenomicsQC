@@ -1,10 +1,6 @@
 Welcome to the GDC Documentation!
 =================================
 
-.. image:: images/gdclogo.jpg
-   :alt: GDC Logo
-   :align: center
-
 This project provides tools and pipelines for interacting with the
 Genomic Data Commons (GDC). It is designed to run efficiently on
 high-performance clusters like the UMN MSI Agate cluster.
@@ -17,20 +13,13 @@ high-performance clusters like the UMN MSI Agate cluster.
    new_hpc_setup
    genomics
    usage
-   api
-   contributing
    tutorial_qc_pipeline
-   labs/lab_qc_visualization
    tutorial_ancestry_classification
-   labs/lab_global_ancestry_visualization
    tutorial_1kg_assembly
    tutorial_heritability
-   labs/lab_heritability_visualization
    tutorial_phenotype_simulation
    tutorial_prs
-   labs/lab_prs_single_visualization
    tutorial_prs_multi
-   labs/lab_local_ancestry_visualization
 
 Getting Started
 ---------------
@@ -41,16 +30,11 @@ Getting Started
 2. :doc:`usage` - Learn how to run the pipeline
 3. :doc:`tutorial_1kg_assembly` - Download reference data
 4. :doc:`tutorial_qc_pipeline` - Run quality control
-5. :doc:`labs/lab_qc_visualization` - **Lab**: Visualize basic QC outputs in R
-6. :doc:`tutorial_ancestry_classification` - Classify ancestry
-7. :doc:`labs/lab_global_ancestry_visualization` - **Lab**: Visualize global ancestry outputs in R
-8. :doc:`tutorial_phenotype_simulation` - Simulate phenotypes for method testing
-9. :doc:`tutorial_heritability` - Estimate heritability (with real phenotypes)
-10. :doc:`labs/lab_heritability_visualization` - **Lab**: Visualize heritability outputs in R
-11. :doc:`tutorial_prs` - Run single-ancestry PRS methods
-12. :doc:`labs/lab_prs_single_visualization` - **Lab**: Visualize single-ancestry PRS outputs in R
-13. :doc:`tutorial_prs_multi` - Run multi-ancestry PRS methods
-14. :doc:`labs/lab_local_ancestry_visualization` - **Lab**: Visualize local ancestry outputs in R
+5. :doc:`tutorial_ancestry_classification` - Classify ancestry
+6. :doc:`tutorial_phenotype_simulation` - Simulate phenotypes for method testing
+7. :doc:`tutorial_heritability` - Estimate heritability (with real phenotypes)
+8. :doc:`tutorial_prs` - Run single-ancestry PRS methods
+9. :doc:`tutorial_prs_multi` - Run multi-ancestry PRS methods
 
 **Quick Setup (MSI/UMN HPC):**
 

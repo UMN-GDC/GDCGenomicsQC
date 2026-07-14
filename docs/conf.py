@@ -23,6 +23,4 @@ html_theme = 'sphinx_rtd_theme'
 # Ensure MathJax uses a reliable CDN for rendering equations
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory.
-html_static_path = ['_static']
+# html_static_path = ['_static']  # disabled: _static directory does not exist

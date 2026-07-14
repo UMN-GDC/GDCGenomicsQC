@@ -13,13 +13,13 @@ The pipeline uses wrapper scripts in each environment's ``bin/`` directory to pr
 Location: ``envs/{environment}/bin/gdcgenomicsqc``
 
 Current Environments
--------------------
+--------------------
 
 - **gdcgenomicsSandbox**: Sandbox HPC environment (uses relative paths)
 - **gdcgenomicsMSI**: MSI HPC environment (uses hardcoded absolute path)
 
 Wrapper Script Structure
------------------------
+------------------------
 
 Each wrapper script:
 
@@ -50,7 +50,7 @@ Example from ``gdcgenomicsSandbox/bin/gdcgenomicsqc``:
 
 
 Modifying for Different Snakemake Versions
------------------------------------------
+-------------------------------------------
 
 If an environment uses an older Snakemake version that doesn't support the ``--executor`` flag with the Slurm plugin, you may need to modify the wrapper and/or profile.
 
@@ -105,6 +105,7 @@ The HPC profile is located at ``profiles/hpc/``. For different Snakemake version
 **Modern Snakemake (>=8.0) with Slurm plugin:**
 
 ``profiles/hpc/config.yaml``:
+
 .. code-block:: yaml
 
     slurm:
@@ -118,6 +119,7 @@ The HPC profile is located at ``profiles/hpc/``. For different Snakemake version
 **Older Snakemake (<8.0):**
 
 ``profiles/hpc/config.yaml``:
+
 .. code-block:: yaml
 
     cluster: "sbatch"
@@ -152,7 +154,7 @@ To create a new environment wrapper (e.g., for a new HPC cluster):
 4. Update module files if using environment modules system
 
 Module File Integration
-----------------------
+-----------------------
 
 If using LMOD or Environment Modules, create a module file:
 

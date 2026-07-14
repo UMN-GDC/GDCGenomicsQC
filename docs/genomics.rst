@@ -1,5 +1,5 @@
 Genomics
-=======
+========
 
 This section outlines the standard procedures for the genomic data processing pipeline
 and how to configure them via the config file.
@@ -134,9 +134,9 @@ Config Options:
    * - **PC-AiR**
      - Captures ancestry without bias from family clusters.
      - Generating ancestry PCs for regression models.
-* - **PC-Relate**
-      - High accuracy in admixed populations.
-      - Final kinship estimation and relatedness filtering.
+   * - **PC-Relate**
+     - High accuracy in admixed populations.
+     - Final kinship estimation and relatedness filtering.
 
 
 Internal PCA Methods
@@ -159,6 +159,7 @@ The pipeline supports two methods for computing internal PCA:
      - ``pcair_pcaobj.RDS``, ``pcrelate_kinship.RDS``, ``pcair.grm.bin``
    * - **both**
      - Run both methods
+     - ``internal_pca_plink2.eigenvec``, ``pcair_pcaobj.RDS``
 
 .. code-block:: yaml
 
@@ -207,10 +208,10 @@ haplotypes in the estimated sequence:
      - **shapeit4.2**: A fast and accurate method for estimation of haplotypes.
    * - **Reference Map**
      - ``chr${CHR}.b38.gmap.gz``: Genetic map used to model recombination.
-     * - **Input Format**
-      - VCF/BCF: Requires high-quality, QC-filtered genotypes from Module 6.
-    * - **Output Format**
-      - Phased VCF: Necessary for local ancestry inference in Module 7.
+   * - **Input Format**
+     - VCF/BCF: Requires high-quality, QC-filtered genotypes from Module 6.
+   * - **Output Format**
+     - Phased VCF: Necessary for local ancestry inference in Module 7.
 
 
 
@@ -259,7 +260,7 @@ Config Options:
 
 
 Module 8: Global Ancestry Classification
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This module classifies global ancestry using dimension reduction (PCA, UMAP, VAE)
 and Random Forest classification. See :doc:`tutorial_ancestry` for detailed usage.
 
@@ -360,7 +361,7 @@ Module 5: Standard QC (Sex Check)
    $ grep 'PROBLEM' plink.sexcheck | awk '{print $1, $2}' > sex_discrepancy.txt
 
 Module 6: Phasing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block:: console
 
    # Execute shapeit4 for a specific chromosome

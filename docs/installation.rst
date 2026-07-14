@@ -11,7 +11,7 @@ This guide covers installing and configuring the GDCGenomicsQC pipeline.
    :local:
 
 Quick Start (MSI HPC or Sandbox)
-------------------------------
+-------------------------------
 
 **You do NOT need to clone the repository** if you're on MSI HPC or the Sandbox.
 The pipeline is pre-installed via the ``gdcgenomicsqc`` module.
@@ -110,7 +110,7 @@ Choose the installation method that matches your environment:
            echo $SINGULARITY_CACHEDIR
            echo $SNAKEMAKE_SINGULARITY_PREFIX
 
-**What the module provides:**
+       **What the module provides:**
 
         The ``gdcgenomicsMSI`` module sets up:
 
@@ -134,10 +134,10 @@ Choose the installation method that matches your environment:
 
         .. note::
 
-        **For MSI HPC and Sandbox**: You do NOT need to clone the repository.
-        The pipeline is pre-installed via the ``gdcgenomicsMSI`` (or ``gdcgenomicsSandbox``)
-        module. The module automatically handles Snakemake loading - no separate
-        ``conda activate snakemake`` needed.
+           **For MSI HPC and Sandbox**: You do NOT need to clone the repository.
+           The pipeline is pre-installed via the ``gdcgenomicsMSI`` (or ``gdcgenomicsSandbox``)
+           module. The module automatically handles Snakemake loading - no separate
+           ``conda activate snakemake`` needed.
 
         **Run (MSI HPC):**
 
@@ -153,50 +153,50 @@ Choose the installation method that matches your environment:
 
         :doc:`Skip to Usage <usage>`
 
-.. tab:: Sandbox
+   .. tab:: Sandbox
 
-       This scenario uses pre-installed modules and pre-cached Singularity images.
-       Ideal for sandbox or testing environments.
+        This scenario uses pre-installed modules and pre-cached Singularity images.
+        Ideal for sandbox or testing environments.
 
-       **Prerequisites:**
+        **Prerequisites:**
 
-       - Access to sandbox environment with SLURM scheduler
-       - Module system available
+        - Access to sandbox environment with SLURM scheduler
+        - Module system available
 
-       **Setup:**
+        **Setup:**
 
-       .. code-block:: bash
+        .. code-block:: bash
 
-            module use /scratch.global/GDC/GDCGenomicsQC/envs
-            module load gdcgenomicsSandbox
-            # Snakemake is automatically loaded by the module via common conda env
+             module use /scratch.global/GDC/GDCGenomicsQC/envs
+             module load gdcgenomicsSandbox
+             # Snakemake is automatically loaded by the module via common conda env
 
-            # Verify environment is set up
-           echo $SINGULARITY_CACHEDIR
-           echo $SNAKEMAKE_SINGULARITY_PREFIX
+             # Verify environment is set up
+            echo $SINGULARITY_CACHEDIR
+            echo $SNAKEMAKE_SINGULARITY_PREFIX
 
-       **What the module provides:**
+        **What the module provides:**
 
-       The ``gdcgenomicsSandbox`` module sets up:
+        The ``gdcgenomicsSandbox`` module sets up:
 
-       +--------------------------------+------------------------------------------------+
-       | Setting                        | Value                                           |
-       +================================+================================================+
-       | ``PATH``                        | Adds ``gdcgenomicsSandbox/bin`` to PATH        |
-       +--------------------------------+------------------------------------------------+
-       | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
-       +--------------------------------+------------------------------------------------+
-       | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
-       +--------------------------------+------------------------------------------------+
-       | **Snakemake**                   | Loaded via common conda environment            |
-       +--------------------------------+------------------------------------------------+
+        +--------------------------------+------------------------------------------------+
+        | Setting                        | Value                                           |
+        +================================+================================================+
+        | ``PATH``                        | Adds ``gdcgenomicsSandbox/bin`` to PATH        |
+        +--------------------------------+------------------------------------------------+
+        | ``APPTAINER_CACHEDIR``          | ``/scratch.global/GDC/singularityimages``      |
+        +--------------------------------+------------------------------------------------+
+        | ``SNAKEMAKE_APPTAINER_PREFIX``  | ``/scratch.global/GDC/singularityimages``      |
+        +--------------------------------+------------------------------------------------+
+        | **Snakemake**                   | Loaded via common conda environment            |
+        +--------------------------------+------------------------------------------------+
 
-       **Snakemake handling:**
+        **Snakemake handling:**
 
-       The ``gdcgenomicsSandbox`` module automatically loads Snakemake through a
-       common conda environment. No additional Snakemake setup is required.
+        The ``gdcgenomicsSandbox`` module automatically loads Snakemake through a
+        common conda environment. No additional Snakemake setup is required.
 
-       **Run (Sandbox):**
+        **Run (Sandbox):**
 
         .. code-block:: bash
 
@@ -251,44 +251,44 @@ Choose the installation method that matches your environment:
       - Reference data locations
       - Pipeline options (relatedness, ancestry methods, etc.)
 
-Example configuration:
+      Example configuration:
 
-       .. code-block:: yaml
+      .. code-block:: yaml
 
-            INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
-            OUT_DIR: "/path/to/output/directory"
-            REF: "/path/to/reference/data"
-            local-storage-prefix: "/path/to/.snakemake/storage"
+           INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
+           OUT_DIR: "/path/to/output/directory"
+           REF: "/path/to/reference/data"
+           local-storage-prefix: "/path/to/.snakemake/storage"
 
-            chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+           chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-            relatedness:
-                method: "king"
-                king_cutoff: 0.0884
+           relatedness:
+               method: "king"
+               king_cutoff: 0.0884
 
-            # Internal PCA (optional)
-            internalPCA:
-                method: "plink2"  # "plink2", "pcair", or "both"
-                npc: 20
+           # Internal PCA (optional)
+           internalPCA:
+               method: "plink2"  # "plink2", "pcair", or "both"
+               npc: 20
 
-            GRM: true
+           GRM: true
 
-            ancestry:
-                ancestry_file: "/path/to/ancestry_labels.tsv"
-                threshold: 0.8
+           ancestry:
+               ancestry_file: "/path/to/ancestry_labels.tsv"
+               threshold: 0.8
 
-            localAncestry:
-                RFMIX: false
-                test: false
+           localAncestry:
+               RFMIX: false
+               test: false
 
-            thin: false
+           thin: false
 
-       **5. Run**
+      **5. Run**
 
-       .. code-block:: bash
+      .. code-block:: bash
 
-           cd GDCGenomicsQC/workflow
-           snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
+          cd GDCGenomicsQC/workflow
+          snakemake --profile ../profiles/hpc --configfile /path/to/your/config.yaml
 
        **Requesting module installation:** Contact your HPC administrators with:
 
@@ -403,26 +403,26 @@ Example configuration:
           conda env create -n snakemake -f envs/snakemake.yml
           conda activate snakemake
 
-      **3. Configure Your Run**
+       **3. Configure Your Run**
 
-      Edit the configuration file at ``config/config.yaml`` to specify:
+       Edit the configuration file at ``config/config.yaml`` to specify:
 
-      - Input and output paths
-      - Reference data locations
-      - Pipeline options (relatedness, ancestry methods, etc.)
+       - Input and output paths
+       - Reference data locations
+       - Pipeline options (relatedness, ancestry methods, etc.)
 
-Example configuration:
+       Example configuration:
 
        .. code-block:: yaml
 
-           INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
-           OUT_DIR: "/path/to/output/directory"
-           REF: "/path/to/reference/data"
-           local-storage-prefix: "/path/to/.snakemake/storage"
+            INPUT: "/path/to/your/vcf/chr{CHR}.vcf.gz"
+            OUT_DIR: "/path/to/output/directory"
+            REF: "/path/to/reference/data"
+            local-storage-prefix: "/path/to/.snakemake/storage"
 
-           chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+            chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
-relatedness:
+            relatedness:
                 method: "king"
                 king_cutoff: 0.0884
 
@@ -441,9 +441,9 @@ relatedness:
                 RFMIX: false
                 test: false
 
-           thin: false
+            thin: false
 
-   **4. Run**
+       **4. Run**
 
        .. code-block:: bash
 
@@ -543,24 +543,24 @@ The pipeline supports multiple ways to access its dependencies. Choose the metho
    * - Method
      - Best For
      - Setup Required
-    * - **Module System (MSI)**
-       - MSI HPC clusters
-       - ``module load gdcgenomicsMSI``
-     * - **Module System (Sandbox)**
-       - Sandbox environments
-       - ``module load gdcgenomicsSandbox``
-    * - **Module-First** (:file:`*-moduleFirst` profiles)
-       - Locked-down HPC (no containers)
-       - Clone repo + conda env + ``module load plink/bcftools/...``
-    * - **Conda Environment**
-      - Custom HPC or local
-      - ``conda env create``
-    * - **Singularity/Apptainer**
-      - Container-based HPC
-      - Pull images manually
-    * - **System-wide Install**
-      - Local development
-      - ``pip install`` / ``conda install``
+   * - **Module System (MSI)**
+     - MSI HPC clusters
+     - ``module load gdcgenomicsMSI``
+   * - **Module System (Sandbox)**
+     - Sandbox environments
+     - ``module load gdcgenomicsSandbox``
+   * - **Module-First** (:file:`*-moduleFirst` profiles)
+     - Locked-down HPC (no containers)
+     - Clone repo + conda env + ``module load plink/bcftools/...``
+   * - **Conda Environment**
+     - Custom HPC or local
+     - ``conda env create``
+   * - **Singularity/Apptainer**
+     - Container-based HPC
+     - Pull images manually
+   * - **System-wide Install**
+     - Local development
+     - ``pip install`` / ``conda install``
 
 Software Environment Summary
 ---------------------------
@@ -577,22 +577,22 @@ Software Environment Summary
      - ``conda activate snakemake``
      - (auto-loaded by ``gdcgenomicsMSI``)
      - (auto-loaded by ``gdcgenomicsSandbox``)
-    * - GDC Pipeline
-        - (via containers)
-        - ``module load gdcgenomicsMSI``
-        - ``module load gdcgenomicsSandbox``
-     * - GDC Pipeline (Module-First)
-        - (via env modules)
-        - ``snakemake --profile ../profiles/hpc-moduleFirst``
-        - ``snakemake --profile ../profiles/sandbox-moduleFirst``
-     * - Apptainer
-       - N/A
-       - ``module load apptainer`` (auto-loaded)
-       - ``module load apptainer`` (auto-loaded)
-     * - SLURM
-       - N/A
-       - (Usually default on HPC)
-       - (Usually default on HPC)
+   * - GDC Pipeline
+     - (via containers)
+     - ``module load gdcgenomicsMSI``
+     - ``module load gdcgenomicsSandbox``
+   * - GDC Pipeline (Module-First)
+     - (via env modules)
+     - ``snakemake --profile ../profiles/hpc-moduleFirst``
+     - ``snakemake --profile ../profiles/sandbox-moduleFirst``
+   * - Apptainer
+     - N/A
+     - ``module load apptainer`` (auto-loaded)
+     - ``module load apptainer`` (auto-loaded)
+   * - SLURM
+     - N/A
+     - (Usually default on HPC)
+     - (Usually default on HPC)
 
 External Dependencies
 ---------------------
