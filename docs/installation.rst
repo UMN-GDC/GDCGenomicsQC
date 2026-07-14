@@ -210,7 +210,7 @@ Choose the installation method that matches your environment:
 
         :doc:`Skip to Usage <usage>`
 
-    .. tab:: New HPC (Clone)
+   .. tab:: New HPC (Clone)
 
       **Prerequisites:**
 
@@ -298,7 +298,7 @@ Choose the installation method that matches your environment:
 
        :doc:`Skip to Usage <usage>`
 
-    .. tab:: Module-First HPC
+   .. tab:: Module-First HPC
 
        For HPC environments where Singularity/Apptainer containers are restricted
        or unavailable, use a ``-moduleFirst`` profile. Tools are loaded via the
@@ -377,7 +377,7 @@ Choose the installation method that matches your environment:
 
        :doc:`Skip to Usage <usage>`
 
-    .. tab:: Interactive (Local/Testing)
+   .. tab:: Interactive (Local/Testing)
 
       For local execution without SLURM. Useful for testing and small datasets.
 
@@ -461,7 +461,7 @@ Choose the installation method that matches your environment:
 
        :doc:`Skip to Usage <usage>`
 
-    .. tab:: Singularity/Apptainer Only
+   .. tab:: Singularity/Apptainer Only
 
       If your HPC provides Singularity/Apptainer but you prefer not to use conda
       for Snakemake, you can install Snakemake via pip:
