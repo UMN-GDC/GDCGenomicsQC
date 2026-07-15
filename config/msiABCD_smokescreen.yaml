@@ -73,7 +73,7 @@ snpHerit:
     
   
     # Output filename for heritability estimates (CSV format)
-    out: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/{subset}/herit.csv"
+    out: "/scratch.global/coffm049/r25outputs/abcd_smokescreen/herit.csv"
     # Column name to use as random effect (for AdjHE with site effects)
     RV: null
 

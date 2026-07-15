@@ -7,8 +7,11 @@ if SNP_HERIT_CONFIG:
         raise ValueError("snpHerit.pheno must be specified in config when covar is specified")
     if SNP_HERIT_CONFIG.get("pheno") and not SNP_HERIT_OUT:
         raise ValueError("snpHerit.out must be specified in config when pheno is specified")
-    if SNP_HERIT_OUT and "{subset}" not in SNP_HERIT_OUT:
-        raise ValueError("snpHerit.out must contain {subset} placeholder (e.g., {subset}/herit.csv)")
+    if SNP_HERIT_CONFIG.get("pheno"):
+        if not SNP_HERIT_CONFIG.get("grm_prefix"):
+            raise ValueError("snpHerit.grm_prefix must be specified in config when pheno is specified")
+        if not SNP_HERIT_CONFIG.get("pca_input"):
+            raise ValueError("snpHerit.pca_input must be specified in config when pheno is specified")
     valid_methods = ["AdjHE", "AdjHE_fixed", "AdjHE_mixed", "AdjHE_random", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
     method = SNP_HERIT_CONFIG.get("method", "AdjHE")
     if method not in valid_methods:
@@ -69,21 +72,21 @@ if SNP_HERIT_ACTIVE:
             mem_mb=32000,
             runtime=720,
         input:
-            grm_bin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.bin",
-            grm_id=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.id",
-            grm_Nbin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
-            eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
+            grm_bin=Path(SNP_HERIT_CONFIG["grm_prefix"]).with_suffix(".grm.bin"),
+            grm_id=Path(SNP_HERIT_CONFIG["grm_prefix"]).with_suffix(".grm.id"),
+            grm_Nbin=Path(SNP_HERIT_CONFIG["grm_prefix"]).with_suffix(".grm.N.bin"),
+            eigenvec=SNP_HERIT_CONFIG["pca_input"],
         output:
             estimates=Path(SNP_HERIT_OUT),
         params:
             argfile=Path(SNP_HERIT_OUT).with_suffix(".json"),
             mash_config=lambda w: _mash_config(
-                prefix=OUT_DIR / w.subset / "f1.b38.ldpruned.unrelated",
+                prefix=SNP_HERIT_CONFIG["grm_prefix"],
                 pheno=SNP_HERIT_CONFIG["pheno"],
                 out=Path(SNP_HERIT_OUT).with_suffix(""),
                 npc=SNP_HERIT_CONFIG.get("npc", 10),
                 mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
-                eigenvec=OUT_DIR / w.subset / "internal_pca_plink2.eigenvec",
+                eigenvec=SNP_HERIT_CONFIG["pca_input"],
                 covar=SNP_HERIT_CONFIG.get("covar"),
                 qcovar=SNP_HERIT_CONFIG.get("qcovar"),
                 covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),

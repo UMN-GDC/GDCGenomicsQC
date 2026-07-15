@@ -71,7 +71,7 @@ snpHerit:
       - "/shared/release/abcd/v7.0/rawdata/phenotype/ab_p_demo.tsv"
   
     # Output filename for heritability estimates (CSV format)
-    out: "/shared/home/coffm049/r25outputs/abcd_smokescreen/{subset}/herit.csv"
+    out: "/shared/home/coffm049/r25outputs/abcd_smokescreen/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "GCTA"

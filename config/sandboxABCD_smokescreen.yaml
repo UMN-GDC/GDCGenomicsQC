@@ -71,8 +71,7 @@ snpHerit:
       - "/scratch.global/GDC/abcdData/ab_p_demo.tsv"
   
     # Output path for heritability estimates (CSV format)
-    # Must include {subset} placeholder for ancestry (e.g., full, EUR, AFR)
-    out: "/scratch.global/GDC/r25outputs/abcd_smokescreen/{subset}/herit.csv"
+    out: "/scratch.global/GDC/r25outputs/abcd_smokescreen/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "GCTA"
