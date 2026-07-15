@@ -43,18 +43,8 @@ snpHerit:
     # - GRM will come from PCAIR if method includes "pcair"
     # - Eigenvec will come from plink2 if method includes "plink2"
     
-    # Pre-computed GRM prefix (prefix.grm.bin, prefix.grm.id, prefix.grm.N.bin)
-    # Options:
-    #   - null: MASH will compute GRM automatically from PCA
-    #   - "/scratch.global/GDC/r25outputs/ABCD/full/pcair_grm" (if PCAIR ran with GRM)
-    #   - "/scratch.global/GDC/r25outputs/ABCD/full/unrelated_grm" (from relatedness step)
-    grm_prefix: "/scratch.global/GDC/r25outputs/abcd_smokescreen/EUR/f1.b38.ldpruned"
-    
-    # Pre-computed eigenvector file for GRM construction
-    # Options:
-    #   - null: MASH will compute eigenvectors from PCA
-    #   - "/scratch.global/GDC/r25outputs/ABCD/full/internal_pca_plink2.eigenvec" (if method=plink2)
-    pca_input: "/scratch.global/GDC/r25outputs/abcd_smokescreen/EUR/internal_pca_plink2.eigenvec"
+    # GRM and eigenvec are resolved from the pipeline DAG
+    # To use external pre-computed files, set all three: out, grm_prefix, pca_input
 
     # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
@@ -69,9 +59,7 @@ snpHerit:
     covar: 
       - "/scratch.global/GDC/abcdData/ab_g_stc.tsv"
       - "/scratch.global/GDC/abcdData/ab_p_demo.tsv"
-  
-    # Output path for heritability estimates (CSV format)
-    out: "/scratch.global/GDC/r25outputs/abcd_smokescreen/herit.csv"
+
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "GCTA"

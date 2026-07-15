@@ -326,9 +326,9 @@ rule run_snpHerit:
     input:
         lambda wildcards: (
             [Path(SNP_HERIT_OUT)]
-            if config.get("snpHerit", {}).get("pheno")
+            if SNP_HERIT_EXTERNAL
             else []
-        ),
+        ) if config.get("snpHerit", {}).get("pheno") else [],
 
 
 rule run_snpHeritSimulated:

@@ -1,21 +1,30 @@
 SNP_HERIT_CONFIG = config.get("snpHerit", {})
 SNP_HERIT_ACTIVE = bool(SNP_HERIT_CONFIG.get("pheno"))
 SNP_HERIT_OUT = SNP_HERIT_CONFIG.get("out")
+SNP_HERIT_GRM_PREFIX = SNP_HERIT_CONFIG.get("grm_prefix")
+SNP_HERIT_PCA_INPUT = SNP_HERIT_CONFIG.get("pca_input")
 
 if SNP_HERIT_CONFIG:
     if SNP_HERIT_CONFIG.get("covar") and not SNP_HERIT_CONFIG.get("pheno"):
         raise ValueError("snpHerit.pheno must be specified in config when covar is specified")
-    if SNP_HERIT_CONFIG.get("pheno") and not SNP_HERIT_OUT:
-        raise ValueError("snpHerit.out must be specified in config when pheno is specified")
-    if SNP_HERIT_CONFIG.get("pheno"):
-        if not SNP_HERIT_CONFIG.get("grm_prefix"):
-            raise ValueError("snpHerit.grm_prefix must be specified in config when pheno is specified")
-        if not SNP_HERIT_CONFIG.get("pca_input"):
-            raise ValueError("snpHerit.pca_input must be specified in config when pheno is specified")
     valid_methods = ["AdjHE", "AdjHE_fixed", "AdjHE_mixed", "AdjHE_random", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
     method = SNP_HERIT_CONFIG.get("method", "AdjHE")
     if method not in valid_methods:
         raise ValueError(f"snpHerit.method must be one of {valid_methods}")
+
+    if SNP_HERIT_ACTIVE:
+        has_out = bool(SNP_HERIT_OUT)
+        has_grm = bool(SNP_HERIT_GRM_PREFIX)
+        has_pca = bool(SNP_HERIT_PCA_INPUT)
+        if has_out or has_grm or has_pca:
+            if not (has_out and has_grm and has_pca):
+                raise ValueError(
+                    "snpHerit: must specify all of (out, grm_prefix, pca_input) "
+                    "for external mode, or none for DAG mode"
+                )
+            SNP_HERIT_EXTERNAL = True
+        else:
+            SNP_HERIT_EXTERNAL = False
 
 import json
 
@@ -60,53 +69,105 @@ def _mash_config(prefix, pheno, out, npc, mpheno, eigenvec,
 
 if SNP_HERIT_ACTIVE:
 
-    rule estimateSnpHeritability:
-        conda:
-            "../../envs/mash.yml"
-        container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
-        envmodules: *([config.get("R_module")] if config.get("R_module") else [])
-        threads: 8
-        resources:
-            nodes=1,
-            mem_mb=32000,
-            runtime=720,
-        input:
-            grm_bin=Path(SNP_HERIT_CONFIG["grm_prefix"]).with_suffix(".grm.bin"),
-            grm_id=Path(SNP_HERIT_CONFIG["grm_prefix"]).with_suffix(".grm.id"),
-            grm_Nbin=Path(SNP_HERIT_CONFIG["grm_prefix"]).with_suffix(".grm.N.bin"),
-            eigenvec=SNP_HERIT_CONFIG["pca_input"],
-        output:
-            estimates=Path(SNP_HERIT_OUT),
-        params:
-            argfile=Path(SNP_HERIT_OUT).with_suffix(".json"),
-            mash_config=lambda w: _mash_config(
-                prefix=SNP_HERIT_CONFIG["grm_prefix"],
-                pheno=SNP_HERIT_CONFIG["pheno"],
-                out=Path(SNP_HERIT_OUT).with_suffix(""),
-                npc=SNP_HERIT_CONFIG.get("npc", 10),
-                mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
-                eigenvec=SNP_HERIT_CONFIG["pca_input"],
-                covar=SNP_HERIT_CONFIG.get("covar"),
-                qcovar=SNP_HERIT_CONFIG.get("qcovar"),
-                covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),
-                pheno_filter=SNP_HERIT_CONFIG.get("pheno_filter"),
-                covar_filter=SNP_HERIT_CONFIG.get("covar_filter"),
-                loop_covars=SNP_HERIT_CONFIG.get("loop_covars", False),
-                random_groups=SNP_HERIT_CONFIG.get("RV"),
-                Naive=SNP_HERIT_CONFIG.get("Naive", False),
-                std=SNP_HERIT_CONFIG.get("std"),
-                k=SNP_HERIT_CONFIG.get("k"),
-                RV=SNP_HERIT_CONFIG.get("RV"),
-            ),
-        shell:
-            """
-            mkdir -p "$(dirname {output.estimates})"
-            cat > {params.argfile} << 'EOF'
+    if SNP_HERIT_EXTERNAL:
+
+        rule estimateSnpHeritability:
+            conda:
+                "../../envs/mash.yml"
+            container:
+                "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
+            envmodules: *([config.get("R_module")] if config.get("R_module") else [])
+            threads: 8
+            resources:
+                nodes=1,
+                mem_mb=32000,
+                runtime=720,
+            input:
+                grm_bin=Path(SNP_HERIT_GRM_PREFIX).with_suffix(".grm.bin"),
+                grm_id=Path(SNP_HERIT_GRM_PREFIX).with_suffix(".grm.id"),
+                grm_Nbin=Path(SNP_HERIT_GRM_PREFIX).with_suffix(".grm.N.bin"),
+                eigenvec=SNP_HERIT_PCA_INPUT,
+            output:
+                estimates=Path(SNP_HERIT_OUT),
+            params:
+                argfile=Path(SNP_HERIT_OUT).with_suffix(".json"),
+                mash_config=lambda w: _mash_config(
+                    prefix=SNP_HERIT_GRM_PREFIX,
+                    pheno=SNP_HERIT_CONFIG["pheno"],
+                    out=Path(SNP_HERIT_OUT).with_suffix(""),
+                    npc=SNP_HERIT_CONFIG.get("npc", 10),
+                    mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
+                    eigenvec=SNP_HERIT_PCA_INPUT,
+                    covar=SNP_HERIT_CONFIG.get("covar"),
+                    qcovar=SNP_HERIT_CONFIG.get("qcovar"),
+                    covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),
+                    pheno_filter=SNP_HERIT_CONFIG.get("pheno_filter"),
+                    covar_filter=SNP_HERIT_CONFIG.get("covar_filter"),
+                    loop_covars=SNP_HERIT_CONFIG.get("loop_covars", False),
+                    random_groups=SNP_HERIT_CONFIG.get("RV"),
+                    Naive=SNP_HERIT_CONFIG.get("Naive", False),
+                    std=SNP_HERIT_CONFIG.get("std"),
+                    k=SNP_HERIT_CONFIG.get("k"),
+                    RV=SNP_HERIT_CONFIG.get("RV"),
+                ),
+            shell:
+                """
+                mkdir -p "$(dirname {output.estimates})"
+                cat > {params.argfile} << 'EOF'
 {params.mash_config}
 EOF
-            MASH --argfile {params.argfile}
-            """
+                MASH --argfile {params.argfile}
+                """
+
+    else:
+
+        rule estimateSnpHeritability:
+            conda:
+                "../../envs/mash.yml"
+            container:
+                "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
+            envmodules: *([config.get("R_module")] if config.get("R_module") else [])
+            threads: 8
+            resources:
+                nodes=1,
+                mem_mb=32000,
+                runtime=720,
+            input:
+                grm_bin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.bin",
+                grm_id=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.id",
+                grm_Nbin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
+                eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
+            output:
+                estimates=OUT_DIR / "{subset}" / "03-snpHeritability" / "herit.csv",
+            params:
+                argfile=lambda w: OUT_DIR / w.subset / "03-snpHeritability" / "mash_config.json",
+                mash_config=lambda w: _mash_config(
+                    prefix=OUT_DIR / w.subset / "f1.b38.ldpruned.unrelated",
+                    pheno=SNP_HERIT_CONFIG["pheno"],
+                    out=OUT_DIR / w.subset / "03-snpHeritability" / "herit",
+                    npc=SNP_HERIT_CONFIG.get("npc", 10),
+                    mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
+                    eigenvec=OUT_DIR / w.subset / "internal_pca_plink2.eigenvec",
+                    covar=SNP_HERIT_CONFIG.get("covar"),
+                    qcovar=SNP_HERIT_CONFIG.get("qcovar"),
+                    covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),
+                    pheno_filter=SNP_HERIT_CONFIG.get("pheno_filter"),
+                    covar_filter=SNP_HERIT_CONFIG.get("covar_filter"),
+                    loop_covars=SNP_HERIT_CONFIG.get("loop_covars", False),
+                    random_groups=SNP_HERIT_CONFIG.get("RV"),
+                    Naive=SNP_HERIT_CONFIG.get("Naive", False),
+                    std=SNP_HERIT_CONFIG.get("std"),
+                    k=SNP_HERIT_CONFIG.get("k"),
+                    RV=SNP_HERIT_CONFIG.get("RV"),
+                ),
+            shell:
+                """
+                mkdir -p "$(dirname {output.estimates})"
+                cat > {params.argfile} << 'EOF'
+{params.mash_config}
+EOF
+                MASH --argfile {params.argfile}
+                """
 
 SIM_CFG = config.get("phenotypeSimulation", {})
 if SIM_CFG.get("enabled", False):
