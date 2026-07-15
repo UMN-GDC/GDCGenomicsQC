@@ -325,13 +325,10 @@ rule run_snpHerit:
         runtime=420,
     input:
         lambda wildcards: (
-            [snp_herit_base / "mash_output.csv"]
-            if SNP_HERIT_OUT
-            else expand(
-                OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
-                subset=get_ancestries(wildcards) + ["full"],
-            )
-        ) if config.get("snpHerit", {}).get("pheno") else [],
+            [Path(SNP_HERIT_OUT)]
+            if config.get("snpHerit", {}).get("pheno")
+            else []
+        ),
 
 
 rule run_snpHeritSimulated:
