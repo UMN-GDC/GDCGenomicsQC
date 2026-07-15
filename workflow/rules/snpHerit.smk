@@ -1,5 +1,6 @@
 SNP_HERIT_CONFIG = config.get("snpHerit", {})
 SNP_HERIT_ACTIVE = bool(SNP_HERIT_CONFIG.get("pheno"))
+SNP_HERIT_OUT = SNP_HERIT_CONFIG.get("out")
 
 if SNP_HERIT_CONFIG:
     if SNP_HERIT_CONFIG.get("covar") and not SNP_HERIT_CONFIG.get("pheno"):
@@ -10,6 +11,12 @@ if SNP_HERIT_CONFIG:
         raise ValueError(f"snpHerit.method must be one of {valid_methods}")
 
 import json
+
+
+def _snp_herit_out_dir(w):
+    if SNP_HERIT_OUT:
+        return Path(SNP_HERIT_OUT)
+    return OUT_DIR / w.ancestry / "03-snpHeritability"
 
 
 def _mash_config(prefix, pheno, out, npc, mpheno, eigenvec,
@@ -69,13 +76,13 @@ if SNP_HERIT_ACTIVE:
             grm_Nbin=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
             eigenvec=OUT_DIR / "{ancestry}" / "internal_pca_plink2.eigenvec",
         output:
-            estimates=OUT_DIR / "{ancestry}" / "03-snpHeritability" / "mash_output.csv",
+            estimates=lambda w: _snp_herit_out_dir(w) / "mash_output.csv",
         params:
-            argfile=lambda w: OUT_DIR / w.ancestry / "03-snpHeritability" / "mash_output.json",
+            argfile=lambda w: _snp_herit_out_dir(w) / "mash_output.json",
             mash_config=lambda w: _mash_config(
                 prefix=OUT_DIR / w.ancestry / "f1.b38.ldpruned.unrelated",
                 pheno=SNP_HERIT_CONFIG["pheno"],
-                out=OUT_DIR / w.ancestry / "03-snpHeritability" / "mash_output",
+                out=_snp_herit_out_dir(w) / "mash_output",
                 npc=SNP_HERIT_CONFIG.get("npc", 10),
                 mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
                 eigenvec=OUT_DIR / w.ancestry / "internal_pca_plink2.eigenvec",
