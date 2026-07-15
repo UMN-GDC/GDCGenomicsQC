@@ -41,7 +41,7 @@ convertNfilt:                                                          # Convers
     qual_min: null      # Minimum QUAL score; null = no filter
 ```
 
-- See [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst) for full reference
+- See [QC Pipeline Tutorial](../tutorial_qc_pipeline.md) for full reference
 
 ## Output
 
@@ -49,11 +49,12 @@ convertNfilt:                                                          # Convers
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
-# CHANGE THIS to match your OUT_DIR from the config YAML
+# CHANGE THESE to match your config YAML
 OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 subset <- "full"
+CHR <- 13  # chromosome to visualize
 
-smiss <- read_tsv(file.path("/scratch.global/GDC/r25outputs/toy", "full", "initial.smiss"))
+smiss <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_", CHR, ".smiss")))
 glimpse(smiss)
 
 ggplot(smiss, aes(x = F_MISS * 100)) +
@@ -67,8 +68,7 @@ ggplot(smiss, aes(x = F_MISS * 100)) +
 ### Variant Missingness
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-vmiss <- read_tsv(file.path("/scratch.global/GDC/r25outputs/toy", "full", "initial.vmiss"))
-#vmiss <- read_tsv(file.path(OUT_DIR, subset, "initial.vmiss"))
+vmiss <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_", CHR, ".vmiss")))
 glimpse(vmiss)
 
 ggplot(vmiss, aes(x = F_MISS * 100)) +
@@ -82,7 +82,7 @@ ggplot(vmiss, aes(x = F_MISS * 100)) +
 ### Allele Frequency
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-freq <- read_tsv(file.path("/scratch.global/GDC/r25outputs/toy", subset, "MAF_check.afreq"))
+freq <- read_tsv(file.path(OUT_DIR, subset, paste0("MAF_check_", CHR, ".afreq")))
 glimpse(freq)
 
 freq %>%
@@ -91,20 +91,12 @@ freq %>%
   labs(x = "Alternate Allele Frequency", y = "Count",
        title = "Allele Frequency Spectrum") +
   theme_minimal()
-
-freq %>%
-  ggplot(aes(x = ALT_FREQS)) +
-  geom_histogram(bins = 40, fill = "coral", alpha = 0.7) +
-  facet_wrap(~`#CHROM`) +
-  labs(x = "Alternate Allele Frequency", y = "Count",
-       title = "Allele Frequency by Chromosome") +
-  theme_minimal()
 ```
 
 ### Hardy-Weinberg Equilibrium
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-hwe <- read_tsv(file.path("/scratch.global/GDC/r25outputs/toy", subset, "standardFilter.hardy"))
+hwe <- read_tsv(file.path(OUT_DIR, subset, paste0("standardFilter_", CHR, ".hardy")))
 glimpse(hwe)
 
 hwe %>%
@@ -217,4 +209,4 @@ if (nrow(anc_hwe) > 0) {
 - **If a dataset had a spike of HWE p-values near 0**, two possible explanations: (1) genotyping errors or batch effects causing systematic miscalls, or (2) population structure (multiple ancestries in sample, variants differ in frequency between groups). Per-ancestry diagnostics distinguish these.
 - **Sample vs. variant missingness > 5%: which is more concerning?** High sample missingness = poor DNA/processing failure for that sample. Remove a few bad samples. High variant missingness across many samples = systematic assay problem (bad probe, poor genomic region). Affects every sample for that variant, harder to fix. Both > 5%? Check overlap: are poor variants concentrated in poor samples, or independent issues?
 
-See the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst) for troubleshooting and deep dives into file formats and pipeline internals.
+See the [QC Pipeline Tutorial](../tutorial_qc_pipeline.md) for troubleshooting and deep dives into file formats and pipeline internals.

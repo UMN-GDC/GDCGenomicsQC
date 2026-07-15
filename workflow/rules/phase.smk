@@ -1,5 +1,5 @@
 def get_chrom(wildcards):
-    return wildcards.CHR.replace('.phased', '')
+    return wildcards.CHR
 
 
 def get_input_pgen(wildcards):
@@ -98,11 +98,6 @@ rule convertPgenToVcf:
         mem_mb=16000,
         runtime=120,
     input:
-        std=lambda wildcards: (
-            OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.unrel.pgen"
-            if "{CHR}" in config.get("INPUT", "")
-            else OUT_DIR / "full" / "f1.b38.f2.unrel.pgen"
-        ),
         pgen=get_input_pgen,
         pvar=get_input_pvar,
         psam=get_input_psam,
@@ -210,10 +205,8 @@ rule compressAndIndexVcf:
         csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz.csi",
     params:
         out_dir=OUT_DIR / "02-localAncestry",
-        chrom=get_chrom,
     shell:
         """
         bgzip -c {input.vcf} > {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz
-        rm {input.vcf}
         """
