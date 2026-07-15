@@ -16,7 +16,7 @@ import json
 def _snp_herit_out_dir(w):
     if SNP_HERIT_OUT:
         return Path(SNP_HERIT_OUT)
-    return OUT_DIR / w.ancestry / "03-snpHeritability"
+    return OUT_DIR / w.subset / "03-snpHeritability"
 
 
 def _mash_config(prefix, pheno, out, npc, mpheno, eigenvec,
@@ -71,21 +71,21 @@ if SNP_HERIT_ACTIVE:
             mem_mb=32000,
             runtime=720,
         input:
-            grm_bin=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated.grm.bin",
-            grm_id=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated.grm.id",
-            grm_Nbin=OUT_DIR / "{ancestry}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
-            eigenvec=OUT_DIR / "{ancestry}" / "internal_pca_plink2.eigenvec",
+            grm_bin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.bin",
+            grm_id=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.id",
+            grm_Nbin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
+            eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
         output:
             estimates=lambda w: _snp_herit_out_dir(w) / "mash_output.csv",
         params:
             argfile=lambda w: _snp_herit_out_dir(w) / "mash_output.json",
             mash_config=lambda w: _mash_config(
-                prefix=OUT_DIR / w.ancestry / "f1.b38.ldpruned.unrelated",
+                prefix=OUT_DIR / w.subset / "f1.b38.ldpruned.unrelated",
                 pheno=SNP_HERIT_CONFIG["pheno"],
                 out=_snp_herit_out_dir(w) / "mash_output",
                 npc=SNP_HERIT_CONFIG.get("npc", 10),
                 mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
-                eigenvec=OUT_DIR / w.ancestry / "internal_pca_plink2.eigenvec",
+                eigenvec=OUT_DIR / w.subset / "internal_pca_plink2.eigenvec",
                 covar=SNP_HERIT_CONFIG.get("covar"),
                 qcovar=SNP_HERIT_CONFIG.get("qcovar"),
                 covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),
@@ -130,22 +130,22 @@ if SIM_CFG.get("enabled", False):
             mem_mb=32000,
             runtime=720,
         input:
-            grm_bin=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.bin",
-            grm_id=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.id",
-            grm_Nbin=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.N.bin",
-            eigenvec=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.eigenvec",
-            pheno=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated_pheno1.pheno",
+            grm_bin=OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "simulated.grm.bin",
+            grm_id=OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "simulated.grm.id",
+            grm_Nbin=OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "simulated.grm.N.bin",
+            eigenvec=OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "simulated.eigenvec",
+            pheno=OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "simulated_pheno1.pheno",
         output:
-            estimates=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "herit.csv",
+            estimates=OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "herit.csv",
         params:
-            argfile=lambda w: OUT_DIR / w.ancestry / "simulations" / w.sim_name / "mash_config.json",
+            argfile=lambda w: OUT_DIR / w.subset / "simulations" / w.sim_name / "mash_config.json",
             mash_config=lambda w: _mash_config(
-                prefix=OUT_DIR / w.ancestry / "simulations" / w.sim_name / "simulated",
-                pheno=[OUT_DIR / w.ancestry / "simulations" / w.sim_name / "simulated_pheno1.pheno"],
-                out=OUT_DIR / w.ancestry / "simulations" / w.sim_name / "herit",
+                prefix=OUT_DIR / w.subset / "simulations" / w.sim_name / "simulated",
+                pheno=[OUT_DIR / w.subset / "simulations" / w.sim_name / "simulated_pheno1.pheno"],
+                out=OUT_DIR / w.subset / "simulations" / w.sim_name / "herit",
                 npc=SNP_HERIT_CONFIG.get("npc", 10),
                 mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
-                eigenvec=OUT_DIR / w.ancestry / "simulations" / w.sim_name / "simulated.eigenvec",
+                eigenvec=OUT_DIR / w.subset / "simulations" / w.sim_name / "simulated.eigenvec",
                 covar=SNP_HERIT_CONFIG.get("covar"),
                 qcovar=SNP_HERIT_CONFIG.get("qcovar"),
                 covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),

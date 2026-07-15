@@ -326,8 +326,8 @@ rule run_snpHerit:
     input:
         lambda wildcards: (
             expand(
-                OUT_DIR / "{anc}" / "03-snpHeritability" / "mash_output.csv",
-                anc=get_ancestries(wildcards) + ["full"],
+                OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
+                subset=get_ancestries(wildcards) + ["full"],
             )
             if config.get("snpHerit", {}).get("pheno")
             else []
@@ -342,9 +342,9 @@ rule run_snpHeritSimulated:
         runtime=420,
     input:
         lambda wildcards: (
-            lambda sim_cfg, ancs: expand(
-                OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "herit.csv",
-                ancestry=ancs,
+            lambda sim_cfg, subsets: expand(
+                OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "herit.csv",
+                subset=subsets,
                 sim_name=[s["name"] for s in sim_cfg.get("simulations", [])],
             )
         )(config.get("phenotypeSimulation", {}), config.get("phenotypeSimulation", {}).get("ancestries", [])) if (
