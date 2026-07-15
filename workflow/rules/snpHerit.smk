@@ -3,6 +3,7 @@ SNP_HERIT_ACTIVE = bool(SNP_HERIT_CONFIG.get("pheno"))
 SNP_HERIT_OUT = SNP_HERIT_CONFIG.get("out")
 SNP_HERIT_GRM_PREFIX = SNP_HERIT_CONFIG.get("grm_prefix")
 SNP_HERIT_PCA_INPUT = SNP_HERIT_CONFIG.get("pca_input")
+SNP_HERIT_SUBSET = SNP_HERIT_CONFIG.get("subset")
 
 if SNP_HERIT_CONFIG:
     if SNP_HERIT_CONFIG.get("covar") and not SNP_HERIT_CONFIG.get("pheno"):

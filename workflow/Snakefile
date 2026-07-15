@@ -327,7 +327,7 @@ rule run_snpHerit:
         lambda wildcards: (
             [Path(SNP_HERIT_OUT)]
             if SNP_HERIT_EXTERNAL
-            else []
+            else [OUT_DIR / SNP_HERIT_SUBSET / "03-snpHeritability" / "herit.csv"]
         ) if config.get("snpHerit", {}).get("pheno") else [],
 
 

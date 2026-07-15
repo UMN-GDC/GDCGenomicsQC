@@ -43,6 +43,7 @@ snpHerit:
     
     # GRM and eigenvec are resolved from the pipeline DAG
     # To use external pre-computed files, set all three: out, grm_prefix, pca_input
+    subset: "EUR"
 
     # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
