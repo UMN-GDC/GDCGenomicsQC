@@ -70,7 +70,7 @@ snpHerit:
       - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_g_dyn.tsv"
   
     # Output filename for heritability estimates (CSV format)
-    out: "/scratch.global/coffm049/r25outputs/abcd_imputed/full/herit/imputed_AdjHE_fixed.csv"
+    out: "/scratch.global/coffm049/r25outputs/abcd_imputed/{subset}/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE_fixed"

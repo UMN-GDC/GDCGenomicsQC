@@ -69,7 +69,7 @@ snpHerit:
       - "/scratch.global/GDC/abcdData/ab_p_demo.tsv"
   
     # Output filename for heritability estimates (CSV format)
-    out: "/scratch.global/abcd_imputed/herit/herit.csv"
+    out: "/scratch.global/abcd_imputed/{subset}/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "AdjHE_mixed"

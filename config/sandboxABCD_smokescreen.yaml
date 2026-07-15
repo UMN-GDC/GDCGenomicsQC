@@ -70,8 +70,9 @@ snpHerit:
       - "/scratch.global/GDC/abcdData/ab_g_stc.tsv"
       - "/scratch.global/GDC/abcdData/ab_p_demo.tsv"
   
-    # Output filename for heritability estimates (CSV format)
-    out: "/scratch.global/GDC/r25outputs/abcd_smokescreen/herit_fixed.csv"
+    # Output path for heritability estimates (CSV format)
+    # Must include {subset} placeholder for ancestry (e.g., full, EUR, AFR)
+    out: "/scratch.global/GDC/r25outputs/abcd_smokescreen/{subset}/herit.csv"
 
     # Estimation method: "AdjHE", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"
     method: "GCTA"

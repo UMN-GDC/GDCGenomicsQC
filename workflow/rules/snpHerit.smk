@@ -7,6 +7,8 @@ if SNP_HERIT_CONFIG:
         raise ValueError("snpHerit.pheno must be specified in config when covar is specified")
     if SNP_HERIT_CONFIG.get("pheno") and not SNP_HERIT_OUT:
         raise ValueError("snpHerit.out must be specified in config when pheno is specified")
+    if SNP_HERIT_OUT and "{subset}" not in SNP_HERIT_OUT:
+        raise ValueError("snpHerit.out must contain {subset} placeholder (e.g., {subset}/herit.csv)")
     valid_methods = ["AdjHE", "AdjHE_fixed", "AdjHE_mixed", "AdjHE_random", "GCTA", "PredLMM", "SWD", "Combat", "Covbat"]
     method = SNP_HERIT_CONFIG.get("method", "AdjHE")
     if method not in valid_methods:
