@@ -76,13 +76,14 @@ if SNP_HERIT_ACTIVE:
             grm_Nbin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
             eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
         output:
-            estimates=lambda w: _snp_herit_out_dir(w) / "mash_output.csv",
+            estimates=OUT_DIR / "{subset}" / "03-snpHeritability" / "mash_output.csv",
         params:
-            argfile=lambda w: _snp_herit_out_dir(w) / "mash_output.json",
+            out_dir=lambda w: str(_snp_herit_out_dir(w)),
+            argfile=lambda w: str(_snp_herit_out_dir(w) / "mash_output.json"),
             mash_config=lambda w: _mash_config(
                 prefix=OUT_DIR / w.subset / "f1.b38.ldpruned.unrelated",
                 pheno=SNP_HERIT_CONFIG["pheno"],
-                out=_snp_herit_out_dir(w) / "mash_output",
+                out=str(_snp_herit_out_dir(w) / "mash_output"),
                 npc=SNP_HERIT_CONFIG.get("npc", 10),
                 mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
                 eigenvec=OUT_DIR / w.subset / "internal_pca_plink2.eigenvec",
@@ -100,11 +101,14 @@ if SNP_HERIT_ACTIVE:
             ),
         shell:
             """
-            mkdir -p "$(dirname {output.estimates})"
+            mkdir -p "{params.out_dir}"
             cat > {params.argfile} << 'EOF'
 {params.mash_config}
 EOF
             MASH --argfile {params.argfile}
+            if [ "{params.out_dir}" != "$(dirname $(realpath {output.estimates}))" ]; then
+                cp {params.out_dir}/mash_output.csv {output.estimates}
+            fi
             """
 
 SIM_CFG = config.get("phenotypeSimulation", {})
