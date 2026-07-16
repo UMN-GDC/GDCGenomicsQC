@@ -4,6 +4,7 @@ SNP_HERIT_OUT = SNP_HERIT_CONFIG.get("out")
 SNP_HERIT_GRM_PREFIX = SNP_HERIT_CONFIG.get("grm_prefix")
 SNP_HERIT_PCA_INPUT = SNP_HERIT_CONFIG.get("pca_input")
 SNP_HERIT_SUBSET = SNP_HERIT_CONFIG.get("subset")
+SNP_HERIT_DAG_OUTPUT = SNP_HERIT_CONFIG.get("output", "03-snpHeritability/herit.csv")
 
 if SNP_HERIT_CONFIG:
     if SNP_HERIT_CONFIG.get("covar") and not SNP_HERIT_CONFIG.get("pheno"):
@@ -139,13 +140,13 @@ EOF
                 grm_Nbin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
                 eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
             output:
-                estimates=OUT_DIR / "{subset}" / "03-snpHeritability" / "herit.csv",
+                estimates=OUT_DIR / "{subset}" / SNP_HERIT_DAG_OUTPUT,
             params:
-                argfile=lambda w: OUT_DIR / w.subset / "03-snpHeritability" / "mash_config.json",
+                argfile=lambda w: OUT_DIR / w.subset / Path(SNP_HERIT_DAG_OUTPUT).parent / "mash_config.json",
                 mash_config=lambda w: _mash_config(
                     prefix=OUT_DIR / w.subset / "f1.b38.ldpruned.unrelated",
                     pheno=SNP_HERIT_CONFIG["pheno"],
-                    out=OUT_DIR / w.subset / "03-snpHeritability" / "herit",
+                    out=OUT_DIR / w.subset / Path(SNP_HERIT_DAG_OUTPUT).with_suffix(""),
                     npc=SNP_HERIT_CONFIG.get("npc", 10),
                     mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
                     eigenvec=OUT_DIR / w.subset / "internal_pca_plink2.eigenvec",

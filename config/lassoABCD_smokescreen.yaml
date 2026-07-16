@@ -47,6 +47,10 @@ snpHerit:
     # To use external pre-computed files, set all three: out, grm_prefix, pca_input
     subset: "EUR"
 
+    # DAG mode output path relative to OUT_DIR/{subset}
+    # Default: "03-snpHeritability/herit.csv"
+    output: "03-snpHeritability/herit.csv"
+
     # Path to phenotype file (required to activate snpHerit)
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID

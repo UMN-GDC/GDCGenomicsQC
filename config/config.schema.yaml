@@ -302,6 +302,15 @@ snpHerit:
       nullable: true
       default: null
       description: Path to covariate file(s) — single path or list of paths (format CSV/TSV with FID, IID)
+    subset:
+      type: str
+      nullable: true
+      default: null
+      description: Ancestry subset to run on in DAG mode (e.g., "EUR", "AFR")
+    output:
+      type: str
+      default: "03-snpHeritability/herit.csv"
+      description: DAG mode output path relative to OUT_DIR/{subset}
     method:
       type: str
       default: "AdjHE"

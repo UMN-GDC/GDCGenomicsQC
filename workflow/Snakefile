@@ -335,7 +335,7 @@ if config.get("snpHerit", {}).get("pheno"):
                 mem_mb=4000,
                 runtime=420,
             input:
-                OUT_DIR / SNP_HERIT_SUBSET / "03-snpHeritability" / "herit.csv",
+                OUT_DIR / SNP_HERIT_SUBSET / SNP_HERIT_DAG_OUTPUT,
 
 
 rule run_snpHeritSimulated:

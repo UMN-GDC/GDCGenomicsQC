@@ -137,6 +137,14 @@ localAncestry:
 #   - Eigenvec will come from plink2 if method includes "plink2"
 #
 snpHerit:
+    # Ancestry subset to run on (used in DAG mode, e.g., "EUR", "AFR")
+    # Default: null (auto-detect)
+    subset: "EUR"
+
+    # DAG mode output path relative to OUT_DIR/{subset}
+    # Default: "03-snpHeritability/herit.csv"
+    output: "03-snpHeritability/herit.csv"
+
     # Pre-computed GRM prefix (prefix.grm.bin, prefix.grm.id, prefix.grm.N.bin)
     # Options:
     #   - null: MASH will compute GRM automatically from PCA
