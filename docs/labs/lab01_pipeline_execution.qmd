@@ -17,6 +17,7 @@ format:
 - **Alternative**: hand-written SLURM arrays, manual dependency tracking, fragile orchestration
 - **After this lab**: remaining labs in R. Explore workflow (alter rules, QC thresholds, config toggles). Every Snakemake output visualized
 - **Why this matters**: genomics pattern is QC -> PCA -> classification -> modeling. Hard part: robust across datasets, HPCs, collaborators. Snakemake collapses into a **config file**. Three abstractions (config, module, rules) let you focus on science, not plumbing
+- **The stack it abstracts**: PLINK2 (QC/PCA), bcftools (VCF manipulation), ShapeIt4 (phasing), RFMix (local ancestry), GCTA/GENESIS (heritability), PRSice-2/LDpred2 (polygenic scores), MASH (pipeline glue). Without Snakemake: install each tool, manage paths, write wrapper scripts, track which version of which tool produced which file. With Snakemake: `module load` + one config
 - **Why collaboration**: same design = reproducible + extensible. Collaborator adds rule file, nothing breaks. `module load gdcgenomicsSandbox` = full pipeline for anyone with repo access. New config = new dataset. New rule file = new method
 
 ## Input: The Three Abstractions
