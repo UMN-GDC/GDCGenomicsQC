@@ -30,6 +30,10 @@ thin: false
 
 # SNP Heritability Estimation
 snpHerit:
+    # DAG mode output path relative to OUT_DIR/{subset}
+    # Default: "03-snpHeritability/herit.csv"
+    output: "03-snpHeritability/herit.csv"
+
     pheno: null
 
     covar: null

@@ -64,6 +64,13 @@ build: "GRCh37"
 
 # SNP Heritability Estimation
 snpHerit:
+    # Ancestry subset to run on (used in DAG mode)
+    subset: "EUR"
+
+    # DAG mode output path relative to OUT_DIR/{subset}
+    # Default: "03-snpHeritability/herit.csv"
+    output: "03-snpHeritability/herit.csv"
+
     pheno: null
     covar: null
     method: "AdjHE"
