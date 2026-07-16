@@ -317,18 +317,25 @@ rule run_simulatePhenotype:
 
 
 
-rule run_snpHerit:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
-    input:
-        lambda wildcards: (
-            [Path(SNP_HERIT_OUT)]
-            if SNP_HERIT_EXTERNAL
-            else [OUT_DIR / SNP_HERIT_SUBSET / "03-snpHeritability" / "herit.csv"]
-        ) if config.get("snpHerit", {}).get("pheno") else [],
+if config.get("snpHerit", {}).get("pheno"):
+    if SNP_HERIT_EXTERNAL:
+        rule run_snpHerit:
+            threads: 1
+            resources:
+                nodes=1,
+                mem_mb=4000,
+                runtime=420,
+            input:
+                Path(SNP_HERIT_OUT)
+    else:
+        rule run_snpHerit:
+            threads: 1
+            resources:
+                nodes=1,
+                mem_mb=4000,
+                runtime=420,
+            input:
+                OUT_DIR / SNP_HERIT_SUBSET / "03-snpHeritability" / "herit.csv",
 
 
 rule run_snpHeritSimulated:
