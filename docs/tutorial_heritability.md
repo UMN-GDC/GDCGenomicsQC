@@ -140,6 +140,7 @@ This step requires the following input files:
 snpHerit:
     pheno: "/path/to/phenotype.tsv"       # Phenotype file(s) — single path or list of paths
     covar: "/path/to/covariates.tsv"      # Covariate file(s) — single path or list (optional)
+    output: "03-snpHeritability/herit.csv" # DAG mode output path (relative to OUT_DIR/{subset})
     method: "AdjHE"                       # Estimation method: AdjHE, GCTA, PredLMM, SWD
     npc: 10                               # PCs — integer (e.g., 10) or list (e.g., [5, 10, 20])
     mpheno: "BMI"                         # Phenotype column — name string or list (e.g., ["BMI", "Height"])
@@ -158,8 +159,8 @@ snpHerit:
 
 * - File
   - Description
-* - ``03-snpHeritability/heritability_estimates.txt``
-  - Heritability estimates per ancestry
+* - ``03-snpHeritability/herit.csv``
+  - Heritability estimates per ancestry (configurable via ``snpHerit.output``)
 ```
 
 **See also:** [](genomics.md) for heritability methodology, [](tutorial_qc_pipeline.md) for QC pipeline, [](tutorial_phenotype_simulation.md) for simulation-based testing.
@@ -313,7 +314,7 @@ snakemake --profile=../profiles/hpc \
 
 ### Heritability Estimates Output
 
-**File**: ``03-snpHeritability/heritability_estimates.txt``
+**File**: ``03-snpHeritability/herit.csv`` (default; configurable via ``snpHerit.output``)
 
 Sample output:
 
