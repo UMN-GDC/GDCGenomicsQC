@@ -85,9 +85,9 @@ if SNP_HERIT_ACTIVE:
                 mem_mb=32000,
                 runtime=720,
             input:
-                grm_bin=Path(SNP_HERIT_GRM_PREFIX).with_suffix(".grm.bin"),
-                grm_id=Path(SNP_HERIT_GRM_PREFIX).with_suffix(".grm.id"),
-                grm_Nbin=Path(SNP_HERIT_GRM_PREFIX).with_suffix(".grm.N.bin"),
+                grm_bin=Path(f"{SNP_HERIT_GRM_PREFIX}.grm.bin"),
+                grm_id=Path(f"{SNP_HERIT_GRM_PREFIX}.grm.id"),
+                grm_Nbin=Path(f"{SNP_HERIT_GRM_PREFIX}.grm.N.bin"),
                 eigenvec=SNP_HERIT_PCA_INPUT,
             output:
                 estimates=Path(SNP_HERIT_OUT),
