@@ -18,6 +18,7 @@ tutorial_1kg_assembly
 tutorial_heritability
 tutorial_phenotype_simulation
 dev_environments
+linux_cheatsheet
 ````
 
 ## Getting Started
