@@ -155,12 +155,14 @@ rule run_initialQC:
             + expand(OUT_DIR / "full" / "initial_{CHR}.vmiss", CHR=CHROMOSOMES)
             + expand(OUT_DIR / "full" / "MAF_check_{CHR}.afreq", CHR=CHROMOSOMES)
             + expand(OUT_DIR / "full" / "standardFilter_{CHR}.hardy", CHR=CHROMOSOMES)
+            + expand(OUT_DIR / "full" / "heterozygosity_{CHR}.het", CHR=CHROMOSOMES)
             if "{CHR}" in config.get("INPUT", "")
             else [
                 OUT_DIR / "full" / "initial.smiss",
                 OUT_DIR / "full" / "initial.vmiss",
                 OUT_DIR / "full" / "MAF_check.afreq",
                 OUT_DIR / "full" / "standardFilter.hardy",
+                OUT_DIR / "full" / "heterozygosity.het",
             ]
         ),
 
