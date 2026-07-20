@@ -82,7 +82,7 @@ ggplot(vmiss, aes(x = F_MISS * 100)) +
 ### Allele Frequency
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-freq <- read_tsv(file.path(OUT_DIR, subset, paste0("MAF_check_", CHR, ".afreq")))
+freq <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_", CHR, ".afreq")))
 glimpse(freq)
 
 freq %>%
@@ -96,7 +96,7 @@ freq %>%
 ### Hardy-Weinberg Equilibrium
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-hwe <- read_tsv(file.path(OUT_DIR, subset, paste0("standardFilter_", CHR, ".hardy")))
+hwe <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_", CHR, ".hardy")))
 glimpse(hwe)
 
 hwe %>%
