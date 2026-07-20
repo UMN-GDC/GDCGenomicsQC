@@ -1,0 +1,485 @@
+---
+title: "R25 Polygenic Risk Score"
+author: "Kody DeGolier"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+# Single Ancestry PRS Lab Overview
+
+By the end of this lab you should be able to understand how to use the prs_pipeline to get Polygenic Risk Scores and how to interpret your findings for single ancestry PRS methods.
+
+# 1. Introduction to Polygenic Risk Scores (PRS)
+
+A Polygenic Risk Score (PRS) is a single value that estimates an individual's genetic liability to a specific trait or disease. It is calculated by summing the risk alleles across the genome, weighted by the effect sizes derived from a Genome-Wide Association Study (GWAS).
+
+The PRS Equation For an individual $j$, the score $PRS_j$ is calculated as:$$PRS_j = \sum_{i=1}^{n} \hat{\beta}_i G_{ij}$$Where:
+
+-   $\hat{\beta}_i$: The effect size (weight) of SNP $i$ from the discovery GWAS.
+-   $G_{ij}$: The dosage (0, 1, or 2) of the risk allele for SNP $i$ in individual $j$.
+
+### The Challenge of Diversity
+
+Most discovery GWAS are performed in European-ancestry populations. When these weights are applied to diverse samples, prediction accuracy often drops due to differences in:
+
+1.  **Linkage Disequilibrium (LD):** The correlation structure between SNPs.
+
+2.  **Allele Frequencies:** A common variant in one population may be rare in another.
+
+3.  **Causal Variants:** The actual functional variant might differ or be tagged differently.
+
+# 2. Pipeline Architecture & Inputs
+
+The `prs_pipeline` is a modular SLURM-based tool designed to automate the alignment of GWAS summary statistics with target genotypes and run multiple PRS algorithms in parallel.
+
+### Required Inputs
+
+To run the pipeline, you need:
+
+1.  **Summary Statistics:** GWAS results containing RSIDs, effect alleles, P-values, and Betas.
+
+    1.  **Summary Statistics File Format** The file needs to have a column header and contain the following columns. If there are multiple listed in `{}` that means that any 1 of the options is recognized but the file cannot contain more than 1 of these overlapping columns.
+
+    ```         
+    -   {rsid, rs_id, rsids}
+
+    -   {A1, alt, a1}
+
+    -   {p, pval}
+
+    -   {sebeta, beta_se}
+
+    -   beta
+
+    Chromosome and position are not required — they are pulled from the `.bim` file during alignment. `ref`/`A2` is also derived automatically, so it does not need to be in the input.
+    ```
+
+    Here is an example summary statistics file with a header:
+
+    ```         
+    rsid    A1    beta    beta_se    pval
+    rs123   A     0.15    0.02       1.2e-8
+    rs456   G     0.08    0.03       5.6e-4
+    rs789   C    -0.21    0.04       3.1e-12
+    ```
+
+2.  **Target Genotype Files:** PLINK format (`.bed`, `.bim`, `.fam`) split into distinct train and test splits.
+
+    To evaluate a PRS fairly, the model must never see the test data during training. You will split your PLINK data into two independent sets:
+
+    -   **Training set (\~70%):** Used to train the PRS model (tune parameters, fit the model).
+    -   **Test set (\~30%):** Held out during training, used only for final evaluation.
+
+    The pipeline includes `run_split_data.sh` which creates random train/test partitions. It can produce sample ID lists only (`-N` flag) or full PLINK file subsets. *See Appendix of lab for additional details regarding PLINK BED files.*
+
+3.  **Configuration File:** A `.conf` file defining paths and parameters.
+
+| Variable | Description |
+|------------------|-------------------------------------------------|
+| summary_stats_file | Full path to the GWAS summary statistics file. |
+| bim_file_path | Full path to a `.bim` file for allele alignment |
+| study_sample | PLINK prefix (no extension) for the study cohort |
+| test_sample | PLINK prefix for held-out test data runs after models are trained |
+| phenotype_info_file | External phenotype file (see [Input File Formats](https://github.com/UMN-GDC/prs_pipeline#input-file-formats)); header **auto-detected and prepended if missing** (checks if first field is `FID`/`fid`) |
+| gwas_pca_eigenvec_file | PCA eigenvector file for covariates (**Optional**) |
+| n_total_gwas | GWAS sample size (used for `n_eff`) |
+| output_path | Directory for all results |
+| path_repo | Path to the cloned `prs_pipeline` repository |
+| skip_ss_generation | Set `1` to skip `prepare_sumstats.R` alignment (Not recommended) |
+| ld_matrix_dir | Pre-computed LD matrix directory (from `src/generate_ld_matrix.R`); takes priority over `ld_cache_dir.` Not mandatory but helps reruns be faster if this is specified on the initial run. |
+| RUN_CT | Set `true` to run C+T |
+| RUN_LDPRED2 | Set `true` to run LDpred2 *(not currently recommended for real data analysis because of computing limitations on sandbox)* |
+| RUN_LASSOSUM2 | Set `true` to run lassosum2 *(not currently recommended for real data analysis because of computing limitations on sandbox)* |
+| RUN_PRSice2 | Set `true` to run PRSice-2 |
+
+For the full list of configuration options see [Sandbox Singularity Runner](https://github.com/UMN-GDC/prs_pipeline/blob/main/docs/sandbox_singularity_runner.md)
+
+#### Config file used to generate this lab.
+
+```         
+# my_project.conf 
+# --- Paths ---
+summary_stats_file="/scratch.global/GDC/r25outputs/toy/prs_inputs/AFR_EUR/gwas/training_sumstats_singlePRS.txt"
+bim_file_path="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_train.bim"
+study_sample="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_train"
+output_path="/scratch.global/baron063/r25outputs/toy" # Change the labs config output path
+path_repo="/scratch.global/baron063/prs_pipeline"
+skip_ss_generation=0
+n_total_gwas=300
+ld_matrix_dir="${output_path}/prs_pipeline/ld_matrix" 
+gwas_pca_eigenvec_file=""
+phenotype_info_file="/scratch.global/baron063/R25_testing/sample_pheno.txt"
+test_sample="/scratch.global/baron063/R25_testing/EUR_simulation_single_pheno_val"
+```
+
+The config above shows the key parameters. Note how `phenotype_info_file` provides external phenotype values (required for test-set evaluation), and `ld_matrix_dir` avoids recomputing LD if previously generated.
+
+**Question:** Why do Bayesian methods like LDpred2 need the total sample size of the discovery GWAS? *Answer: To distinguish between a small effect size and a lack of statistical power in the discovery set.*
+
+### Running the Pipeline
+
+Split your genotype data into training and testing sets:
+
+``` bash
+bash /path/to/prs_pipeline/run_split_data.sh \
+    -1 /path/to/your/study_sample \
+    -r /path/to/prs_pipeline \
+    -t 70 -T 30
+```
+
+After splitting, generate the allele frequencies for the training set:
+
+``` bash
+plink2 --bfile /path/to/train --freq --out /path/to/train
+```
+
+**Assignment:** Generate your own split of the data using `run_split_data.sh` with a 70/30 train/test ratio. Use the sample ID files to extract the corresponding PLINK subsets, then compute allele frequencies for the training set. The genomic plink data is located here: `/scratch.global/baron063/R25_lab/EUR_simulation_single_pheno` The prs_pipeline repository is located here: `/scratch.global/baron063/prs_pipeline`
+
+### Step 2: Build Your Config File
+
+Once you have distinct training and testing splits, create a `.conf` file with the following variables. Use the example config above as your starting template:
+
+-   `summary_stats_file` — path to your GWAS summary statistics
+-   `study_sample` — PLINK prefix for the training split (no `.bed`/`.bim`/`.fam` extension)
+-   `bim_file_path` — path to the `.bim` file (same location as `study_sample` with extension)
+-   `test_sample` — PLINK prefix for the held-out testing split (evaluated after training)
+-   `path_repo` — path to your `prs_pipeline` clone
+-   `output_path` — directory where all results will be written
+-   `n_total_gwas` — sample size of the discovery GWAS
+-   `phenotype_info_file` — tab-separated file with columns `FID`, `IID`, `Pheno` (see below)
+-   `ld_matrix_dir` — *(optional)* LD matrix directory; speeds up re-runs if previously computed
+-   `gwas_pca_eigenvec_file` — *(optional)* PCA eigenvectors from the GDC QC pipeline
+
+The `output_path` **Needs** to be changed to your own location such as `~/Downloads/`
+
+**Generating a `phenotype_info_file`:**
+
+If you do not already have a phenotype file, you can create one from your PLINK `.fam` file. The sixth column of a `.fam` file stores the phenotype for each sample:
+
+``` bash
+awk '{print $1, $2, $6}' /path/to/train.fam > /path/to/pheno.txt
+```
+
+This produces a tab-separated file:
+
+```         
+FID    IID    Pheno
+Sample1 ID001 1.24
+Sample2 ID002 -0.87
+```
+
+The pipeline auto-detects headers — if the first field is not `FID`, a header is prepended automatically. If you leave `phenotype_info_file` unset, the pipeline falls back to the `.fam` column 6 values automatically.
+
+### Step 3: Run the Pipeline
+
+Once your config file is ready, use `sandbox_singularity_runner.sh` to execute the pipeline inside a pre-built Singularity container. Full documentation is at `docs/sandbox_singularity_runner.md` in the `prs_pipeline` repo.
+
+**1. Pull the container image (already done for you — shown for reference):**
+
+``` bash
+apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prsv2:latest
+```
+
+**2. Run locally (sandbox mode — for testing or interactive desktop sessions):**
+
+``` bash
+bash /path/to/prs_pipeline/sandbox_singularity_runner.sh --C my_project.conf -c -l -s
+```
+
+**3. Submit to SLURM (production \| preferred):**
+
+``` bash
+sbatch /scratch.global/baron063/prs_pipeline/sandbox_singularity_runner.sh --C my_project.conf -c -l -s -P
+```
+
+| Flag | Method                  |
+|------|-------------------------|
+| `-c` | Clumping + Thresholding |
+| `-l` | LDpred2                 |
+| `-s` | lassosum2               |
+| `-P` | PRSice-2                |
+| `-B` | Binary phenotype flag   |
+
+Expected runtime for toy data (3 chromosomes, \~500 samples): \~10–20 min locally, \~5–10 min on SLURM. Full-scale runs with all chromosomes and 10K+ samples can take several hours.
+
+**Assignment:** Run the pipeline using only C+T (`-c`). Compare the size of the output and runtime against running all methods. How does the structure of `prs_pipeline/CT/` differ from the multi-method run?
+
+# 3. Comparing PRS Methodologies
+
+The pipeline implements four major single ancestry methods. Each handles **LD (Linkage Disequilibrium)** differently:
+
+|  |  |  |
+|------------------------|------------------------|------------------------|
+| **Method** | **Approach** | **LD Handling** |
+| **C+T** | Heuristic | Physical/Correlation Clumping (removes correlated SNPs) |
+| **PRSice-2** | Optimized C+T | Automated High-Resolution Clumping across P-value thresholds |
+| **LDpred2** | Bayesian | Models LD using a reference panel and applies a Gibbs sampler |
+| **lassosum2** | Penalized Regression | Uses Elastic Net / Coordinate Descent to account for LD |
+
+# 4. Hands-on: Analyzing Pipeline Outputs
+
+Once the pipeline has completed on the HPC, it generates a structured directory. In this section, we will load the scores generated by different methods and compare them.
+
+## Output Structure
+
+The pipeline automatically organizes results into a clean directory tree:
+
+Each method outputs model training results to `{output_path}/prs_pipeline/`:
+
+| **Method** | **Key Output File**                        |
+|------------|--------------------------------------------|
+| C+T        | `CT/CT_prs_results.txt`                    |
+| LDpred2    | `LDpred2/prs_method_individual_scores.txt` |
+| lassosum2  | `lassosum2/prs_method_final_best_prs.csv`  |
+| PRSice-2   | `PRSice2/prs_method/PRSice2_outputs.best`  |
+
+## **PRS Score Columns**
+
+All methods output scores into `test_evaluation/` with a unified `SCORE` column, making comparison straightforward:
+
+| **Method** | **Test Evaluation File**                  | **Score Column** |
+|------------|-------------------------------------------|------------------|
+| C+T        | `test_evaluation/CT_scores.txt`           | `SCORE`          |
+| LDpred2    | `test_evaluation/LDpred2_grid_scores.txt` | `SCORE`          |
+| lassosum2  | `test_evaluation/lassosum2_scores.txt`    | `SCORE`          |
+| PRSice-2   | `test_evaluation/PRSice2_scores.txt`      | `SCORE`          |
+
+### Step 4.1: Load the Data
+
+Replace `output_path` with the directory where your pipeline results are stored.
+
+Code snippet
+
+```{r}
+# Load necessary packages
+library(data.table)
+library(tidyverse)
+
+# Define your output directory
+output_path <- "/scratch.global/baron063/r25outputs/toy/prs_pipeline"
+test_data_outputs <- file.path(output_path, "test_evaluation") # Important to use the testing data outputs # all others are using the training data so cannot be used for evalution of prs models
+
+# 1. Load Clumping + Thresholding (C+T) Scores
+ct_path <- file.path(test_data_outputs, "CT_scores.txt")
+ct_data <- fread(ct_path)
+
+# 2. Load LDpred2 Scores
+ldp_path <- file.path(test_data_outputs, "LDpred2_grid_scores.txt")
+ldp_data <- fread(ldp_path)
+
+# 3. Load lassosum2 Scores
+lasso_path <- file.path(test_data_outputs, "lassosum2_scores.txt")
+lasso_data <- fread(lasso_path)
+
+# 4. Load PRSice2 Scores (you will add this to the comparison later)
+prsice_path <- file.path(test_data_outputs, "PRSice2_scores.txt")
+prsice_data <- fread(prsice_path)
+```
+
+### Step 4.2: Merge and Correlate
+
+We want to see how much the methods agree on individual risk rankings.
+
+Code snippet
+
+```{r}
+# Merge scores by IID so alignment is robust
+combined_scores <- merge(ct_data[, c("IID", "SCORE")], ldp_data[, c("IID", "SCORE")],
+                         by = "IID", suffixes = c(".ct", ".ld"))
+combined_scores <- merge(combined_scores, lasso_data[, c("IID", "SCORE")],
+                         by = "IID")
+colnames(combined_scores) <- c("IID", "CT", "LDpred2", "lassosum2")
+# Hint: merge in PRSice2 the same way to include it in the comparison
+
+# Calculate Pearson Correlation
+cor_matrix <- cor(combined_scores[, -1], use = "complete.obs")
+print(cor_matrix)
+
+# Visualize the correlation
+library(corrplot)
+corrplot(cor_matrix, method = "color", addCoef.col = "black")
+```
+
+### 4.3: Incorporating Phenotypes & Covariates
+
+To calculate the $R^2$, we need a phenotype file. Usually, this file follows the PLINK format: `FID`, `IID`, `Phenotype`, and several `PC` columns.
+
+R
+
+```{r}
+# Load Phenotype and Covariate data
+# Assuming a file with columns: FID, IID, Pheno, Age, Sex, PC1, PC2...
+pheno_path <- file.path(test_data_outputs, "pheno.txt")
+#pheno_path <- "/scratch.global/baron063/R25_testing/sample_pheno.txt"
+
+pheno_data <- fread(pheno_path)
+colnames(pheno_data) = c("FID", "IID", "Pheno")
+
+# Merge with our previously created 'combined_scores' data frame
+final_data <- merge(combined_scores, pheno_data, by = "IID")
+
+# Ensure the phenotype is numeric
+final_data$Pheno <- as.numeric(final_data$Pheno)
+```
+
+### 4.4: Calculating Incremental $R^2$
+
+We calculate the $R^2$ by comparing two models:
+
+1.  **Null Model:** Phenotype \~ Age + Sex + PCs
+
+2.  **Full Model:** Phenotype \~ Age + Sex + PCs + **PRS**
+
+The Incremental $R^2$ is $R^2_{Full} - R^2_{Null}$.
+
+```{r}
+# Define the base covariates
+covariates <- "Age + Sex + PC1 + PC2 + PC3 + PC4 + PC5" # Ideally something like this
+covariates <- "Sex"
+
+# Simulate Sex
+simulated_sex=rbinom(dim(final_data)[1], 1, 0.5)
+
+# add simulated sex to pheno file
+final_data <- cbind(final_data, simulated_sex)
+final_data <- final_data %>%
+  rename(Sex = simulated_sex)
+
+calculate_incremental_r2 <- function(prs_col, data) {
+  # Null Model
+  null_formula <- as.formula(paste("Pheno ~", covariates))
+  null_model <- lm(null_formula, data = data)
+  r2_null <- summary(null_model)$r.squared
+  
+  # Full Model
+  full_formula <- as.formula(paste("Pheno ~", covariates, "+", prs_col))
+  full_model <- lm(full_formula, data = data)
+  r2_full <- summary(full_model)$r.squared
+  
+  return(r2_full - r2_null)
+}
+
+# Apply to the three methods (add PRSice2 as an exercise)
+r2_results <- data.frame(
+  Method = c("CT", "LDpred2", "lassosum2"),
+  Incremental_R2 = c(
+    calculate_incremental_r2("CT", final_data),
+    calculate_incremental_r2("LDpred2", final_data),
+    calculate_incremental_r2("lassosum2", final_data)
+  )
+)
+
+print(r2_results)
+```
+
+### 4.5: Visualizing Performance Comparison
+
+A simple bar chart is the standard way to show which method "won" for this specific sample.
+
+```{r}
+# Visualization using ggplot2
+ggplot(r2_results, aes(x = reorder(Method, -Incremental_R2), y = Incremental_R2, fill = Method)) +
+  geom_bar(stat = "identity", color = "black", show.legend = FALSE) +
+  theme_minimal() +
+  labs(
+    title = "PRS Performance Comparison",
+    subtitle = "Measured by Incremental R-squared",
+    x = "Statistical Method",
+    y = "Incremental R2"
+  ) +
+  scale_fill_brewer(palette = "Set2")
+```
+
+### 4.6: Visualizing Predicted vs. Observed (Scatter Plot)
+
+It is also helpful to see the raw correlation for the top-performing method (e.g., CT).
+
+```{r}
+# Visualizing the fit for CT
+ggplot(final_data, aes(x = CT, y = Pheno)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_smooth(method = "lm", color = "darkred") +
+  theme_light() +
+  labs(
+    title = "Observed Phenotype vs. CT Score",
+    x = "Polygenic Risk Score (CT)",
+    y = "Observed Phenotype Value"
+  )
+```
+
+**Why is my** $R^2$ so low? In diverse samples, $R^2$ values are often significantly lower than those reported in the original discovery GWAS papers (which are usually 100% European). Ask students to consider if the drop is due to **LD decay** (different correlation patterns) or if the **causal variants** themselves have different effect sizes in this specific population.
+
+# 5. Troubleshooting & Best Practices
+
+### Alignment Issues
+
+If your output `gwas/CT_PRSice2_summary_stat_file.txt` is empty:
+
+-   **Check ID Formats:** Do your Summary Stats use `rsIDs` while your `.bim` file uses `chr:pos`?
+
+-   **Check Strand:** Are the alleles aligned (A/T vs C/G)? The pipeline attempts to flip them, but unusual custom chips may require manual intervention.
+
+### Resource Management (SLURM)
+
+-   **Memory:** LDpred2 is memory-intensive. If the job fails, increase `#SBATCH --mem=64g` to `128g`.
+
+-   **Parallelization:** The pipeline runs methods in parallel. Ensure your `-c` (CPUs) flag matches the requirements of your LD reference panel size.
+
+# 6. Conclusion
+
+By the end of this lab, you should understand that a PRS is not a single "truth" but an estimate dependent on the statistical model used. In diverse populations, comparing simple heuristic methods (C+T) with complex modeling (LDpred2/lassosum2) is essential for validating the portability of genetic risk.
+
+**Assignment:**
+
+1.  Plot the distribution (histogram) of the LDpred2 scores.
+
+2.  Add PRSice2 to the `combined_scores` merge and the `r2_results` table. Did it outperform the other methods on your test data?
+
+3.  If phenotypes are available, calculate the $R^2$ for each method. Which one performs best for your specific sample?
+
+    """
+
+# 7. Appendix
+
+## What are PLINK BED Files?
+
+In bioinformatics, a **BED** file in the context of PLINK is **not** a standard text-based UCSC BED file. Instead, it is a **binary file** used to store large-scale genetic variant data (genotypes) compactly.
+
+It is almost always accompanied by two companion text files:
+
+1.  **`.bim`** (Extended MAP file): Contains information about the variants (chromosome, ID, position, alleles).
+
+2.  **`.fam`** (Family/Pedigree file): Contains information about the individuals (Family ID, Individual ID, sex, phenotype).
+
+Because the `.bed` file is binary (written in bits), **you cannot read it directly with a standard text editor.**
+
+## Sample of Companion Files
+
+Since a raw `.bed` file looks like garbled text in a standard viewer, you look at its companion files to understand the data.
+
+### Sample `.fam` (Individual Info)
+
+This is a tab-separated file:
+
+```         
+Fam_001  Ind_01  0  0  1  2
+Fam_001  Ind_02  0  0  2  1
+```
+
+*(FamilyID, IndividualID, PaternalID, MaternalID, Sex [1=M, 2=F], Phenotype)*
+
+### Sample `.bim` (Variant Info)
+
+This is a tab-separated file:
+
+```         
+1  rs12345  0  1002342  A  G
+1  rs67890  0  1002561  T  C
+```
+
+*(Chromosome, VariantID, cM_Position, BasePair_Position, Allele1, Allele2)*
