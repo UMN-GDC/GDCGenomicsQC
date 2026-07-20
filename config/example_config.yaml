@@ -18,7 +18,7 @@ INPUT: "/path/to/data/chr{CHR}.vcf.gz"
 # Leave null to use INPUT path
 vcf_template: null
 
-# Output directory for pipeline results
+# Output directory for pipeline results (full absolute path; no ~ or $HOME)
 OUT_DIR: "/path/to/output/directory"
 
 # Reference data directory (required for various operations)

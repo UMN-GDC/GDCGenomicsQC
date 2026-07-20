@@ -236,7 +236,7 @@ INPUT: "/path/to/vcf/chr{CHR}.vcf.gz"
 vcf_template: null
 
 # Output directory for pipeline results
-OUT_DIR: "/path/to/output/directory"
+OUT_DIR: "/path/to/output/directory"   # Must be full absolute path; no ~ or $HOME
 
 # Reference data directory
 REF: "/path/to/reference/data"

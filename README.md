@@ -307,7 +307,7 @@ Details for each specific project are configured in a .yaml file. An example is 
 ### Core Parameters
 ```yaml
 INPUT_FILE: "/path/to/input/vcf"
-OUT_DIR: "/path/to/output"
+OUT_DIR: "/path/to/output"    # Must be full absolute path; no ~ or $HOME
 REF: "/path/to/reference"
 vcf_template: "/path/to/vcf_template_chr{chr}.vcf.gz"
 local-storage-prefix: "/path/to/.snakemake/storage"
