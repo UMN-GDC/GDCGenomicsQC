@@ -151,18 +151,18 @@ rule run_initialQC:
             else [OUT_DIR / "full" / "f1.b38.f2.pgen"]
         ),
         lambda wildcards: (
-            expand(OUT_DIR / "full" / "initial_{CHR}.smiss", CHR=CHROMOSOMES)
-            + expand(OUT_DIR / "full" / "initial_{CHR}.vmiss", CHR=CHROMOSOMES)
-            + expand(OUT_DIR / "full" / "MAF_check_{CHR}.afreq", CHR=CHROMOSOMES)
-            + expand(OUT_DIR / "full" / "standardFilter_{CHR}.hardy", CHR=CHROMOSOMES)
-            + expand(OUT_DIR / "full" / "heterozygosity_{CHR}.het", CHR=CHROMOSOMES)
+            expand(OUT_DIR / "full" / "initial_smiss_{CHR}.smiss", CHR=CHROMOSOMES)
+            + expand(OUT_DIR / "full" / "initial_vmiss_{CHR}.vmiss", CHR=CHROMOSOMES)
+            + expand(OUT_DIR / "full" / "initial_MAF_{CHR}.afreq", CHR=CHROMOSOMES)
+            + expand(OUT_DIR / "full" / "initial_HWE_{CHR}.hardy", CHR=CHROMOSOMES)
+            + expand(OUT_DIR / "full" / "initial_het_{CHR}.het", CHR=CHROMOSOMES)
             if "{CHR}" in config.get("INPUT", "")
             else [
-                OUT_DIR / "full" / "initial.smiss",
-                OUT_DIR / "full" / "initial.vmiss",
-                OUT_DIR / "full" / "MAF_check.afreq",
-                OUT_DIR / "full" / "standardFilter.hardy",
-                OUT_DIR / "full" / "heterozygosity.het",
+                OUT_DIR / "full" / "initial_smiss.smiss",
+                OUT_DIR / "full" / "initial_vmiss.vmiss",
+                OUT_DIR / "full" / "initial_MAF.afreq",
+                OUT_DIR / "full" / "initial_HWE.hardy",
+                OUT_DIR / "full" / "initial_het.het",
             ]
         ),
 

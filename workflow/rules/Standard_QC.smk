@@ -20,9 +20,9 @@ if INPUT_IS_PER_CHROMOSOME:
             pgen=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pgen",
             pvar=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pvar",
             psam=OUT_DIR / "{subset}" / "f1.f2_{CHR}.psam",
-            maf=OUT_DIR / "{subset}" / "MAF_check_{CHR}.afreq",
-            hardy=OUT_DIR / "{subset}" / "standardFilter_{CHR}.hardy",
-            het=OUT_DIR / "{subset}" / "heterozygosity_{CHR}.het",
+            maf=OUT_DIR / "{subset}" / "initial_MAF_{CHR}.afreq",
+            hardy=OUT_DIR / "{subset}" / "initial_HWE_{CHR}.hardy",
+            het=OUT_DIR / "{subset}" / "initial_het_{CHR}.het",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter_{CHR}")
             ),
@@ -53,7 +53,7 @@ if INPUT_IS_PER_CHROMOSOME:
               cp {input.psam} {output.tempDir}/step1.psam
             fi
 
-            plink2 --pfile {output.tempDir}/step1 --freq --out {params.output_dir}/MAF_check_{wildcards.CHR} --threads {threads}
+            plink2 --pfile {output.tempDir}/step1 --freq --out {params.output_dir}/initial_MAF_{wildcards.CHR} --threads {threads}
             plink2 --pfile {output.tempDir}/step1 --maf 0.01 --make-pgen --out {output.tempDir}/step2 --threads {threads}
 
             plink2 --pfile {output.tempDir}/step2 --hardy --out {output.tempDir}/step2 --threads {threads}
@@ -107,9 +107,9 @@ else:
             LDpgen=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pgen",
             LDpvar=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pvar",
             LDpsam=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.psam",
-            maf=OUT_DIR / "{subset}" / "MAF_check.afreq",
-            hardy=OUT_DIR / "{subset}" / "standardFilter.hardy",
-            het=OUT_DIR / "{subset}" / "heterozygosity.het",
+            maf=OUT_DIR / "{subset}" / "initial_MAF.afreq",
+            hardy=OUT_DIR / "{subset}" / "initial_HWE.hardy",
+            het=OUT_DIR / "{subset}" / "initial_het.het",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter")
             ),

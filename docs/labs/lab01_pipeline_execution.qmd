@@ -115,7 +115,7 @@ module load gdcgenomicsSandbox
 
 | Lab | File(s) loaded in R | How it's used |
 |-----|--------------------|---------------|
-| Lab 2, QC Diagnostics | `{OUT_DIR}/{subset}/initial.smiss`, `initial.vmiss`, `MAF_check.afreq`, `standardFilter.hardy` | Missingness, AF, HWE per subset |
+| Lab 2, QC Diagnostics | `{OUT_DIR}/{subset}/initial_smiss.smiss`, `initial_vmiss.vmiss`, `initial_MAF.afreq`, `initial_HWE.hardy` | Missingness, AF, HWE per subset |
 | Lab 3, Ancestry Classification | `{OUT_DIR}/01-globalAncestry/classificationProbabilities.tsv`, `ancestry_classifications.tsv`, `sampleRefPCscores.sscore` | PCA projection, confusion matrix, classification probabilities; extends to local ancestry discussion |
 | Lab 4, Heritability | `{OUT_DIR}/{ancestry}/simulations/{sim_name}/herit.csv` per ancestry | h2 comparison across ancestry groups |
 
