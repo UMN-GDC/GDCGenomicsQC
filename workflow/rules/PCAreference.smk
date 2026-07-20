@@ -89,7 +89,7 @@ if INPUT_IS_PER_CHROMOSOME:
                        --make-pgen \
                        --threads {threads} \
                        --out {output.tempDir}/study_shared_$chr_name
-                echo "${{output.tempDir}}/study_shared_$chr_name" >> {output.tempDir}/mergelist.txt
+                echo "{output.tempDir}/study_shared_$chr_name" >> {output.tempDir}/mergelist.txt
             done
             plink2 --pmerge-list {output.tempDir}/mergelist.txt \
                    --make-pgen \
