@@ -39,7 +39,7 @@ snpHerit:
 
     covar: null
 
-    method: "AdjHE"
+    method: "GCTA"
 
     npc: [1,2]
 
