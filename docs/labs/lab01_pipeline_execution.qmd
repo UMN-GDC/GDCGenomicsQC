@@ -29,10 +29,10 @@ Everything specific to your dataset: paths, chromosomes, which analyses to run, 
 
 ```yaml
 # sandboxToy.yaml lines 2-8 (relevant keys)
-INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"  # Path to genotype data; supports .vcf, .vcf.gz, .bed+.bim+.fam, .pgen+.pvar+.psam; use {CHR} for per-chromosome or full path for single file
-OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr"                      # All pipeline outputs land here, organized by analysis stage
+INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38.bed"              # Path to genotype data; supports .vcf, .vcf.gz, .bed+.bim+.fam, .pgen+.pvar+.psam; single file (no {CHR}) = whole-genome mode
+OUT_DIR: "/scratch.global/GDC/r25outputs/toy"                          # All pipeline outputs land here, organized by analysis stage
 REF: "/scratch.global/GDC/referenceData"                                # 1000 Genomes reference; used for PCA projection, RF training, LD reference
-chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]                 # Subset of autosomes; parallelized per-chromosome in Snakemake
+chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]  # All autosomes
 ```
 
 #### Input format: the pipeline adapts to your data
@@ -52,6 +52,7 @@ Two modes:
 | Per-chromosome | `...chr{CHR}.vcf.gz` | Large datasets, parallel processing |
 | Whole-genome | `/path/to/file.bed` | Small datasets, single file |
 
+- **This lab uses whole-genome mode** (`INPUT` points to a single `.bed` file, no `{CHR}`). Pipeline runs each rule once per subset, not once per chromosome. Output files are single files (`initial.smiss`) instead of per-chromosome (`initial_{CHR}.smiss`)
 - **Auto-detected**: Snakemake reads file extension (VCF/PLINK1/PLINK2) and checks for `{CHR}` in path. No extra config keys.
 
 #### Reference panel: the 1000 Genomes anchor

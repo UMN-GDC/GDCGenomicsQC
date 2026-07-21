@@ -42,7 +42,7 @@ snpHerit:
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 library(tidyverse)
 # CHANGE THIS to match your OUT_DIR from the config YAML
-OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
+OUT_DIR <- "/scratch.global/GDC/r25outputs/toy"
 sim_name <- "bivariate_test"
 
 ancestries <- c("EUR", "AFR")
