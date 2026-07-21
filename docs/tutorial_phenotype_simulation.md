@@ -77,6 +77,25 @@ cd GDCGenomicsQC
 
 ---
 
+(dag-visualization-sim)=
+
+### DAG Visualization
+
+The pipeline DAG up to the ``run_simulatePhenotype`` rule shows the phenotype
+simulation and GRM/PCA computation workflow:
+
+```{mermaid} dag_simulatePhenotype.mmd
+
+```
+
+The rule graph provides a cleaner view of rule dependencies:
+
+```{mermaid} rulegraph_simulatePhenotype.mmd
+
+```
+
+---
+
 ## Phenotype Simulation Overview
 
 The phenotype simulation feature generates synthetic phenotypes with

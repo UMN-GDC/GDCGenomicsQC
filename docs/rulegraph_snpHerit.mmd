@@ -1,0 +1,24 @@
+---
+title: DAG
+---
+flowchart TB
+	id0[run_snpHeritSimulated]
+	id1[simulatePhenotypes]
+	id2[computeSimGRM]
+	id3[computeSimPCA]
+	id4[extractSimPheno]
+	id5[estimateSnpHeritabilitySimulated]
+	style id0 fill:#57C5D9,stroke-width:2px,color:#333333
+	style id1 fill:#ADD957,stroke-width:2px,color:#333333
+	style id2 fill:#7ED957,stroke-width:2px,color:#333333
+	style id3 fill:#5FB0D9,stroke-width:2px,color:#333333
+	style id4 fill:#D9A657,stroke-width:2px,color:#333333
+	style id5 fill:#D97657,stroke-width:2px,color:#333333
+	id1 --> id2
+	id1 --> id3
+	id1 --> id4
+	id1 --> id5
+	id2 --> id5
+	id3 --> id5
+	id4 --> id5
+	id5 --> id0

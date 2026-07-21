@@ -117,6 +117,25 @@ snakemake --version
 
 ---
 
+(dag-visualization-assemble)=
+
+### DAG Visualization
+
+The pipeline DAG up to the ``assembleRef`` rule shows the workflow for
+downloading, merging, and LD-pruning the 1000 Genomes reference:
+
+```{mermaid} dag_assembleRef.mmd
+
+```
+
+The rule graph provides a cleaner view of rule dependencies:
+
+```{mermaid} rulegraph_assembleRef.mmd
+
+```
+
+---
+
 ### Required Input Files
 
 This step downloads data from external sources:

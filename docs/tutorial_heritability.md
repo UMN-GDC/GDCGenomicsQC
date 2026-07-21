@@ -111,6 +111,25 @@ snakemake --version
 
 ---
 
+(dag-visualization-herit)=
+
+### DAG Visualization
+
+The pipeline DAG up to the ``run_snpHeritSimulated`` rule shows the complete
+simulation-to-heritability workflow:
+
+```{mermaid} dag_snpHerit.mmd
+
+```
+
+The rule graph provides a cleaner view of rule dependencies:
+
+```{mermaid} rulegraph_snpHerit.mmd
+
+```
+
+---
+
 ### Required Input Files
 
 This step requires the following input files:

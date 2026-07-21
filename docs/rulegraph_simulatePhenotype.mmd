@@ -1,0 +1,21 @@
+---
+title: DAG
+---
+flowchart TB
+	id0[run_simulatePhenotype]
+	id1[simulatePhenotypes]
+	id2[computeSimGRM]
+	id3[computeSimPCA]
+	id4[extractSimPheno]
+	style id0 fill:#57C5D9,stroke-width:2px,color:#333333
+	style id1 fill:#ADD957,stroke-width:2px,color:#333333
+	style id2 fill:#7ED957,stroke-width:2px,color:#333333
+	style id3 fill:#5FB0D9,stroke-width:2px,color:#333333
+	style id4 fill:#D9A657,stroke-width:2px,color:#333333
+	id1 --> id0
+	id2 --> id0
+	id3 --> id0
+	id4 --> id0
+	id1 --> id2
+	id1 --> id3
+	id1 --> id4

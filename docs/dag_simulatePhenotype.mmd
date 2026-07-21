@@ -1,0 +1,44 @@
+---
+title: DAG
+---
+flowchart TB
+	id0[simulatePhenotypes - sim_name: default]
+	id1[computeSimGRM - ancestry: EUR - sim_name: default]
+	id2[computeSimGRM - ancestry: AFR - sim_name: default]
+	id3[computeSimGRM - ancestry: AMR - sim_name: default]
+	id4[computeSimPCA - ancestry: EUR - sim_name: default]
+	id5[computeSimPCA - ancestry: AFR - sim_name: default]
+	id6[computeSimPCA - ancestry: AMR - sim_name: default]
+	id7[extractSimPheno - ancestry: EUR - sim_name: default]
+	id8[extractSimPheno - ancestry: AFR - sim_name: default]
+	id9[extractSimPheno - ancestry: AMR - sim_name: default]
+	id10[run_simulatePhenotype]
+	style id0 fill:#ADD957,stroke-width:2px,color:#333333
+	style id1 fill:#7ED957,stroke-width:2px,color:#333333
+	style id2 fill:#7ED957,stroke-width:2px,color:#333333
+	style id3 fill:#7ED957,stroke-width:2px,color:#333333
+	style id4 fill:#5FB0D9,stroke-width:2px,color:#333333
+	style id5 fill:#5FB0D9,stroke-width:2px,color:#333333
+	style id6 fill:#5FB0D9,stroke-width:2px,color:#333333
+	style id7 fill:#D9A657,stroke-width:2px,color:#333333
+	style id8 fill:#D9A657,stroke-width:2px,color:#333333
+	style id9 fill:#D9A657,stroke-width:2px,color:#333333
+	style id10 fill:#57C5D9,stroke-width:2px,color:#333333
+	id0 --> id1
+	id0 --> id2
+	id0 --> id3
+	id0 --> id4
+	id0 --> id5
+	id0 --> id6
+	id0 --> id7
+	id0 --> id8
+	id0 --> id9
+	id1 --> id10
+	id2 --> id10
+	id3 --> id10
+	id4 --> id10
+	id5 --> id10
+	id6 --> id10
+	id7 --> id10
+	id8 --> id10
+	id9 --> id10
