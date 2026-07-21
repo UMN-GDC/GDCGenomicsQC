@@ -128,6 +128,40 @@ module load gdcgenomicsSandbox
 - Job fails? Pipeline stops with a clear error. Fix and re-run same command. Snakemake skips completed steps
 - Every run produces an auditable log (`.snakemake/log/`): what ran, inputs, outputs, errors
 
+### Running it yourself
+
+Practical steps to submit the pipeline:
+
+```bash
+# 1. Navigate to the repo (you are here after cloning or logging into the HPC)
+cd /path/to/GDCGenomicsQC
+
+# 2. Edit the config file with vi
+vi config/sandboxToy.yaml
+```
+
+**vi essentials** (see [Linux Cheatsheet](../linux_cheatsheet.md)):
+
+| Action | Command |
+|--------|---------|
+| Enter insert mode | `i` |
+| Save and quit | `Esc` then `:wq` |
+| Quit without saving | `Esc` then `:q!` |
+| Move cursor | Arrow keys or `h`/`j`/`k`/`l` |
+
+```bash
+# 3. Submit the SLURM job
+sbatch jobs/sandboxToy.SLURM
+
+# 4. Check job status
+squeue -u $USER
+
+# 5. Monitor the output log
+tail -f snakemake_*.log
+```
+
+Config changes (`OUT_DIR`, `chromosomes`, QC thresholds) are the only edits needed. No rule files, no wrapper scripts. Re-submit with `sbatch` and Snakemake skips completed steps automatically.
+
 ### What happens when a collaborator runs on their data
 
 - Clone repo, edit one config (INPUT, OUT_DIR, REF, chromosomes), submit same SLURM script
