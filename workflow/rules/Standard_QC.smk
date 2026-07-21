@@ -64,6 +64,7 @@ if INPUT_IS_PER_CHROMOSOME:
 
             plink2 --pfile {output.tempDir}/step3 --indep-pairwise 50 5 0.2 --out {output.tempDir}/indepSNP --threads {threads}
             plink2 --pfile {output.tempDir}/step3 --extract {output.tempDir}/indepSNP.prune.in --het --out {output.tempDir}/hetcheck --threads {threads}
+            [ -f {output.tempDir}/hetcheck.het ] || touch {output.tempDir}/hetcheck.het
 
             Rscript --no-save {params.scripts_dir}/heterozygosity_outliers_list.R {output.tempDir}/hetcheck.het {params.output_dir}
             cp {output.tempDir}/hetcheck.het {output.het}
@@ -140,7 +141,7 @@ else:
             bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
 
             cp {output.tempDir}/intermediate_6.hardy {output.hardy}
-            cp {params.output_dir}/R_check.het {output.het}
+            [ -f {params.output_dir}/R_check.het ] && cp {params.output_dir}/R_check.het {output.het} || touch {output.het}
 
             for ext in pgen pvar psam; do
                 mv {params.output_dir}/standardFilter.$ext {params.output_dir}/f1.b38.f2.$ext
