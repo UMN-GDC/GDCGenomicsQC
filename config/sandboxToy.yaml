@@ -1,6 +1,6 @@
 # Project-wide paths
 INPUT: "/scratch.global/GDC/toyData/allSubjects_hg38_chr{CHR}.vcf.gz"
-OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr"  # Full absolute path; no ~ or $HOME
+OUT_DIR: "/scratch.global/GDC/r25outputs/toy_chr2"  # Full absolute path; no ~ or $HOME
 REF: "/scratch.global/GDC/referenceData"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
 
