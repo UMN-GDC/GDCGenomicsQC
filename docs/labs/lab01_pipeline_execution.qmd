@@ -175,4 +175,4 @@ Config changes (`OUT_DIR`, `chromosomes`, QC thresholds) are the only edits need
 - **How would you contribute this pipeline to a consortium?** Share your config file. `envs/` and `gdcgenomicsqc` wrapper are version-controlled. Anyone clones the repo, edits config, runs wrapper = full pipeline. Consortium needs a new module? Someone adds a rule file. No one else changes their workflow.
 - **Why does rule-file-per-stage matter?** New PRS method? Write `rules/my_prs_method.smk`, add one import line to `Snakefile`. No merge conflicts, no "my version is different", no monkey-patching a file someone else is editing. Anyone contributes a module without coordination overhead.
 
-See the [QC Pipeline Tutorial](../tutorial_qc_pipeline.rst) for a step-by-step walkthrough of each target and its outputs.
+See the [QC Pipeline Tutorial](https://gdcgenomicsqc.readthedocs.io/en/latest/tutorial_qc_pipeline.html) for a step-by-step walkthrough of each target and its outputs.

@@ -13,6 +13,7 @@ format:
 
 ## Overview
 
+- **Full documentation**: [gdcgenomicsqc.readthedocs.io](https://gdcgenomicsqc.readthedocs.io/en/latest/)
 - **A random forest trained on 1000 Genomes PCA coordinates** classifies each sample into one of five 1KG superpopulations (AFR, AMR, EAS, EUR, SAS). With synthetic data derived from the same reference, assignments should be near 100% accurate because the populations are cleanly separated in PCA space
 - **The pipeline supports multiple latent spaces**: PCA (linear), UMAP (non-linear), VAE (variational autoencoder, probabilistic, handles missing data). Toggle with single config key (`ancestry.model`). Output file format unchanged across all three, so R code does not change
 
@@ -156,7 +157,7 @@ class_prob |>
 - **How does local ancestry improve PRS in admixed individuals?** Variant in AFR-derived block: LD matches AFR reference, not EUR. Use AFR LD for clumping/LDpred2 for that variant, EUR LD for EUR-derived blocks. Ancestry-aware PRS matches LD reference to local ancestry context per variant, substantially improving prediction accuracy.
 - **Phasing accuracy in recently admixed populations?** ShapeIt4 uses reference panel. Panel mostly EUR + sample AFR/EUR admixed: EUR haplotypes phase more accurately (many EUR haplotypes in reference with similar LD). AFR haplotypes mis-phased more often, especially at ancestry transition points where LD structure switches abruptly. Phasing errors propagate to RFMix: a phasing switch error creates a spurious ancestry switch in RFMix output.
 
-See the [Multi-Ancestry PRS Tutorial](../tutorial_prs_multi.rst) for local ancestry parameter tuning and troubleshooting.
+See the [Ancestry Classification Tutorial](https://gdcgenomicsqc.readthedocs.io/en/latest/tutorial_ancestry_classification.html) for details on model comparison and parameter tuning.
 
 ## Discussion: Global Classification
 

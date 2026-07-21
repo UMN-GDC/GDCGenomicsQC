@@ -13,6 +13,7 @@ format:
 
 ## Overview
 
+- **Full documentation**: [gdcgenomicsqc.readthedocs.io](https://gdcgenomicsqc.readthedocs.io/en/latest/)
 - **QC diagnostics**: first check. Sample/variant missingness, AF distributions, HWE p-values reveal genotyping errors, poor DNA, batch effects before downstream analysis
 - **Data are synthetic**: resampled from 1000 Genomes haplotypes. Expect textbook distributions:
   - Tight peaks near 0% missingness
@@ -41,7 +42,7 @@ convertNfilt:                                                          # Convers
     qual_min: null      # Minimum QUAL score; null = no filter
 ```
 
-- See [QC Pipeline Tutorial](../tutorial_qc_pipeline.md) for full reference
+- See [QC Pipeline Tutorial](https://gdcgenomicsqc.readthedocs.io/en/latest/tutorial_qc_pipeline.html) for full reference
 
 ## Output
 
@@ -228,4 +229,4 @@ het %>%
 - **If a dataset had a spike of HWE p-values near 0**, two possible explanations: (1) genotyping errors or batch effects causing systematic miscalls, or (2) population structure (multiple ancestries in sample, variants differ in frequency between groups). Per-ancestry diagnostics distinguish these.
 - **Sample vs. variant missingness > 5%: which is more concerning?** High sample missingness = poor DNA/processing failure for that sample. Remove a few bad samples. High variant missingness across many samples = systematic assay problem (bad probe, poor genomic region). Affects every sample for that variant, harder to fix. Both > 5%? Check overlap: are poor variants concentrated in poor samples, or independent issues?
 
-See the [QC Pipeline Tutorial](../tutorial_qc_pipeline.md) for troubleshooting and deep dives into file formats and pipeline internals.
+See the [QC Pipeline Tutorial](https://gdcgenomicsqc.readthedocs.io/en/latest/tutorial_qc_pipeline.html) for troubleshooting and deep dives into file formats and pipeline internals.

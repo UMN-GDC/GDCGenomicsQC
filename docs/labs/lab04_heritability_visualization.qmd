@@ -13,6 +13,7 @@ format:
 
 ## Overview
 
+- **Full documentation**: [gdcgenomicsqc.readthedocs.io](https://gdcgenomicsqc.readthedocs.io/en/latest/)
 - **SNP heritability (h2)**: fraction of phenotypic variance explained by measured genetic variants. How much of trait variation is due to genotyped SNPs vs environmental/unmeasured factors
 - **Pipeline estimates h2 per ancestry subset** using MASH (or GCTA/PredLMM). GRM built from LD-pruned, crossmapped variants. Related samples removed via KING before estimation
 - **Phenotype simulated with known heritability of 0.4**: ground-truth target. Ancestry-specific estimates should cluster near 0.4 if pipeline is working. Systematic deviation reveals estimator behavior across ancestry groups
@@ -33,7 +34,7 @@ snpHerit:
 - **`method`**: AdjHE (bias-corrected Haseman-Elston, default), GCTA (REML), PredLMM. AdjHE preferred for multi-ancestry settings, less sensitive to model misspecification than REML
 - **`npc`**: genetic PCs as covariates. Reduces bias from population structure, but too many PCs over-absorb true genetic variance, deflating h2
 - **GRM from LD-pruned, crossmapped variants** after QC. Related samples removed via KING (`relatedness.king_cutoff: 0.0884`) before estimation. Cryptic relatedness inflates GRM off-diagonals, biasing h2 upward
-- See [Heritability Tutorial](../tutorial_heritability.rst) for full walkthrough
+- See [Heritability Tutorial](https://gdcgenomicsqc.readthedocs.io/en/latest/tutorial_heritability.html) for full walkthrough
 
 ## Output
 
@@ -74,4 +75,4 @@ ggplot(herit, aes(x = ancestry, y = h2, color = ancestry)) +
 - **EUR 500 samples, AFR 150. Sample size vs SE of h2? Meaningful to compare estimates with different CIs?** SE scales ~1/sqrt(N). AFR SE ~ sqrt(500/150) = 1.8x EUR SE. Comparison still meaningful if accounting for precision difference. Test EUR vs AFR difference with difference-of-means test (accounts for unequal variances) or report both with CIs. AFR estimate less precise: a 0.07 EUR-AFR difference may be within sampling noise for AFR even if significant for EUR.
 - **Add 10 genetic PCs as covariates: h2 drops from 0.40 to 0.25. What does this mean?** Additional PCs absorbing phenotypic variance correlated with population structure. Two interpretations: (1) PCs capture genuine confounding (correct if population stratification exists) or (2) PCs over-absorb true genetic variance (if causal variants correlate with PC axes). Appropriate adjustment removes confounding without over-correcting. Plot h2 vs number of PCs, look for elbow where additional PCs stop reducing estimate. Rule of thumb: if first 2 PCs explain most ancestry variation and additional PCs don't change estimate, 2 PCs is enough.
 
-See the [Heritability Tutorial](../tutorial_heritability.rst) for GRM heatmap visualization, method comparisons (AdjHE vs GCTA vs PredLMM), and exploration exercises (varying PC count, sample size, covariates).
+See the [Heritability Tutorial](https://gdcgenomicsqc.readthedocs.io/en/latest/tutorial_heritability.html) for GRM heatmap visualization, method comparisons (AdjHE vs GCTA vs PredLMM), and exploration exercises (varying PC count, sample size, covariates).
