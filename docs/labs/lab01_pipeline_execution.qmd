@@ -13,6 +13,7 @@ format:
 
 ## Overview
 
+- **Full documentation**: [gdcgenomicsqc.readthedocs.io](https://gdcgenomicsqc.readthedocs.io/en/latest/)
 - **Snakemake**: builds DAG from rules, submits HPC jobs, handles failures, locks reproducibility (Apptainer + conda per tool)
 - **Alternative**: hand-written SLURM arrays, manual dependency tracking, fragile orchestration
 - **After this lab**: remaining labs in R. Explore workflow (alter rules, QC thresholds, config toggles). Every Snakemake output visualized
