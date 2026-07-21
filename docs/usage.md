@@ -401,21 +401,21 @@ internal ones; `--list-targets` only shows explicitly designated end-points.
   - Description
 * - `full/f1.pgen`
   - Initial QC: sample and SNP missingness filtering
-* - `full/initial_smiss.smiss`
+* - `full/initial.smiss`
   - Sample missingness statistics (`--smissing`)
-* - `full/initial_vmiss.vmiss`
+* - `full/initial.vmiss`
   - Variant missingness statistics (`--vmissing`)
 * - `full/initial.sexcheck`
   - Sex discrepancy check (`--check-sex`)
-* - `full/initial_het.het`
+* - `full/heterozygosity.het`
   - Heterozygosity check (`--het`)
 * - `full/initial.ibd`
   - IBD estimation (`--genome`)
-* - `full/initial_MAF.afreq`
+* - `full/MAF_check.afreq`
   - Allele frequency report (`--freq`)
 * - `full/MAF_check.smiss`
   - Sample missingness per ancestry group
-* - `full/initial_HWE.hardy`
+* - `full/standardFilter.hardy`
   - HWE exact test (`--hardy`)
 * - `full/standardFilter.LDpruned`
   - LD-pruned variant set
@@ -478,7 +478,7 @@ earlier steps:
 
 ```bash
 snakemake --profile=../profiles/hpc --configfile ../config/config.yaml \
-    AFR/initial_MAF.afreq
+    AFR/MAF_check.afreq
 ```
 
 The same pattern applies to every ancestry group listed in the config

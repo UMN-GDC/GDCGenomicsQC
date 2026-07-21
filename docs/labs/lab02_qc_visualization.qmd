@@ -54,7 +54,7 @@ OUT_DIR <- "/scratch.global/GDC/r25outputs/toy_chr"
 subset <- "full"
 CHR <- 13  # chromosome to visualize
 
-smiss <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_smiss_", CHR, ".smiss")))
+smiss <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_", CHR, ".smiss")))
 glimpse(smiss)
 
 ggplot(smiss, aes(x = F_MISS * 100)) +
@@ -68,7 +68,7 @@ ggplot(smiss, aes(x = F_MISS * 100)) +
 ### Variant Missingness
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-vmiss <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_vmiss_", CHR, ".vmiss")))
+vmiss <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_", CHR, ".vmiss")))
 glimpse(vmiss)
 
 ggplot(vmiss, aes(x = F_MISS * 100)) +
@@ -82,7 +82,7 @@ ggplot(vmiss, aes(x = F_MISS * 100)) +
 ### Allele Frequency
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-freq <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_MAF_", CHR, ".afreq")))
+freq <- read_tsv(file.path(OUT_DIR, subset, paste0("MAF_check_", CHR, ".afreq")))
 glimpse(freq)
 
 freq %>%
@@ -96,7 +96,7 @@ freq %>%
 ### Hardy-Weinberg Equilibrium
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
-hwe <- read_tsv(file.path(OUT_DIR, subset, paste0("initial_HWE_", CHR, ".hardy")))
+hwe <- read_tsv(file.path(OUT_DIR, subset, paste0("standardFilter_", CHR, ".hardy")))
 glimpse(hwe)
 
 hwe %>%
@@ -172,7 +172,7 @@ Similarly, compare the number of variants passing HWE per ancestry:
 
 ```{r, message=FALSE, warning=FALSE, error=FALSE}
 anc_hwe <- map_dfr(set_names(ancestries), function(a) {
-  f <- file.path(OUT_DIR, a, "initial_HWE.hardy")
+  f <- file.path(OUT_DIR, a, "standardFilter.hardy")
   if (file.exists(f)) {
     read_tsv(f, show_col_types = FALSE) |>
       summarise(

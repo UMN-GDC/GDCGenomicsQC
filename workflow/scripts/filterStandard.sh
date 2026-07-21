@@ -9,7 +9,7 @@ mkdir -p $STAGE/intermediates/standard_filter
 INTER_FILEPREFIX=$STAGE/intermediates/standard_filter/intermediate
 
 # Minor allele frequency filter
-plink2 --pfile $INPUT --freq --out $STAGE/initial_MAF --threads $THREADS
+plink2 --pfile $INPUT --freq --out $STAGE/MAF_check --threads $THREADS
 plink2 --pfile $INPUT --maf 0.01 --make-pgen --out ${INTER_FILEPREFIX}_6 --threads $THREADS
 
 # Hardy-Weinberg equilibrium check

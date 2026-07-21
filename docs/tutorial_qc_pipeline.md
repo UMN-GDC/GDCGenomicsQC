@@ -432,9 +432,9 @@ The QC pipeline generates many intermediate files for detailed analysis:
   - Merged, filtered dataset
 * - ``f1.ldpruned.*``
   - LD-pruned dataset for PCA/relatedness
-* - ``initial_smiss.smiss``
+* - ``initial.smiss``
   - Sample missingness table
-* - ``initial_vmiss.vmiss``
+* - ``initial.vmiss``
   - Variant missingness table
 ```
 
@@ -449,7 +449,7 @@ The QC pipeline generates many intermediate files for detailed analysis:
   - Final filtered dataset
 * - ``f1.b38.f2.ldpruned.*``
   - Final LD-pruned dataset
-* - ``initial_MAF.afreq``
+* - ``MAF_check.afreq``
   - Allele frequency table
 * - ``zoomhwe.hwe``
   - Variants failing HWE p < 1×10⁻⁵
