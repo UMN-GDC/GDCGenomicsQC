@@ -57,6 +57,9 @@ rule convertPlinkPerChromosome:
         ),
         smiss=OUT_DIR / "{subset}" / "initial_{CHR}.smiss",
         vmiss=OUT_DIR / "{subset}" / "initial_{CHR}.vmiss",
+        maf=OUT_DIR / "{subset}" / "MAF_check_{CHR}.afreq",
+        hardy=OUT_DIR / "{subset}" / "standardFilter_{CHR}.hardy",
+        het=OUT_DIR / "{subset}" / "heterozygosity_{CHR}.het",
     input:
         fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
         keep=get_ancestry_file,
@@ -192,6 +195,10 @@ fi
 
 bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_4 {params.output_prefix} {threads} {output.tempDir}
 
+cp {output.tempDir}/initial_QC.afreq {output.maf}
+cp {output.tempDir}/initial_QC.hardy {output.hardy}
+cp {output.tempDir}/het_indep.het {output.het}
+
 mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
 mv {output.tempDir}/intermediate_0.smiss {output.smiss}
 for ext in pgen pvar psam; do
@@ -238,6 +245,9 @@ if not INPUT_IS_PER_CHROMOSOME:
             ),
             smiss=OUT_DIR / "{subset}" / "initial.smiss",
             vmiss=OUT_DIR / "{subset}" / "initial.vmiss",
+            maf=OUT_DIR / "{subset}" / "MAF_check.afreq",
+            hardy=OUT_DIR / "{subset}" / "standardFilter.hardy",
+            het=OUT_DIR / "{subset}" / "heterozygosity.het",
         input:
             fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
             keep=get_ancestry_file,
@@ -336,6 +346,9 @@ if not INPUT_IS_PER_CHROMOSOME:
             fi
 
             bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_3 {params.output_prefix} {threads} {output.tempDir}
+            cp {output.tempDir}/initial_QC.afreq {output.maf}
+            cp {output.tempDir}/initial_QC.hardy {output.hardy}
+            cp {output.tempDir}/het_indep.het {output.het}
             mkdir -p {output.tempDir}
             mv {output.tempDir}/intermediate_00.vmiss {output.vmiss}
             mv {output.tempDir}/intermediate_00.smiss {output.smiss}

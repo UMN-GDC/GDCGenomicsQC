@@ -20,9 +20,6 @@ if INPUT_IS_PER_CHROMOSOME:
             pgen=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pgen",
             pvar=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pvar",
             psam=OUT_DIR / "{subset}" / "f1.f2_{CHR}.psam",
-            maf=OUT_DIR / "{subset}" / "MAF_check_{CHR}.afreq",
-            hardy=OUT_DIR / "{subset}" / "standardFilter_{CHR}.hardy",
-            het=OUT_DIR / "{subset}" / "heterozygosity_{CHR}.het",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter_{CHR}")
             ),
@@ -53,21 +50,17 @@ if INPUT_IS_PER_CHROMOSOME:
               cp {input.psam} {output.tempDir}/step1.psam
             fi
 
-            plink2 --pfile {output.tempDir}/step1 --freq --out {params.output_dir}/MAF_check_{wildcards.CHR} --threads {threads}
             plink2 --pfile {output.tempDir}/step1 --maf 0.01 --make-pgen --out {output.tempDir}/step2 --threads {threads}
 
             plink2 --pfile {output.tempDir}/step2 --hardy --out {output.tempDir}/step2 --threads {threads}
-            cp {output.tempDir}/step2.hardy {output.hardy}
             awk '$9 < 1e-5' {output.tempDir}/step2.hardy > {params.output_dir}/zoomhwe_{wildcards.CHR}.hwe
             plink2 --pfile {output.tempDir}/step2 --hwe 1e-6 --make-pgen --out {output.tempDir}/step3a --threads {threads}
             plink2 --pfile {output.tempDir}/step3a --hwe 1e-10 --make-pgen --out {output.tempDir}/step3 --threads {threads}
 
             plink2 --pfile {output.tempDir}/step3 --indep-pairwise 50 5 0.2 --out {output.tempDir}/indepSNP --threads {threads}
             plink2 --pfile {output.tempDir}/step3 --extract {output.tempDir}/indepSNP.prune.in --het --out {output.tempDir}/hetcheck --threads {threads}
-            [ -f {output.tempDir}/hetcheck.het ] || touch {output.tempDir}/hetcheck.het
 
             Rscript --no-save {params.scripts_dir}/heterozygosity_outliers_list.R {output.tempDir}/hetcheck.het {params.output_dir}
-            cp {output.tempDir}/hetcheck.het {output.het}
             if [ -f {params.output_dir}/het_fail_ind.txt ]; then
                 sed 's/"//g' {params.output_dir}/het_fail_ind.txt | awk '{{print $1, $2}}' > {output.tempDir}/het_fail.txt
                 plink2 --pfile {output.tempDir}/step3 --remove {output.tempDir}/het_fail.txt --make-pgen --out {output.tempDir}/step4 --threads {threads}
@@ -108,9 +101,6 @@ else:
             LDpgen=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pgen",
             LDpvar=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.pvar",
             LDpsam=OUT_DIR / "{subset}" / "f1.b38.f2.ldpruned.psam",
-            maf=OUT_DIR / "{subset}" / "MAF_check.afreq",
-            hardy=OUT_DIR / "{subset}" / "standardFilter.hardy",
-            het=OUT_DIR / "{subset}" / "heterozygosity.het",
             tempDir=temp(
                 directory(OUT_DIR / "{subset}" / "intermediates" / "standard_filter")
             ),
@@ -139,9 +129,6 @@ else:
               cp {input.psam} {output.tempDir}/pastSex.psam
             fi
             bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
-
-            cp {output.tempDir}/intermediate_6.hardy {output.hardy}
-            [ -f {params.output_dir}/R_check.het ] && cp {params.output_dir}/R_check.het {output.het} || touch {output.het}
 
             for ext in pgen pvar psam; do
                 mv {params.output_dir}/standardFilter.$ext {params.output_dir}/f1.b38.f2.$ext

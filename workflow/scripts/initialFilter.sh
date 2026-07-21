@@ -20,4 +20,11 @@ plink2 --pfile ${INTER_FILEPREFIX}_2 --geno 0.02 --make-pgen --out ${INTER_FILEP
 plink2 --pfile ${INTER_FILEPREFIX}_3 --mind 0.02 --make-pgen --out $OUTPRE --threads $THREADS
 
 plink2 --pfile $OUTPRE --indep-pairwise 500 10 0.1 --out $OUTPRE --threads $THREADS
-plink2 --pfile $OUTPRE --extract ${OUTPRE}.prune.in --make-pgen --out ${OUTPRE}.LDpruned  --threads $THREADS
+plink2 --pfile $OUTPRE --extract ${OUTPRE}.prune.in --make-pgen --out ${OUTPRE}.LDpruned --threads $THREADS
+
+# Pre-Standard-QC metrics (guaranteed regardless of applyStandardQualityControl)
+plink2 --pfile $OUTPRE --freq --out $TEMP/initial_QC --threads $THREADS
+plink2 --pfile $OUTPRE --hardy --out $TEMP/initial_QC --threads $THREADS
+plink2 --pfile $OUTPRE --indep-pairwise 50 5 0.2 --out $TEMP/het_indep --threads $THREADS
+plink2 --pfile $OUTPRE --extract $TEMP/het_indep.prune.in --het --out $TEMP/het_indep --threads $THREADS
+[ -f $TEMP/het_indep.het ] || touch $TEMP/het_indep.het
