@@ -31,12 +31,15 @@ if INPUT_IS_PER_CHROMOSOME:
             output_prefix=lambda wildcards, output: str(output.pgen)[:-5],
             relatedness=config.get("relatedness", {}).get("method", "king"),
             scripts_dir=SCRIPTS_DIR,
+            hwe_k=config.get("hwe_k", ""),
         shell:
             """
             echo "Standard QC: Variants and samples filtering"
             echo "Data subset: {wildcards.subset}"
             echo "Chromosome: {wildcards.CHR}"
             mkdir -p {output.tempDir}
+
+            HWE_K="{params.hwe_k}"
 
             if [[ "{params.sex_check}" == "True" ]]; then
               echo "Performing Sex check"
@@ -54,8 +57,8 @@ if INPUT_IS_PER_CHROMOSOME:
 
             plink2 --pfile {output.tempDir}/step2 --hardy --out {output.tempDir}/step2 --threads {threads}
             awk '$9 < 1e-5' {output.tempDir}/step2.hardy > {params.output_dir}/zoomhwe_{wildcards.CHR}.hwe
-            plink2 --pfile {output.tempDir}/step2 --hwe 1e-6 --make-pgen --out {output.tempDir}/step3a --threads {threads}
-            plink2 --pfile {output.tempDir}/step3a --hwe 1e-10 --make-pgen --out {output.tempDir}/step3 --threads {threads}
+            plink2 --pfile {output.tempDir}/step2 --hwe 1e-6 $HWE_K --make-pgen --out {output.tempDir}/step3a --threads {threads}
+            plink2 --pfile {output.tempDir}/step3a --hwe 1e-10 $HWE_K --make-pgen --out {output.tempDir}/step3 --threads {threads}
 
             plink2 --pfile {output.tempDir}/step3 --indep-pairwise 50 5 0.2 --out {output.tempDir}/indepSNP --threads {threads}
             plink2 --pfile {output.tempDir}/step3 --extract {output.tempDir}/indepSNP.prune.in --het --out {output.tempDir}/hetcheck --threads {threads}
@@ -111,11 +114,14 @@ else:
             input_prefix=lambda wildcards, input: input.pgen[:-5],
             relatedness=config.get("relatedness", {}).get("method", "king"),
             scripts_dir=SCRIPTS_DIR,
+            hwe_k=config.get("hwe_k", ""),
         shell:
             """
             echo "Standard QC: Variants and samples filtering"
             echo "Data subset: {wildcards.subset}"
             mkdir -p {output.tempDir}
+
+            HWE_K="{params.hwe_k}"
 
             if [[ "{params.sex_check}" == "True" ]]; then
               echo "Performing Sex check"
@@ -128,7 +134,7 @@ else:
               cp {input.pvar} {output.tempDir}/pastSex.pvar
               cp {input.psam} {output.tempDir}/pastSex.psam
             fi
-            bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads}
+            bash {params.scripts_dir}/filterStandard.sh {output.tempDir}/pastSex {params.output_dir} {threads} $HWE_K
 
             for ext in pgen pvar psam; do
                 mv {params.output_dir}/standardFilter.$ext {params.output_dir}/f1.b38.f2.$ext

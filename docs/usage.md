@@ -256,6 +256,15 @@ SEX_CHECK: false
 GRM: true
 thin: false
 
+# QC missingness thresholds (default values shown; set to null to skip)
+initial_variant_missingness: 0.1     # Initial --geno (convertPlink per-chromosome)
+final_variant_missingness: 0.02      # Final --geno (initialFilter.sh after allele alignment)
+initial_subject_missingness: 0.1     # Initial --mind (initialFilter.sh)
+final_subject_missingness: 0.02      # Final --mind (initialFilter.sh)
+
+# HWE sample-size scaling (null = fixed threshold)
+# hwe_k: 0.001                       # Greer et al. (2024) recommendation for large studies
+
 # Ancestry analysis
 ancestry:
     threshold: 0.8

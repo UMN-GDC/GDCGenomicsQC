@@ -206,17 +206,16 @@ het <- read_tsv(file.path(OUT_DIR, subset, "heterozygosity.het"))
 glimpse(het)
 
 het %>%
-  mutate(HET_RATE = (N_NM - O_HOM) / N_NM) %>%
-  ggplot(aes(x = HET_RATE)) +
+  ggplot(aes(x = F)) +
   geom_histogram(bins = 30, fill = "darkorange", alpha = 0.7) +
-  geom_vline(xintercept = mean((het$N_NM - het$O_HOM) / het$N_NM) + c(-3, 3) * sd((het$N_NM - het$O_HOM) / het$N_NM),
+  geom_vline(xintercept = mean(het$F) + c(-3, 3) * sd(het$F),
              color = "red", linetype = "dashed") +
-  labs(x = "Heterozygosity Rate", y = "Number of Samples",
-       title = "Heterozygosity Distribution with ±3SD Thresholds") +
+  labs(x = "Inbreeding Coefficient (F)", y = "Number of Samples",
+       title = "Heterozygosity (F Statistic) Distribution with ±3SD Thresholds") +
   theme_minimal()
 ```
 
-- **±3SD lines**: default het outlier threshold. Samples outside are flagged for removal. Tight cluster expected; wide spread or multiple modes suggests contamination or batch effects.
+- **±3SD lines**: default het outlier threshold based on the inbreeding coefficient `F`. Samples outside are flagged for removal. Tight cluster expected; wide spread or multiple modes suggests contamination or batch effects.
 
 - **What to look for**: if one ancestry group shows higher missingness or HWE deviation, possible causes:
   - **Population-specific genotyping artifacts**: assay performs differently across ancestral backgrounds (probe bias, differential amplification)

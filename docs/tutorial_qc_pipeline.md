@@ -188,6 +188,15 @@ relatedness:
 SEX_CHECK: true  # Enable/disable sex verification
 GRM: true  # Compute genetic relationship matrix
 thin: false
+
+# Missingness thresholds (optional, default values shown)
+initial_variant_missingness: 0.1     # Initial --geno (convertPlink per-chromosome)
+final_variant_missingness: 0.02      # Final --geno (initialFilter.sh after allele alignment)
+initial_subject_missingness: 0.1     # Initial --mind (initialFilter.sh)
+final_subject_missingness: 0.02      # Final --mind (initialFilter.sh)
+
+# HWE sample-size scaling (optional, default null = fixed threshold)
+# hwe_k: 0.001
 ```
 
 **See also:** [](usage.md) for configuration options, [](installation.md) for software setup.
@@ -219,6 +228,13 @@ SEX_CHECK: true
 thin: false
 conda-frontend: mamba
 
+# Missingness thresholds (optional, defaults shown)
+# initial_variant_missingness: 0.1
+# final_variant_missingness: 0.02
+# initial_subject_missingness: 0.1
+# final_subject_missingness: 0.02
+# hwe_k: null
+
 # Internal PCA (optional)
 internalPCA:
     method: "plink2"  # "plink2", "pcair", or "both"
@@ -231,6 +247,11 @@ Key parameters:
 - ``SEX_CHECK``: Enable/disable sex verification (default: true)
 - ``relatedness.method``: Relatedness filtering method ("0" for none, "king" or "primus" for removal)
 - ``internalPCA.method``: PCA method ("plink2", "pcair", or "both")
+- ``initial_variant_missingness``: Initial --geno threshold (default: 0.1). Applied per-chromosome in ``convertPlink`` before allele alignment.
+- ``final_variant_missingness``: Final --geno threshold (default: 0.02). Applied in ``initialFilter.sh`` after allele alignment.
+- ``initial_subject_missingness``: Initial --mind threshold (default: 0.1). Applied in ``initialFilter.sh``.
+- ``final_subject_missingness``: Final --mind threshold (default: 0.02). Applied in ``initialFilter.sh`` after variant missingness filter.
+- ``hwe_k``: HWE sample-size scaling factor k (default: null = fixed threshold). When set, the effective p-value threshold becomes p × 10^(−n×k). Greer et al. (2024) recommends k=0.001 for large studies.
 
 ### Step 2: Run Initial QC
 
@@ -274,10 +295,14 @@ snakemake --profile=../profiles/hpc \
 
 The Initial QC stage performs:
 
-1. **Sample missingness (initial)**: Removes samples with >10% missing genotypes (``--mind 0.1``)
-2. **Variant missingness**: Removes variants with >2% missingness (``--geno 0.02``)
-3. **Sample missingness (final)**: Removes samples with >2% missingness (``--mind 0.02``)
+1. **Sample missingness (initial)**: Removes samples with >10% missing genotypes (``--mind 0.1``; configurable via ``initial_subject_missingness``)
+2. **Variant missingness**: Removes variants with >2% missingness (``--geno 0.02``; configurable via ``final_variant_missingness``)
+3. **Sample missingness (final)**: Removes samples with >2% missingness (``--mind 0.02``; configurable via ``final_subject_missingness``)
 4. **LD pruning**: Creates pruned dataset for downstream analyses (``--indep-pairwise 500 10 0.1``)
+
+```{tip}
+The initial per-chromosome variant missingness threshold is controlled by ``initial_variant_missingness`` (default: 0.1) and is applied during the ``convertPlink`` step, before allele alignment. The final ``--geno`` threshold (``final_variant_missingness``) applies after alignment in ``initialFilter.sh``.
+```
 
 ### Step 3: Run Standard QC
 
@@ -318,7 +343,7 @@ snakemake --profile=../profiles/hpc \
 The Standard QC stage applies additional filters:
 
 1. **Minor Allele Frequency (MAF)**: Removes variants with MAF < 1% (``--maf 0.01``)
-2. **Hardy-Weinberg Equilibrium (HWE)**: Removes variants failing HWE at p < 1×10⁻⁶ (discovery) and p < 1×10⁻¹⁰ (validation)
+2. **Hardy-Weinberg Equilibrium (HWE)**: Removes variants failing HWE at p < 1×10⁻⁶ (discovery) and p < 1×10⁻¹⁰ (validation). The threshold can be scaled by sample size using ``hwe_k`` — when set, the effective p-value threshold becomes p × 10^(−n×k). Greer et al. (2024) recommends k=0.001 for large studies to avoid discarding genuine SNP-trait associations.
 3. **Heterozygosity check**: Identifies samples with FWER > 3 standard deviations from mean
 4. **Sex check**: Optionally verifies reported sex matches genetic sex
 

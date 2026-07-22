@@ -3,6 +3,7 @@
 INPUT=$1
 STAGE=$2
 THREADS=$3
+HWE_K=$4
 
 SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p $STAGE/intermediates/standard_filter
@@ -15,8 +16,8 @@ plink2 --pfile $INPUT --maf 0.01 --make-pgen --out ${INTER_FILEPREFIX}_6 --threa
 # Hardy-Weinberg equilibrium check
 plink2 --pfile ${INTER_FILEPREFIX}_6 --hardy --out ${INTER_FILEPREFIX}_6 --threads $THREADS
 awk '$9 < 1e-5' ${INTER_FILEPREFIX}_6.hardy > $STAGE/zoomhwe.hwe
-plink2 --pfile ${INTER_FILEPREFIX}_6 --hwe 1e-6 --make-pgen --out ${INTER_FILEPREFIX}_7a --threads $THREADS
-plink2 --pfile ${INTER_FILEPREFIX}_7a --hwe 1e-10 --make-pgen --out ${INTER_FILEPREFIX}_7 --threads $THREADS
+plink2 --pfile ${INTER_FILEPREFIX}_6 --hwe 1e-6 $HWE_K --make-pgen --out ${INTER_FILEPREFIX}_7a --threads $THREADS
+plink2 --pfile ${INTER_FILEPREFIX}_7a --hwe 1e-10 $HWE_K --make-pgen --out ${INTER_FILEPREFIX}_7 --threads $THREADS
 
 # Heterozygosity check
 INVERSION="$SCRIPTS_DIR/inversion.txt"

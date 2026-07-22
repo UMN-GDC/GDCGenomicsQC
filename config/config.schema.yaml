@@ -470,6 +470,73 @@ keep_variants:
       1:12345:A:G
       2:67890:T:C
 
+remove_samples:
+  type: str
+  nullable: true
+  default: null
+  description: |
+    Path to a text file with IIDs (one per line) to remove from the data at the start.
+    These samples are excluded before ancestry-specific keep files are applied.
+    Example format:
+      bad_sample_1
+      bad_sample_2
+
+exclude_variants:
+  type: str
+  nullable: true
+  default: null
+  description: |
+    Path to a text file with variant IDs (one per line) to exclude from the data at the start.
+    Applied before keep_variants (exclusion first, then extraction).
+    IDs must match the variant ID format in the input data (e.g., chr:pos:ref:alt).
+    Example format:
+      1:12345:A:G
+      2:67890:T:C
+
+initial_variant_missingness:
+  type: float
+  nullable: true
+  default: 0.1
+  description: |
+    Initial variant missingness threshold for --geno, applied in the convertPlink
+    per-chromosome step before allele alignment. Variants with > this fraction of
+    missing genotypes are removed.
+
+final_variant_missingness:
+  type: float
+  nullable: true
+  default: 0.02
+  description: |
+    Final variant missingness threshold for --geno, applied in initialFilter.sh
+    after allele alignment. More stringent than initial_variant_missingness.
+
+initial_subject_missingness:
+  type: float
+  nullable: true
+  default: 0.1
+  description: |
+    Initial sample missingness threshold for --mind, applied in initialFilter.sh
+    before the final variant missingness filter.
+
+final_subject_missingness:
+  type: float
+  nullable: true
+  default: 0.02
+  description: |
+    Final sample missingness threshold for --mind, applied in initialFilter.sh
+    after the final variant missingness filter.
+
+hwe_k:
+  type: float
+  nullable: true
+  default: null
+  description: |
+    Sample-size scaling factor k for the --hwe filter in applyStandardQualityControl.
+    The effective HWE p-value threshold becomes p * 10^(-n*k), where n is the sample
+    size. When null (default), k=0 is used (traditional fixed threshold).
+    Greer et al. (2024) recommends k=0.001 for large sample sizes to avoid
+    throwing out genuine SNP-trait associations due to overpowered HWE tests.
+
 convertNfilt:
   type: dict
   default: {}

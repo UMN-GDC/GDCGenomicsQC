@@ -56,6 +56,20 @@ def get_keep_variants(*args, **kwargs):
     return []
 
 
+def get_remove_samples(*args, **kwargs):
+    path = config.get("remove_samples")
+    if path and Path(path).exists():
+        return ancient(path)
+    return []
+
+
+def get_exclude_variants(*args, **kwargs):
+    path = config.get("exclude_variants")
+    if path and Path(path).exists():
+        return ancient(path)
+    return []
+
+
 def uses_rfmix():
     return config.get("localAncestry", {}).get("RFMIX", False)
 

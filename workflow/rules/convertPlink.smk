@@ -65,18 +65,24 @@ rule convertPlinkPerChromosome:
         keep=get_ancestry_file,
         keep_samples=get_keep_samples,
         extract=get_keep_variants,
+        remove_samples=get_remove_samples,
+        exclude_variants=get_exclude_variants,
         ref_pvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar"),
-    params:
-        scripts_dir=SCRIPTS_DIR,
-        format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
-        chrom_input=lambda wc: config.get("INPUT", "").format(CHR=wc.CHR),
-        thin=config.get("thin", False),
-        min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
-        max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
-        qual_min=config.get("convertNfilt", {}).get("qual_min"),
-        output_prefix=lambda wildcards, output: output.pgen.replace(".pgen", ""),
-        ld_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / f"f1.ldpruned_{wildcards.CHR}"),
-    shell:
+        params:
+            scripts_dir=SCRIPTS_DIR,
+            format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+            chrom_input=lambda wc: config.get("INPUT", "").format(CHR=wc.CHR),
+            thin=config.get("thin", False),
+            min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
+            max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
+            qual_min=config.get("convertNfilt", {}).get("qual_min"),
+            output_prefix=lambda wildcards, output: output.pgen.replace(".pgen", ""),
+            ld_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / f"f1.ldpruned_{wildcards.CHR}"),
+            initial_variant_missingness=config.get("initial_variant_missingness", 0.1),
+            final_variant_missingness=config.get("final_variant_missingness", 0.02),
+            initial_subject_missingness=config.get("initial_subject_missingness", 0.1),
+            final_subject_missingness=config.get("final_subject_missingness", 0.02),
+        shell:
         """
 mkdir -p {output.tempDir}
 
@@ -108,6 +114,10 @@ else
     exit 1
 fi
 
+if [ -n "{input.remove_samples}" ]; then
+    CMD="$CMD --remove {input.remove_samples}"
+fi
+
 KEEP_FILES=""
 if [[ "{wildcards.subset}" != "full" ]]; then
     KEEP_FILES="{input.keep}"
@@ -126,6 +136,10 @@ if [ -n "$KEEP_FILES" ]; then
     CMD="$CMD --keep $KEEP_FILES"
 fi
 
+if [ -n "{input.exclude_variants}" ]; then
+    CMD="$CMD --exclude {input.exclude_variants}"
+fi
+
 if [ -n "{input.extract}" ]; then
     CMD="$CMD --extract {input.extract}"
 fi
@@ -142,7 +156,7 @@ $CMD
 
 plink2 --pfile {output.tempDir}/intermediate_0 \
        --make-pgen \
-       --geno 0.1 \
+       --geno {params.initial_variant_missingness} \
        --threads {threads} \
        --output-chr 26 \
        --sort-vars \
@@ -193,6 +207,9 @@ else
            --out {output.tempDir}/intermediate_4
 fi
 
+INITIAL_SUBJECT_MISSINGNESS={params.initial_subject_missingness} \
+FINAL_VARIANT_MISSINGNESS={params.final_variant_missingness} \
+FINAL_SUBJECT_MISSINGNESS={params.final_subject_missingness} \
 bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_4 {params.output_prefix} {threads} {output.tempDir}
 
 cp {output.tempDir}/initial_QC.afreq {output.maf}
@@ -253,6 +270,8 @@ if not INPUT_IS_PER_CHROMOSOME:
             keep=get_ancestry_file,
             keep_samples=get_keep_samples,
             extract=get_keep_variants,
+            remove_samples=get_remove_samples,
+            exclude_variants=get_exclude_variants,
             ref_pvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar"),
         params:
             format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
@@ -264,6 +283,9 @@ if not INPUT_IS_PER_CHROMOSOME:
             qual_min=config.get("convertNfilt", {}).get("qual_min"),
             output_prefix=lambda wildcards, output: str(output.pgen)[:-5],
             scripts_dir=SCRIPTS_DIR,
+            final_variant_missingness=config.get("final_variant_missingness", 0.02),
+            initial_subject_missingness=config.get("initial_subject_missingness", 0.1),
+            final_subject_missingness=config.get("final_subject_missingness", 0.02),
         shell:
             """
             mkdir -p {output.tempDir}
@@ -271,6 +293,11 @@ if not INPUT_IS_PER_CHROMOSOME:
             FORMAT="{params.format}"
             SINGLE_INPUT="{params.single_input}"
             SINGLE_INPUT_PREFIX="{params.single_input_prefix}"
+
+            REMOVE_ARG=""
+            if [ -n "{input.remove_samples}" ]; then
+                REMOVE_ARG="--remove {input.remove_samples}"
+            fi
 
             KEEP_ARG=""
             if [[ "{wildcards.subset}" != "full" ]]; then
@@ -290,6 +317,11 @@ if not INPUT_IS_PER_CHROMOSOME:
                 KEEP_ARG="--keep $KEEP_ARG"
             fi
 
+            EXCLUDE_ARG=""
+            if [ -n "{input.exclude_variants}" ]; then
+                EXCLUDE_ARG="--exclude {input.exclude_variants}"
+            fi
+
             EXTRACT_ARG=""
             if [ -n "{input.extract}" ]; then
                 EXTRACT_ARG="--extract {input.extract}"
@@ -298,13 +330,13 @@ if not INPUT_IS_PER_CHROMOSOME:
             echo "Input is a single file: $SINGLE_INPUT"
 
             if [ "$FORMAT" = "bed" ]; then
-                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
+                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
                 plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             elif [ "$FORMAT" = "vcf" ]; then
-                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
+                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
                 plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             else
-                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $KEEP_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
+                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
                 plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
             fi
 
@@ -345,6 +377,9 @@ if not INPUT_IS_PER_CHROMOSOME:
                        --out {output.tempDir}/intermediate_3
             fi
 
+            INITIAL_SUBJECT_MISSINGNESS={params.initial_subject_missingness} \
+            FINAL_VARIANT_MISSINGNESS={params.final_variant_missingness} \
+            FINAL_SUBJECT_MISSINGNESS={params.final_subject_missingness} \
             bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_3 {params.output_prefix} {threads} {output.tempDir}
             cp {output.tempDir}/initial_QC.afreq {output.maf}
             cp {output.tempDir}/initial_QC.hardy {output.hardy}

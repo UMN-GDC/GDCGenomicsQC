@@ -39,8 +39,20 @@ harmonize: true  # Set to false if data is already harmonized
 ### Module 3: Initial QC
 Performs Quality Control prior to relatedness checks.
 
-- Exclude SNPs and individuals with >10% missingness (**Plink**).
-- Exclude SNPs and individuals with >2% missingness (**Plink**).
+- Exclude SNPs and individuals with >10% missingness (**Plink**; configurable via ``initial_variant_missingness`` and ``initial_subject_missingness``).
+- Exclude SNPs and individuals with >2% missingness (**Plink**; configurable via ``final_variant_missingness`` and ``final_subject_missingness``).
+
+The variant missingness filter is applied in two stages:
+
+1. ``initial_variant_missingness`` (default: 0.1) — applied per-chromosome in the ``convertPlink`` step, before allele alignment.
+2. ``final_variant_missingness`` (default: 0.02) — applied in ``initialFilter.sh`` after allele alignment, using a more stringent threshold.
+
+Sample missingness is also filtered in two stages within ``initialFilter.sh``:
+
+1. ``initial_subject_missingness`` (default: 0.1) — applied before the final variant missingness filter.
+2. ``final_subject_missingness`` (default: 0.02) — applied after the final variant missingness filter.
+
+All four thresholds can be overridden in ``config.yaml`` and are ``nullable`` (set to ``null`` to skip the filter).
 
 ### Module 4: Relatedness
 This module uses **KING** to separate related and unrelated study samples. The module
@@ -160,7 +172,7 @@ Standard GWAS quality control measures on unrelated individuals.
 
 - **Filtering:** Exclude SNPs and individuals with >2% missingness (**Plink**).
 - **MAF:** Exclude SNPs with Minor Allele Frequency < 0.01.
-- **HWE:** Exclude SNPs with p-values < 1e-6 (controls) or < 1e-10 (cases).
+- **HWE:** Exclude SNPs with p-values < 1e-6 (controls) or < 1e-10 (cases). The threshold can be scaled by sample size via the ``hwe_k`` config parameter (default: null, meaning fixed threshold). When set, the effective p-value is p × 10^(−n×k). Greer et al. (2024) recommends k=0.001 for large studies.
 - **Sex Check:** F-values < 0.2 assigned as female, > 0.8 as male.
 
 ### Module 6: Phasing

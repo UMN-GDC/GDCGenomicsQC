@@ -171,8 +171,19 @@ ancestry:
     # Optional: reported_race: "/path/to/reported_race.tsv"
 
 # Optional: subset samples/variants at the very start of the pipeline
-keep_samples: "/path/to/sample_iids.txt"     # One IID per line
-keep_variants: "/path/to/variant_ids.txt"    # One variant ID per line
+keep_samples: "/path/to/sample_iids.txt"       # One IID per line
+keep_variants: "/path/to/variant_ids.txt"      # One variant ID per line
+remove_samples: "/path/to/remove_iids.txt"     # One IID per line — removed before keep files
+exclude_variants: "/path/to/exclude_vars.txt"  # One variant ID per line — excluded before keep_variants
+
+# QC missingness thresholds (optional, default values shown)
+initial_variant_missingness: 0.1     # Initial --geno threshold (convertPlink per-chromosome step)
+final_variant_missingness: 0.02      # Final --geno threshold (initialFilter.sh)
+initial_subject_missingness: 0.1     # Initial --mind threshold (initialFilter.sh)
+final_subject_missingness: 0.02      # Final --mind threshold (initialFilter.sh)
+
+# HWE sample-size scaling factor (optional, default null = fixed threshold)
+# hwe_k: 0.001   # Greer et al. (2024) recommends 0.001 for large studies
 
 INPUT: "/path/to/data/chr{CHR}.vcf.gz"
 OUT_DIR: "/path/to/output"
@@ -215,6 +226,15 @@ ancestry:
 # Optional: subset samples/variants before ancestry classification
 # keep_samples: "/path/to/sample_iids.txt"
 # keep_variants: "/path/to/variant_ids.txt"
+# remove_samples: "/path/to/remove_iids.txt"
+# exclude_variants: "/path/to/exclude_vars.txt"
+
+# Optional: QC missingness thresholds (defaults shown)
+# initial_variant_missingness: 0.1
+# final_variant_missingness: 0.02
+# initial_subject_missingness: 0.1
+# final_subject_missingness: 0.02
+# hwe_k: null    # set to 0.001 for Greer et al. (2024) recommendation
 
 relatedness:
     method: "king"  # "0" for none, "king" or "primus" for removal
@@ -247,6 +267,13 @@ Key parameters:
   - ``"joint"``: Merges study and reference genotypes, computes PCA jointly, then splits by population. Better for capturing study-specific variation but slower.
 - ``keep_samples``: Path to a file with sample IIDs (one per line) to subset data at the start of the pipeline. Applied on top of ancestry-specific keep files.
 - ``keep_variants``: Path to a file with variant IDs (one per line) to subset variants at the start of the pipeline.
+- ``remove_samples``: Path to a file with sample IIDs (one per line) to remove from the data at the start. These samples are excluded before ancestry-specific keep files are applied.
+- ``exclude_variants``: Path to a file with variant IDs (one per line) to exclude from the data at the start. Applied before ``keep_variants`` (exclusion first, then extraction). IDs must match the variant ID format in the input data (e.g., ``chr:pos:ref:alt``).
+- ``initial_variant_missingness``: Initial --geno threshold (default: 0.1). Applied per-chromosome in ``convertPlink`` before allele alignment. Removes variants with >10% missing genotypes.
+- ``final_variant_missingness``: Final --geno threshold (default: 0.02). Applied in ``initialFilter.sh`` after allele alignment. More stringent, removes variants with >2% missing genotypes.
+- ``initial_subject_missingness``: Initial --mind threshold (default: 0.1). Applied in ``initialFilter.sh`` to remove samples with >10% missing genotypes.
+- ``final_subject_missingness``: Final --mind threshold (default: 0.02). Applied in ``initialFilter.sh`` after variant missingness filter. Removes samples with >2% missing genotypes.
+- ``hwe_k``: Sample-size scaling factor k for --hwe in ``applyStandardQualityControl`` (default: null, meaning k=0/fixed threshold). The effective HWE p-value becomes p × 10^(−n×k). Greer et al. (2024) recommends k=0.001 for large studies to avoid discarding genuine associations from overpowered HWE tests.
 
 ### Step 2: Run Classification Pipeline
 
