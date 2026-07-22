@@ -131,7 +131,7 @@ simEffects <- function(out_dirs_list, anc_names_v, herit, corr_mat, maf) {
         }
         df <- read_table(freq_path)
         C_vals[k] <- sum(df$ALT_FREQS > maf, na.rm = TRUE)
-        colnames(df)[ncol(df)] <- paste0("ALT_FREQS_", k)
+        colnames(df)[grep("^ALT_FREQS$", colnames(df))] <- paste0("ALT_FREQS_", k)
         freq_list[[k]] <- df
     }
 
