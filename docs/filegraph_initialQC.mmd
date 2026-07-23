@@ -1,0 +1,54 @@
+---
+title: File graph
+---
+flowchart TB
+  subgraph kgMeta_outs[kgMeta]
+    fa["REF/.../Homo_sapiens.GRCh38.dna.primary_assembly.fa"]
+    gmap["REF/.../genetic_maps.b38.tar.gz"]
+    chain["REF/.../hg19ToHg38.over.chain.gz"]
+    pop["REF/.../population.txt"]
+    ped["REF/.../pedigree.txt"]
+  end
+
+  subgraph convert_outs[convertNfilt - per chromosome]
+    pgen["OUT_DIR/full/f1_{CHR}.pgen/.pvar/.psam"]
+    smiss["OUT_DIR/full/initial_{CHR}.smiss"]
+    vmiss["OUT_DIR/full/initial_{CHR}.vmiss"]
+    maf["OUT_DIR/full/MAF_check_{CHR}.afreq"]
+    hardy["OUT_DIR/full/standardFilter_{CHR}.hardy"]
+    het["OUT_DIR/full/heterozygosity_{CHR}.het"]
+    ldp["OUT_DIR/full/f1.ldpruned_{CHR}.pgen/.pvar/.psam"]
+  end
+
+  subgraph initialFilter_outs[initialFilter]
+    qc_pgen["OUT_DIR/full/f1.f2_{CHR}.pgen/.pvar/.psam"]
+  end
+
+  subgraph Standard_QC_outs[Standard_QC / applyStandardQualityControl]
+    final_pgen["OUT_DIR/full/f1.b38.f2.pgen/.pvar/.psam"]
+    final_ldp["OUT_DIR/full/f1.b38.f2.ldpruned.pgen/.pvar/.psam"]
+  end
+
+  pop --> convertNfilt
+  ped --> convertNfilt
+  fa --> convertNfilt
+
+  convertNfilt --> pgen
+  convertNfilt --> smiss
+  convertNfilt --> vmiss
+  convertNfilt --> maf
+  convertNfilt --> hardy
+  convertNfilt --> het
+  convertNfilt --> ldp
+
+  pgen --> initialFilter
+  initialFilter --> qc_pgen
+
+  qc_pgen --> Standard_QC
+  Standard_QC --> final_pgen
+  Standard_QC --> final_ldp
+
+  style kgMeta fill:#57D95F,stroke-width:2px,color:#333,stroke-dasharray:5 5
+  style convertNfilt fill:#ADD957,stroke-width:2px,color:#333
+  style initialFilter fill:#7ED957,stroke-width:2px,color:#333
+  style Standard_QC fill:#D9A657,stroke-width:2px,color:#333

@@ -1,0 +1,47 @@
+---
+title: File graph
+---
+flowchart TB
+  subgraph kgMeta_outs[kgMeta]
+    fa["REF/.../Homo_sapiens.GRCh38.dna.primary_assembly.fa"]
+    gmap["REF/.../genetic_maps.b38.tar.gz"]
+    chain["REF/.../hg19ToHg38.over.chain.gz"]
+    pop["REF/.../population.txt"]
+    ped["REF/.../pedigree.txt"]
+  end
+
+  subgraph download_outs[download1000GenomesVcf]
+    vcf1["REF/.../1000G_highCoveragePhased_chr1.vcf.gz"]
+    vcf2["REF/.../1000G_highCoveragePhased_chr2.vcf.gz"]
+    vcfX["REF/.../1000G_highCoveragePhased_chr*.vcf.gz + .tbi"]
+  end
+
+  subgraph assemble_outs[assemble1000GenomesReference]
+    ref_pgen["REF/.../1000G_highCoveragephased.pgen/.pvar/.psam"]
+    ref_pruned["REF/.../1000G_highCoveragephased.pruned.pgen/.pvar/.psam"]
+    ref_unrel["REF/.../*.king.cutoff.in.id"]
+  end
+
+  fa --> assemble1000GenomesReference
+  pop --> assemble1000GenomesReference
+  ped --> assemble1000GenomesReference
+  vcf1 --> assemble1000GenomesReference
+  vcf2 --> assemble1000GenomesReference
+  vcfX --> assemble1000GenomesReference
+  assemble1000GenomesReference --> ref_pgen
+  assemble1000GenomesReference --> ref_pruned
+  assemble1000GenomesReference --> ref_unrel
+
+  ref_pgen --> assembleRef
+  ref_pruned --> assembleRef
+  ref_unrel --> assembleRef
+  fa --> assembleRef
+  gmap --> assembleRef
+  chain --> assembleRef
+  pop --> assembleRef
+  ped --> assembleRef
+
+  style kgMeta fill:#57D95F,stroke-width:2px,color:#333,stroke-dasharray:5 5
+  style download fill:#5FD957,stroke-width:2px,color:#333,stroke-dasharray:5 5
+  style assemble1000GenomesReference fill:#7ED957,stroke-width:2px,color:#333
+  style assembleRef fill:#57C5D9,stroke-width:2px,color:#333

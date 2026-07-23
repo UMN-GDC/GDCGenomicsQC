@@ -1,0 +1,55 @@
+---
+title: File graph
+---
+flowchart TB
+  subgraph ref_side[Reference Panel]
+    vcf1["REF/.../1000G_highCoveragePhased_chr*.vcf.gz"]
+    pop["REF/.../population.txt"]
+    ped["REF/.../pedigree.txt"]
+    ref_pgen["REF/.../1000G_highCoveragephased.pgen/.pvar/.psam"]
+    ref_pruned["REF/.../1000G_highCoveragephased.pruned.pgen/.pvar/.psam"]
+    ref_unrel["REF/.../*.king.cutoff.in.id"]
+  end
+
+  subgraph study_side[Study Data]
+    study_pgen["OUT_DIR/full/f1_{CHR}.pgen/.pvar/.psam"]
+    qc_pgen["OUT_DIR/full/f1.f2.pgen/.pvar/.psam"]
+  end
+
+  subgraph pca_outs[PCAreference]
+    eigenvec["OUT_DIR/01-globalAncestry/ref.eigenvec"]
+    eigenval["OUT_DIR/01-globalAncestry/ref.eigenval"]
+    loadings["OUT_DIR/01-globalAncestry/ref.eigenvec.allele"]
+    sscore["OUT_DIR/01-globalAncestry/sampleRefPCscores.sscore"]
+    snplist["OUT_DIR/01-globalAncestry/*.snplist"]
+  end
+
+  vcf1 --> kgAssemble
+  pop --> kgAssemble
+  ped --> kgAssemble
+  kgAssemble --> ref_pgen
+  kgAssemble --> ref_pruned
+  kgAssemble --> ref_unrel
+
+  pop --> convertNfilt
+  ped --> convertNfilt
+  convertNfilt --> study_pgen
+
+  study_pgen --> initialFilter
+  initialFilter --> qc_pgen
+
+  ref_pruned --> PCAreference
+  ref_unrel --> PCAreference
+  qc_pgen --> PCAreference
+  PCAreference --> eigenvec
+  PCAreference --> eigenval
+  PCAreference --> loadings
+  PCAreference --> sscore
+  PCAreference --> snplist
+
+  style kgMeta fill:#57D95F,stroke-width:2px,color:#333,stroke-dasharray:5 5
+  style download fill:#5FD957,stroke-width:2px,color:#333,stroke-dasharray:5 5
+  style kgAssemble fill:#6ED957,stroke-width:2px,color:#333,stroke-dasharray:5 5
+  style convertNfilt fill:#ADD957,stroke-width:2px,color:#333
+  style initialFilter fill:#7ED957,stroke-width:2px,color:#333
+  style PCAreference fill:#D97657,stroke-width:2px,color:#333

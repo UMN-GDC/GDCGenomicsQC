@@ -126,9 +126,9 @@ the PCA reference and running ancestry classification:
 
 ```
 
-The rule graph provides a cleaner view of rule dependencies:
+The file graph shows how input and output files flow through each rule:
 
-```{mermaid} rulegraph_pca.mmd
+```{mermaid} filegraph_pca.mmd
 
 ```
 

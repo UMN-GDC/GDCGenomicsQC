@@ -128,9 +128,9 @@ downloading, merging, and LD-pruning the 1000 Genomes reference:
 
 ```
 
-The rule graph provides a cleaner view of rule dependencies:
+The file graph shows how input and output files flow through each rule:
 
-```{mermaid} rulegraph_assembleRef.mmd
+```{mermaid} filegraph_assembleRef.mmd
 
 ```
 

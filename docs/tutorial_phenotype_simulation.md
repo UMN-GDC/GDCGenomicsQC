@@ -88,9 +88,9 @@ simulation and GRM/PCA computation workflow:
 
 ```
 
-The rule graph provides a cleaner view of rule dependencies:
+The file graph shows how input and output files flow through each rule:
 
-```{mermaid} rulegraph_simulatePhenotype.mmd
+```{mermaid} filegraph_simulatePhenotype.mmd
 
 ```
 

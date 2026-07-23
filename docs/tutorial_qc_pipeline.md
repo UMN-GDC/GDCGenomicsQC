@@ -125,9 +125,9 @@ The pipeline DAG up to the ``run_initialQC`` rule shows the Initial QC workflow:
 
 ```
 
-The rule graph provides a cleaner view of rule dependencies:
+The file graph shows how input and output files flow through each rule:
 
-```{mermaid} rulegraph_initialQC.mmd
+```{mermaid} filegraph_initialQC.mmd
 
 ```
 

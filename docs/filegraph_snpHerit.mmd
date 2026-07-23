@@ -1,0 +1,49 @@
+---
+title: File graph
+---
+flowchart TB
+  subgraph input_data[Input Data]
+    pgen["OUT_DIR/{ANC}/f1.b38.pgen/.pvar/.psam"]
+  end
+
+  subgraph sim_outs[simulatePhenotypes]
+    bed["OUT_DIR/{ANC}/simulated.bed/.bim/.fam"]
+  end
+
+  subgraph grm_outs[computeSimGRM]
+    grm["OUT_DIR/{ANC}/simulated.grm.bin/.grm.id/.grm.N.bin"]
+  end
+
+  subgraph pca_outs[computeSimPCA]
+    eigenvec["OUT_DIR/{ANC}/simulated.eigenvec"]
+  end
+
+  subgraph pheno_outs[extractSimPheno]
+    pheno["OUT_DIR/{ANC}/simulated_pheno1.pheno"]
+  end
+
+  subgraph herit_outs[estimateSnpHeritabilitySimulated]
+    herit["OUT_DIR/{ANC}/herit.csv"]
+  end
+
+  pgen --> simulatePhenotypes
+  simulatePhenotypes --> bed
+
+  bed --> computeSimGRM
+  bed --> computeSimPCA
+  bed --> extractSimPheno
+
+  computeSimGRM --> grm
+  computeSimPCA --> eigenvec
+  extractSimPheno --> pheno
+
+  grm --> estimateSnpHeritabilitySimulated
+  eigenvec --> estimateSnpHeritabilitySimulated
+  pheno --> estimateSnpHeritabilitySimulated
+  estimateSnpHeritabilitySimulated --> herit
+
+  style simulatePhenotypes fill:#ADD957,stroke-width:2px,color:#333
+  style computeSimGRM fill:#7ED957,stroke-width:2px,color:#333
+  style computeSimPCA fill:#5FB0D9,stroke-width:2px,color:#333
+  style extractSimPheno fill:#D9A657,stroke-width:2px,color:#333
+  style estimateSnpHeritabilitySimulated fill:#D97657,stroke-width:2px,color:#333

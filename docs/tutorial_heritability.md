@@ -122,9 +122,9 @@ simulation-to-heritability workflow:
 
 ```
 
-The rule graph provides a cleaner view of rule dependencies:
+The file graph shows how input and output files flow through each rule:
 
-```{mermaid} rulegraph_snpHerit.mmd
+```{mermaid} filegraph_snpHerit.mmd
 
 ```
 
