@@ -19,6 +19,8 @@ tutorial_heritability
 tutorial_phenotype_simulation
 dev_environments
 linux_cheatsheet
+reference_output_formats
+reference_plink2_commands
 ````
 
 ## Getting Started
