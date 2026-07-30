@@ -530,6 +530,13 @@ final_subject_missingness:
     Final sample missingness threshold for --mind, applied in initialFilter.sh
     after the final variant missingness filter.
 
+hwe_p:
+  type: float
+  default: 1e-6
+  description: |
+    HWE p-value threshold for the --hwe filter.
+    Applied as --hwe <hwe_p> [hwe_k].
+
 hwe_k:
   type: float
   nullable: true

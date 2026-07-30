@@ -354,6 +354,9 @@ final_variant_missingness: 0.02
 initial_subject_missingness: 0.1
 final_subject_missingness: 0.02
 
+# HWE p-value threshold
+hwe_p: 1e-6
+
 # HWE scaling factor k (null = traditional fixed threshold)
 # Effective threshold: p * 10^(-n*k); Greer et al. (2024) recommends k=0.001
 hwe_k: null
