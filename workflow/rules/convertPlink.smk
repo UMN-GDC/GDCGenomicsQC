@@ -102,13 +102,13 @@ fi
 CMD=""
 
 if [ "$FORMAT" = "vcf" ]; then
-    CMD="plink2 --vcf $CHROM_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --vcf $CHROM_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
 elif [ "$FORMAT" = "bed" ]; then
     BED_PREFIX=${{CHROM_INPUT%.bed}}
-    CMD="plink2 --bfile $BED_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --bfile $BED_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
 elif [ "$FORMAT" = "pgen" ]; then
     PGEN_PREFIX=${{CHROM_INPUT%.pgen}}
-    CMD="plink2 --pfile $PGEN_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --pfile $PGEN_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
 else
     echo "Unknown format: $FORMAT"
     exit 1
@@ -330,19 +330,19 @@ if not INPUT_IS_PER_CHROMOSOME:
             echo "Input is a single file: $SINGLE_INPUT"
 
             if [ "$FORMAT" = "bed" ]; then
-                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
-                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
+                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {output.tempDir}/intermediate_0
             elif [ "$FORMAT" = "vcf" ]; then
-                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
-                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
+                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {output.tempDir}/intermediate_0
             else
-                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --memory {resources.mem_mb} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
-                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_0
+                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
+                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {output.tempDir}/intermediate_0
             fi
 
-            plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta}  --ref-from-fa force --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_1
+            plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta}  --ref-from-fa force --make-pgen --threads {threads} --out {output.tempDir}/intermediate_1
             cp {output.tempDir}/intermediate_1.pvar {output.original_id_pvar}
-            plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --threads {threads} --memory {resources.mem_mb} --out {output.tempDir}/intermediate_2
+            plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --threads {threads} --out {output.tempDir}/intermediate_2
 
             # === Allele alignment against reference panel ===
             bash {params.scripts_dir}/align_alleles.sh \
@@ -358,7 +358,6 @@ if not INPUT_IS_PER_CHROMOSOME:
                        --flip {output.tempDir}/flip_list.txt \
                        --make-pgen \
                        --threads {threads} \
-                       --memory {resources.mem_mb} \
                        --out {output.tempDir}/intermediate_2_flipped
                 plink2 --pfile {output.tempDir}/intermediate_2_flipped \
                        --fa {input.fasta} \
@@ -366,14 +365,12 @@ if not INPUT_IS_PER_CHROMOSOME:
                        --set-all-var-ids 'chr@:#:$r:$a' \
                        --make-pgen \
                        --threads {threads} \
-                       --memory {resources.mem_mb} \
                        --out {output.tempDir}/intermediate_3
             else
                 echo "[convertPlink] No strand flips needed" >> {log} 2>&1
                 plink2 --pfile {output.tempDir}/intermediate_2 \
                        --make-pgen \
                        --threads {threads} \
-                       --memory {resources.mem_mb} \
                        --out {output.tempDir}/intermediate_3
             fi
 
