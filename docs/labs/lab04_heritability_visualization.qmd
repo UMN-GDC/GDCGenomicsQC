@@ -33,7 +33,7 @@ snpHerit:
 
 - **`method`**: AdjHE (bias-corrected Haseman-Elston, default), GCTA (REML), PredLMM. AdjHE preferred for multi-ancestry settings, less sensitive to model misspecification than REML
 - **`npc`**: genetic PCs as covariates. Reduces bias from population structure, but too many PCs over-absorb true genetic variance, deflating h2
-- **GRM from LD-pruned, crossmapped variants** after QC. Related samples removed via KING (`relatedness.king_cutoff: 0.0884`) before estimation. Cryptic relatedness inflates GRM off-diagonals, biasing h2 upward
+- **GRM from LD-pruned, crossmapped variants** after QC. Related samples removed via KING (`relatedness.cutoff: 0.0884`) before estimation. Cryptic relatedness inflates GRM off-diagonals, biasing h2 upward
 - See [Heritability Tutorial](https://gdcgenomicsqc.readthedocs.io/en/latest/tutorial_heritability.html) for full walkthrough
 
 ## Output

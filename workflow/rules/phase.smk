@@ -3,21 +3,21 @@ def get_chrom(wildcards):
 
 
 def get_input_pgen(wildcards):
-    if "{CHR}" in config.get("INPUT", ""):
+    if INPUT_IS_PER_CHROMOSOME:
         return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.unrel.pgen"
     else:
         return OUT_DIR / "full" / "f1.b38.f2.unrel.pgen"
 
 
 def get_input_pvar(wildcards):
-    if "{CHR}" in config.get("INPUT", ""):
+    if INPUT_IS_PER_CHROMOSOME:
         return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.unrel.pvar"
     else:
         return OUT_DIR / "full" / "f1.b38.f2.unrel.pvar"
 
 
 def get_input_psam(wildcards):
-    if "{CHR}" in config.get("INPUT", ""):
+    if INPUT_IS_PER_CHROMOSOME:
         return OUT_DIR / "full" / f"f1.f2_{wildcards.CHR}.unrel.psam"
     else:
         return OUT_DIR / "full" / "f1.b38.f2.unrel.psam"

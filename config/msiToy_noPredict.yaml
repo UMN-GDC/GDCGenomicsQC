@@ -22,7 +22,7 @@ convertNfilt:
 # QC Settings
 relatedness:
     method: "king"  # "0" = skip (assume unrelated), "king" = KING algorithm
-    king_cutoff: 0.0884
+    cutoff: 0.0884
 
 SEX_CHECK: false
 GRM: true

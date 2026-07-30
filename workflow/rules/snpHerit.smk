@@ -135,16 +135,16 @@ EOF
                 mem_mb=32000,
                 runtime=720,
             input:
-                grm_bin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.bin",
-                grm_id=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.id",
-                grm_Nbin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
+                grm_bin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.grm.bin",
+                grm_id=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.grm.id",
+                grm_Nbin=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.grm.N.bin",
                 eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
             output:
                 estimates=OUT_DIR / "{subset}" / SNP_HERIT_DAG_OUTPUT,
             params:
                 argfile=lambda w: OUT_DIR / w.subset / Path(SNP_HERIT_DAG_OUTPUT).parent / "mash_config.json",
                 mash_config=lambda w: _mash_config(
-                    prefix=OUT_DIR / w.subset / "f1.b38.ldpruned.unrelated",
+                    prefix=OUT_DIR / w.subset / "f1.b38.ldpruned.unrelated.ldpruned",
                     pheno=SNP_HERIT_CONFIG["pheno"],
                     out=OUT_DIR / w.subset / Path(SNP_HERIT_DAG_OUTPUT).with_suffix(""),
                     npc=SNP_HERIT_CONFIG.get("npc", 10),

@@ -115,7 +115,7 @@ Config Options:
 ```yaml
 relatedness:
     method: "king"  # Options: "king", "primus", or other (assumes unrelated)
-    king_cutoff: 0.0884  # KING cutoff for "unrelated"
+    cutoff: 0.0884  # Pairwise kinship cutoff for "unrelated"
 
 SEX_CHECK: true  # Whether to perform sex check
 GRM: true  # Whether to compute GRM
@@ -299,9 +299,12 @@ OUT_DIR/
     ├── f1.ldpruned.unrelated.pgen     # Unrelated samples only
     ├── f1.ldpruned.unrelated.ldpruned.pgen  # LD pruned unrelated samples
     ├── f1.f2.ldpruned.pgen            # LD pruned post-standard QC
-    ├── f1.ldpruned.unrelated.grm.bin  # GRM from unrelated subset
-    ├── f1.ldpruned.unrelated.grm.id
-    ├── f1.ldpruned.unrelated.grm.N.bin
+    ├── f1.ldpruned.grm.bin            # GRM on all LD-pruned samples (pre-unrelated)
+    ├── f1.ldpruned.grm.id
+    ├── f1.ldpruned.grm.N.bin
+    ├── f1.ldpruned.unrelated.ldpruned.grm.bin  # GRM on unrelated LD-pruned samples
+    ├── f1.ldpruned.unrelated.ldpruned.grm.id
+    ├── f1.ldpruned.unrelated.ldpruned.grm.N.bin
     ├── internal_pca_plink2.eigenvec   # Internal PCA (plink2)
     └── internal_pca_plink2.eigenval
 ```

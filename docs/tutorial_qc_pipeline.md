@@ -183,7 +183,7 @@ chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 # QC thresholds
 relatedness:
     method: "king"  # "0" for none, "king" for removal
-    king_cutoff: 0.0884
+    cutoff: 0.0884
 
 SEX_CHECK: true  # Enable/disable sex verification
 GRM: true  # Compute genetic relationship matrix
@@ -222,7 +222,7 @@ chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 
 relatedness:
     method: "king"  # "0" for none, "king" or "primus" for removal
-    king_cutoff: 0.0884
+    cutoff: 0.0884
 
 SEX_CHECK: true
 thin: false

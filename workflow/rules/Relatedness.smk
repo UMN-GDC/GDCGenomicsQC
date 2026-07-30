@@ -20,11 +20,11 @@ rule checkRelatednessExtractUnrelated:
         pvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.pvar",
         psam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.psam",
         unrels=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_ids.txt",
-        grm=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.bin",
-        grmid=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.id",
-        grmN=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.grm.N.bin",
+        grm=OUT_DIR / "{subset}" / "f1.b38.ldpruned.grm.bin",
+        grmid=OUT_DIR / "{subset}" / "f1.b38.ldpruned.grm.id",
+        grmN=OUT_DIR / "{subset}" / "f1.b38.ldpruned.grm.N.bin",
     params:
-        king_cutoff=config.get("relatedness", {}).get("king_cutoff", 0.0884),
+        cutoff=config.get("relatedness", {}).get("cutoff", 0.0884),
         method=config.get("relatedness", {}).get("method", "king"),
         scripts_dir=SCRIPTS_DIR,
         input_prefix=lambda wildcards, input: input.pgen[:-5],
@@ -37,17 +37,17 @@ rule checkRelatednessExtractUnrelated:
     echo "Method: {params.method}"
 
     if [[ "{params.method}" == "king" || "{params.method}" == "1" ]]; then
-        echo "KING ESTIMATION using PLINK2 with cutoff {params.king_cutoff}"
+        echo "KING ESTIMATION using PLINK2 with cutoff {params.cutoff}"
         plink2 --pfile {params.input_prefix} \
             --make-grm-bin \
             --threads {threads} \
-            --king-cutoff {params.king_cutoff} \
+            --king-cutoff {params.cutoff} \
             --make-king \
             --out {params.output_prefix}_grm
         mv {params.output_prefix}_grm.grm.bin {output.grm}
         mv {params.output_prefix}_grm.grm.id {output.grmid}
         mv {params.output_prefix}_grm.grm.N.bin {output.grmN}
-        awk -v cutoff={params.king_cutoff} '$5 < cutoff {{print $1, $2}}' {params.output_prefix}_grm.king.cutoff.in.id | head -n -1 > {output.unrels}
+        awk -v cutoff={params.cutoff} '$5 < cutoff {{print $1, $2}}' {params.output_prefix}_grm.king.cutoff.in.id | head -n -1 > {output.unrels}
         plink2 --pfile {params.input_prefix} --keep {output.unrels} --make-pgen --out {params.output_prefix}
 
     elif [[ "{params.method}" == "primus" || "{params.method}" == "2" ]]; then
@@ -103,4 +103,40 @@ rule ldPruneUnrelated:
         echo "LD pruning unrelated samples"
         plink2 --pfile {params.input_prefix} --allow-extra-chr --chr 1-22 --indep-pairwise 50 5 0.2 --out {params.input_prefix}_indep --threads {threads}
         plink2 --pfile {params.input_prefix} --allow-extra-chr --chr 1-22 --extract {params.input_prefix}_indep.prune.in --make-pgen --out {params.input_prefix}.ldpruned --threads {threads}
+        """
+
+
+rule computeGrmUnrelated:
+    log:
+        OUT_DIR / "logs" / "computeGrmUnrelated_{subset}.log",
+    container:
+        "docker://gfanz/plink2:latest"
+    conda:
+        "../../envs/ancNreport.yml"
+    envmodules: *([config.get("plink_module")] if config.get("plink_module") else [])
+    threads: 8
+    resources:
+        nodes=1,
+        mem_mb=32000,
+        runtime=60,
+    input:
+        pgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.pgen",
+        pvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.pvar",
+        psam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.psam",
+    output:
+        grm=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.grm.bin",
+        grmid=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.grm.id",
+        grmN=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.ldpruned.grm.N.bin",
+    params:
+        input_prefix=lambda wildcards, input: input.pgen[:-5],
+    shell:
+        """
+        echo "Computing GRM on unrelated LD-pruned samples"
+        plink2 --pfile {params.input_prefix} \
+            --make-grm-bin \
+            --threads {threads} \
+            --out {params.input_prefix}_grm
+        mv {params.input_prefix}_grm.grm.bin {output.grm}
+        mv {params.input_prefix}_grm.grm.id {output.grmid}
+        mv {params.input_prefix}_grm.grm.N.bin {output.grmN}
         """

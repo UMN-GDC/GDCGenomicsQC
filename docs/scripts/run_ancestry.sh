@@ -33,7 +33,7 @@ ancestry:
 
 relatedness:
     method: "king"
-    king_cutoff: 0.0884
+    cutoff: 0.0884
 
 internalPCA:
     method: "plink2"

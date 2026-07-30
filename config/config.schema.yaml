@@ -105,9 +105,13 @@ relatedness:
       type: str
       default: "0"
       enum: ["0", "1", "2", "king", "primus"]
-    king_cutoff:
+    cutoff:
       type: float
       default: 0.0884
+      description: |
+        Pairwise kinship cutoff for identifying related individuals.
+        Default 0.0884 corresponds to 3rd-degree relatives (KING-robust).
+        Lower values = stricter (fewer related pairs retained).
 
 ancestry:
   type: dict

@@ -21,7 +21,7 @@ The pipeline is pre-installed via the `gdcgenomicsqc` module.
 
    relatedness:
        method: "king"
-       king_cutoff: 0.0884
+       cutoff: 0.0884
 
    # Internal PCA (optional)
    internalPCA:
@@ -263,7 +263,7 @@ Example configuration:
 
   relatedness:
       method: "king"
-      king_cutoff: 0.0884
+      cutoff: 0.0884
 
   # Internal PCA (optional)
   internalPCA:
@@ -425,7 +425,7 @@ conda activate snakemake
 
   relatedness:
       method: "king"
-      king_cutoff: 0.0884
+      cutoff: 0.0884
 
   # Internal PCA (optional)
   internalPCA:

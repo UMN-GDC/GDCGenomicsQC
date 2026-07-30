@@ -238,7 +238,7 @@ ancestry:
 
 relatedness:
     method: "king"  # "0" for none, "king" or "primus" for removal
-    king_cutoff: 0.0884
+    cutoff: 0.0884
 
 # Internal PCA (optional)
 internalPCA:

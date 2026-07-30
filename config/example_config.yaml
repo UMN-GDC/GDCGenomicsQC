@@ -50,7 +50,7 @@ pca_min_maf: 0.05
 #   "primus" - Use PRIMUS (not fully implemented)
 relatedness:
     method: "king"              # Relationship estimation method
-    king_cutoff: 0.0884         # KING cutoff for "unrelated" (default: 0.0884)
+    cutoff: 0.0884         # Pairwise kinship cutoff for "unrelated" (default: 0.0884)
 
 
 # =============================================================================
