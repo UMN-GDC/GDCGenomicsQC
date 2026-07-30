@@ -166,10 +166,9 @@ rule all:
             if (not has_provided_ancestry() and uses_rfmix()) else []
         ),
         # ── All QC outputs per subset ──
-        _qc_outputs_for_subset("full") + (
-            sum((_qc_outputs_for_subset(a) for a in get_provided_ancestries()), [])
-            if has_provided_ancestry()
-            else []
+        _qc_outputs_for_subset("full"),
+        lambda wildcards: sum(
+            (_qc_outputs_for_subset(a) for a in get_ancestries(wildcards)), []
         ),
 
 
