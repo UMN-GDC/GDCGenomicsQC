@@ -147,6 +147,7 @@ else:
             runtime=60,
         input:
             king=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_grm.king",
+            kingid=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_grm.king.id",
         output:
             plot=report(
                 OUT_DIR / "{subset}" / "figures" / "relatedness_histogram.svg",
@@ -159,7 +160,7 @@ else:
             """
             mkdir -p "$(dirname {output.plot})"
             if [ -f {input.king} ]; then
-                Rscript {params.scripts_dir}/plotRelatedness.R {input.king} {output.plot}
+                Rscript {params.scripts_dir}/plotRelatedness.R {input.king} {input.kingid} {output.plot}
             else
                 echo "Warning: {input.king} not found, skipping relatedness plot" >> {log}
             fi

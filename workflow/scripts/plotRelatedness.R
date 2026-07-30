@@ -2,10 +2,27 @@ library(tidyverse)
 theme_set(theme_minimal())
 args <- commandArgs(trailingOnly = TRUE)
 kin_file <- args[1]
-out <- args[2]
+kinid_file <- args[2]
+out <- args[3]
 
-kin <- read_table(kin_file)
-kin <- kin |>
+ids <- read_table(kinid_file, col_names = c("FID", "IID")) |>
+  mutate(idx = row_number()) |>
+  unite(ID, FID, IID, sep = "_")
+
+lines <- readLines(kin_file)
+lower <- lapply(strsplit(lines, "\\s+"), as.numeric)
+n <- length(lower)
+K <- matrix(NA, n, n)
+for (i in seq_len(n)) {
+  K[i, 1:i] <- lower[[i]]
+}
+K[upper.tri(K)] <- t(K)[upper.tri(K)]
+
+kin <- as.data.frame(K) |>
+  mutate(ID1 = ids$ID) |>
+  pivot_longer(-ID1, names_to = "j", values_to = "KINSHIP") |>
+  mutate(j = as.integer(str_remove(j, "V")), ID2 = ids$ID[j]) |>
+  filter(ID1 != ID2) |>
   mutate(pair = paste(pmin(ID1, ID2), pmax(ID1, ID2), sep = "_")) |>
   distinct(pair, .keep_all = TRUE)
 
