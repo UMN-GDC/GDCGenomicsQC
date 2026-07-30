@@ -31,7 +31,7 @@ if INPUT_IS_PER_CHROMOSOME:
             output_prefix=lambda wildcards, output: str(output.pgen)[:-5],
             relatedness=config.get("relatedness", {}).get("method", "king"),
             scripts_dir=SCRIPTS_DIR,
-            hwe_k=config.get("hwe_k", ""),
+            hwe_k=lambda wildcards: config.get("hwe_k") or "",
         shell:
             """
             echo "Standard QC: Variants and samples filtering"
@@ -114,7 +114,7 @@ else:
             input_prefix=lambda wildcards, input: input.pgen[:-5],
             relatedness=config.get("relatedness", {}).get("method", "king"),
             scripts_dir=SCRIPTS_DIR,
-            hwe_k=config.get("hwe_k", ""),
+            hwe_k=lambda wildcards: config.get("hwe_k") or "",
         shell:
             """
             echo "Standard QC: Variants and samples filtering"
