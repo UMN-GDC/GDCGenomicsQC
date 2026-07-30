@@ -24,7 +24,6 @@ rule checkRelatednessExtractUnrelated:
         grmid=OUT_DIR / "{subset}" / "f1.b38.ldpruned.grm.id",
         grmN=OUT_DIR / "{subset}" / "f1.b38.ldpruned.grm.N.bin",
         king=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_grm.king",
-        kingid=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_grm.king.id",
     params:
         cutoff=config.get("relatedness", {}).get("cutoff", 0.0884),
         method=config.get("relatedness", {}).get("method", "king"),

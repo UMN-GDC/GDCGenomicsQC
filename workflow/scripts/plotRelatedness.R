@@ -2,37 +2,20 @@ library(tidyverse)
 theme_set(theme_minimal())
 args <- commandArgs(trailingOnly = TRUE)
 kin_file <- args[1]
-kinid_file <- args[2]
-out <- args[3]
+out <- args[2]
 
 lines <- readLines(kin_file)
-lower <- lapply(strsplit(lines, "\\s+"), as.numeric)
-n <- length(lower)
-
-id_lines <- readLines(kinid_file)
-ids <- read.table(text = id_lines[1:n], col.names = c("FID", "IID")) |>
-  unite(ID, FID, IID, sep = "_")
-
-K <- matrix(NA, n, n)
-for (i in seq_len(n)) {
-  K[i, 1:i] <- lower[[i]]
-}
-K[upper.tri(K)] <- t(K)[upper.tri(K)]
-
-kin <- as.data.frame(K) |>
-  mutate(ID1 = ids$ID) |>
-  pivot_longer(-ID1, names_to = "j", values_to = "KINSHIP") |>
-  mutate(j = as.integer(str_remove(j, "V")), ID2 = ids$ID[j]) |>
-  filter(ID1 != ID2) |>
-  mutate(pair = paste(pmin(ID1, ID2), pmax(ID1, ID2), sep = "_")) |>
-  distinct(pair, .keep_all = TRUE)
+kinship <- unlist(lapply(seq_along(lines), function(i) {
+  vals <- as.numeric(strsplit(lines[i], "\\s+")[[1]])
+  vals[1:(i - 1)]
+}))
 
 expected_lines <- data.frame(
   kinship = c(0.25, 0.125, 0.0625, 0.03125),
   label = c("1st-degree", "2nd-degree", "3rd-degree", "4th-degree")
 )
 
-kin |>
+tibble(KINSHIP = kinship) |>
   ggplot(aes(x = KINSHIP)) +
   geom_histogram(bins = 50, fill = "steelblue", color = "white") +
   geom_vline(data = expected_lines, aes(xintercept = kinship),
