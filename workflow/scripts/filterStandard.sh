@@ -21,7 +21,7 @@ plink2 --pfile ${INTER_FILEPREFIX}_7a --hwe 1e-10 $HWE_K --make-pgen --out ${INT
 # Heterozygosity check
 INVERSION="$SCRIPTS_DIR/inversion.txt"
 if [ -f "$INVERSION" ]; then
-    plink2 --pfile ${INTER_FILEPREFIX}_7 --exclude "$INVERSION" --range --indep-pairwise 50 5 0.2 --out $STAGE/indepSNP --threads $THREADS
+    plink2 --pfile ${INTER_FILEPREFIX}_7 --exclude range "$INVERSION" --indep-pairwise 50 5 0.2 --out $STAGE/indepSNP --threads $THREADS
 else
     plink2 --pfile ${INTER_FILEPREFIX}_7 --indep-pairwise 50 5 0.2 --out $STAGE/indepSNP --threads $THREADS
 fi
