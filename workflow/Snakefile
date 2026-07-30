@@ -75,16 +75,16 @@ def _qc_outputs_for_subset(subset):
                 prefix / f"initial_{CHR}.smiss",
                 prefix / f"initial_{CHR}.vmiss",
                 prefix / f"MAF_check_{CHR}.afreq",
-                prefix / f"standardFilter_{CHR}.hardy",
-                prefix / f"heterozygosity_{CHR}.het",
+                prefix / f"f1.f2_{CHR}.hardy",
+                prefix / f"f1.f2_{CHR}.het",
             ])
     else:
         files.extend([
             prefix / "initial.smiss",
             prefix / "initial.vmiss",
             prefix / "MAF_check.afreq",
-            prefix / "standardFilter.hardy",
-            prefix / "heterozygosity.het",
+            prefix / "f1.b38.f2.hardy",
+            prefix / "f1.b38.f2.het",
         ])
 
     # ── pgen backbone ──
