@@ -29,7 +29,11 @@ if INPUT_IS_PER_CHROMOSOME:
             """
             mkdir -p "$(dirname {output.plot})"
             plink2 --pfile {params.prefix} --hardy --out {params.prefix}_hwe --threads {threads}
-            Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hardy {output.plot}
+            if [ -f {params.prefix}_hwe.hardy ]; then
+                Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hardy {output.plot}
+            else
+                echo "Warning: {params.prefix}_hwe.hardy not found, skipping HWE plot" >> {log}
+            fi
             """
 
     rule plotHeterozygosity:
@@ -71,7 +75,11 @@ if INPUT_IS_PER_CHROMOSOME:
                 --het \
                 --out {params.prefix}_het \
                 --threads {threads}
-            Rscript {params.scripts_dir}/plotHeterozygosity.R {params.prefix}_het.het {output.plot}
+            if [ -f {params.prefix}_het.het ]; then
+                Rscript {params.scripts_dir}/plotHeterozygosity.R {params.prefix}_het.het {output.plot}
+            else
+                echo "Warning: {params.prefix}_het.het not found, skipping heterozygosity plot" >> {log}
+            fi
             """
 
 else:
@@ -105,7 +113,11 @@ else:
             """
             mkdir -p "$(dirname {output.plot})"
             plink2 --pfile {params.prefix} --hardy --out {params.prefix}_hwe --threads {threads}
-            Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hardy {output.plot}
+            if [ -f {params.prefix}_hwe.hardy ]; then
+                Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hardy {output.plot}
+            else
+                echo "Warning: {params.prefix}_hwe.hardy not found, skipping HWE plot" >> {log}
+            fi
             """
 
     rule plotHeterozygosity:
@@ -147,7 +159,11 @@ else:
                 --het \
                 --out {params.prefix}_het \
                 --threads {threads}
-            Rscript {params.scripts_dir}/plotHeterozygosity.R {params.prefix}_het.het {output.plot}
+            if [ -f {params.prefix}_het.het ]; then
+                Rscript {params.scripts_dir}/plotHeterozygosity.R {params.prefix}_het.het {output.plot}
+            else
+                echo "Warning: {params.prefix}_het.het not found, skipping heterozygosity plot" >> {log}
+            fi
             """
 
     rule plotRelatedness:
@@ -183,5 +199,9 @@ else:
                 --make-king \
                 --out {params.prefix}_kin \
                 --threads {threads}
-            Rscript {params.scripts_dir}/plotRelatedness.R {params.prefix}_kin.kin0 {output.plot}
+            if [ -f {params.prefix}_kin.kin0 ]; then
+                Rscript {params.scripts_dir}/plotRelatedness.R {params.prefix}_kin.kin0 {output.plot}
+            else
+                echo "Warning: {params.prefix}_kin.kin0 not found, skipping relatedness plot" >> {log}
+            fi
             """
