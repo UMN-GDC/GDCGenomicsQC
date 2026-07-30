@@ -4,6 +4,11 @@ args <- commandArgs(trailingOnly = TRUE)
 kin_file <- args[1]
 out <- args[2]
 
+if (file.size(kin_file) < 10) {
+  file.create(out)
+  quit()
+}
+
 lines <- readLines(kin_file)
 kinship <- unlist(lapply(seq_along(lines), function(i) {
   vals <- as.numeric(strsplit(lines[i], "\\s+")[[1]])

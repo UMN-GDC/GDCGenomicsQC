@@ -4,6 +4,11 @@ args <- commandArgs(trailingOnly = TRUE)
 het_file <- args[1]
 out <- args[2]
 
+if (file.size(het_file) < 50) {
+  file.create(out)
+  quit()
+}
+
 het <- read_table(het_file)
 het |>
   ggplot(aes(x = F)) +

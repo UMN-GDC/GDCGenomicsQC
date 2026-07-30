@@ -27,7 +27,7 @@ else
 fi
 plink2 --pfile ${INTER_FILEPREFIX}_7 --extract $STAGE/indepSNP.prune.in --het --out $STAGE/R_check --threads $THREADS
 if [ ! -f $STAGE/R_check.het ]; then
-    touch $STAGE/R_check.het
+    printf "FID\tIID\tO(HOM)\tE(HOM)\tOBS_CT\tF\n" > $STAGE/R_check.het
 fi
 
 Rscript --no-save $SCRIPTS_DIR/heterozygosity_outliers_list.R $STAGE/R_check.het $STAGE
