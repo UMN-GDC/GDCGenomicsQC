@@ -13,9 +13,7 @@ if INPUT_IS_PER_CHROMOSOME:
             mem_mb=16000,
             runtime=30,
         input:
-            pgen=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pgen",
-            pvar=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pvar",
-            psam=OUT_DIR / "{subset}" / "f1.f2_{CHR}.psam",
+            hardy=OUT_DIR / "{subset}" / "f1.f2_{CHR}.hardy",
         output:
             plot=report(
                 OUT_DIR / "{subset}" / "figures" / "hwe_histogram_{CHR}.svg",
@@ -23,16 +21,14 @@ if INPUT_IS_PER_CHROMOSOME:
                 category="Quality Control",
             ),
         params:
-            prefix=lambda wildcards, input: str(input.pgen)[:-5],
             scripts_dir=SCRIPTS_DIR,
         shell:
             """
             mkdir -p "$(dirname {output.plot})"
-            plink2 --pfile {params.prefix} --hardy --out {params.prefix}_hwe --threads {threads}
-            if [ -f {params.prefix}_hwe.hardy ]; then
-                Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hardy {output.plot}
+            if [ -f {input.hardy} ]; then
+                Rscript {params.scripts_dir}/plotHWE.R {input.hardy} {output.plot}
             else
-                echo "Warning: {params.prefix}_hwe.hardy not found, skipping HWE plot" >> {log}
+                echo "Warning: {input.hardy} not found, skipping HWE plot" >> {log}
             fi
             """
 
@@ -50,9 +46,7 @@ if INPUT_IS_PER_CHROMOSOME:
             mem_mb=16000,
             runtime=30,
         input:
-            pgen=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pgen",
-            pvar=OUT_DIR / "{subset}" / "f1.f2_{CHR}.pvar",
-            psam=OUT_DIR / "{subset}" / "f1.f2_{CHR}.psam",
+            het=OUT_DIR / "{subset}" / "f1.f2_{CHR}.het",
         output:
             plot=report(
                 OUT_DIR / "{subset}" / "figures" / "het_distribution_{CHR}.svg",
@@ -60,25 +54,14 @@ if INPUT_IS_PER_CHROMOSOME:
                 category="Quality Control",
             ),
         params:
-            prefix=lambda wildcards, input: str(input.pgen)[:-5],
             scripts_dir=SCRIPTS_DIR,
         shell:
             """
             mkdir -p "$(dirname {output.plot})"
-            mkdir -p {params.prefix}_het_tmp
-            plink2 --pfile {params.prefix} \
-                --indep-pairwise 50 5 0.2 \
-                --out {params.prefix}_het_tmp/indep \
-                --threads {threads}
-            plink2 --pfile {params.prefix} \
-                --extract {params.prefix}_het_tmp/indep.prune.in \
-                --het \
-                --out {params.prefix}_het \
-                --threads {threads}
-            if [ -f {params.prefix}_het.het ]; then
-                Rscript {params.scripts_dir}/plotHeterozygosity.R {params.prefix}_het.het {output.plot}
+            if [ -f {input.het} ]; then
+                Rscript {params.scripts_dir}/plotHeterozygosity.R {input.het} {output.plot}
             else
-                echo "Warning: {params.prefix}_het.het not found, skipping heterozygosity plot" >> {log}
+                echo "Warning: {input.het} not found, skipping heterozygosity plot" >> {log}
             fi
             """
 
@@ -97,9 +80,7 @@ else:
             mem_mb=16000,
             runtime=30,
         input:
-            pgen=OUT_DIR / "{subset}" / "f1.b38.f2.pgen",
-            pvar=OUT_DIR / "{subset}" / "f1.b38.f2.pvar",
-            psam=OUT_DIR / "{subset}" / "f1.b38.f2.psam",
+            hardy=OUT_DIR / "{subset}" / "f1.b38.f2.hardy",
         output:
             plot=report(
                 OUT_DIR / "{subset}" / "figures" / "hwe_histogram.svg",
@@ -107,16 +88,14 @@ else:
                 category="Quality Control",
             ),
         params:
-            prefix=lambda wildcards, input: str(input.pgen)[:-5],
             scripts_dir=SCRIPTS_DIR,
         shell:
             """
             mkdir -p "$(dirname {output.plot})"
-            plink2 --pfile {params.prefix} --hardy --out {params.prefix}_hwe --threads {threads}
-            if [ -f {params.prefix}_hwe.hardy ]; then
-                Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hardy {output.plot}
+            if [ -f {input.hardy} ]; then
+                Rscript {params.scripts_dir}/plotHWE.R {input.hardy} {output.plot}
             else
-                echo "Warning: {params.prefix}_hwe.hardy not found, skipping HWE plot" >> {log}
+                echo "Warning: {input.hardy} not found, skipping HWE plot" >> {log}
             fi
             """
 
@@ -134,9 +113,7 @@ else:
             mem_mb=16000,
             runtime=30,
         input:
-            pgen=OUT_DIR / "{subset}" / "f1.b38.f2.pgen",
-            pvar=OUT_DIR / "{subset}" / "f1.b38.f2.pvar",
-            psam=OUT_DIR / "{subset}" / "f1.b38.f2.psam",
+            het=OUT_DIR / "{subset}" / "f1.b38.f2.het",
         output:
             plot=report(
                 OUT_DIR / "{subset}" / "figures" / "het_distribution.svg",
@@ -144,25 +121,14 @@ else:
                 category="Quality Control",
             ),
         params:
-            prefix=lambda wildcards, input: str(input.pgen)[:-5],
             scripts_dir=SCRIPTS_DIR,
         shell:
             """
             mkdir -p "$(dirname {output.plot})"
-            mkdir -p {params.prefix}_het_tmp
-            plink2 --pfile {params.prefix} \
-                --indep-pairwise 50 5 0.2 \
-                --out {params.prefix}_het_tmp/indep \
-                --threads {threads}
-            plink2 --pfile {params.prefix} \
-                --extract {params.prefix}_het_tmp/indep.prune.in \
-                --het \
-                --out {params.prefix}_het \
-                --threads {threads}
-            if [ -f {params.prefix}_het.het ]; then
-                Rscript {params.scripts_dir}/plotHeterozygosity.R {params.prefix}_het.het {output.plot}
+            if [ -f {input.het} ]; then
+                Rscript {params.scripts_dir}/plotHeterozygosity.R {input.het} {output.plot}
             else
-                echo "Warning: {params.prefix}_het.het not found, skipping heterozygosity plot" >> {log}
+                echo "Warning: {input.het} not found, skipping heterozygosity plot" >> {log}
             fi
             """
 
@@ -180,9 +146,7 @@ else:
             mem_mb=32000,
             runtime=60,
         input:
-            pgen=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.pgen",
-            pvar=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.pvar",
-            psam=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated.psam",
+            king=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_grm.king",
         output:
             plot=report(
                 OUT_DIR / "{subset}" / "figures" / "relatedness_histogram.svg",
@@ -190,18 +154,13 @@ else:
                 category="Quality Control",
             ),
         params:
-            prefix=lambda wildcards, input: str(input.pgen)[:-5],
             scripts_dir=SCRIPTS_DIR,
         shell:
             """
             mkdir -p "$(dirname {output.plot})"
-            plink2 --pfile {params.prefix} \
-                --make-king \
-                --out {params.prefix}_kin \
-                --threads {threads}
-            if [ -f {params.prefix}_kin.kin0 ]; then
-                Rscript {params.scripts_dir}/plotRelatedness.R {params.prefix}_kin.kin0 {output.plot}
+            if [ -f {input.king} ]; then
+                Rscript {params.scripts_dir}/plotRelatedness.R {input.king} {output.plot}
             else
-                echo "Warning: {params.prefix}_kin.kin0 not found, skipping relatedness plot" >> {log}
+                echo "Warning: {input.king} not found, skipping relatedness plot" >> {log}
             fi
             """

@@ -23,6 +23,7 @@ rule checkRelatednessExtractUnrelated:
         grm=OUT_DIR / "{subset}" / "f1.b38.ldpruned.grm.bin",
         grmid=OUT_DIR / "{subset}" / "f1.b38.ldpruned.grm.id",
         grmN=OUT_DIR / "{subset}" / "f1.b38.ldpruned.grm.N.bin",
+        king=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_grm.king",
     params:
         cutoff=config.get("relatedness", {}).get("cutoff", 0.0884),
         method=config.get("relatedness", {}).get("method", "king"),
@@ -54,7 +55,7 @@ rule checkRelatednessExtractUnrelated:
         echo "PRIMUS ESTIMATION"
         mkdir -p {params.output_prefix}_primus_tmp
         bash {params.scripts_dir}/run_primus.sh {params.input_prefix} {params.output_prefix}_primus_tmp {params.ref_path}
-        plink2 --bfile {params.output_prefix}_primus_tmp/unrelated --make-grm-bin --out {params.output_prefix}_grm --threads {threads}
+        plink2 --bfile {params.output_prefix}_primus_tmp/unrelated --make-grm-bin --make-king --out {params.output_prefix}_grm --threads {threads}
         mv {params.output_prefix}_grm.grm.bin {output.grm}
         mv {params.output_prefix}_grm.grm.id {output.grmid}
         mv {params.output_prefix}_grm.grm.N.bin {output.grmN}
@@ -66,7 +67,7 @@ rule checkRelatednessExtractUnrelated:
         cp {input.pgen} {output.pgen}
         cp {input.pvar} {output.pvar}
         cp {input.psam} {output.psam}
-        plink2 --pfile {params.input_prefix} --make-grm-bin --out {params.output_prefix}_grm --threads {threads}
+        plink2 --pfile {params.input_prefix} --make-grm-bin --make-king --out {params.output_prefix}_grm --threads {threads}
         mv {params.output_prefix}_grm.grm.bin {output.grm}
         mv {params.output_prefix}_grm.grm.id {output.grmid}
         mv {params.output_prefix}_grm.grm.N.bin {output.grmN}

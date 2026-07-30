@@ -10,14 +10,12 @@ SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p $STAGE/intermediates/standard_filter
 INTER_FILEPREFIX=$STAGE/intermediates/standard_filter/intermediate
 
-# Minor allele frequency filter
-plink2 --pfile $INPUT --freq --out $STAGE/MAF_check --threads $THREADS
-plink2 --pfile $INPUT --maf 0.01 --make-pgen --out ${INTER_FILEPREFIX}_6 --threads $THREADS
+# Minor allele frequency filter (--freq and --maf in one pass)
+plink2 --pfile $INPUT --freq --maf 0.01 --make-pgen --out ${INTER_FILEPREFIX}_6 --threads $THREADS
 
-# Hardy-Weinberg equilibrium check
-plink2 --pfile ${INTER_FILEPREFIX}_6 --hardy --out ${INTER_FILEPREFIX}_6 --threads $THREADS
-awk '$9 < 1e-5' ${INTER_FILEPREFIX}_6.hardy > $STAGE/zoomhwe.hwe
-plink2 --pfile ${INTER_FILEPREFIX}_6 --hwe $HWE_P $HWE_K --make-pgen --out ${INTER_FILEPREFIX}_7a --threads $THREADS
+# Hardy-Weinberg equilibrium check (--hardy and --hwe in one pass)
+plink2 --pfile ${INTER_FILEPREFIX}_6 --hardy --hwe $HWE_P $HWE_K --make-pgen --out ${INTER_FILEPREFIX}_7a --threads $THREADS
+awk '$9 < 1e-5' ${INTER_FILEPREFIX}_7a.hardy > $STAGE/zoomhwe.hwe
 plink2 --pfile ${INTER_FILEPREFIX}_7a --hwe 1e-10 $HWE_K --make-pgen --out ${INTER_FILEPREFIX}_7 --threads $THREADS
 
 # Heterozygosity check
