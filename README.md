@@ -393,7 +393,7 @@ snpHerit:
 
 ### VCF Conversion
 ```yaml
-convertNfilt:
+InitialQC:
     info_r2_min: null  # Minimum R2 from INFO field
     filter_pass: true  # Only keep FILTER==PASS
     qual_min: null     # Minimum QUAL value
@@ -409,7 +409,7 @@ The pipeline includes the following rules:
 
 | Rule | Description |
 |------|-------------|
-| `convertNfilt` | Convert VCF to PLINK format with filtering |
+| `InitialQC` | Convert VCF to PLINK format with filtering |
 | `Initial_QC` | Initial quality control (MAF, missingness) |
 | `Standard_QC` | Standard QC (HWE, inversion regions, sex check) |
 | `Relatedness` | Check and filter related samples |

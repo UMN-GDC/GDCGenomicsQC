@@ -64,7 +64,7 @@ gdcgenomicsqc --configfile ../config_ancestry.yaml classifyAncestry
 
 # Step 4: Ancestry-specific subsetting
 echo "Step 4: Extracting ancestry-specific data..."
-gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+gdcgenomicsqc --configfile ../config_ancestry.yaml InitialQC/CHR=20/subset=EUR
 
 echo "Ancestry classification complete."
 echo "Outputs in: OUT_DIR/01-globalAncestry/"

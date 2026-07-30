@@ -7,7 +7,7 @@ local-storage-prefix: "/scratch.global/coffm049/tmp"
 chromosomes: [1,2,3,4,5,6,7,8,9,10,11,12,13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
 
-convertNfilt:
+InitialQC:
     # Minimum R² value from INFO field (set null to skip filter)
     # Only applies to VCF input
     info_r2_min: 0.9
@@ -17,6 +17,19 @@ convertNfilt:
     
     # Minimum QUAL value (set null to skip filter)
     qual_min: null
+
+
+# ---------------------------------------------------------------------------
+# Missingness thresholds — applied during initial QC (convertPlink, initialFilter.sh)
+# ---------------------------------------------------------------------------
+initial_variant_missingness: 0.1
+final_variant_missingness: 0.02
+initial_subject_missingness: 0.1
+final_subject_missingness: 0.02
+
+# HWE scaling factor k (null = traditional fixed threshold)
+# Effective threshold: p * 10^(-n*k); Greer et al. (2024) recommends k=0.001
+hwe_k: null
 
 
 # QC Settings

@@ -380,21 +380,21 @@ The pipeline creates keep files for each predicted ancestry:
 :::{tab-item} MSI HPC
 
 ```bash
-gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+gdcgenomicsqc --configfile ../config_ancestry.yaml InitialQC/CHR=20/subset=EUR
 ```
 
 :::
 :::{tab-item} Sandbox
 
 ```bash
-gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+gdcgenomicsqc --configfile ../config_ancestry.yaml InitialQC/CHR=20/subset=EUR
 ```
 
 :::
 :::{tab-item} Other HPCs
 
 ```bash
-gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EUR
+gdcgenomicsqc --configfile ../config_ancestry.yaml InitialQC/CHR=20/subset=EUR
 ```
 
 :::
@@ -403,7 +403,7 @@ gdcgenomicsqc --configfile ../config_ancestry.yaml convertNfilt/CHR=20/subset=EU
 ```bash
 snakemake --profile=../profiles/hpc \
     --configfile ../config_ancestry.yaml \
-    convertNfilt/CHR=20/subset=EUR
+    InitialQC/CHR=20/subset=EUR
 ```
 
 :::

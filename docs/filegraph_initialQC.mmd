@@ -10,7 +10,7 @@ flowchart TB
     ped["REF/.../pedigree.txt"]
   end
 
-  subgraph convert_outs[convertNfilt - per chromosome]
+  subgraph convert_outs[InitialQC - per chromosome]
     pgen["OUT_DIR/full/f1_{CHR}.pgen/.pvar/.psam"]
     smiss["OUT_DIR/full/initial_{CHR}.smiss"]
     vmiss["OUT_DIR/full/initial_{CHR}.vmiss"]
@@ -29,17 +29,17 @@ flowchart TB
     final_ldp["OUT_DIR/full/f1.b38.f2.ldpruned.pgen/.pvar/.psam"]
   end
 
-  pop --> convertNfilt
-  ped --> convertNfilt
-  fa --> convertNfilt
+  pop --> InitialQC
+  ped --> InitialQC
+  fa --> InitialQC
 
-  convertNfilt --> pgen
-  convertNfilt --> smiss
-  convertNfilt --> vmiss
-  convertNfilt --> maf
-  convertNfilt --> hardy
-  convertNfilt --> het
-  convertNfilt --> ldp
+  InitialQC --> pgen
+  InitialQC --> smiss
+  InitialQC --> vmiss
+  InitialQC --> maf
+  InitialQC --> hardy
+  InitialQC --> het
+  InitialQC --> ldp
 
   pgen --> initialFilter
   initialFilter --> qc_pgen
@@ -49,6 +49,6 @@ flowchart TB
   Standard_QC --> final_ldp
 
   style kgMeta fill:#57D95F,stroke-width:2px,color:#333,stroke-dasharray:5 5
-  style convertNfilt fill:#ADD957,stroke-width:2px,color:#333
+  style InitialQC fill:#ADD957,stroke-width:2px,color:#333
   style initialFilter fill:#7ED957,stroke-width:2px,color:#333
   style Standard_QC fill:#D9A657,stroke-width:2px,color:#333

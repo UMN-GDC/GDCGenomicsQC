@@ -541,7 +541,7 @@ hwe_k:
     Greer et al. (2024) recommends k=0.001 for large sample sizes to avoid
     throwing out genuine SNP-trait associations due to overpowered HWE tests.
 
-convertNfilt:
+InitialQC:
   type: dict
   default: {}
   schema:
