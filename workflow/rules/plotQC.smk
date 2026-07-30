@@ -29,7 +29,7 @@ if INPUT_IS_PER_CHROMOSOME:
             """
             mkdir -p "$(dirname {output.plot})"
             plink2 --pfile {params.prefix} --hardy --out {params.prefix}_hwe --threads {threads}
-            Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hwe {output.plot}
+            Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hardy {output.plot}
             """
 
     rule plotHeterozygosity:
@@ -105,7 +105,7 @@ else:
             """
             mkdir -p "$(dirname {output.plot})"
             plink2 --pfile {params.prefix} --hardy --out {params.prefix}_hwe --threads {threads}
-            Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hwe {output.plot}
+            Rscript {params.scripts_dir}/plotHWE.R {params.prefix}_hwe.hardy {output.plot}
             """
 
     rule plotHeterozygosity:
