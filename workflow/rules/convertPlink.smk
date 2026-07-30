@@ -82,9 +82,25 @@ rule convertPlinkPerChromosome:
             final_variant_missingness=config.get("final_variant_missingness", 0.02),
             initial_subject_missingness=config.get("initial_subject_missingness", 0.1),
             final_subject_missingness=config.get("final_subject_missingness", 0.02),
+            # Flat aliases for dotted refs (Snakemake shell compat)
+            temp_dir=lambda w, output: output.tempDir,
+            fasta=lambda w, input: input.fasta,
+            remove=lambda w, input: input.remove_samples,
+            keep_samples=lambda w, input: input.keep_samples,
+            extract=lambda w, input: input.extract,
+            exclude=lambda w, input: input.exclude_variants,
+            ancestry_keep=lambda w, input: input.keep,
+            ref_pvar=lambda w, input: input.ref_pvar,
+            orig_pvar=lambda w, output: output.original_id_pvar,
+            maf=lambda w, output: output.maf,
+            hardy=lambda w, output: output.hardy,
+            het=lambda w, output: output.het,
+            smiss=lambda w, output: output.smiss,
+            vmiss=lambda w, output: output.vmiss,
+            sub=lambda w: w.subset,
         shell:
         """
-mkdir -p {output.tempDir}
+mkdir -p {params.temp_dir}
 
 FORMAT="{params.format}"
 CHROM_INPUT="{params.chrom_input}"
@@ -102,33 +118,33 @@ fi
 CMD=""
 
 if [ "$FORMAT" = "vcf" ]; then
-    CMD="plink2 --vcf $CHROM_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --vcf $CHROM_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {params.temp_dir}/intermediate_0 $PLINK2_FILTERS"
 elif [ "$FORMAT" = "bed" ]; then
     BED_PREFIX=${{CHROM_INPUT%.bed}}
-    CMD="plink2 --bfile $BED_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --bfile $BED_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {params.temp_dir}/intermediate_0 $PLINK2_FILTERS"
 elif [ "$FORMAT" = "pgen" ]; then
     PGEN_PREFIX=${{CHROM_INPUT%.pgen}}
-    CMD="plink2 --pfile $PGEN_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {output.tempDir}/intermediate_0 $PLINK2_FILTERS"
+    CMD="plink2 --pfile $PGEN_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} --out {params.temp_dir}/intermediate_0 $PLINK2_FILTERS"
 else
     echo "Unknown format: $FORMAT"
     exit 1
 fi
 
-if [ -n "{input.remove_samples}" ]; then
-    CMD="$CMD --remove {input.remove_samples}"
+if [ -n "{params.remove}" ]; then
+    CMD="$CMD --remove {params.remove}"
 fi
 
 KEEP_FILES=""
-if [[ "{wildcards.subset}" != "full" ]]; then
-    KEEP_FILES="{input.keep}"
+if [[ "{params.sub}" != "full" ]]; then
+    KEEP_FILES="{params.ancestry_keep}"
 fi
 
-if [ -n "{input.keep_samples}" ]; then
+if [ -n "{params.keep_samples}" ]; then
     if [ -n "$KEEP_FILES" ]; then
-        awk 'NR==FNR{{a[$1];next}} $1 in a' {input.keep_samples} $KEEP_FILES > {output.tempDir}/merged_keep.txt
-        KEEP_FILES={output.tempDir}/merged_keep.txt
+        awk 'NR==FNR{{a[$1];next}} $1 in a' {params.keep_samples} $KEEP_FILES > {params.temp_dir}/merged_keep.txt
+        KEEP_FILES={params.temp_dir}/merged_keep.txt
     else
-        KEEP_FILES="{input.keep_samples}"
+        KEEP_FILES="{params.keep_samples}"
     fi
 fi
 
@@ -136,16 +152,16 @@ if [ -n "$KEEP_FILES" ]; then
     CMD="$CMD --keep $KEEP_FILES"
 fi
 
-if [ -n "{input.exclude_variants}" ]; then
-    CMD="$CMD --exclude {input.exclude_variants}"
+if [ -n "{params.exclude}" ]; then
+    CMD="$CMD --exclude {params.exclude}"
 fi
 
-if [ -n "{input.extract}" ]; then
-    CMD="$CMD --extract {input.extract}"
+if [ -n "{params.extract}" ]; then
+    CMD="$CMD --extract {params.extract}"
 fi
 
 if [[ "{params.thin}" == "True" ]]; then
-    if [[ "{wildcards.subset}" == "full" ]]; then
+    if [[ "{params.sub}" == "full" ]]; then
         CMD="$CMD --thin-indiv 0.1 --thin-count 100000 --seed 1"
     else
         CMD="$CMD --thin-indiv-count 10000 --thin-count 100000 --seed 1"
@@ -154,70 +170,70 @@ fi
 
 $CMD
 
-plink2 --pfile {output.tempDir}/intermediate_0 \
+plink2 --pfile {params.temp_dir}/intermediate_0 \
        --make-pgen \
        --geno {params.initial_variant_missingness} \
        --threads {threads} \
        --output-chr 26 \
        --sort-vars \
-       --out {output.tempDir}/intermediate_1
+       --out {params.temp_dir}/intermediate_1
 
-plink2 --pfile {output.tempDir}/intermediate_1 \
-       --fa {input.fasta} \
+plink2 --pfile {params.temp_dir}/intermediate_1 \
+       --fa {params.fasta} \
        --sort-vars \
        --ref-from-fa force \
        --make-pgen \
        --threads {threads} \
-       --out {output.tempDir}/intermediate_2
+       --out {params.temp_dir}/intermediate_2
 
-cp {output.tempDir}/intermediate_2.pvar {output.original_id_pvar}
-plink2 --pfile {output.tempDir}/intermediate_2 \
+cp {params.temp_dir}/intermediate_2.pvar {params.orig_pvar}
+plink2 --pfile {params.temp_dir}/intermediate_2 \
        --set-all-var-ids 'chr@:#:$r:$a' \
        --make-pgen \
        --threads {threads} \
-       --out {output.tempDir}/intermediate_3
+       --out {params.temp_dir}/intermediate_3
 
 # === Allele alignment against reference panel ===
             bash {params.scripts_dir}/align_alleles.sh \
-                {output.tempDir}/intermediate_3.pvar \
-                {input.ref_pvar} \
-                {output.tempDir}/flip_list.txt \
-                {output.tempDir}/align_report.txt >> {log} 2>&1
+                {params.temp_dir}/intermediate_3.pvar \
+                {params.ref_pvar} \
+                {params.temp_dir}/flip_list.txt \
+                {params.temp_dir}/align_report.txt >> {log} 2>&1
 
-if [ -s {output.tempDir}/flip_list.txt ]; then
-    N_FLIP=$(wc -l < {output.tempDir}/flip_list.txt)
+if [ -s {params.temp_dir}/flip_list.txt ]; then
+    N_FLIP=$(wc -l < {params.temp_dir}/flip_list.txt)
     echo "[convertPlink] Flipping $N_FLIP strand-mismatched variants" >> {log} 2>&1
-    plink2 --pfile {output.tempDir}/intermediate_3 \
-           --flip {output.tempDir}/flip_list.txt \
+    plink2 --pfile {params.temp_dir}/intermediate_3 \
+           --flip {params.temp_dir}/flip_list.txt \
            --make-pgen \
            --threads {threads} \
-           --out {output.tempDir}/intermediate_3_flipped
-    plink2 --pfile {output.tempDir}/intermediate_3_flipped \
-           --fa {input.fasta} \
+           --out {params.temp_dir}/intermediate_3_flipped
+    plink2 --pfile {params.temp_dir}/intermediate_3_flipped \
+           --fa {params.fasta} \
            --ref-from-fa force \
            --set-all-var-ids 'chr@:#:$r:$a' \
            --make-pgen \
            --threads {threads} \
-           --out {output.tempDir}/intermediate_4
+           --out {params.temp_dir}/intermediate_4
 else
     echo "[convertPlink] No strand flips needed" >> {log} 2>&1
-    plink2 --pfile {output.tempDir}/intermediate_3 \
+    plink2 --pfile {params.temp_dir}/intermediate_3 \
            --make-pgen \
            --threads {threads} \
-           --out {output.tempDir}/intermediate_4
+           --out {params.temp_dir}/intermediate_4
 fi
 
 INITIAL_SUBJECT_MISSINGNESS={params.initial_subject_missingness} \
 FINAL_VARIANT_MISSINGNESS={params.final_variant_missingness} \
 FINAL_SUBJECT_MISSINGNESS={params.final_subject_missingness} \
-bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_4 {params.output_prefix} {threads} {output.tempDir}
+bash {params.scripts_dir}/initialFilter.sh {params.temp_dir}/intermediate_4 {params.output_prefix} {threads} {params.temp_dir}
 
-cp {output.tempDir}/initial_QC.afreq {output.maf}
-cp {output.tempDir}/initial_QC.hardy {output.hardy}
-cp {output.tempDir}/het_indep.het {output.het}
+cp {params.temp_dir}/initial_QC.afreq {params.maf}
+cp {params.temp_dir}/initial_QC.hardy {params.hardy}
+cp {params.temp_dir}/het_indep.het {params.het}
 
-mv {output.tempDir}/intermediate_0.vmiss {output.vmiss}
-mv {output.tempDir}/intermediate_0.smiss {output.smiss}
+mv {params.temp_dir}/intermediate_0.vmiss {params.vmiss}
+mv {params.temp_dir}/intermediate_0.smiss {params.smiss}
 for ext in pgen pvar psam; do
     mv {params.output_prefix}.LDpruned.$ext {params.ld_prefix}.$ext
 done
@@ -286,30 +302,46 @@ if not INPUT_IS_PER_CHROMOSOME:
             final_variant_missingness=config.get("final_variant_missingness", 0.02),
             initial_subject_missingness=config.get("initial_subject_missingness", 0.1),
             final_subject_missingness=config.get("final_subject_missingness", 0.02),
+            # Flat aliases for dotted refs (Snakemake shell compat)
+            temp_dir=lambda w, output: output.tempDir,
+            fasta=lambda w, input: input.fasta,
+            remove=lambda w, input: input.remove_samples,
+            keep_samples=lambda w, input: input.keep_samples,
+            extract=lambda w, input: input.extract,
+            exclude=lambda w, input: input.exclude_variants,
+            ancestry_keep=lambda w, input: input.keep,
+            ref_pvar=lambda w, input: input.ref_pvar,
+            orig_pvar=lambda w, output: output.original_id_pvar,
+            maf=lambda w, output: output.maf,
+            hardy=lambda w, output: output.hardy,
+            het=lambda w, output: output.het,
+            smiss=lambda w, output: output.smiss,
+            vmiss=lambda w, output: output.vmiss,
+            sub=lambda w: w.subset,
         shell:
             """
-            mkdir -p {output.tempDir}
+            mkdir -p {params.temp_dir}
 
             FORMAT="{params.format}"
             SINGLE_INPUT="{params.single_input}"
             SINGLE_INPUT_PREFIX="{params.single_input_prefix}"
 
             REMOVE_ARG=""
-            if [ -n "{input.remove_samples}" ]; then
-                REMOVE_ARG="--remove {input.remove_samples}"
+            if [ -n "{params.remove}" ]; then
+                REMOVE_ARG="--remove {params.remove}"
             fi
 
             KEEP_ARG=""
-            if [[ "{wildcards.subset}" != "full" ]]; then
-                KEEP_ARG="{input.keep}"
+            if [[ "{params.sub}" != "full" ]]; then
+                KEEP_ARG="{params.ancestry_keep}"
             fi
 
-            if [ -n "{input.keep_samples}" ]; then
+            if [ -n "{params.keep_samples}" ]; then
                 if [ -n "$KEEP_ARG" ]; then
-                    awk 'NR==FNR{{a[$1];next}} $1 in a' {input.keep_samples} $KEEP_ARG > {output.tempDir}/merged_keep.txt
-                    KEEP_ARG={output.tempDir}/merged_keep.txt
+                    awk 'NR==FNR{{a[$1];next}} $1 in a' {params.keep_samples} $KEEP_ARG > {params.temp_dir}/merged_keep.txt
+                    KEEP_ARG={params.temp_dir}/merged_keep.txt
                 else
-                    KEEP_ARG="{input.keep_samples}"
+                    KEEP_ARG="{params.keep_samples}"
                 fi
             fi
 
@@ -318,72 +350,72 @@ if not INPUT_IS_PER_CHROMOSOME:
             fi
 
             EXCLUDE_ARG=""
-            if [ -n "{input.exclude_variants}" ]; then
-                EXCLUDE_ARG="--exclude {input.exclude_variants}"
+            if [ -n "{params.exclude}" ]; then
+                EXCLUDE_ARG="--exclude {params.exclude}"
             fi
 
             EXTRACT_ARG=""
-            if [ -n "{input.extract}" ]; then
-                EXTRACT_ARG="--extract {input.extract}"
+            if [ -n "{params.extract}" ]; then
+                EXTRACT_ARG="--extract {params.extract}"
             fi
 
             echo "Input is a single file: $SINGLE_INPUT"
 
             if [ "$FORMAT" = "bed" ]; then
-                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
-                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {output.tempDir}/intermediate_0
+                plink2 --bfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {params.temp_dir}/intermediate_00
+                plink2 --pfile {params.temp_dir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {params.temp_dir}/intermediate_0
             elif [ "$FORMAT" = "vcf" ]; then
-                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
-                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {output.tempDir}/intermediate_0
+                plink2 --vcf $SINGLE_INPUT --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {params.temp_dir}/intermediate_00
+                plink2 --pfile {params.temp_dir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {params.temp_dir}/intermediate_0
             else
-                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {output.tempDir}/intermediate_00
-                plink2 --pfile {output.tempDir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {output.tempDir}/intermediate_0
+                plink2 --pfile $SINGLE_INPUT_PREFIX --make-pgen --rm-dup force-first --snps-only --missing --threads {threads} $REMOVE_ARG $KEEP_ARG $EXCLUDE_ARG $EXTRACT_ARG --out {params.temp_dir}/intermediate_00
+                plink2 --pfile {params.temp_dir}/intermediate_00 --make-pgen --sort-vars --threads {threads} --out {params.temp_dir}/intermediate_0
             fi
 
-            plink2 --pfile {output.tempDir}/intermediate_0 --fa {input.fasta}  --ref-from-fa force --make-pgen --threads {threads} --out {output.tempDir}/intermediate_1
-            cp {output.tempDir}/intermediate_1.pvar {output.original_id_pvar}
-            plink2 --pfile {output.tempDir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --threads {threads} --out {output.tempDir}/intermediate_2
+            plink2 --pfile {params.temp_dir}/intermediate_0 --fa {params.fasta}  --ref-from-fa force --make-pgen --threads {threads} --out {params.temp_dir}/intermediate_1
+            cp {params.temp_dir}/intermediate_1.pvar {params.orig_pvar}
+            plink2 --pfile {params.temp_dir}/intermediate_1 --set-all-var-ids 'chr@:#:$r:$a' --make-pgen --threads {threads} --out {params.temp_dir}/intermediate_2
 
             # === Allele alignment against reference panel ===
             bash {params.scripts_dir}/align_alleles.sh \
-                {output.tempDir}/intermediate_2.pvar \
-                {input.ref_pvar} \
-                {output.tempDir}/flip_list.txt \
-                {output.tempDir}/align_report.txt >> {log} 2>&1
+                {params.temp_dir}/intermediate_2.pvar \
+                {params.ref_pvar} \
+                {params.temp_dir}/flip_list.txt \
+                {params.temp_dir}/align_report.txt >> {log} 2>&1
 
-            if [ -s {output.tempDir}/flip_list.txt ]; then
-                N_FLIP=$(wc -l < {output.tempDir}/flip_list.txt)
+            if [ -s {params.temp_dir}/flip_list.txt ]; then
+                N_FLIP=$(wc -l < {params.temp_dir}/flip_list.txt)
                 echo "[convertPlink] Flipping $N_FLIP strand-mismatched variants" >> {log} 2>&1
-                plink2 --pfile {output.tempDir}/intermediate_2 \
-                       --flip {output.tempDir}/flip_list.txt \
+                plink2 --pfile {params.temp_dir}/intermediate_2 \
+                       --flip {params.temp_dir}/flip_list.txt \
                        --make-pgen \
                        --threads {threads} \
-                       --out {output.tempDir}/intermediate_2_flipped
-                plink2 --pfile {output.tempDir}/intermediate_2_flipped \
-                       --fa {input.fasta} \
+                       --out {params.temp_dir}/intermediate_2_flipped
+                plink2 --pfile {params.temp_dir}/intermediate_2_flipped \
+                       --fa {params.fasta} \
                        --ref-from-fa force \
                        --set-all-var-ids 'chr@:#:$r:$a' \
                        --make-pgen \
                        --threads {threads} \
-                       --out {output.tempDir}/intermediate_3
+                       --out {params.temp_dir}/intermediate_3
             else
                 echo "[convertPlink] No strand flips needed" >> {log} 2>&1
-                plink2 --pfile {output.tempDir}/intermediate_2 \
+                plink2 --pfile {params.temp_dir}/intermediate_2 \
                        --make-pgen \
                        --threads {threads} \
-                       --out {output.tempDir}/intermediate_3
+                       --out {params.temp_dir}/intermediate_3
             fi
 
             INITIAL_SUBJECT_MISSINGNESS={params.initial_subject_missingness} \
             FINAL_VARIANT_MISSINGNESS={params.final_variant_missingness} \
             FINAL_SUBJECT_MISSINGNESS={params.final_subject_missingness} \
-            bash {params.scripts_dir}/initialFilter.sh {output.tempDir}/intermediate_3 {params.output_prefix} {threads} {output.tempDir}
-            cp {output.tempDir}/initial_QC.afreq {output.maf}
-            cp {output.tempDir}/initial_QC.hardy {output.hardy}
-            cp {output.tempDir}/het_indep.het {output.het}
-            mkdir -p {output.tempDir}
-            mv {output.tempDir}/intermediate_00.vmiss {output.vmiss}
-            mv {output.tempDir}/intermediate_00.smiss {output.smiss}
+            bash {params.scripts_dir}/initialFilter.sh {params.temp_dir}/intermediate_3 {params.output_prefix} {threads} {params.temp_dir}
+            cp {params.temp_dir}/initial_QC.afreq {params.maf}
+            cp {params.temp_dir}/initial_QC.hardy {params.hardy}
+            cp {params.temp_dir}/het_indep.het {params.het}
+            mkdir -p {params.temp_dir}
+            mv {params.temp_dir}/intermediate_00.vmiss {params.vmiss}
+            mv {params.temp_dir}/intermediate_00.smiss {params.smiss}
             for ext in pgen pvar psam; do
                 mv {params.output_prefix}.LDpruned.$ext {params.output_prefix}.ldpruned.$ext
             done
@@ -423,14 +455,17 @@ if INPUT_IS_PER_CHROMOSOME:
             ),
         params:
             output_prefix=lambda wildcards, output: output.pgen[:-5],
+            # Flat aliases for dotted refs (Snakemake shell compat)
+            temp_dir=lambda w, output: output.tempDir,
+            concat_pgen=lambda w, input: input.pgen,
         shell:
             """
-            mkdir -p {output.tempDir}
-            > {output.tempDir}/mergelist.txt
-            for f in {input.pgen}; do
-                echo "${{f%.pgen}}" >> {output.tempDir}/mergelist.txt
+            mkdir -p {params.temp_dir}
+            > {params.temp_dir}/mergelist.txt
+            for f in {params.concat_pgen}; do
+                echo "${{f%.pgen}}" >> {params.temp_dir}/mergelist.txt
             done
-            plink2 --pmerge-list {output.tempDir}/mergelist.txt \
+            plink2 --pmerge-list {params.temp_dir}/mergelist.txt \
                    --make-pgen \
                    --threads {threads} \
                    --out {params.output_prefix}
