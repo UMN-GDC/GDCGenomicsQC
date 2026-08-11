@@ -11,3 +11,4 @@ module load gdcgenomicsSandbox
 #gdcgenomicsqc --until run_rfmix --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml"
 #gdcgenomicsqc --until run_snpHerit --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml" --unlock
 gdcgenomicsqc --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml"
+# gdcgenomicsqc --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml" # --unlock
