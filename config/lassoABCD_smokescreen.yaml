@@ -157,6 +157,12 @@ localAncestry:
     RFMIX: true
     test: false
     thin_subjects: 0.1
+    # PBWT index storage frequency (cM). 0.02 = SNP-array (default);
+    # 0.0005 = sequencing (e.g. high-coverage WGS). Lower = more memory.
+    pbwt_modulo: 0.02
+    # Depth of PBWT conditioning indexes. 4 = default; 8 = better accuracy
+    # on low-density/array data at some runtime cost.
+    pbwt_depth: 4
     chromosomes: null  # Use pipeline chromosomes if null, or specify list e.g. [13, 14, 15]
     figures: "figures"
 

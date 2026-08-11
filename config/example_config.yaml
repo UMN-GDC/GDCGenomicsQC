@@ -119,6 +119,14 @@ localAncestry:
     # Fraction of subjects to use (0.0-1.0)
     thin_subjects: 1.0
     
+    # PBWT index storage frequency (cM). 0.02 = SNP-array (default);
+    # 0.0005 = sequencing (e.g. high-coverage WGS). Lower = more memory.
+    pbwt_modulo: 0.02
+    
+    # Depth of PBWT conditioning indexes. 4 = default; 8 = better accuracy
+    # on low-density/array data at some runtime cost.
+    pbwt_depth: 4
+    
     # Output directory for figures
     figures: "figures"
     

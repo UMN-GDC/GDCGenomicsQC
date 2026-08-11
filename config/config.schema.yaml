@@ -201,6 +201,18 @@ localAncestry:
     thin_subjects:
       type: float
       default: 0.1
+    pbwt_modulo:
+      type: float
+      default: 0.02
+      description: |
+        SHAPEIT4 PBWT index storage frequency in cM.
+        SNP-array data: 0.02 (default). Sequencing data: 0.0005.
+    pbwt_depth:
+      type: int
+      default: 4
+      description: |
+        Depth of PBWT indexes SHAPEIT4 conditions on.
+        Default 4; 8 improves accuracy on low-density/array data.
     figures:
       type: str
       default: "figures"

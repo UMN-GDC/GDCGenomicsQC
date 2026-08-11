@@ -86,6 +86,8 @@ rule phaseWithShapeit:
         out_dir=OUT_DIR / "02-localAncestry",
         test=config.get("localAncestry", {}).get("test", False),
         thin=config.get("localAncestry", {}).get("thin_subjects", 0.1),
+        pbwt_modulo=config.get("localAncestry", {}).get("pbwt_modulo", 0.02),
+        pbwt_depth=config.get("localAncestry", {}).get("pbwt_depth", 4),
         chrom=get_chrom,
     shell:
         """
@@ -106,7 +108,8 @@ rule phaseWithShapeit:
               --mcmc-iterations 1b,1p,1m \
               --output {output.vcf} \
               --reference {input.ref} \
-              --sequencing
+              --pbwt-modulo {params.pbwt_modulo} \
+              --pbwt-depth {params.pbwt_depth}
           rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         else
           awk '{{print "chr" $0}}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
@@ -118,7 +121,8 @@ rule phaseWithShapeit:
               --thread {threads} \
               --output {output.vcf} \
               --reference {input.ref} \
-              --sequencing
+              --pbwt-modulo {params.pbwt_modulo} \
+              --pbwt-depth {params.pbwt_depth}
           rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         fi
         """
