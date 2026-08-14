@@ -222,11 +222,13 @@ snpHerit:
     covar_filter: null
 
     # Additional values to treat as NA/missing in phenotype, covariate, and PC files
-    # (e.g., [999, 777] or [-777, -888] for ABCD sentinel codes). Added to MASH's
-    # built-in missing markers (empty, NA, NaN, n/a). Applied at file load time,
-    # so rows with these codes are dropped only for the phenotypes/analyses that
-    # reference them (per-phenotype complete-case) rather than for the whole file.
-    na_values: null
+    # Defaults: ["", "NA", "Na", "NAN", "NaN", "missing", "na", "Missing", "MISSING"]
+    # Add dataset-specific sentinel codes, e.g. ["", "NA", ..., "MISSING", 999, 777]
+    # for ABCD sentinel codes. Added to MASH's built-in missing markers. Applied at
+    # file load time, so rows with these codes are dropped only for the
+    # phenotypes/analyses that reference them (per-phenotype complete-case)
+    # rather than for the whole file.
+    na_values: ["", "NA", "Na", "NAN", "NaN", "missing", "na", "Missing", "MISSING"]
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
     iid_col: "IID"

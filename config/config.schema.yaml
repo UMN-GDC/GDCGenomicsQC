@@ -393,11 +393,12 @@ snpHerit:
     na_values:
       type: any
       nullable: true
-      default: null
+      default: ["", "NA", "Na", "NAN", "NaN", "missing", "na", "Missing", "MISSING"]
       description: |
-        Additional values to treat as NA/missing in phenotype, covariate, and PC files
-        (e.g., [999, 777] or [-777, -888] for ABCD sentinel codes). Added to MASH's built-in
-        missing markers (empty, NA, NaN, n/a). Applied at file load time. Overrides the
+        Additional values to treat as NA/missing in phenotype, covariate, and PC files.
+        Defaults to common missing markers (empty value, NA, Na, NAN, NaN, missing, na,
+        Missing, MISSING). Add dataset-specific sentinel codes (e.g., [999, 777] for ABCD).
+        Added to MASH's built-in missing markers. Applied at file load time. Overrides the
         previous stopgap of chaining pheno_filter/covar_filter expressions per column.
 
 prsMethods:

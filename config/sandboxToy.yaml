@@ -79,7 +79,7 @@ snpHerit:
 
     covar_filter: null
 
-    na_values: null  # Extra missing-value codes, e.g. [999, 777] (ABCD sentinels)
+    na_values: ["", "NA", "Na", "NAN", "NaN", "missing", "na", "Missing", "MISSING"]  # Default missing markers
 
     iid_col: "IID"
 
