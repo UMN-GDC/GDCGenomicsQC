@@ -98,9 +98,9 @@ snpHerit:
     covar: null
     method: "AdjHE"
     npc: [1, 2]
-    mpheno: 1
-    qcovar: null
-    covar_discrete: null
+    mpheno: 1  # Phenotype — column name(s), index, or "ALL" (case-insensitive) for all columns
+    qcovar: null  # null = use ALL covariate columns (auto-detect); [] = no covariates; list = exactly those
+    covar_discrete: null  # null = use ALL covariate columns (auto-detect); [] = no covariates; list = exactly those
     RV: null
     loop_covars: false
     Naive: false
@@ -108,6 +108,7 @@ snpHerit:
     k: null
     pheno_filter: null
     covar_filter: null
+    na_values: null  # Extra missing-value codes, e.g. [999, 777] (ABCD sentinels)
     iid_col: "IID"
     fid_col: "FID"
 

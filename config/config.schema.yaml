@@ -336,19 +336,28 @@ snpHerit:
       default: 10
       description: Number of principal components — integer (e.g., 10) or list of integers (e.g., [5, 10, 20])
     mpheno:
-      type: str
+      type: any
       default: "1"
-      description: Phenotype column(s) — column name string (e.g., "BMI") or list of strings (e.g., ["BMI", "Height"])
+      description: |
+        Phenotype column(s) to estimate — integer index (1 = first phenotype after FID/IID),
+        column name string (e.g., "BMI"), list of names/indices, or "ALL" (case-insensitive)
+        to run across all phenotype columns in the file.
     qcovar:
-      type: str
+      type: any
       nullable: true
       default: null
-      description: Quantitative covariate column names (passed via --qcovar to GCTA)
+      description: |
+        Quantitative covariate column names (passed via --qcovar to GCTA).
+        null = use ALL covariate columns (auto-detect); [] = use NO covariates;
+        e.g., ["age", "bmi"] = exactly those columns.
     covar_discrete:
-      type: str
+      type: any
       nullable: true
       default: null
-      description: Discrete/categorical covariate column names (passed via --covar to GCTA)
+      description: |
+        Discrete/categorical covariate column names (passed via --covar to GCTA).
+        null = use ALL covariate columns (auto-detect); [] = use NO covariates;
+        e.g., ["sex", "site"] = exactly those columns.
     RV:
       type: str
       nullable: true
@@ -381,6 +390,15 @@ snpHerit:
       nullable: true
       default: null
       description: Filter covariate data — string (e.g., "site==1") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
+    na_values:
+      type: any
+      nullable: true
+      default: null
+      description: |
+        Additional values to treat as NA/missing in phenotype, covariate, and PC files
+        (e.g., [999, 777] or [-777, -888] for ABCD sentinel codes). Added to MASH's built-in
+        missing markers (empty, NA, NaN, n/a). Applied at file load time. Overrides the
+        previous stopgap of chaining pheno_filter/covar_filter expressions per column.
 
 prsMethods:
   type: dict

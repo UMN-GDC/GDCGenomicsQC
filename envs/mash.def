@@ -26,5 +26,5 @@ From: mambaorg/micromamba:latest
 
 %labels
     Author Christian Coffman
-    Version v1.0.0
+    Version v1.1
 

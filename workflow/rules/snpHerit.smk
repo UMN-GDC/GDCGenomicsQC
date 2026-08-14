@@ -35,13 +35,12 @@ def _mash_config(prefix, pheno, out, npc, mpheno, eigenvec,
                  covar=None, covar_discrete=None, qcovar=None,
                  pheno_filter=None, covar_filter=None,
                  loop_covars=False, random_groups=None, Naive=False,
-                 std=None, k=None, RV=None):
+                 std=None, k=None, RV=None, na_values=None):
     cfg = {
         "prefix": str(prefix),
         "pheno": [str(p) for p in (pheno if isinstance(pheno, list) else [pheno])],
         "out": str(out),
         "npc": [int(n) for n in (npc if isinstance(npc, list) else [npc])],
-        "mpheno": [str(m) for m in (mpheno if isinstance(mpheno, list) else [mpheno])],
         "Method": SNP_HERIT_CONFIG.get("method", "AdjHE"),
         "iid_col": SNP_HERIT_CONFIG.get("iid_col", "IID"),
         "fid_col": SNP_HERIT_CONFIG.get("fid_col", "FID"),
@@ -50,12 +49,23 @@ def _mash_config(prefix, pheno, out, npc, mpheno, eigenvec,
         "random_groups": RV if RV else None,
         "Naive": Naive,
     }
+    # mpheno: "ALL" (case-insensitive) runs across all phenotypes in the
+    # phenotype file; otherwise a list of column names or indices.
+    if isinstance(mpheno, str) and mpheno.lower() == "all":
+        cfg["mpheno"] = "ALL"
+    else:
+        cfg["mpheno"] = [str(m) for m in (mpheno if isinstance(mpheno, list) else [mpheno])]
     if covar:
         cfg["covar"] = [str(c) for c in covar] if isinstance(covar, list) else str(covar)
-    if covar_discrete:
-        cfg["covar_discrete"] = covar_discrete
-    if qcovar:
+    # qcovar/covar_discrete: null (None) -> use ALL covariate columns;
+    # empty list [] -> use NO covariates; list -> exactly those columns.
+    # Pass through explicitly so MASH can distinguish null from empty set.
+    if qcovar is not None:
         cfg["qcovar"] = qcovar
+    if covar_discrete is not None:
+        cfg["covar_discrete"] = covar_discrete
+    if na_values is not None:
+        cfg["na_values"] = na_values
     if pheno_filter:
         cfg["pheno_filter"] = pheno_filter
     if covar_filter:
@@ -77,7 +87,7 @@ if SNP_HERIT_ACTIVE:
             conda:
                 "../../envs/mash.yml"
             container:
-                "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
+                "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1.1"
             envmodules: *([config.get("R_module")] if config.get("R_module") else [])
             threads: 8
             resources:
@@ -111,6 +121,7 @@ if SNP_HERIT_ACTIVE:
                     std=SNP_HERIT_CONFIG.get("std"),
                     k=SNP_HERIT_CONFIG.get("k"),
                     RV=SNP_HERIT_CONFIG.get("RV"),
+                    na_values=SNP_HERIT_CONFIG.get("na_values"),
                 ),
             shell:
                 """
@@ -127,7 +138,7 @@ EOF
             conda:
                 "../../envs/mash.yml"
             container:
-                "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
+                "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1.1"
             envmodules: *([config.get("R_module")] if config.get("R_module") else [])
             threads: 8
             resources:
@@ -161,6 +172,7 @@ EOF
                     std=SNP_HERIT_CONFIG.get("std"),
                     k=SNP_HERIT_CONFIG.get("k"),
                     RV=SNP_HERIT_CONFIG.get("RV"),
+                    na_values=SNP_HERIT_CONFIG.get("na_values"),
                 ),
             shell:
                 """
@@ -186,7 +198,7 @@ if SIM_CFG.get("enabled", False):
         conda:
             "../../envs/mash.yml"
         container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1"
+            "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1.1"
         envmodules: *([config.get("R_module")] if config.get("R_module") else [])
         threads: 8
         resources:
@@ -210,23 +222,24 @@ if SIM_CFG.get("enabled", False):
                 npc=SNP_HERIT_CONFIG.get("npc", 10),
                 mpheno=SNP_HERIT_CONFIG.get("mpheno", 1),
                 eigenvec=OUT_DIR / w.subset / "simulations" / w.sim_name / "simulated.eigenvec",
-                covar=SNP_HERIT_CONFIG.get("covar"),
-                qcovar=SNP_HERIT_CONFIG.get("qcovar"),
-                covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),
-                pheno_filter=SNP_HERIT_CONFIG.get("pheno_filter"),
-                covar_filter=SNP_HERIT_CONFIG.get("covar_filter"),
-                loop_covars=SNP_HERIT_CONFIG.get("loop_covars", False),
-                random_groups=SNP_HERIT_CONFIG.get("RV"),
-                Naive=SNP_HERIT_CONFIG.get("Naive", False),
-                std=SNP_HERIT_CONFIG.get("std"),
-                k=SNP_HERIT_CONFIG.get("k"),
-                RV=SNP_HERIT_CONFIG.get("RV"),
-            ),
-        shell:
-            """
-            mkdir -p "$(dirname {output.estimates})"
-            cat > {params.argfile} << 'EOF'
+                    covar=SNP_HERIT_CONFIG.get("covar"),
+                    qcovar=SNP_HERIT_CONFIG.get("qcovar"),
+                    covar_discrete=SNP_HERIT_CONFIG.get("covar_discrete"),
+                    pheno_filter=SNP_HERIT_CONFIG.get("pheno_filter"),
+                    covar_filter=SNP_HERIT_CONFIG.get("covar_filter"),
+                    loop_covars=SNP_HERIT_CONFIG.get("loop_covars", False),
+                    random_groups=SNP_HERIT_CONFIG.get("RV"),
+                    Naive=SNP_HERIT_CONFIG.get("Naive", False),
+                    std=SNP_HERIT_CONFIG.get("std"),
+                    k=SNP_HERIT_CONFIG.get("k"),
+                    RV=SNP_HERIT_CONFIG.get("RV"),
+                    na_values=SNP_HERIT_CONFIG.get("na_values"),
+                ),
+            shell:
+                """
+                mkdir -p "$(dirname {output.estimates})"
+                cat > {params.argfile} << 'EOF'
 {params.mash_config}
 EOF
-            MASH --argfile {params.argfile}
-            """
+                MASH --argfile {params.argfile}
+                """

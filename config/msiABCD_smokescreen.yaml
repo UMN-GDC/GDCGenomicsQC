@@ -87,7 +87,7 @@ snpHerit:
     method: "GCTA"
 
     # Discrete/categorical covariate column names (passed via --covar to GCTA)
-    # If null and covar provided, MASH auto-detects (columns with <35 unique values)
+    # null = use ALL covariate columns (auto-detect); [] = use NO covariates
     covar_discrete:
       - "ab_g_stc__cohort_sex"
 
@@ -96,7 +96,7 @@ snpHerit:
     npc: [2,5]
 
     # Phenotype column(s) to analyze
-    # Integer or array: 1 = third column (after FID, IID)
+    # Integer or array: 1 = third column (after FID, IID); or "ALL" to run across every column
     mpheno:
       - "mr_y_smri__vol__aseg__cd__lh_sum"
       - "mr_y_smri__vol__aseg__pt__lh_sum"
@@ -119,7 +119,7 @@ snpHerit:
       - "mr_y_smri__vol__aseg__vdc__rh_sum"
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
-    # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
+    # null = use ALL covariate columns (auto-detect); [] = use NO covariates
     qcovar:
       - "ab_p_demo_age"
     # Loop through covariates, including all previous covariates in each iteration
@@ -141,6 +141,10 @@ snpHerit:
     #covar_filter: ["session_id==ses-00A", "ab_g_dyn__design_site==16"]
     covar_filter: ["session_id==ses-00A", "ab_g_stc__cohort_ethnrace__aou___7==TRUE"]
     
+
+    # Additional values to treat as NA/missing in phenotype, covariate, and PC files
+    # (e.g., [999, 777] for ABCD sentinel codes). Added to MASH's built-in missing markers.
+    na_values: null
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
     iid_col: "participant_id"

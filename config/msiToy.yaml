@@ -82,16 +82,16 @@ snpHerit:
     # Examples: 10  or  [5, 10, 20]
     npc: 10
 
-    # Phenotype column(s) — column name string or list of column name strings
-    # Examples: "BMI"  or  ["BMI", "Height"]
+    # Phenotype column(s) — column name string, list of names, integer index, or "ALL"
+    # Examples: "BMI"  or  ["BMI", "Height"]  or  1  or  "ALL"
     mpheno: 1
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
-    # If null and covar provided, MASH auto-detects (columns with ≥35 unique values)
+    # null = use ALL covariate columns (auto-detect); [] = use NO covariates
     qcovar: null
 
     # Discrete/categorical covariate column names (passed via --covar to GCTA)
-    # If null and covar provided, MASH auto-detects (columns with <35 unique values)
+    # null = use ALL covariate columns (auto-detect); [] = use NO covariates
     covar_discrete: null
 
     # Column name to use as random effect (for AdjHE with site effects)
@@ -114,6 +114,10 @@ snpHerit:
 
     # Filter covariate data — string (e.g., "site==1") or list of strings (e.g., ["session_id==ses-00A", "age>=18"])
     covar_filter: null
+
+    # Additional values to treat as NA/missing in phenotype, covariate, and PC files
+    # (e.g., [999, 777] for ABCD sentinel codes). Added to MASH's built-in missing markers.
+    na_values: null
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
     iid_col: "IID"

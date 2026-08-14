@@ -35,7 +35,10 @@ snpHerit:
     covar: "/path/to/covariates.tsv"
     method: "AdjHE"
     npc: 10
-    mpheno: "BMI"
+    mpheno: "BMI"          # column name(s), index, or "ALL" (case-insensitive) for all phenotypes
+    qcovar: null           # null = all covariate columns (auto-detect); [] = no covariates
+    covar_discrete: null   # null = all covariate columns (auto-detect); [] = no covariates
+    na_values: null        # extra missing codes, e.g. [999, 777] (ABCD sentinels)
     loop_covars: false
     Naive: false
 

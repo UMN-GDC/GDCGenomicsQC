@@ -162,9 +162,10 @@ snpHerit:
     output: "03-snpHeritability/herit.csv" # DAG mode output path (relative to OUT_DIR/{subset})
     method: "AdjHE"                       # Estimation method: AdjHE, GCTA, PredLMM, SWD
     npc: 10                               # PCs — integer (e.g., 10) or list (e.g., [5, 10, 20])
-    mpheno: "BMI"                         # Phenotype column — name string or list (e.g., ["BMI", "Height"])
-    qcovar: null                          # Quantitative covariate names (for GCTA)
-    covar_discrete: null                  # Discrete covariate names (for GCTA)
+    mpheno: "BMI"                         # Phenotype — name, index, list, or "ALL" (all columns)
+    qcovar: null                          # null = all covariates; [] = none; list = exactly those
+    covar_discrete: null                  # null = all covariates; [] = none; list = exactly those
+    na_values: null                       # Extra missing codes, e.g. [999, 777] (ABCD sentinels)
     std: false                            # Run SAdj-HE (standardized) vs UAdj-HE
     loop_covars: false                    # Loop through covariates iteratively
     Naive: false                          # Use naive estimator (false for AdjHE)
@@ -246,7 +247,16 @@ Key parameters:
   - PCs — integer or list (e.g., [5,10,20])
 * - ``mpheno``
   - "1"
-  - Phenotype column name(s) — string or list
+  - Phenotype — name, index, list, or ``"ALL"`` (all columns)
+* - ``qcovar``
+  - null
+  - Quantitative covariates: null = all, [] = none, list = exactly those
+* - ``covar_discrete``
+  - null
+  - Discrete covariates: null = all, [] = none, list = exactly those
+* - ``na_values``
+  - null
+  - Extra missing codes, e.g. [999, 777] (ABCD sentinels)
 * - ``loop_covars``
   - false
   - Loop through covariates iteratively
@@ -318,13 +328,139 @@ snakemake --profile=../profiles/hpc \
   - PCs — integer or list (e.g., [5,10,20])
 * - ``mpheno``
   - "1"
-  - Phenotype column name(s) — string or list
+  - Phenotype — name, index, list, or ``"ALL"`` (all columns)
+* - ``qcovar``
+  - null
+  - Quantitative covariates: null = all, [] = none, list = exactly those
+* - ``covar_discrete``
+  - null
+  - Discrete covariates: null = all, [] = none, list = exactly those
+* - ``na_values``
+  - null
+  - Extra missing codes, e.g. [999, 777] (ABCD sentinels)
 * - ``loop_covars``
   - false
   - Loop through covariates iteratively
 * - ``Naive``
   - false
   - Use naive estimator (false for AdjHE)
+```
+
+---
+
+## Missing Values (`na_values`)
+
+By default, MASH recognizes the standard missing markers (empty values, `NA`,
+`NaN`, `n/a`, etc.). Some datasets (e.g., ABCD) encode missing data with
+sentinel values such as `999`, `777`, or `-888`. Declare those codes with
+`na_values` and MASH will treat them as missing at file load time:
+
+```yaml
+snpHerit:
+    pheno: "/path/to/phenotype.tsv"
+    covar: "/path/to/covariates.tsv"
+    method: "GCTA"
+    mpheno: ["nihtb_verb_iq", "nihtb_flanker"]
+    na_values: [999, 777]
+```
+
+This produces the following MASH argfile (the JSON written by the pipeline):
+
+```json
+{
+  "na_values": [999, 777]
+}
+```
+
+Equivalently on the MASH command line:
+
+```bash
+MASH --argfile config.json --na-values 999 777
+```
+
+Custom NA values are *added* to the built-in list, so standard markers still
+work. `na_values` applies to all delimited text files (phenotype, covariate,
+and PC files).
+
+```{note}
+Rows containing these codes are dropped **per-phenotype** (MASH's
+complete-case handling), so a subject missing only `nihtb_verb_iq` is still
+used for `nihtb_flanker`. This is the intended behavior of `na_values` and
+differs from the earlier stopgap of chaining `pheno_filter: ["col!=999", ...]`
+expressions, which dropped rows globally for every analysis.
+```
+
+---
+
+## Covariate Selection (`qcovar` / `covar_discrete`)
+
+Control which covariates are used in the model:
+
+| Setting | Behavior |
+|---------|----------|
+| `null` (default) | Use **all** covariate columns |
+| `[]` | Use **no** covariates |
+| `["age", "sex"]` | Use exactly those columns |
+
+```yaml
+# Use all covariate columns (auto-classified for GCTA)
+snpHerit:
+    covar: "/path/to/covariates.tsv"
+    qcovar: null
+    covar_discrete: null
+```
+
+```yaml
+# Use no covariates at all
+snpHerit:
+    covar: "/path/to/covariates.tsv"
+    qcovar: []
+    covar_discrete: []
+```
+
+These map to the MASH argfile directly:
+
+```json
+{
+  "qcovar": [],
+  "covar_discrete": []
+}
+```
+
+For the `GCTA` method, `null` triggers automatic classification of covariate
+columns into quantitative vs. discrete based on the number of unique values.
+
+---
+
+## Running All Phenotypes (`mpheno: "ALL"`)
+
+Set `mpheno` to `"ALL"` (case-insensitive) to estimate heritability across
+**every** phenotype column in the phenotype file:
+
+```yaml
+snpHerit:
+    pheno: "/path/to/phenotype.tsv"
+    method: "AdjHE"
+    mpheno: "ALL"
+```
+
+This maps to the MASH argfile as:
+
+```json
+{
+  "mpheno": "ALL"
+}
+```
+
+Equivalently on the MASH command line:
+
+```bash
+MASH --argfile config.json --mpheno ALL
+```
+
+```{note}
+`"ALL"` runs across all non-ID phenotype columns. To run all-but-a-few, use an
+explicit list instead (e.g., `mpheno: ["BMI", "Height"]`).
 ```
 
 ---

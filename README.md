@@ -388,7 +388,10 @@ snpHerit:
     random_groups: false
     npc: [10]
     loop_covs: false
-    mpheno: 1
+    mpheno: 1  # Column name(s), index, or "ALL" (case-insensitive) for all phenotypes
+    qcovar: null  # null = all covariate columns (auto-detect); [] = no covariates; list = exactly those
+    covar_discrete: null  # null = all covariate columns (auto-detect); [] = no covariates; list = exactly those
+    na_values: null  # Extra missing-value codes, e.g. [999, 777] (ABCD sentinels)
 ```
 
 ### VCF Conversion

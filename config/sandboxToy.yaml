@@ -59,11 +59,11 @@ snpHerit:
 
     npc: [1,2]
 
-    mpheno: 1
+    mpheno: 1  # Phenotype — column name(s), index, or "ALL" (case-insensitive) for all columns
 
-    qcovar: null
+    qcovar: null  # null = use ALL covariate columns (auto-detect); [] = no covariates; list = exactly those
 
-    covar_discrete: null
+    covar_discrete: null  # null = use ALL covariate columns (auto-detect); [] = no covariates; list = exactly those
 
     RV: null
 
@@ -78,6 +78,8 @@ snpHerit:
     pheno_filter: null
 
     covar_filter: null
+
+    na_values: null  # Extra missing-value codes, e.g. [999, 777] (ABCD sentinels)
 
     iid_col: "IID"
 
