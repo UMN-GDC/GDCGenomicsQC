@@ -146,7 +146,7 @@ snpHerit:
 
     # Additional values to treat as NA/missing in phenotype, covariate, and PC files
     # (e.g., [999, 777] for ABCD sentinel codes). Added to MASH's built-in missing markers.
-    na_values: null
+    na_values: [999, 777]
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
     iid_col: "participant_id"
