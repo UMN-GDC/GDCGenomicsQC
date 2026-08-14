@@ -235,11 +235,11 @@ if SIM_CFG.get("enabled", False):
                 RV=SNP_HERIT_CONFIG.get("RV"),
                 na_values=SNP_HERIT_CONFIG.get("na_values"),
             ),
-            shell:
-                """
-                mkdir -p "$(dirname {output.estimates})"
-                cat > {params.argfile} << 'EOF'
+        shell:
+            """
+            mkdir -p "$(dirname {output.estimates})"
+            cat > {params.argfile} << 'EOF'
 {params.mash_config}
 EOF
-                MASH --argfile {params.argfile}
-                """
+            MASH --argfile {params.argfile}
+            """
