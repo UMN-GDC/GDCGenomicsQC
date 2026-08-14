@@ -91,41 +91,44 @@ snpHerit:
 
     # Phenotype column(s) to analyze
     # Integer or array: 1 = third column (after FID, IID); or "ALL" to run across every column
-    mpheno:
-      - "mr_y_smri__vol__aseg__cd__lh_sum"
-      - "mr_y_smri__vol__aseg__pt__lh_sum"
-      - "mr_y_smri__vol__aseg__pl__lh_sum"
-      - "mr_y_smri__vol__aseg__ag__lh_sum"
-      - "mr_y_smri__vol__aseg__hc__lh_sum"
-      - "mr_y_smri__vol__aseg__ab__lh_sum"
-      - "mr_y_smri__vol__aseg__cd__rh_sum"
-      - "mr_y_smri__vol__aseg__pt__rh_sum"
-      - "mr_y_smri__vol__aseg__pl__rh_sum"
-      - "mr_y_smri__vol__aseg__ag__rh_sum"
-      - "mr_y_smri__vol__aseg__hc__rh_sum"
-      - "mr_y_smri__vol__aseg__ab__rh_sum"
-      - "mr_y_smri__vol__aseg__whb_sum"
-      - "mr_y_smri__vol__aseg__icv_sum"
-      - "nc_y_nihtb__picvcb__uncor_score"
-      - "nc_y_nihtb__flnkr__uncor_score"
-      - "nc_y_nihtb__lswmt__uncor_score"
-      - "nc_y_nihtb__crdst__uncor_score"
-      - "nc_y_nihtb__pttcp__uncor_score"
-      - "nc_y_nihtb__picsq__uncor_score"
-      - "nc_y_nihtb__readr__uncor_score"
-      - "nc_y_nihtb__comp__fluid__uncor_score"
-      - "nc_y_nihtb__comp__cryst__uncor_score"
-      - "nc_y_nihtb__comp__tot__uncor_score"
+    # (previous mpheno)
+    #   - "mr_y_smri__vol__aseg__cd__lh_sum"
+    #   - "mr_y_smri__vol__aseg__pt__lh_sum"
+    #   - "mr_y_smri__vol__aseg__pl__lh_sum"
+    #   - "mr_y_smri__vol__aseg__ag__lh_sum"
+    #   - "mr_y_smri__vol__aseg__hc__lh_sum"
+    #   - "mr_y_smri__vol__aseg__ab__lh_sum"
+    #   - "mr_y_smri__vol__aseg__cd__rh_sum"
+    #   - "mr_y_smri__vol__aseg__pt__rh_sum"
+    #   - "mr_y_smri__vol__aseg__pl__rh_sum"
+    #   - "mr_y_smri__vol__aseg__ag__rh_sum"
+    #   - "mr_y_smri__vol__aseg__hc__rh_sum"
+    #   - "mr_y_smri__vol__aseg__ab__rh_sum"
+    #   - "mr_y_smri__vol__aseg__whb_sum"
+    #   - "mr_y_smri__vol__aseg__icv_sum"
+    #   - "nc_y_nihtb__picvcb__uncor_score"
+    #   - "nc_y_nihtb__flnkr__uncor_score"
+    #   - "nc_y_nihtb__lswmt__uncor_score"
+    #   - "nc_y_nihtb__crdst__uncor_score"
+    #   - "nc_y_nihtb__pttcp__uncor_score"
+    #   - "nc_y_nihtb__picsq__uncor_score"
+    #   - "nc_y_nihtb__readr__uncor_score"
+    #   - "nc_y_nihtb__comp__fluid__uncor_score"
+    #   - "nc_y_nihtb__comp__cryst__uncor_score"
+    #   - "nc_y_nihtb__comp__tot__uncor_score"
+    mpheno: "ALL"
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
     # null = use ALL covariate columns (auto-detect); [] = use NO covariates
-    qcovar:
-      - "ab_p_demo_age"
+    # (previous qcovar)
+    #   - "ab_p_demo_age"
+    qcovar: []
 
     # Discrete/categorical covariate column names (passed via --covar to GCTA)
     # null = use ALL covariate columns (auto-detect); [] = use NO covariates
-    covar_discrete:
-      - "ab_g_stc__cohort_sex"
+    # (previous covar_discrete)
+    #   - "ab_g_stc__cohort_sex"
+    covar_discrete: []
     # Column name to use as random effect (for AdjHE with site effects)
     RV: null
 
@@ -148,7 +151,8 @@ snpHerit:
 
     # Additional values to treat as NA/missing in phenotype, covariate, and PC files
     # (e.g., [999, 777] for ABCD sentinel codes). Added to MASH's built-in missing markers.
-    na_values: null
+    # (previous na_values: null)
+    na_values: [999, 777]
 
     # Column name for individual ID in phenotype/covariate files (case-insensitive match)
     iid_col: "participant_id"
