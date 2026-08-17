@@ -30,6 +30,67 @@ AGENTS.md
 !profiles/*/example_config.yaml
 !profiles/*/*.yaml
 .cache/
+workflow/rule_backups/
+profiles/hpc-nosif/
+prs_inputs_hm3/
+CTSLEB/
+Ref/
+Ref_symlink_backup_20260419_014947/
+backups/
+conda-envs/
+config/#msi_config.yaml#
+config/README_msiCTSLEBPRS_end_to_end.md
+config/abcd_single_ancestry_prs.regulated.config.sh
+config/backups/
+config/managed_context/
+config/msi_config.yaml~
+config/temp_ld/
+config/test_suite_analysis/
+docs/ABCD_single_ancestry_PRS_regulated_runbook.md
+docs/ctsleb_multi_prs_draft.md
+output/
+output_ctsleb_heritability/
+output_ctsleb_prs/
+output_hm3_heritability/
+output_vcfgz_heritability/
+toyData/
+workflow/Snakefile.bak.20260419_125612
+workflow/Snakefile.before_abcd_ancestry
+workflow/SnakefileHM3all
+workflow/abcd_longitudinal_cognition_traits.txt
+workflow/backups/
+workflow/temp_ld/
+workflow1/
+workflow/scripts/*longitudinal*
+workflow/scripts/*abcd*
+workflow/scripts/prs_pipeline/
+workflow/*longitudinal*
+workflow/*txt
+workflow/*tsv
+workflow/rules/*abcd*
+workflow/rules/*longitudinal*
+workflow/scripts/*2026*
+workflow/rules/*2026*
+prs_benchmark/
+prs_inpputs_hm3/
+prs_resources/
+workflow/rules/classifyAncestry.smk.20260706_174910
+	workflow/rules/classifyAncestry.smk.bak.20260419_125612
+	workflow/rules/classifyAncestry.smk.before_grch38_labels
+	workflow/rules/convertPlink.smk.20260706_174910
+	workflow/rule_backups/
+	workflow/rules/#simulatePhenotype.smk#
+	workflow/rules/Initial_QC.smk.20260706_174910
+	workflow/rules/Relatedness.smk.before_hardening.20260707_014032
+	workflow/rules/prsPipelines.smk.before_prosper_edit
+	workflow/rules/prsPipelines.smk~
+	workflow/rules/simulatePhenotype.smk.backup.20260421_000400
+	workflow/rules/simulatePhenotype.smk.backup.20260421_001752
+	workflow/rules/simulatePhenotype.smk.backup.20260627
+	workflow/rules/snpHerit.original_backup.smk
+workflow/scripts/prs_pipeline/
+
+
 
 # History files
 .Rhistory

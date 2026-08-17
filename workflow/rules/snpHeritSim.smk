@@ -1,8 +1,59 @@
 SIM_CONFIG = config.get("phenotypeSimulation", {})
+SNP_HERIT_CONFIG = config.get("snpHerit", {})
+
 sim_ancestries = SIM_CONFIG.get("ancestries", ["AFR", "EUR"])
+if len(sim_ancestries) != 2:
+    raise ValueError("phenotypeSimulation.ancestries must be exactly 2 values")
+
 ANC1 = sim_ancestries[0]
 ANC2 = sim_ancestries[1]
 SIM_OUT_DIR = OUT_DIR / "simulations" / f"{ANC1}_{ANC2}"
+
+
+def use_sim_covar():
+    return bool(SNP_HERIT_CONFIG.get("use_sim_covar", False))
+
+
+rule pruneSimVariants:
+    log:
+        OUT_DIR / "logs" / "pruneSimVariants_{anc}.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest"
+    threads: 8
+    resources:
+        nodes=1,
+        mem_mb=64000,
+        runtime=240,
+    input:
+        bed=SIM_OUT_DIR / "{anc}_simulation.bed",
+        bim=SIM_OUT_DIR / "{anc}_simulation.bim",
+        fam=SIM_OUT_DIR / "{anc}_simulation.fam",
+    output:
+        prune_in=SIM_OUT_DIR / "{anc}_simulation_ldprune.prune.in",
+        prune_out=SIM_OUT_DIR / "{anc}_simulation_ldprune.prune.out",
+    params:
+        prefix=lambda wildcards, input: str(input.bed)[:-4],
+        maf=SNP_HERIT_CONFIG.get("grm_maf", 0.05),
+        prune_window=SNP_HERIT_CONFIG.get("grm_prune_window", 200),
+        prune_step=SNP_HERIT_CONFIG.get("grm_prune_step", 50),
+        prune_r2=SNP_HERIT_CONFIG.get("grm_prune_r2", 0.2),
+        plink_mem_mb=SNP_HERIT_CONFIG.get("grm_plink_memory_mb", 120000),
+    shell:
+        r"""
+        set -euo pipefail
+        exec > {log} 2>&1
+
+        plink2 \
+          --bfile {params.prefix} \
+          --maf {params.maf} \
+          --indep-pairwise {params.prune_window} {params.prune_step} {params.prune_r2} \
+          --threads {threads} \
+          --memory {params.plink_mem_mb} \
+          --out {params.prefix}_ldprune
+
+        test -s {output.prune_in}
+        test -s {output.prune_out}
+        """
 
 
 rule generateSimPCA:
@@ -13,43 +64,100 @@ rule generateSimPCA:
     threads: 8
     resources:
         nodes=1,
-        mem_mb=16000,
-        runtime=60,
+        mem_mb=192000,
+        runtime=1440,
     input:
         bed=SIM_OUT_DIR / "{anc}_simulation.bed",
         bim=SIM_OUT_DIR / "{anc}_simulation.bim",
         fam=SIM_OUT_DIR / "{anc}_simulation.fam",
+        prune_in=rules.pruneSimVariants.output.prune_in,
     output:
+        grm=SIM_OUT_DIR / "{anc}_simulation.grm.bin",
+        grmid=SIM_OUT_DIR / "{anc}_simulation.grm.id",
+        grmN=SIM_OUT_DIR / "{anc}_simulation.grm.N.bin",
         eigenvec=SIM_OUT_DIR / "{anc}_simulation.eigenvec",
     params:
-        prefix=lambda wildcards, input: input.bed[:-4],
-        npc=config.get("snpHerit", {}).get("npc", 10),
+        prefix=lambda wildcards, input: str(input.bed)[:-4],
+        npc=SNP_HERIT_CONFIG.get("npc", 10),
+        plink_mem_mb=SNP_HERIT_CONFIG.get("grm_plink_memory_mb", 120000),
     shell:
-        """
-        plink2 --bfile {params.prefix} --make-grm-bin --pca approx {params.npc} --out {params.prefix}
+        r"""
+        set -euo pipefail
+        exec > {log} 2>&1
+
+        plink2 \
+          --bfile {params.prefix} \
+          --extract {input.prune_in} \
+          --make-grm-bin \
+          --pca approx {params.npc} \
+          --threads {threads} \
+          --memory {params.plink_mem_mb} \
+          --out {params.prefix}
+
+        test -s {output.grm}
+        test -s {output.grmid}
+        test -s {output.grmN}
+        test -s {output.eigenvec}
         """
 
 
 rule prepareSimPheno:
-    container:
-        "docker://alpine:latest"
     log:
         OUT_DIR / "logs" / "prepareSimPheno_{anc}.log",
     input:
         fam=SIM_OUT_DIR / "{anc}_simulation.fam",
     output:
-        pheno=SIM_OUT_DIR / "{anc}_simulation_pheno1.pheno",
+        pheno=SIM_OUT_DIR / "{anc}_simulation_pheno1.phen",
     shell:
-        """
+        r"""
+        set -euo pipefail
+        exec > {log} 2>&1
+
+        test -s {input.fam}
         awk '{{print $1, $2, $6}}' {input.fam} > {output.pheno}
+        test -s {output.pheno}
+        """
+
+
+rule prepareSimPC:
+    log:
+        OUT_DIR / "logs" / "prepareSimPC_{anc}.log",
+    input:
+        eigenvec=SIM_OUT_DIR / "{anc}_simulation.eigenvec",
+    output:
+        pc=SIM_OUT_DIR / "{anc}_simulation_adjhe.eigenvec",
+    shell:
+        r"""
+        set -euo pipefail
+        exec > {log} 2>&1
+
+        test -s {input.eigenvec}
+        tail -n +2 {input.eigenvec} > {output.pc}
+        test -s {output.pc}
+        """
+
+
+rule prepareSimCovar:
+    log:
+        OUT_DIR / "logs" / "prepareSimCovar_{anc}.log",
+    input:
+        pc=SIM_OUT_DIR / "{anc}_simulation_adjhe.eigenvec",
+    output:
+        covar=SIM_OUT_DIR / "{anc}_simulation.covar.txt",
+    shell:
+        r"""
+        set -euo pipefail
+        exec > {log} 2>&1
+
+        test -s {input.pc}
+        cp {input.pc} {output.covar}
+        test -s {output.covar}
         """
 
 
 rule snpHeritSim:
     log:
         OUT_DIR / "logs" / "snpHeritSim_{anc}.log",
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest"
     threads: 1
     resources:
         nodes=1,
@@ -59,22 +167,38 @@ rule snpHeritSim:
         grm=SIM_OUT_DIR / "{anc}_simulation.grm.bin",
         grmid=SIM_OUT_DIR / "{anc}_simulation.grm.id",
         grmN=SIM_OUT_DIR / "{anc}_simulation.grm.N.bin",
-        eigen=SIM_OUT_DIR / "{anc}_simulation.eigenvec",
-        pheno=SIM_OUT_DIR / "{anc}_simulation_pheno1.pheno",
+        pc=SIM_OUT_DIR / "{anc}_simulation_adjhe.eigenvec",
+        pheno=SIM_OUT_DIR / "{anc}_simulation_pheno1.phen",
+        covar=lambda wildcards: (
+            SIM_OUT_DIR / f"{wildcards.anc}_simulation.covar.txt" if use_sim_covar() else []
+        ),
     output:
-        estimates=SIM_OUT_DIR / "{anc}_simulation_pheno1.estimates",
+        estimates=SIM_OUT_DIR / "{anc}_simulation_pheno1.estimates.csv",
     params:
-        method=config.get("snpHerit", {}).get("method", "AdjHE"),
-        npc=config.get("snpHerit", {}).get("npc", 10),
-        grm_prefix=lambda wildcards, input: input.grm[:-4],
-        covar=config.get("snpHerit", {}).get("covar", ""),
+        python_bin=SNP_HERIT_CONFIG.get("python_bin", "python"),
+        adjhe_script=SNP_HERIT_CONFIG.get("adjhe_script", ""),
+        npc=SNP_HERIT_CONFIG.get("npc", 10),
+        mpheno=str(SNP_HERIT_CONFIG.get("mpheno", 1)),
+        grm_prefix=lambda wildcards, input: str(input.grm)[:-8],
+        covar_arg=lambda wildcards, input: (
+            f"--covar {input.covar}" if use_sim_covar() else ""
+        ),
     shell:
-        """
-        MASH --PC {input.eigen} \
+        r"""
+        set -euo pipefail
+        exec > {log} 2>&1
+
+        test -n "{params.adjhe_script}"
+        test -s "{params.adjhe_script}"
+
+        {params.python_bin} {params.adjhe_script} \
           --prefix {params.grm_prefix} \
+          --PC {input.pc} \
           --pheno {input.pheno} \
           --out {output.estimates} \
           --npc {params.npc} \
-          --Method {params.method} \
-          --covar {params.covar}
+          --mpheno {params.mpheno} \
+          {params.covar_arg}
+
+        test -s {output.estimates}
         """

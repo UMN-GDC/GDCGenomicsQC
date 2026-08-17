@@ -130,7 +130,7 @@ plink2 --pfile {output.tempDir}/intermediate_1 \
        --out {output.tempDir}/intermediate_2
 
 plink2 --pfile {output.tempDir}/intermediate_2 \
-       --set-all-var-ids 'chr@:#:$r:$a' \
+       --set-missing-var-ids 'chr@:#:$r:$a' \
        --make-pgen \
        --threads {threads} \
        --out {params.output_prefix}
@@ -195,8 +195,7 @@ rule convertPlinkSingleFile:
     shell:
         """
         if [ "{params.is_per_chr}" == "True" ]; then
-            echo "ERROR: convertPlinkSingleFile should not be used when INPUT has {{CHR}}. Use convertPlinkPerChromosome instead."
-            echo "INPUT: {config.get('INPUT', '')}"
+            echo "ERROR: convertPlinkSingleFile called in per-chromosome mode."
             exit 1
         fi
 
@@ -281,7 +280,7 @@ rule convertPlinkSingleFile:
                    --out {output.tempDir}/intermediate_2
 
             plink2 --pfile {output.tempDir}/intermediate_2 \
-                   --set-all-var-ids 'chr@:#:$r:$a' \
+                   --set-missing-var-ids 'chr@:#:$r:$a' \
                    --make-pgen \
                    --threads {threads} \
                    --out {output.tempDir}/intermediate_3

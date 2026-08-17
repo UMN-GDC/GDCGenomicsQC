@@ -53,8 +53,6 @@ rule runPcairInternalPca:
         
         echo "PC-AiR completed"
         """
-
-
 rule runPlink2ApproximatePca:
     log:
         OUT_DIR / "logs" / "runPlink2ApproximatePca_{subset}.log",
@@ -68,26 +66,26 @@ rule runPlink2ApproximatePca:
         mem_mb=32000,
         runtime=1440,
     input:
-        bed=OUT_DIR / "{subset}" / "unrelated.bed",
-        bim=OUT_DIR / "{subset}" / "unrelated.bim",
-        fam=OUT_DIR / "{subset}" / "unrelated.fam",
+        pgen=OUT_DIR / "{subset}" / "standardFilter.LDpruned.pgen",
+        pvar=OUT_DIR / "{subset}" / "standardFilter.LDpruned.pvar",
+        psam=OUT_DIR / "{subset}" / "standardFilter.LDpruned.psam",
+        keep=OUT_DIR / "{subset}" / "unrelated.keep",
     output:
         eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
         eigenval=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenval",
     params:
-        input_prefix=lambda wildcards, input: str(input.bed)[:-4],
-        npc=config.get("internalPCA", {}).get("npc", 20),
+        input_prefix=lambda wc, input: str(input.pgen)[:-5],
+        output_prefix=lambda wc, output: str(output.eigenvec).replace(
+            ".eigenvec", ""
+        ),
+        npc=config.get("internalPCA", {}).get("npc", 10),
     shell:
         """
-        echo "Running PLINK2 approx PCA on unrelated samples"
-        
-        mkdir -p "$(dirname {output.eigenvec})"
-        
-        plink2 --bfile {params.input_prefix} \
-            --pca approx {params.npc} \
-            --out {output.eigenvec}
-        
-        cp {output.eigenvec}.eigenval {output.eigenval}
-        
-        echo "PLINK2 approx PCA completed"
+        set -euo pipefail
+
+        plink2 --pfile {params.input_prefix} \
+          --keep {input.keep} \
+          --pca approx {params.npc} \
+          --out {params.output_prefix} \
+          --threads {threads}
         """

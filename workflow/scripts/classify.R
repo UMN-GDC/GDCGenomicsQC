@@ -41,6 +41,17 @@ model <- args$model
 predicted_col <- paste0(model, "_predicted")
 confidence_col <- paste0(model, "_confidence")
 
+if (!(predicted_col %in% colnames(result)) || !(confidence_col %in% colnames(result))) {
+    available_models <- c("pca", "umap", "vae", "rfmix")[
+        paste0(c("pca", "umap", "vae", "rfmix"), "_predicted") %in% colnames(result)
+    ]
+    stop(
+        "Selected ancestry model '", model, "' is not available in posterior_probabilities.tsv. ",
+        "Available models: ", paste(available_models, collapse = ", "), ". ",
+        "If using VAE, set ancestry.vae_file in the config and rerun estimateGlobalAncestry."
+    )
+}
+
 unique_ancestries <- result |>
     filter(.data[[confidence_col]] >= args$threshold) |>
     pull(predicted_col) |>
@@ -53,6 +64,14 @@ for (anc in unique_ancestries) {
         mutate(FID = 0) |>
         relocate(FID, IID) |>
         write_delim(file.path(args$out, paste0("keep_", anc, ".txt")), delim = "\t")
+}
+
+for (anc in c("AFR", "AMR", "EAS", "EUR", "SAS")) {
+    keep_file <- file.path(args$out, paste0("keep_", anc, ".txt"))
+    if (!file.exists(keep_file)) {
+        tibble(FID = character(), IID = character()) |>
+            write_delim(keep_file, delim = "\t")
+    }
 }
 
 result |>

@@ -31,6 +31,6 @@ rule applyUmapDimensionalityReduction:
       --sample {input.sample} \
       --threads {threads} \
       --ncoords {params.ncoords} \
-      --seed $RANDOM
+      --seed 42
 
     """

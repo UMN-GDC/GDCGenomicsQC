@@ -63,7 +63,7 @@ rule mergeChromosomesAndFilter:
            --make-pgen
     plink2 --pfile {output.tempDir}/intermediate_1 \
            --threads {threads} \
-           --set-all-var-ids 'chr@:#:$r:$a' \
+           --set-missing-var-ids 'chr@:#:$r:$a' \
            --out {output.tempDir}/intermediate_2 \
            --make-pgen
 
