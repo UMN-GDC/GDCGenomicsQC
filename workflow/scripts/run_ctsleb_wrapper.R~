@@ -1,0 +1,93 @@
+#!/usr/bin/env Rscript
+
+suppressPackageStartupMessages({
+  library(argparse)
+  library(data.table)
+  library(CTSLEB)
+})
+
+parser <- ArgumentParser(description = "Draft CTSLEB wrapper for HM3 multi-ancestry PRS")
+parser$add_argument("--target-sumstats", required = TRUE)
+parser$add_argument("--aux-sumstats", required = TRUE)
+parser$add_argument("--target-ref-plink", required = TRUE)
+parser$add_argument("--aux-ref-plink", required = TRUE)
+parser$add_argument("--target-test-plink", required = TRUE)
+parser$add_argument("--plink19", required = TRUE)
+parser$add_argument("--plink2", required = TRUE)
+parser$add_argument("--results-dir", required = TRUE)
+parser$add_argument("--out-prefix", required = TRUE)
+parser$add_argument("--tuning-pheno", required = TRUE)
+parser$add_argument("--validation-pheno", required = TRUE)
+args <- parser$parse_args()
+
+dir.create(args$results_dir, recursive = TRUE, showWarnings = FALSE)
+
+sum_ref <- fread(args$aux_sumstats)
+sum_target <- fread(args$target_sumstats)
+
+params_farm <- SetParamsFarm(
+  plink19_exec = args$plink19,
+  plink2_exec = args$plink2
+)
+
+# Step 1: two-dimensional clumping and thresholding.
+prs_mat <- dimCT(
+  results_dir = args$results_dir,
+  sum_target = sum_target,
+  sum_ref = sum_ref,
+  ref_plink = args$aux_ref_plink,
+  target_plink = args$target_ref_plink,
+  test_target_plink = args$target_test_plink,
+  out_prefix = args$out_prefix,
+  params_farm = params_farm
+)
+
+y_tune <- fread(args$tuning_pheno)
+y_valid <- fread(args$validation_pheno)
+
+n_tune <- nrow(y_tune)
+if (nrow(prs_mat) < (n_tune + nrow(y_valid))) {
+  stop("CTSLEB wrapper: PRS matrix rows are fewer than tuning + validation samples.")
+}
+
+prs_tune <- prs_mat[seq_len(n_tune), ]
+prs_valid <- prs_mat[seq.int(n_tune + 1, n_tune + nrow(y_valid)), ]
+
+# The tutorial computes tuning R^2 across all PRS columns.
+prs_cols <- seq.int(3, ncol(prs_tune))
+prs_r2 <- vapply(
+  prs_cols,
+  function(i) summary(lm(y_tune[[1]] ~ prs_tune[[i]]))$r.squared,
+  numeric(1)
+)
+max_ind <- which.max(prs_r2)
+best_snps <- colnames(prs_tune)[max_ind + 2]
+
+# Step 2: empirical Bayes effect sizes.
+prs_mat_eb <- CalculateEBEffectSize(
+  bfile = args$target_test_plink,
+  snp_ind = best_snps,
+  plink_list = plink_list,
+  out_prefix = args$out_prefix,
+  results_dir = args$results_dir,
+  params_farm = params_farm
+)
+
+# Step 3: clean PRS matrices and store intermediates for a later SL step.
+prs_tune_eb <- prs_mat_eb[seq_len(n_tune), ]
+prs_valid_eb <- prs_mat_eb[seq.int(n_tune + 1, n_tune + nrow(y_valid)), ]
+
+cleaned <- PRS_Clean(
+  Tune_PRS = prs_tune_eb,
+  Tune_Y = y_tune,
+  Validation_PRS = prs_valid_eb
+)
+
+fwrite(as.data.table(prs_mat), file.path(args$results_dir, paste0(args$out_prefix, "_dimct_prs.tsv")), sep = "\t")
+fwrite(as.data.table(prs_mat_eb), file.path(args$results_dir, paste0(args$out_prefix, "_eb_prs.tsv")), sep = "\t")
+fwrite(as.data.table(cleaned$Cleaned_Tune_PRS), file.path(args$results_dir, paste0(args$out_prefix, "_tune_clean.tsv")), sep = "\t")
+fwrite(as.data.table(cleaned$Cleaned_Validation_PRS), file.path(args$results_dir, paste0(args$out_prefix, "_validation_clean.tsv")), sep = "\t")
+fwrite(data.table(best_snps = best_snps), file.path(args$results_dir, paste0(args$out_prefix, "_best_snps.tsv")), sep = "\t")
+
+cat("CTSLEB draft wrapper completed.\n")
+cat("Best SNP set:", best_snps, "\n")
