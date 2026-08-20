@@ -9,5 +9,6 @@ module load gdcgenomicsSandbox
 
 #gdcgenomicsqc --until run_classifyAncestry --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_imputed.yaml"
 #gdcgenomicsqc --until run_rfmix --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_imputed.yaml"
-gdcgenomicsqc --until run_ancestryQC --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_imputed.yaml"
-#gdcgenomicsqc --until run_snpHerit --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_imputed.yaml" --dry-run
+#gdcgenomicsqc --until run_snpHerit --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_imputed.yaml" --unlock
+gdcgenomicsqc --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_imputed.yaml"
+# gdcgenomicsqc --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_imputed.yaml" # --unlock

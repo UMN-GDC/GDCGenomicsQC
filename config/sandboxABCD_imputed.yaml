@@ -1,6 +1,6 @@
 # Project-wide paths
 INPUT: "/shared/release/abcd/abcd/concatenated/genetics/genotype_microarray/imputed/chr{CHR}_dose.vcf.gz"
-OUT_DIR: "/scratch.global/GDC/r25outputs/abcd_imputed"
+OUT_DIR: "/scratch.global/GDC/r25outputs/abcd_imputed2"
 REF: "/scratch.global/GDC/referenceData"
 build: "GRCh38"
 local-storage-prefix: "/scratch.global/coffm049/tmp"
