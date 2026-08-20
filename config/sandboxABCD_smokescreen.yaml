@@ -170,7 +170,7 @@ localAncestry:
     pbwt_modulo: 0.02
     # Depth of PBWT conditioning indexes. 4 = default; 8 = better accuracy
     # on low-density/array data at some runtime cost.
-    pbwt_depth: 4
+    pbwt_depth: 2
     chromosomes: null  # Use pipeline chromosomes if null, or specify list e.g. [13, 14, 15]
     figures: "figures"
 
