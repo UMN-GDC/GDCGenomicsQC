@@ -132,35 +132,35 @@ else:
             fi
             """
 
-    rule plotRelatedness:
-        log:
-            OUT_DIR / "logs" / "plotRelatedness_{subset}.log",
-        container:
-            "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-        conda:
-            "../../envs/ancNreport.yml"
-        envmodules: *[m for m in (config.get("plink_module"), config.get("R_module")) if m]
-        threads: 8
-        resources:
-            nodes=1,
-            mem_mb=32000,
-            runtime=60,
-        input:
-            king=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_grm.king",
-        output:
-            plot=report(
-                OUT_DIR / "{subset}" / "figures" / "relatedness_histogram.svg",
-                caption="Histogram of pairwise KING kinship coefficients (unrelated set)",
-                category="Quality Control",
-            ),
-        params:
-            scripts_dir=SCRIPTS_DIR,
-        shell:
-            """
-            mkdir -p "$(dirname {output.plot})"
-            if [ -f {input.king} ]; then
-                Rscript {params.scripts_dir}/plotRelatedness.R {input.king} {output.plot}
-            else
-                echo "Warning: {input.king} not found, skipping relatedness plot" >> {log}
-            fi
-            """
+rule plotRelatedness:
+    log:
+        OUT_DIR / "logs" / "plotRelatedness_{subset}.log",
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda:
+        "../../envs/ancNreport.yml"
+    envmodules: *[m for m in (config.get("plink_module"), config.get("R_module")) if m]
+    threads: 8
+    resources:
+        nodes=1,
+        mem_mb=32000,
+        runtime=60,
+    input:
+        king=OUT_DIR / "{subset}" / "f1.b38.ldpruned.unrelated_grm.king",
+    output:
+        plot=report(
+            OUT_DIR / "{subset}" / "figures" / "relatedness_histogram.svg",
+            caption="Histogram of pairwise KING kinship coefficients (unrelated set)",
+            category="Quality Control",
+        ),
+    params:
+        scripts_dir=SCRIPTS_DIR,
+    shell:
+        """
+        mkdir -p "$(dirname {output.plot})"
+        if [ -f {input.king} ]; then
+            Rscript {params.scripts_dir}/plotRelatedness.R {input.king} {output.plot}
+        else
+            echo "Warning: {input.king} not found, skipping relatedness plot" >> {log}
+        fi
+        """

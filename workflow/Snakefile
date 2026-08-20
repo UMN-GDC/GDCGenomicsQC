@@ -95,14 +95,21 @@ def _qc_outputs_for_subset(subset):
                 prefix / f"f1.ldpruned_{CHR}.pgen",
                 prefix / f"f1.f2_{CHR}.pgen",
             ])
+        # Crossmap produces per-chromosome f1.b38_{CHR}.pgen in this mode;
+        # there is no single-file f1.b38.pgen / f1.b38.f2.pgen merge.
+        files.extend(
+            prefix / f"f1.b38_{CHR}.pgen" for CHR in CHROMOSOMES
+        )
+        # b38 LD-pruned backbone comes from the standalone crossmapLdPrunedToB38.
+        files.append(prefix / "f1.b38.ldpruned.pgen")
     else:
         files.append(prefix / "f1.pgen")
-    files.extend([
-        prefix / "f1.b38.pgen",
-        prefix / "f1.b38.ldpruned.pgen",
-        prefix / "f1.b38.f2.pgen",
-        prefix / "f1.b38.f2.ldpruned.pgen",
-    ])
+        files.extend([
+            prefix / "f1.b38.pgen",
+            prefix / "f1.b38.ldpruned.pgen",
+            prefix / "f1.b38.f2.pgen",
+            prefix / "f1.b38.f2.ldpruned.pgen",
+        ])
 
     # ── Relatedness / GRM ──
     files.extend([
