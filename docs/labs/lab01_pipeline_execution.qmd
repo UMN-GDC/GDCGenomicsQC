@@ -72,7 +72,7 @@ Used at every stage:
 - **Assembled by `assembleRef`**: downloads raw VCFs from 1KG server, merges, LD prunes. Takes hours, run once per reference version, outputs shared by all users
 
 - **Config keys unlock analysis branches:**
-  - `localAncestry.RFMIX: true`: phases with ShapeIt4, runs RFMix, produces local ancestry tracts. No additional commands
+  - `localAncestry.method: "rfmix"` (or `"gnomix"`): phases with ShapeIt4, runs RFMix/Gnomix, produces local ancestry tracts. Legacy `localAncestry.RFMIX: true` still works. No additional commands
   - `phenotypeSimulation.simulations`: generates synthetic phenotypes, GRMs, heritability estimates
   - Each key opens a new stage. Config is the **only** file you edit per project
 - **Same module, same rules, different config**: the entire data-modeling cycle
@@ -104,7 +104,7 @@ module load gdcgenomicsSandbox
   - `simulatePhenotype2.smk`: synthetic phenotypes
   - `snpHerit.smk`: heritability estimation
   - `prsPipelines.smk`: PRSice-2, LDpred2, etc.
-  - `phase.smk` + `ancestry.smk`: ShapeIt4 phasing + RFMix local ancestry
+  - `phase.smk` + `RFMIX.smk`/`gnomix.smk` (selected by `localAncestry.method`): ShapeIt4 phasing + local ancestry inference
 - **Independently extensible**: add `rules/my_new_method.smk` + one import line in `Snakefile`. Available to everyone, no merge conflicts, no breaking changes
 - **How it comes together**: `module load gdcgenomicsSandbox` -> `gdcgenomicsqc` wrapper -> `--profile` (where to run) + `--snakefile` (what to run) + your targets/configfile -> one command resolves the full DAG, submits HPC jobs, produces all outputs
 

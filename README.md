@@ -354,10 +354,11 @@ internalPCA:
     phenotype_file: null
 ```
 
-### Local Ancestry (RFMIX)
+### Local Ancestry (RFMIX or Gnomix)
 ```yaml
 localAncestry:
-  RFMIX: true
+  method: "rfmix"  # "rfmix" (default) or "gnomix"
+  RFMIX: true      # Legacy flag; implied by method: "rfmix"
   test: true
   thin_subjects: 0.1
   figures: "figures"

@@ -28,7 +28,7 @@ checkpoint kgMeta:
         # 1kg reference
         wget -O {output.highcovPop} {params.highcovPop}
         wget -O {output.highcovPed} {params.highcovPed}
-        wget -O {output.gr38fastagz} {params.fasta}
+        wget -O {output.gr38fastagz} {params.fasta1}
         wget -O {output.gr38fastagz2} {params.fasta2}
 
         wget -O {output.shapemap} {params.shapemap}
@@ -54,6 +54,7 @@ checkpoint splitMapChr:
         map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt")
     shell:
         """
-        zcat {input.shapemap} \
-            | awk -v chr={wildcards.chr} 'NR>1 {{OFS="\t"}} {{print $2, $1, $3}}' > {output.map_chr}
+        tar -xzOf {input.shapemap} chr{wildcards.chr}.b38.gmap.gz \
+            | zcat \
+            | awk -v chr={wildcards.chr} 'NR==1 {{next}} {{OFS="\t"}} NR==2 {{print $1, 0, $3; pp=$1; pc=$3; next}} {{d=$1-pp; r=(d>0)?($3-pc)/d*1e6:0; print $1, r, $3; pp=$1; pc=$3}}' > {output.map_chr}
         """

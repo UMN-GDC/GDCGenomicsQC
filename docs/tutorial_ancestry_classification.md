@@ -166,7 +166,7 @@ The ancestry classification pipeline depends on:
 ```yaml
 ancestry:
     threshold: 0.8  # Minimum posterior probability for classification
-    model: "pca"    # Options: pca, umap, rfmix (vae not yet implemented)
+    model: "pca"    # Options: pca, umap, lai (vae not yet implemented); "lai" classifies from local-ancestry proportions (RFMix or Gnomix)
     pca_estimation: "projection"  # "projection" or "joint" — how PCA is computed
     # Optional: reported_race: "/path/to/reported_race.tsv"
 
@@ -220,7 +220,7 @@ chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 
 ancestry:
     threshold: 0.8
-    model: "pca"  # Options: pca, umap, rfmix (vae not yet implemented)
+    model: "pca"  # Options: pca, umap, lai (vae not yet implemented); "lai" classifies from local-ancestry proportions (RFMix or Gnomix)
     pca_estimation: "projection"  # "projection" or "joint"
 
 # Optional: subset samples/variants before ancestry classification
@@ -246,6 +246,7 @@ internalPCA:
     npc: 20
 
 localAncestry:
+    method: "rfmix"  # "rfmix" (default) or "gnomix"
     RFMIX: true
     test: true
     thin_subjects: 0.1
@@ -260,8 +261,9 @@ EOF
 Key parameters:
 
 - ``threshold``: Minimum posterior probability for confident classification (default: 0.8)
-- ``model``: Embedding used for classification—``pca``, ``umap``, or ``rfmix``
-  (Note: VAE is not yet implemented)
+- ``model``: Embedding used for classification—``pca``, ``umap``, or ``lai``
+  (``lai`` classifies from genome-wide local-ancestry proportions produced by
+  either estimator; Note: VAE is not yet implemented)
 - ``pca_estimation``: How PCA components are computed:
   - ``"projection"`` (default): PCA on the 1000G reference panel only, then projects study samples onto those PCs. Fast, reference-consistent.
   - ``"joint"``: Merges study and reference genotypes, computes PCA jointly, then splits by population. Better for capturing study-specific variation but slower.

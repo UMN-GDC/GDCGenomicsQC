@@ -119,7 +119,15 @@ ancestry:
     model:
       type: str
       default: "pca"
-      enum: ["pca", "umap", "vae", "rfmix"]
+      enum: ["pca", "umap", "vae", "lai", "rfmix"]
+      description: |
+        Which feature space drives ancestry classification (keep_* files).
+        "lai" classifies from genome-wide local-ancestry proportions
+        (ancestry_full.txt) regardless of which estimator (RFMix or Gnomix,
+        selected by localAncestry.method) produced them, and automatically
+        triggers local ancestry estimation. PCA/UMAP coordinates are still
+        computed for plots and companion models. "rfmix" is a deprecated
+        alias for "lai".
     pca_estimation:
       type: str
       default: "projection"
@@ -187,10 +195,61 @@ internalPCA:
 localAncestry:
   type: dict
   default: {}
+  description: |
+    Local ancestry estimation (phasing + per-chromosome inference).
+    Runs when localAncestry.RFMIX is true OR when ancestry.model is "lai"
+    (the deprecated alias "rfmix" also triggers it).
   schema:
     RFMIX:
       type: bool
       default: false
+      description: |
+        Run RFMIX local ancestry inference. Implied by method: "rfmix" or by
+        ancestry.model "lai" (alias "rfmix"). Deprecated in favor of method.
+    method:
+      type: str
+      default: null
+      nullable: true
+      enum: ["rfmix", "gnomix"]
+      description: |
+        Local ancestry estimator. Overrides the legacy RFMIX flag.
+        "rfmix" runs RFMIX in the published oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1
+        image. "gnomix" trains per-chromosome Gnomix models in the published
+        docker://bdchen/run_gnomix:0.0.2 image (Brian Chen, UNC; see
+        envs/gnomix_bdchen/) and normalizes outputs to the same .lai interface
+        RFMIX produces. Both are pulled and invoked by Snakemake itself via the
+        rule `container:` directives; no host paths or config/images needed.
+    gnomix:
+      type: dict
+      default: {}
+      description: Tuning for Gnomix training/inference (written to gnomix_config.yaml).
+      schema:
+        inference:
+          type: str
+          default: "fast"
+          enum: ["fast", "default", "best", "large"]
+        window_size_cM:
+          type: float
+          default: 0.5
+        r_admixed:
+          type: float
+          default: 1.0
+        smooth_size:
+          type: int
+          default: 75
+        seed:
+          type: int
+          default: 94305
+        gens:
+          type: list
+          nullable: true
+          default: null
+          description: |
+            Generations since admixture to simulate (default [0,2,4,6,8,12,16,24]).
+        windowed_loading:
+          type: bool
+          default: false
+          description: Load train1 one window at a time (lower RAM, slower).
     test:
       type: bool
       default: false
@@ -345,7 +404,8 @@ snpHerit:
     Naive:
       type: bool
       default: false
-      description: Use naive estimator (default: false for AdjHE)
+      description: |-
+        Use naive estimator (default: false for AdjHE)
     std:
       type: bool
       default: false

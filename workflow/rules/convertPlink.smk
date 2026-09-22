@@ -68,21 +68,21 @@ rule convertPlinkPerChromosome:
         remove_samples=get_remove_samples,
         exclude_variants=get_exclude_variants,
         ref_pvar=ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar"),
-        params:
-            scripts_dir=SCRIPTS_DIR,
-            format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
-            chrom_input=lambda wc: config.get("INPUT", "").format(CHR=wc.CHR),
-            thin=config.get("thin", False),
-            min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
-            max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
-            qual_min=config.get("convertNfilt", {}).get("qual_min"),
-            output_prefix=lambda wildcards, output: output.pgen.replace(".pgen", ""),
-            ld_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / f"f1.ldpruned_{wildcards.CHR}"),
-            initial_variant_missingness=config.get("initial_variant_missingness", 0.1),
-            final_variant_missingness=config.get("final_variant_missingness", 0.02),
-            initial_subject_missingness=config.get("initial_subject_missingness", 0.1),
-            final_subject_missingness=config.get("final_subject_missingness", 0.02),
-        shell:
+    params:
+        scripts_dir=SCRIPTS_DIR,
+        format="vcf" if ".vcf" in config.get("INPUT", "") else ("bed" if ".bed" in config.get("INPUT", "") else "pgen"),
+        chrom_input=lambda wc: config.get("INPUT", "").format(CHR=wc.CHR),
+        thin=config.get("thin", False),
+        min_mach_r2=config.get("convertNfilt", {}).get("info_r2_min"),
+        max_mach_r2=config.get("convertNfilt", {}).get("info_r2_max"),
+        qual_min=config.get("convertNfilt", {}).get("qual_min"),
+        output_prefix=lambda wildcards, output: output.pgen.replace(".pgen", ""),
+        ld_prefix=lambda wildcards: str(OUT_DIR / wildcards.subset / f"f1.ldpruned_{wildcards.CHR}"),
+        initial_variant_missingness=config.get("initial_variant_missingness", 0.1),
+        final_variant_missingness=config.get("final_variant_missingness", 0.02),
+        initial_subject_missingness=config.get("initial_subject_missingness", 0.1),
+        final_subject_missingness=config.get("final_subject_missingness", 0.02),
+    shell:
         """
 mkdir -p {output.tempDir}
 

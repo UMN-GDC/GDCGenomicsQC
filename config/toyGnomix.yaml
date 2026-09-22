@@ -1,0 +1,124 @@
+# Gnomix local-ancestry test config (toy). Reuses the same OUT_DIR layout;
+# use a SEPARATE OUT_DIR from RFMIX runs since both write chr*.lai.* files.
+INPUT: "/home/christian/toyData/allSubjects_hg38.bed"
+OUT_DIR: "/home/christian/toy_gnomix"
+REF: "/home/christian/ReferenceData"
+local-storage-prefix: "/home/christian/toy_gnomix/.snakemake/storage"
+
+chromosomes: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+
+convertNfilt:
+    info_r2_min: 0.9
+    filter_pass: true
+    qual_min: null
+
+relatedness:
+    method: "king"
+    king_cutoff: 0.0884
+
+SEX_CHECK: false
+GRM: true
+thin: false
+
+snpHerit:
+    output: "03-snpHeritability/herit.csv"
+    pheno: null
+    covar: null
+    method: "GCTA"
+    npc: [1,2]
+    mpheno: 1
+    qcovar: null
+    covar_discrete: null
+    RV: null
+    loop_covars: false
+    Naive: false
+    std: false
+    k: null
+    pheno_filter: null
+    covar_filter: null
+    iid_col: "IID"
+    fid_col: "FID"
+
+localAncestry:
+    RFMIX: false
+    method: gnomix
+    test: true
+    thin_subjects: 0.5
+    chromosomes: [20, 21]
+    figures: "figures"
+    gnomix:
+        inference: "fast"
+        window_size_cM: 1.0
+        r_admixed: 0.15
+        smooth_size: 75
+        seed: 94305
+        gens: [0, 4, 8]
+        windowed_loading: true
+
+internalPCA:
+    method: "plink2"
+    npc: 20
+    plot: true
+    color_by: null
+    phenotype_file: null
+
+build: "GRCh38"
+
+ancestry:
+    threshold: 0.8
+    model: "lai"
+    ancestry_file: null
+
+phenotypeSimulation:
+    enabled: false
+    ancestries: ["AFR", "EUR"]
+    input_prefixes:
+    simulations:
+        - name: "bivariate_test"
+          corr_matrix: [[1.0, 0.8], [0.8, 1.0]]
+          heritability: 0.4
+          maf: 0.05
+          seed: 42
+          n_sims: 10
+          skip_thinning: true
+          thin_count_snps: 1000000
+          thin_count_inds: 10000
+    simulations_dir: null
+    prefix: null
+
+prsPipeline:
+    iid_col: "IID"
+    fid_col: "FID"
+
+prsMethods:
+  single_ct:
+    enabled: false
+  single_prsice:
+    enabled: false
+  single_prscs:
+    enabled: false
+  single_ldpred2:
+    enabled: false
+  single_lassosum2:
+    enabled: false
+    iid_col: "IID"
+    fid_col: "FID"
+  multi_ctsleb:
+    enabled: false
+  multi_prscsx:
+    enabled: false
+    ld_ref_dir: ""
+  multi_ldpred2:
+    enabled: false
+  multi_prosper:
+    enabled: false
+  multi_sdprs:
+    enabled: false
+
+plink_module: null
+bcftools_module: null
+shapeit_module: null
+rfmix_module: null
+samtools_module: null
+R_module: null
+crossmap_module: null

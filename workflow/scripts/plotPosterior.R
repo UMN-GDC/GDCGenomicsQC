@@ -12,12 +12,12 @@ prob_df <- read_delim(args$prob_file, delim = "\t")
 
 has_umap <- any(str_starts(colnames(prob_df), "umap_"))
 has_vae <- any(str_starts(colnames(prob_df), "vae_"))
-has_rfmix <- any(str_starts(colnames(prob_df), "rfmix_"))
+has_lai <- any(str_starts(colnames(prob_df), "lai_"))
 
 available_models <- c("pca")
 if (has_umap) available_models <- c(available_models, "umap")
 if (has_vae) available_models <- c(available_models, "vae")
-if (has_rfmix) available_models <- c(available_models, "rfmix")
+if (has_lai) available_models <- c(available_models, "lai")
 
 for (model in available_models) {
     prob_cols <- prob_df |> select(IID, matches(paste0("^", model, "_"))) |> colnames()

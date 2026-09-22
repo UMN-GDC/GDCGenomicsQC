@@ -92,7 +92,7 @@ build: "GRCh38"
 
 ancestry:
     threshold: 0.8
-    model: "pca"
+    model: "pca"  # Options: pca, umap, lai (classifies from local-ancestry proportions)
 
     # Minimum posterior probability for ancestry assignment (0-1)
     threshold: 0.8
@@ -110,7 +110,9 @@ ancestry:
     ancestry_file: null
 
 localAncestry:
-    # Run RFMix for local ancestry inference
+    # Local ancestry estimator: "rfmix" (default) or "gnomix"
+    method: "rfmix"
+    # Legacy flag below; implied by method: "rfmix". Run RFMix local ancestry.
     RFMIX: false
     
     # Run in test mode (subset of data)

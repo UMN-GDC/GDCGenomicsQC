@@ -25,7 +25,7 @@ ref_data <- read_delim(file.path(args$out_dir, "ref_coords.tsv"), delim = "\t") 
 
 has_umap <- any(str_starts(colnames(sample_coords), "umap_"))
 has_vae <- any(str_starts(colnames(sample_coords), "vae_"))
-has_rfmix <- any(str_starts(colnames(classification_df), "rfmix_"))
+has_lai <- any(str_starts(colnames(classification_df), "lai_"))
 
 sample_list <- list()
 ref_list <- list()
@@ -71,16 +71,16 @@ if (has_vae && all(c("vae_mean1", "vae_mean2") %in% colnames(sample_coords))) {
 available_models <- c("pca")
 if (has_umap) available_models <- c(available_models, "umap")
 if (has_vae) available_models <- c(available_models, "vae")
-if (has_rfmix) available_models <- c(available_models, "rfmix")
+if (has_lai) available_models <- c(available_models, "lai")
 
-rfmix_models <- available_models[available_models != "rfmix"]
+plot_models <- available_models[available_models != "lai"]
 
-sample_plot_df <- bind_rows(sample_list[rfmix_models])
-ref_plot_df <- bind_rows(ref_list[rfmix_models])
+sample_plot_df <- bind_rows(sample_list[plot_models])
+ref_plot_df <- bind_rows(ref_list[plot_models])
 
 contour_list <- list()
 
-if (!is.null(args$rf_model) && file.exists(args$rf_model) && "pca" %in% rfmix_models) {
+if (!is.null(args$rf_model) && file.exists(args$rf_model) && "pca" %in% plot_models) {
     rf_model <- readRDS(args$rf_model)
     rf_vars <- all.vars(formula(rf_model))
 
@@ -108,7 +108,7 @@ if (!is.null(args$rf_model) && file.exists(args$rf_model) && "pca" %in% rfmix_mo
         mutate(model = "pca")
 }
 
-if (has_umap && "umap" %in% rfmix_models) {
+if (has_umap && "umap" %in% plot_models) {
     umap_rf_path <- file.path(args$out_dir, "RFumap.Rds")
     if (file.exists(umap_rf_path)) {
         umap_model <- readRDS(umap_rf_path)
@@ -151,5 +151,5 @@ if (nrow(sample_plot_df) > 0) {
         theme(legend.position = "bottom")
 
     ggsave(file.path(args$out_dir, "ancestry_classification_space.svg"),
-        plot = p, width = 1920, height = 800 * length(rfmix_models), units = "px")
+        plot = p, width = 1920, height = 800 * length(plot_models), units = "px")
 }

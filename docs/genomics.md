@@ -209,10 +209,13 @@ $$
   - Phased VCF: Necessary for local ancestry inference in Module 7.
 ```
 
-### Module 7: Rfmix
+### Module 7: Local Ancestry (RFMix or Gnomix)
 This module infers local ancestry across the genome using phased genotype files and a
-reference panel, such as `hg38_phased.vcf.gz`. **rfmix** uses a discriminative
-machine learning approach to assign ancestral origins to specific chromosomal segments.
+reference panel, such as `hg38_phased.vcf.gz`. The default estimator **rfmix** uses a
+discriminative machine learning approach to assign ancestral origins to specific
+chromosomal segments; **gnomix** is supported as an alternative (set
+`localAncestry.method: "gnomix"`). Both run in published apptainer images pulled by
+Snakemake and produce the same `.lai` output files.
 
 For high-confidence ancestry calls, the pipeline enforces a strict threshold on the
 posterior probabilities assigned to each segment. Global ancestry estimates are only
@@ -229,12 +232,13 @@ Config Options:
 
 ```yaml
 localAncestry:
-    RFMIX: true  # Enable RFMix
+    method: "rfmix"  # "rfmix" (default) or "gnomix"
+    RFMIX: true  # Legacy flag for RFMix; implied by method: "rfmix"
     test: true   # Run in test mode with reduced parameters
     thin_subjects: 0.1  # Fraction of subjects to use
 ```
 
-```{list-table} rfmix Configuration and Requirements
+```{list-table} Local Ancestry Configuration and Requirements
 :widths: 30 70
 :header-rows: 1
 
@@ -244,6 +248,11 @@ localAncestry:
   - Must be phased VCF files from **shapeit4.2** (Module 6).
 * - **Reference Panel**
   - `hg38_phased.vcf.gz`: Phased reference genotypes for known populations.
+* - **Estimator**
+  - `rfmix` (default) or `gnomix`; selected via `localAncestry.method`.
+* - **Images**
+  - RFMix: `oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1`; Gnomix:
+    `docker://bdchen/run_gnomix:0.0.2` (see `envs/gnomix_bdchen/`).
 * - **Genetic Map**
   - Requires a genetic map (recombination rates) consistent with the genome build.
 * - **Confidence Threshold**
@@ -259,7 +268,7 @@ Config Options:
 ```yaml
 ancestry:
     threshold: 0.8  # Minimum posterior probability for confident classification
-    model: "pca"    # Embedding model: pca, umap, vae, rfmix
+    model: "pca"    # Embedding model: pca, umap, vae, lai ("lai" = local-ancestry proportions from RFMix or Gnomix)
 ```
 
 ## File Naming Conventions
@@ -354,7 +363,7 @@ $ shapeit4 --input study_filtered.vcf.gz \
            --thread 8
 ```
 
-### Module 7: Rfmix Execution
+### Module 7: Local Ancestry Execution (RFMix or Gnomix)
 ```console
 # Execute rfmix for local ancestry inference
 $ rfmix -f study.phased.vcf.gz \

@@ -20,7 +20,7 @@ parser$add_argument("--umap_ref", type = "character", default = NULL,
     help = "Filepath to the umap file")
 parser$add_argument("--umap_sample", type = "character", default = NULL,
     help = "Filepath to the umap file")
-parser$add_argument("--rfmix_global", type = "character", default = NULL,
+parser$add_argument("--lai_global", type = "character", default = NULL,
     help = "Filepath to global RFMix ancestry output (ancestry_full.txt)")
 parser$add_argument("--out", type = "character", default = NULL,
     help = "Output directory")
@@ -69,7 +69,7 @@ fit_and_predict_ancestry_models <- function(
     umap_ref = NULL,
     umap_sample = NULL,
     vae_ref = NULL,
-    rfmix_global = NULL,
+    lai_global = NULL,
     out_dir,
     threads = 1
 ) {
@@ -202,21 +202,43 @@ fit_and_predict_ancestry_models <- function(
         }
     }
 
-    has_rfmix <- FALSE
-    if (!is.null(rfmix_global)) {
-        has_rfmix <- TRUE
-        rfmix_df <- read.table(rfmix_global, header = TRUE, check.names = FALSE) |>
+    has_lai <- FALSE
+    if (!is.null(lai_global)) {
+        has_lai <- TRUE
+        lai_df <- read.table(lai_global, header = TRUE, check.names = FALSE) |>
             as_tibble()
 
-        rfmix_ancestries <- colnames(rfmix_df) |> setdiff("IID")
+        lai_ancestries <- colnames(lai_df) |> setdiff("IID")
 
-        result_df <- result_df |>
-            left_join(rfmix_df, by = "IID")
+        # Pad reference ancestries absent from the local-ancestry run with
+        # zero probability so downstream keep_* files exist for the full
+        # declared ancestry set (e.g. AMR when the LAI estimator models 4
+        # populations but the reference labels 5).
+        for (anc in setdiff(ancestries, lai_ancestries)) {
+            lai_df[[anc]] <- 0
+        }
+        lai_ancestries <- colnames(lai_df) |> setdiff("IID")
 
-        for (anc in rfmix_ancestries) {
-            if (!(paste0("rfmix_", anc) %in% colnames(result_df))) {
-                result_df[[paste0("rfmix_", anc)]] <- result_df[[anc]]
-                result_df[[anc]] <- NULL
+        # The LAI table labels samples FID_IID while PCA-space IDs are bare IID.
+        # Map each study sample to its local-ancestry row: direct match,
+        # then FID_IID paste, then unique-suffix fallback.
+        lai_match <- match(result_df$IID, lai_df$IID)
+        need <- is.na(lai_match)
+        if (any(need) && "FID" %in% colnames(result_df)) {
+            key2 <- paste0(result_df$FID[need], "_", result_df$IID[need])
+            lai_match[need] <- match(key2, lai_df$IID)
+            need <- is.na(lai_match)
+        }
+        if (any(need)) {
+            suf <- sub("^.*_", "", lai_df$IID)
+            if (!anyDuplicated(suf)) {
+                lai_match[need] <- match(result_df$IID[need], suf)
+            }
+        }
+
+        for (anc in lai_ancestries) {
+            if (!(paste0("lai_", anc) %in% colnames(result_df))) {
+                result_df[[paste0("lai_", anc)]] <- lai_df[[anc]][lai_match]
             }
         }
     }
@@ -228,7 +250,7 @@ fit_and_predict_ancestry_models <- function(
         ancestries = ancestries,
         has_umap = has_umap,
         has_vae = has_vae,
-        has_rfmix = has_rfmix
+        has_lai = has_lai
     )
 }
 
@@ -239,7 +261,7 @@ prob_results <- fit_and_predict_ancestry_models(
     umap_ref = args$umap_ref,
     umap_sample = args$umap_sample,
     vae_ref = args$vae,
-    rfmix_global = args$rfmix_global,
+    lai_global = args$lai_global,
     out_dir = args$out,
     threads = args$threads
 )

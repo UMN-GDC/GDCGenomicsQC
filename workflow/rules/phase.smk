@@ -128,6 +128,49 @@ rule convertPgenToVcf:
         """
 
 
+def get_phase_input(wildcards):
+    # Test mode phases a thinned copy; otherwise phase the full VCF.
+    # The thinning rule below only executes when its outputs are needed.
+    if config.get("localAncestry", {}).get("test", False):
+        stem = OUT_DIR / "02-localAncestry" / f"chr{wildcards.CHR}.test"
+    else:
+        stem = OUT_DIR / "02-localAncestry" / f"chr{wildcards.CHR}"
+    return {
+        "vcf": f"{stem}.vcf.gz",
+        "csi": f"{stem}.vcf.gz.csi",
+    }
+
+
+rule thinVcfForTest:
+    log:
+        OUT_DIR / "logs" / "thinVcfForTest_{CHR}.log",
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1"
+    conda: "../../envs/rfmix.yml"
+    envmodules: *[m for m in (config.get("plink_module"), config.get("bcftools_module")) if m]
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=8000,
+        runtime=60,
+    input:
+        vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
+        csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz.csi",
+    output:
+        vcf=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.test.vcf.gz"),
+        csi=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.test.vcf.gz.csi"),
+        plog=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.test.log"),
+    params:
+        thin=config.get("localAncestry", {}).get("thin_subjects", 0.1),
+        out_dir=OUT_DIR / "02-localAncestry",
+    shell:
+        """
+        # Thin into a separate file (never overwrite {input.vcf}: a resume
+        # after failure must not thin an already-thinned VCF twice).
+        plink2 --vcf {input.vcf} --thin-indiv {params.thin} --export vcf bgz --out {params.out_dir}/chr{wildcards.CHR}.test > {log} 2>&1
+        bcftools index -f {output.vcf}
+        """
+
+
 rule phaseWithShapeit:
     log:
         OUT_DIR / "logs" / "Phase_{CHR}.log",
@@ -140,49 +183,53 @@ rule phaseWithShapeit:
         mem_mb=64000,
         runtime=1320,
     input:
-        vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
+        unpack(get_phase_input),
         ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
         gmap=ancient(REF / "gmaps" / "hg38map.chr{CHR}.txt"),
     output:
         vcf=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf"),
+        ref_vcf=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.ref.vcf.gz"),
+        ref_csi=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.ref.vcf.gz.csi"),
+        fixed_map=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.fixed_map.txt"),
+        rename_txt=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.rename.txt"),
     params:
         out_dir=OUT_DIR / "02-localAncestry",
         test=config.get("localAncestry", {}).get("test", False),
-        thin=config.get("localAncestry", {}).get("thin_subjects", 0.1),
         chrom=get_chrom,
     shell:
         """
         echo "Shapeit Phasing"
 
+        # Study VCF uses bare contigs ("21") while the 1KG reference uses
+        # "chr"-prefixed contigs ("chr21"). Rename a copy of the reference to
+        # bare contigs so study, reference, region, and map all agree.
+        echo "chr{params.chrom} {params.chrom}" > {output.rename_txt}
+        bcftools annotate --rename-chrs {output.rename_txt} {input.ref} -Oz -o {output.ref_vcf}
+        bcftools index -f {output.ref_vcf}
+        cp {input.gmap} {output.fixed_map}
+
         if [ "{params.test}" = "True" ] ; then
-          plink2 --vcf {input.vcf} --bp-space 100000 --thin-indiv {params.thin} --export vcf bgz --out {params.out_dir}/chr{wildcards.CHR}.thinned
-          mv {params.out_dir}/chr{wildcards.CHR}.thinned.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
-          bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
           echo "Running shapeit4 in test mode"
-          awk '{{print "chr" $0}}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
           shapeit4 \
-              --input {params.out_dir}/chr{wildcards.CHR}.vcf.gz \
-              --map {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt \
-              --region chr{params.chrom} \
+              --input {input.vcf} \
+              --map {output.fixed_map} \
+              --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --mcmc-iterations 1b,1p,1m \
               --output {output.vcf} \
-              --reference {input.ref} \
+              --reference {output.ref_vcf} \
               --sequencing
-          rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         else
-          awk '{{print "chr" $0}}' {input.gmap} > {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
           shapeit4 \
               --input {input.vcf} \
-              --map {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt \
-              --region chr{params.chrom} \
+              --map {output.fixed_map} \
+              --region {params.chrom} \
               --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
               --thread {threads} \
               --output {output.vcf} \
-              --reference {input.ref} \
+              --reference {output.ref_vcf} \
               --sequencing
-          rm -f {params.out_dir}/chr{wildcards.CHR}.fixed_map.txt
         fi
         """
 
@@ -203,10 +250,12 @@ rule compressAndIndexVcf:
     output:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
         csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz.csi",
+        tbi=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz.tbi",
     params:
         out_dir=OUT_DIR / "02-localAncestry",
     shell:
         """
         bgzip -c {input.vcf} > {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz
+        bcftools index -t -f {params.out_dir}/chr{wildcards.CHR}.phased.vcf.gz
         """
