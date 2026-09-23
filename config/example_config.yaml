@@ -96,9 +96,6 @@ ancestry:
 
     # Minimum posterior probability for ancestry assignment (0-1)
     threshold: 0.8
-    
-    # Ancestry inference method: "pca", "umap", "vae", or "rfmix"
-    model: "pca"
 
     # Bypass mode: Provide your own ancestry labels instead of running prediction
     # Format: Tab-separated file with two columns (IID, ancestry), no header
