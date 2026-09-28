@@ -1,0 +1,78 @@
+# Multi-phenotype config example
+# ===============================
+#
+# Provide a comma-separated list of GWAS summary stats files (one per phenotype)
+# and a tab-separated multi-phenotype file with columns: FID, IID, pheno1, pheno2, ...
+# The first summary stats file maps to column 3 (1st phenotype), the second to column 4, etc.
+# Phenotype names are read from the multi_pheno_file header row (columns 3+).
+#
+# Output goes to: {output_path}/prs_pipeline/{phenotype_name}/{METHOD}/
+
+# --- Paths ---
+study_sample="/path/to/study_sample"
+bim_file_path="/path/to/study_sample.bim"
+output_path="/scratch.global/user/outputs"
+path_repo="/home/user/prs_pipeline"
+n_total_gwas=31968
+ncores=16
+
+# --- Multi-phenotype inputs ---
+# Comma-separated (NO spaces between entries):
+summary_stats_files="/path/to/gwas_phenoA.txt,/path/to/gwas_phenoB.txt"
+
+# Tab-separated file with header: FID, IID, phenoA, phenoB, ...
+# (column names must match the header in this file)
+multi_pheno_file="/path/to/combined_phenotypes.txt"
+
+# --- Parameters ---
+gwas_pca_eigenvec_file="/path/to/pca.eigenvec"
+ld_matrix_dir="${output_path}/prs_pipeline/ld_matrix"
+
+# --- Methods ---
+RUN_CT=true
+RUN_LDPRED2=true
+RUN_LASSOSUM2=true
+RUN_PRSice2=true
+
+# --- PRS-CSx (joint-ancestry; runs ONCE, ignores multi-pheno loop) ---
+# RUN_PRSCSX=false
+# anc1="AFR" / anc2="EUR"
+# target_sumstats_file="/path/to/anc1_gwas.txt"    # Explicitly set for PRS-CSx in multi-pheno mode
+# training_sumstats_file="/path/to/anc2_gwas.txt"
+# study_sample_anc2="/path/to/anc2_study_sample"
+# path_code="/projects/standard/gdc/public/prs_methods/scripts/PRScsx"
+# path_ref_dir="/projects/standard/gdc/public/prs_methods/ref/ref_PRScsx/1kg_ref"
+
+# --- VIPRS (runs PER-PHENOTYPE inside the multi-pheno loop) ---
+# VIPRS accepts GWAS sumstats from EITHER a provided file (preferred when you
+# don't have genotypes behind the GWAS) OR from the GWAS cohort genotypes.
+# RUN_VIPRS=false
+#
+# Option A: provided GWAS summary statistics (no GWAS genotypes needed).
+#   provided_sumstats expects the pipeline-standard layout:
+#     SNP CHR BP A1 A2 beta beta_se P n_eff
+#   (the same layout produced by src/prepare_sumstats.R). It is converted to
+#   viprs's native 'magenpy' layout using viprs_custom_sumstats_mapper.
+# provided_sumstats="/path/to/gwas_sumstats.txt"        # single file or chr_* glob
+# viprs_sumstats_format="custom"                        # 'custom' = pipeline-standard layout; any native viprs format passes through
+# viprs_custom_sumstats_mapper="BP=POS,beta=BETA,beta_se=SE,P=PVAL,n_eff=N"
+# viprs_custom_sumstats_sep="\t"
+# viprs_gwas_sample_size=31968                          # optional; used if N not in the file
+#
+# Option B: generate sumstats from GWAS cohort genotypes (plink2 --glm).
+# bfile_gwas_input="/path/to/gwas_sample"
+# covariate_file_gwas="/path/to/gwas_covar.txt"
+#
+# Both options require the study-sample covariate file + LD reference panels:
+# covariate_file_study_sample="/path/to/study_covar.txt"
+# viprs_ref_glob="/projects/standard/gdc/public/prs_methods/ref/ref_viprs/AFR/chr_*"
+
+# --- PROSPER (joint-ancestry; runs ONCE, after the phenotype loop) ---
+# RUN_PROSPER=false
+# prosper_training_sumstats="/path/to/EUR_gwas.txt"      # GWAS sumstats for training/reference ancestry (PROSPER format: rsid chr a1 a0 beta beta_se n_eff)
+# prosper_training_anc="EUR"                              # Training/reference ancestry label
+# prosper_target_anc="AFR"                                # Target ancestry (must match study_sample ancestry)
+# study_sample_anc2="/path/to/EUR_study_sample"           # PLINK prefix for training/reference ancestry samples
+# prosper_tuning_fraction=0.7                             # Fraction of study_sample for tuning (rest = validation)
+# prosper_split_seed=42                                   # Seed for reproducible sample split
+# prosper_ncores=5                                        # Cores for PROSPER R scripts

@@ -53,7 +53,6 @@ include: "rules/kgData.smk"
 include: "rules/plotMissingness.smk"
 include: "rules/convertPlink.smk"
 include: "rules/Initial_QC.smk"
-include: "rules/abcdBedBridge.smk"
 include: "rules/Relatedness.smk"
 include: "rules/Standard_QC.smk"
 include: "rules/phase.smk"
@@ -69,11 +68,8 @@ include: "rules/prsPipelines.smk"
 include: "rules/snpHerit_fullABCD.smk"
 include: "rules/snpHeritSim.smk"
 include: "rules/prosper_multi_prs_rule.smk"
-include: "rules/longitudinal_hm3_heritability.smk"
-include: "rules/longitudinal_hm3_spline_simulation.smk"
-include: "rules/longitudinal_hm3_spline_heritability.smk"
+
 include: "rules/snpHerit_fullABCD.smk"
-include: "rules/snpHerit_abcd_adjhe_by_ancestry.smk"
 
 rule all:
     input:

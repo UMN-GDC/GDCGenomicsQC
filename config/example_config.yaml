@@ -21,6 +21,38 @@ vcf_template: null
 # Output directory for pipeline results
 OUT_DIR: "/path/to/output/directory"
 
+# Absorbed prs_pipeline method engine: the vendored copy at
+# workflow/scripts/prs_pipeline/ is used by default (see VENDORED.md there).
+# Override only for legacy configs pointing at an external checkout:
+# prs_pipeline_path: "/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
+# Provenance pin: upstream sandbox_multi_pheno @ f71cf4f (2026-08-20), verified
+# against git HEAD only when prs_pipeline_path is a genuine upstream checkout.
+prs_pipeline_ref: "f71cf4f1031ff6231bc9f8abc9f96ebdc6f17bdf"
+
+# PRS pipeline parameters (native rule settings, phase 2)
+prsPipeline:
+    n_total_gwas: 31968          # GWAS sample size for n_eff (prepare_sumstats.R)
+    path_plink: "plink"          # PLINK 1.9 binary/path for C+T + PRSice2
+    path_plink2: "plink2"        # PLINK2 binary/path for PRS-CS (run_PRScs.sh)
+    binary_target: "F"           # PRSice2 --binary-target: F quantitative / T case-control
+    afreq_file: null             # optional PLINK2 .afreq for LDpred2/lassosum2
+    ld_matrix_dir: null          # shared LD matrix dir (default: <PRS_OUT_DIR>/ld_matrix/<ANC1>)
+    gwas_pca_eigenvec_file: null # optional study-sample PCA file for C+T
+
+# SIF container images used by the prs_pipeline method rules (used from phase 7;
+# not vendored). Defaults resolve to <OUT_DIR>/containers/<name>. Pull with:
+#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prsv2:latest
+#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/singleprshelper:latest
+prsMethods:
+    containers:
+        prsv2: null                # e.g. "/path/to/prsv2_latest.sif"
+        singleprshelper: null      # e.g. "/path/to/singleprshelper_latest.sif"
+    # single_prscs:               # single-ancestry PRS-CS (PRScsx.py single-pop)
+    #     path_code: null         # dir containing PRScsx.py (default: <RESOURCE>/software/PRScsx)
+    #     ld_ref_dir: null        # PRS-CSx LD ref dir (default: <RESOURCE>/ld/prs_csx/ref)
+    #     seed: 42                # MCMC seed
+    #     path_python: null       # python with numpy+scipy+h5py (default: python on PATH)
+
 # Reference data directory (required for various operations)
 REF: "/path/to/reference/data"
 

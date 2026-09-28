@@ -1,6 +1,20 @@
 PRS_CONFIG = config.get("prsPipeline", {})
 PRS_SIM_CONFIG = config.get("phenotypeSimulation", {})
 
+# Absorbed prs_pipeline method engine (see workflow/scripts/prs_pipeline/VENDORED.md).
+# Default = the vendored in-repo copy; prs_pipeline_path may override it (e.g. for
+# legacy MSI configs). prs_pipeline_ref records the upstream source commit (pin).
+PRS_PIPELINE_PATH = Path(
+    config.get(
+        "prs_pipeline_path",
+        str(Path(workflow.basedir) / "scripts" / "prs_pipeline"),
+    )
+)
+PRS_PIPELINE_PIN = config.get(
+    "prs_pipeline_ref",
+    "f71cf4f1031ff6231bc9f8abc9f96ebdc6f17bdf",  # sandbox_multi_pheno (2026-08-20)
+)
+
 PRS_ANC1 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[0]
 PRS_ANC2 = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])[1]
 PRS_SIM_DIR = OUT_DIR / "simulations" / f"{PRS_ANC1}_{PRS_ANC2}"
@@ -10,6 +24,51 @@ PRS_OUT_DIR = Path(
         str(OUT_DIR / "prs_inputs" / f"{PRS_ANC1}_{PRS_ANC2}"),
     )
 )
+
+
+rule checkPRSPipelinePath:
+    log:
+        OUT_DIR / "logs" / "checkPRSPipelinePath.log",
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=2000,
+        runtime=30,
+    output:
+        checked=OUT_DIR / ".prs_pipeline_path.checked",
+    params:
+        repo=PRS_PIPELINE_PATH,
+        pin=PRS_PIPELINE_PIN,
+    shell:
+        """
+        set -euo pipefail
+
+        REPO="{params.repo}"
+        PIN="{params.pin}"
+
+        if [[ ! -d "$REPO" ]]; then
+            echo "ERROR: prs_pipeline tree not found at $REPO (check prs_pipeline_path)" >&2
+            exit 1
+        fi
+        for f in run_single_ancestry_PRS_pipeline.sh \\
+                 src/prepare_sumstats.R \\
+                 src/run_CT.sh \\
+                 src/run_LDpred2.R \\
+                 src/run_lassosum2.R \\
+                 src/run_PRSice2.sh; do
+            if [[ ! -f "$REPO/$f" ]]; then
+                echo "ERROR: missing vendored $REPO/$f" >&2
+                exit 1
+            fi
+        done
+
+        echo "prs_pipeline_path=$REPO" > {output.checked}
+        echo "prs_pipeline_ref=$PIN" >> {output.checked}
+        echo "prs_pipeline_vendored=true" >> {output.checked}
+        echo "checked_at=$(date -Iseconds)" >> {output.checked}
+
+        echo "OK: prs_pipeline tree found at $REPO (source pin $PIN)" > "{log}"
+        """
 
 
 rule preparePRSInputs:
@@ -56,6 +115,7 @@ rule preparePRSInputs:
         gwas_fraction=PRS_CONFIG.get("gwas_fraction", 0.5),
         seed=PRS_CONFIG.get("seed", 42),
         plink2=PRS_CONFIG.get("path_plink2", "plink2"),
+        prs_pipeline_dir=PRS_PIPELINE_PATH,
         script=Path(workflow.basedir) / "scripts" / "prepare_prs_inputs.sh",
     shell:
         """
@@ -68,6 +128,7 @@ rule preparePRSInputs:
             --gwas-fraction {params.gwas_fraction} \
             --seed {params.seed} \
             --plink2-bin {params.plink2} \
+            --prs-pipeline-dir {params.prs_pipeline_dir} \
             > {log} 2>&1
         """
 
@@ -81,6 +142,7 @@ rule runSingleAncestryPRS:
         mem_mb=16000,
         runtime=240,
     input:
+        check=rules.checkPRSPipelinePath.output.checked,
         config=rules.preparePRSInputs.output.single_config,
         target_sumstats=rules.preparePRSInputs.output.target_single_sumstats,
         study_bed=rules.preparePRSInputs.output.study_bed,
@@ -91,7 +153,7 @@ rule runSingleAncestryPRS:
     params:
         script=PRS_CONFIG.get(
             "single_ancestry_script",
-            "/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline/run_single_ancestry_PRS_pipeline.sh",
+            str(PRS_PIPELINE_PATH / "run_single_ancestry_PRS_pipeline.sh"),
         ),
         flags=PRS_CONFIG.get("single_ancestry_flags", "-c -l -s -P"),
     shell:

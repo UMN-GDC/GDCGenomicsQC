@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  prepare_prs_inputs.sh --sim-dir DIR --out-dir DIR --anc1 AFR --anc2 EUR [--phenotype-index 1] [--gwas-fraction 0.5] [--seed 42] [--plink2-bin plink2]
+  prepare_prs_inputs.sh --sim-dir DIR --out-dir DIR --anc1 AFR --anc2 EUR [--phenotype-index 1] [--gwas-fraction 0.5] [--seed 42] [--plink2-bin plink2] [--prs-pipeline-dir DIR]
 
 Creates PRS pipeline inputs from simulated ancestry-specific PLINK files:
   - gwas/target_sumstats.txt and gwas/training_sumstats.txt for PRS-CSx
@@ -25,6 +25,9 @@ PHENO_INDEX="1"
 GWAS_FRACTION="0.5"
 SEED="42"
 PLINK2_BIN="plink2"
+# Default to the vendored absorbed prs_pipeline (see workflow/scripts/prs_pipeline/VENDORED.md);
+# the Snakefile rule always passes --prs-pipeline-dir explicitly.
+PRS_PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prs_pipeline"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -36,6 +39,7 @@ while [[ $# -gt 0 ]]; do
     --gwas-fraction) GWAS_FRACTION="$2"; shift 2 ;;
     --seed) SEED="$2"; shift 2 ;;
     --plink2-bin) PLINK2_BIN="$2"; shift 2 ;;
+    --prs-pipeline-dir) PRS_PIPELINE_DIR="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -233,12 +237,12 @@ reference_SNPS_bim="\${path_data_root}/anc1_plink_files/${ANC1}_simulation_study
 study_sample_plink="\${path_data_root}/anc1_plink_files/${ANC1}_simulation_study_sample"
 study_sample_plink_anc2="\${path_data_root}/anc2_plink_files/${ANC2}_simulation_study_sample"
 
-prs_pipeline="/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
+prs_pipeline="${PRS_PIPELINE_DIR}"
 EOF
 
 cat > "$OUT_DIR/prs_single_ancestry_${ANC1}_generated.conf" <<EOF
 path_data="$OUT_DIR"
-path_repo="/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
+path_repo="${PRS_PIPELINE_DIR}"
 path_plink2="/projects/standard/gdc/public/plink2"
 
 summary_stats_file="\${path_data}/gwas/target_sumstats_singlePRS.txt"

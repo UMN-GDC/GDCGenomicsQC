@@ -1,0 +1,80 @@
+# --- Paths ---
+summary_stats_file="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/gwas/target_sumstats_CTSLEB.txt"
+bim_file_path="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/anc1_plink_files/archived/AFR_simulation_gwas.bim"
+study_sample="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/anc1_plink_files/AFR_simulation_study_sample"
+output_path="/scratch.global/baron063/testing/singlePRS"
+path_repo="/scratch.global/baron063/testing/documentation_updates/prs_pipeline"
+skip_ss_generation=0
+n_total_gwas=300
+ncores=16
+# ld_cache_dir="/path/to/ld_cache"   # Cache per-chromosome LD matrices (avoids recomputing)
+
+# --- Parameters ---
+gwas_pca_eigenvec_file="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/gwas/adjusted_1kgPCs.tsv"
+# afreq_file="/path/to/sample.afreq"  # Optional: bypasses MAF computation from genotype matrix for LDpred2 and lassosum2
+phenotype_info_file="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/prs_pipeline/viprs/study_sample_pheno.txt"
+
+# --- Multi-phenotype mode (optional; overrides single-phenotype settings above) ---
+# Provide a comma-separated list of summary stats files (one per phenotype) and
+# a tab-separated multi-phenotype file with columns: FID, IID, pheno1, pheno2, ...
+# The first summary stats file maps to column 3 (first phenotype), the second to column 4, etc.
+# Phenotype names are read from the multi_pheno_file header row.
+# Output goes to: {output_path}/prs_pipeline/{phenotype_name}/{METHOD}/
+# summary_stats_files="/path/to/gwas_pheno1.txt,/path/to/gwas_pheno2.txt"
+# multi_pheno_file="/path/to/combined_phenotypes.txt"
+
+RUN_CT=true
+RUN_LDPRED2=true
+RUN_LASSOSUM2=true
+RUN_PRSice2=true
+
+# --- PRS-CSx (joint-ancestry; run once after the phenotype pipeline) ---
+# RUN_PRSCSX=false
+# anc1="AFR"                                  # Target ancestry (must be super population: AFR, AMR, EAS, EUR, SAS)
+# anc2="EUR"                                  # Training/reference ancestry (must be super population)
+# target_sumstats_file="${summary_stats_file}" # Anc1 GWAS (defaults to summary_stats_file)
+# training_sumstats_file="/path/to/anc2_gwas.txt"  # Anc2 GWAS (required; format: SNP CHR A1 A2 BETA SE N)
+# study_sample_anc2="/path/to/anc2_study_sample"   # Anc2 PLINK prefix (required; must exist)
+# path_code="/projects/standard/gdc/public/prs_methods/scripts/PRScsx"  # Cloned PRScsx repo (contains PRScsx.py)
+# path_ref_dir="/projects/standard/gdc/public/prs_methods/ref/ref_PRScsx/1kg_ref"  # Downloaded LD reference panels
+# path_db_dir="/path/to/prs_csx/db"  # Optional: PRS-CSx database directory
+
+# --- VIPRS (single-ancestry; per-phenotype in multi-pheno mode) ---
+# VIPRS accepts GWAS sumstats from EITHER a provided file (preferred when you
+# don't have genotypes behind the GWAS) OR from the GWAS cohort genotypes.
+# RUN_VIPRS=false
+#
+# Option A: provided GWAS summary statistics (no GWAS genotypes needed).
+#   provided_sumstats expects the pipeline-standard layout:
+#     SNP CHR BP A1 A2 beta beta_se P n_eff
+#   (the same layout produced by src/prepare_sumstats.R). It is converted to
+#   viprs's native 'magenpy' layout using viprs_custom_sumstats_mapper.
+# provided_sumstats="/path/to/gwas_sumstats.txt"        # single file or chr_* glob
+# viprs_sumstats_format="custom"                        # 'custom' = pipeline-standard layout; any native viprs format (plink/plink2/magenpy/fastgwa/...) passes through
+# viprs_custom_sumstats_mapper="BP=POS,beta=BETA,beta_se=SE,P=PVAL,n_eff=N"
+# viprs_custom_sumstats_sep="\t"
+# viprs_gwas_sample_size=31968                          # optional; used if N not in the file
+#
+# Option B: generate sumstats from GWAS cohort genotypes (plink2 --glm).
+#   bfile_gwas_input="/path/to/gwas_sample"          # PLINK prefix used to generate GWAS sumstats
+#   covariate_file_gwas="/path/to/gwas_covar.txt"    # Covariates for plink2 --glm (FID IID covariates)
+#
+# Both options require the study-sample covariate file + LD reference panels:
+# covariate_file_study_sample="/path/to/study_covar.txt"  # Covariates for evaluation (FID IID covariates)
+# viprs_ref_glob="/projects/standard/gdc/public/prs_methods/ref/ref_viprs/AFR/chr_*"  # Download LD reference panels first
+
+# --- PROSPER (joint-ancestry; runs ONCE, after the phenotype loop) ---
+# Note: PROSPER requires a helper Singularity image. Pull it and place it in the
+# same directory as the prs_pipeline repo:
+#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/singleprshelper:latest
+# RUN_PROSPER=false
+# prosper_package="/path/to/PROSPER"                     # Path to PROSPER R package directory (required)
+# prosper_training_sumstats="/path/to/EUR_gwas.txt"      # GWAS sumstats for training/reference ancestry (required; format: rsid chr a1 a0 beta beta_se n_eff)
+# prosper_target_sumstats="/path/to/AFR_gwas.txt"        # GWAS sumstats for target ancestry (required; format: same as training)
+# prosper_training_anc="EUR"                              # Training/reference ancestry label
+# prosper_target_anc="AFR"                                # Target ancestry (must match study_sample ancestry)
+# study_sample_anc2="/path/to/EUR_study_sample"           # PLINK prefix for training/reference ancestry samples (required)
+# phenotype_info_file="/path/to/phenotypes.txt"           # External phenotype file (FID IID value; required for PROSPER)
+# prosper_tuning_fraction=0.7                             # Fraction of study_sample for tuning (rest = validation)
+# prosper_split_seed=42                                   # Seed for reproducible sample split
+# prosper_ncores=5                                        # Cores for PROSPER R scripts

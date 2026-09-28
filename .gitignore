@@ -63,7 +63,6 @@ workflow/temp_ld/
 workflow1/
 workflow/scripts/*longitudinal*
 workflow/scripts/*abcd*
-workflow/scripts/prs_pipeline/
 workflow/*longitudinal*
 workflow/*txt
 workflow/*tsv
@@ -74,6 +73,9 @@ workflow/rules/*2026*
 prs_benchmark/
 prs_inpputs_hm3/
 prs_resources/
+# temporary smoke/test artifacts
+temp_test_script.sh
+__pycache__/
 workflow/rules/classifyAncestry.smk.20260706_174910
 	workflow/rules/classifyAncestry.smk.bak.20260419_125612
 	workflow/rules/classifyAncestry.smk.before_grch38_labels
@@ -88,7 +90,6 @@ workflow/rules/classifyAncestry.smk.20260706_174910
 	workflow/rules/simulatePhenotype.smk.backup.20260421_001752
 	workflow/rules/simulatePhenotype.smk.backup.20260627
 	workflow/rules/snpHerit.original_backup.smk
-workflow/scripts/prs_pipeline/
 
 
 
