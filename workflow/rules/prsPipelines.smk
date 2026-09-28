@@ -61,6 +61,21 @@ PRS_PRSCS_REF_DIR = (
 )
 PRS_PRSCS_SEED = PRS_METHODS_CONFIG.get("single_prscs", {}).get("seed", 42)
 PRS_PRSCS_PATH_PYTHON = PRS_METHODS_CONFIG.get("single_prscs", {}).get("path_python", None)
+# Joint multi-ancestry PRS-CSx (PRScsx.py in multi-population mode). Reuses the
+# single_prscs code/LD-reference/seed defaults unless overridden via
+# prsMethods.multi_prscsx.path_code / ld_ref_dir / seed / path_python.
+PRS_PRSCSX_PATH_CODE = (
+    PRS_METHODS_CONFIG.get("multi_prscsx", {}).get("path_code")
+    or PRS_PRSCS_PATH_CODE
+)
+PRS_PRSCSX_REF_DIR = (
+    PRS_METHODS_CONFIG.get("multi_prscsx", {}).get("ld_ref_dir")
+    or PRS_PRSCS_REF_DIR
+)
+PRS_PRSCSX_SEED = PRS_METHODS_CONFIG.get("multi_prscsx", {}).get("seed", PRS_PRSCS_SEED)
+PRS_PRSCSX_PATH_PYTHON = PRS_METHODS_CONFIG.get(
+    "multi_prscsx", {}
+).get("path_python", PRS_PRSCS_PATH_PYTHON)
 
 # --- Phase 3: test evaluation (score_test.sh) ---
 PRS_TEST_SAMPLE = PRS_CONFIG.get("test_sample", "")
@@ -750,30 +765,65 @@ rule runMultiAncestryPRSCSx:
         runtime=720,
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        env=rules.preparePRSInputs.output.env,
-        config=rules.preparePRSInputs.output.prscsx_config,
-        target_sumstats=rules.preparePRSInputs.output.target_sumstats,
-        training_sumstats=rules.preparePRSInputs.output.training_sumstats,
-        study_pheno=rules.preparePRSInputs.output.target_study_pheno,
-        study_anc2_pheno=rules.preparePRSInputs.output.training_study_pheno,
+        ss_target=rules.preparePRSInputs.output.target_sumstats,
+        ss_training=rules.preparePRSInputs.output.training_sumstats,
+        study_bed=rules.preparePRSInputs.output.study_bed,
+        study_bim=rules.preparePRSInputs.output.study_bim,
+        study_fam=rules.preparePRSInputs.output.study_fam,
+        study_anc2_bed=rules.preparePRSInputs.output.study_anc2_bed,
+        study_anc2_bim=rules.preparePRSInputs.output.study_anc2_bim,
+        study_anc2_fam=rules.preparePRSInputs.output.study_anc2_fam,
     output:
+        combined_anc1=PRS_METHOD_RUN_DIR / "multi_prscsx" / "prs_pipeline" / "PRScsx" / f"PRScsx_{PRS_ANC1}_combined_weights.txt",
+        combined_anc2=PRS_METHOD_RUN_DIR / "multi_prscsx" / "prs_pipeline" / "PRScsx" / f"PRScsx_{PRS_ANC2}_combined_weights.txt",
+        score_anc1=PRS_METHOD_RUN_DIR / "multi_prscsx" / "prs_pipeline" / "PRScsx" / f"PRScsx_joint_{PRS_ANC1}_score.sscore",
+        score_anc2=PRS_METHOD_RUN_DIR / "multi_prscsx" / "prs_pipeline" / "PRScsx" / f"PRScsx_joint_{PRS_ANC2}_score.sscore",
+        rsq_anc1=PRS_METHOD_RUN_DIR / "multi_prscsx" / "prs_pipeline" / "PRScsx" / f"{PRS_ANC1}_PRS_sscore_Rsqr.txt",
+        adj_rsq_anc1=PRS_METHOD_RUN_DIR / "multi_prscsx" / "prs_pipeline" / "PRScsx" / f"{PRS_ANC1}_adj_PRS_sscore_Rsqr.txt",
+        rsq_anc2=PRS_METHOD_RUN_DIR / "multi_prscsx" / "prs_pipeline" / "PRScsx" / f"{PRS_ANC2}_PRS_sscore_Rsqr.txt",
+        adj_rsq_anc2=PRS_METHOD_RUN_DIR / "multi_prscsx" / "prs_pipeline" / "PRScsx" / f"{PRS_ANC2}_adj_PRS_sscore_Rsqr.txt",
         done=PRS_METHOD_RUN_DIR / "multi_prscsx.done",
     params:
-        method="multi_prscsx",
-        command=prs_method_command_quoted("multi_prscsx"),
-        extra=prs_method_extra_args("multi_prscsx"),
-        out_dir=PRS_METHOD_RUN_DIR / "multi_prscsx",
-        script=Path(workflow.basedir) / "scripts" / "run_prs_pipeline_adapter.sh",
+        study_prefix=PRS_STUDY_PLINK,
+        study_anc2_prefix=PRS_OUT_DIR / "anc2_plink_files" / f"{PRS_ANC2}_simulation_study_sample",
+        out_base=PRS_METHOD_RUN_DIR / "multi_prscsx",
+        anc1=PRS_ANC1,
+        anc2=PRS_ANC2,
+        plink2=PRS_PLINK2_BIN,
+        path_code=PRS_PRSCSX_PATH_CODE,
+        ref_dir=PRS_PRSCSX_REF_DIR,
+        seed=PRS_PRSCSX_SEED,
+        path_python=lambda wildcards: PRS_PRSCSX_PATH_PYTHON or shutil.which("python3") or shutil.which("python") or "python",
+        rscript=lambda wildcards: shutil.which("Rscript") or "Rscript",
+        script=PRS_SRC / "run_PRScsx.sh",
     shell:
         """
-        PRS_METHOD_COMMAND={params.command} bash {params.script} \
-            --method {params.method} \
-            --prs-inputs-env {input.env} \
-            --resource-dir {PRS_RESOURCE_DIR} \
-            --out-dir {params.out_dir} \
-            {params.extra} \
-            --done {output.done} \
-            > {log} 2>&1
+        set -euo pipefail
+
+        mkdir -p {params.out_base}
+        CONFIG={params.out_base}/temp/PRScsx_temp_config.txt
+        mkdir -p "$(dirname "$CONFIG")"
+
+        echo "path_data_root={params.out_base}" > "$CONFIG"
+        echo "target_sumstats_file={input.ss_target}" >> "$CONFIG"
+        echo "training_sumstats_file={input.ss_training}" >> "$CONFIG"
+        echo "study_sample_plink={params.study_prefix}" >> "$CONFIG"
+        echo "study_sample_plink_anc2={params.study_anc2_prefix}" >> "$CONFIG"
+        echo "reference_SNPS_bim={params.study_prefix}" >> "$CONFIG"
+        echo "output_dir={params.out_base}" >> "$CONFIG"
+        echo "path_code={params.path_code}" >> "$CONFIG"
+        echo "path_ref_dir={params.ref_dir}" >> "$CONFIG"
+        echo "path_plink2={params.plink2}" >> "$CONFIG"
+        echo "path_python={params.path_python}" >> "$CONFIG"
+        echo "rscript={params.rscript}" >> "$CONFIG"
+        echo "anc1={params.anc1}" >> "$CONFIG"
+        echo "anc2={params.anc2}" >> "$CONFIG"
+        echo "seed={params.seed}" >> "$CONFIG"
+        echo "prs_pipeline={PRS_PIPELINE_PATH}" >> "$CONFIG"
+
+        bash {params.script} --c "$CONFIG" > {log} 2>&1
+
+        touch {output.done}
         """
 
 

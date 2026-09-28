@@ -8,6 +8,8 @@
 #SBATCH -o PRScsx.out
 #SBATCH --job-name PRScsx
 
+set -euo pipefail
+
 
 load_config() {
     local file_path="$1"
@@ -58,6 +60,9 @@ reference_SNPS_bim="${path_data_root}/anc1_plink_files/${anc1}_simulation_study_
 study_sample_plink="${path_data_root}/anc1_plink_files/${anc1}_simulation_study_sample"
 study_sample_plink_anc2="${path_data_root}/anc2_plink_files/${anc2}_simulation_study_sample"
 prs_pipeline="/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
+seed="42"
+path_python=""
+rscript="Rscript"
 
 # ---- Parse args ----
 while [[ $# -gt 0 ]]; do
@@ -109,14 +114,19 @@ for ss_file in ${target_sumstats_file} ${training_sumstats_file}; do
 done
 
 # ---- Load environment ----
-# Prefer python from the container (prsv2_latest.sif); fall back to the host
-# conda environment if python is not already available.
-if ! command -v python >/dev/null 2>&1; then
-    if [[ -f /projects/standard/gdc/public/envs/load_miniconda3.sh ]]; then
-        source /projects/standard/gdc/public/envs/load_miniconda3.sh
-    else
-        echo "ERROR: 'python' not found in PATH. Run this inside the prsv2_latest.sif container or source a conda env." >&2
-        exit 1
+# Prefer an explicit python (container or conda with numpy/h5py); fall back to
+# 'python' on PATH, then a global conda env (matches run_PRScs.sh).
+if [[ -n "$path_python" ]]; then
+    PYTHON_CMD="$path_python"
+else
+    PYTHON_CMD="python"
+    if ! command -v python >/dev/null 2>&1; then
+        if [[ -f /projects/standard/gdc/public/envs/load_miniconda3.sh ]]; then
+            source /projects/standard/gdc/public/envs/load_miniconda3.sh
+        else
+            echo "ERROR: 'python' not found in PATH. Run this inside the prsv2_latest.sif container or source a conda env." >&2
+            exit 1
+        fi
     fi
 fi
 if ! command -v "${path_plink2}" >/dev/null 2>&1 && [[ ! -x "${path_plink2}" ]]; then
@@ -142,23 +152,23 @@ awk 'BEGIN {OFS="\t"} NR==1 {print "SNP","A1","A2","BETA","SE"} NR>1 {print $1,$
 GWAS_sample_size_training=$(awk 'NR==2 {print $NF}' "${training_sumstats_file}")
 
 echo "Python call:"
-echo "python ${path_code}/PRScsx.py --ref_dir=${path_ref_dir} \
+echo "${PYTHON_CMD} ${path_code}/PRScsx.py --ref_dir=${path_ref_dir} \
   --bim_prefix=${reference_SNPS_bim} \
   --sst_file=${training_sst_file_using},${target_sst_file_using} \
   --n_gwas=${GWAS_sample_size_training},${GWAS_sample_size_target} \
   --pop=${anc2},${anc1} \
   --out_dir=${final_output_dir} \
-  --out_name=PRScsx_joint_${anc1} \
-  --seed=42"
+  --out_name=PRScsx \
+  --seed=${seed}"
 
-python "${path_code}/PRScsx.py" --ref_dir="${path_ref_dir}" \
+"${PYTHON_CMD}" "${path_code}/PRScsx.py" --ref_dir="${path_ref_dir}" \
   --bim_prefix="${reference_SNPS_bim}" \
   --sst_file="${training_sst_file_using},${target_sst_file_using}" \
   --n_gwas="${GWAS_sample_size_training},${GWAS_sample_size_target}" \
   --pop="${anc2},${anc1}" \
   --out_dir="${final_output_dir}" \
   --out_name=PRScsx \
-  --seed=42
+  --seed="${seed}"
 
 pushd "${final_output_dir}"
   out_prefix_anc1="PRScsx_${anc1}_pst_eff_a1_b0.5_phiauto"
@@ -179,13 +189,13 @@ pushd "${final_output_dir}"
 
   "${path_plink2}" --bfile "${study_sample_plink}" --score "$combined_file_anc1" 2 4 6 header --out PRScsx_joint_${anc1}_score
 
-  Rscript ${prs_pipeline}/src/PRS_sscore_to_R2.R PRScsx_joint_${anc1}_score.sscore
+  "${rscript}" ${prs_pipeline}/src/PRS_sscore_to_R2.R PRScsx_joint_${anc1}_score.sscore
   mv PRS_sscore_R_sqr.txt ${anc1}_PRS_sscore_Rsqr.txt
   mv adj_PRS_sscore_Rsqr.txt ${anc1}_adj_PRS_sscore_Rsqr.txt
 
   "${path_plink2}" --bfile "${study_sample_plink_anc2}" --score "$combined_file_anc2" 2 4 6 header --out PRScsx_joint_${anc2}_score
 
-  Rscript ${prs_pipeline}/src/PRS_sscore_to_R2.R PRScsx_joint_${anc2}_score.sscore
+  "${rscript}" ${prs_pipeline}/src/PRS_sscore_to_R2.R PRScsx_joint_${anc2}_score.sscore
   mv PRS_sscore_R_sqr.txt ${anc2}_PRS_sscore_Rsqr.txt
   mv adj_PRS_sscore_Rsqr.txt ${anc2}_adj_PRS_sscore_Rsqr.txt
 popd

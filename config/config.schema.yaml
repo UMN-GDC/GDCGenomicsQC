@@ -168,8 +168,42 @@ prsMethods:
           nullable: true
           default: null
           description: >
-            Explicit python interpreter for PRS-CSx.py (needs numpy, scipy,
+            Explicit python interpreter for PRScsx.py (needs numpy, scipy,
             h5py). Default: python3/python found on PATH.
+    multi_prscsx:
+      type: dict
+      default: {}
+      description: |
+        Joint multi-ancestry PRS-CSx (via PRScsx.py in multi-population mode;
+        ran jointly on the two ancestry GWAS with shared LD/blocks). Same code
+        and LD reference as single_prscs unless overridden here.
+      schema:
+        path_code:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            Directory containing PRScsx.py (defaults to single_prscs.path_code,
+            then <PRS_RESOURCE_DIR>/software/PRScsx).
+        ld_ref_dir:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            PRS-CSx LD reference dir containing per-pop ldblk_1kg_<pop>/ +
+            snpinfo_mult_1kg_hm3 (defaults to single_prscs.ld_ref_dir, then
+            <PRS_RESOURCE_DIR>/ld/prs_csx/ref).
+        seed:
+          type: int
+          default: 42
+          description: PRS-CS MCMC seed (defaults to single_prscs.seed).
+        path_python:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            Explicit python interpreter for PRScsx.py (defaults to
+            single_prscs.path_python, then python3/python on PATH).
 
 REF:
   type: str

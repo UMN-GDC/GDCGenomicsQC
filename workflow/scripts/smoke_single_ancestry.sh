@@ -3,7 +3,8 @@
 # smoke_single_ancestry.sh
 #
 # End-to-end SLURM smoke test for the five single-ancestry PRS methods
-# (CT, PRSice2, PRS-CS, LDpred2, lassosum2) in GDCGenomicsQC.
+# (CT, PRSice2, PRS-CS, LDpred2, lassosum2) plus the joint multi-ancestry
+# PRS-CSx method (multi_prscsx) in GDCGenomicsQC.
 #
 # What it does:
 #   1. Preflights tools (snakemake, Rscript, plink/plink2, PRS-CS python).
@@ -11,8 +12,10 @@
 #      variants are REAL chr22 HapMap3 SNPs (so PRS-CS LD-overlap works).
 #   3. Seeds the phenotypeSimulation outputs (bypasses the QC/sim QC graph).
 #   4. Writes a full config, dry-runs the graph, then RUNS
-#      `run_singleAncestryPRSPipelines` locally within this allocation.
-#   5. Verifies all five method outputs + `.done` markers and prints a table.
+#      `run_singleAncestryPRSPipelines` and `runMultiAncestryPRSCSx` locally
+#      within this allocation.
+#   5. Verifies all five single method outputs + `.done` markers, the
+#      multi_prscsx outputs for both ancestries, and (Phase 3) prints a table.
 #
 # Run via:
 #   sbatch workflow/scripts/smoke_single_ancestry.sh
@@ -242,17 +245,26 @@ prsMethods:
     ld_ref_dir: $(printf %q "$PRSCSX_REF")
     seed: ${SEED}
     path_python: $(printf %q "$PRSCS_PYTHON")
+  multi_prscsx:
+    seed: ${SEED}
 EOF
 sed -n '1,2p;s/^\(IN\|OUT\|prs\|INPUT\|REF\)/  \1/p' "$CONFIG" 2>/dev/null | head -5
 log "config written ($(wc -l < "$CONFIG") lines)"
 
 # ---------------------------------------------------------------- dry run
-section "Dry-run of run_singleAncestryPRSPipelines"
+section "Dry-run of run_singleAncestryPRSPipelines + runMultiAncestryPRSCSx"
 (
     cd "$WORKFLOW"
     snakemake -n -j "$CPUS" $TRACE_ARGS run_singleAncestryPRSPipelines --configfile "$CONFIG" 2>&1 \
         | tee "$WORK_BASE/dryrun.log" \
         | grep -E "^(Job stats|runSingleAncestry|total|waiting|Nothing to be done|Job counts)" \
+        || true
+)
+(
+    cd "$WORKFLOW"
+    snakemake -n -j "$CPUS" $TRACE_ARGS runMultiAncestryPRSCSx --configfile "$CONFIG" 2>&1 \
+        | tee "$WORK_BASE/dryrun_mprscsx.log" \
+        | grep -E "^(Job stats|runMultiAncestry|prepare|total|waiting|Nothing to be done|Job counts)" \
         || true
 )
 if [[ ${GDCQC_SMOKE_DRYRUN:-0} == 1 ]]; then
@@ -305,6 +317,29 @@ else
     fi
 fi
 
+# ---------------------------------------------------------------- multi-ancestry PRS-CSx
+section "Running joint multi-ancestry PRS-CSx (snakemake -j $CPUS)"
+MPRSCSX_LOG="$WORK_BASE/mprscsx_run.log"
+if [[ -e $METHOD_RUN/multi_prscsx.done && ${GDCQC_SMOKE_KEEP:-0} == 1 ]]; then
+    log "KEEP=1 and multi_prscsx.done present -- skipping execution"
+else
+    (
+        cd "$WORKFLOW"
+        snakemake -j "$CPUS" $TRACE_ARGS \
+            --verbose \
+            runMultiAncestryPRSCSx \
+            --configfile "$CONFIG" \
+            > "$MPRSCSX_LOG" 2>&1
+    )
+    SNAKE_RC=$?
+    log "multi_prscsx run finished with exit code $SNAKE_RC (see $MPRSCSX_LOG)"
+    if [[ $SNAKE_RC -ne 0 ]]; then
+        log "--- last 60 lines of $MPRSCSX_LOG ---"
+        tail -60 "$MPRSCSX_LOG"
+        die "multi_prscsx run failed (rc=$SNAKE_RC)"
+    fi
+fi
+
 # ---------------------------------------------------------------- verification
 section "Verifying method outputs"
 FAIL=0
@@ -327,7 +362,7 @@ donef() {  # donef <method>
     fi
 }
 
-for m in single_ct single_prsice single_prscs single_ldpred2 single_lassosum2; do
+for m in single_ct single_prsice single_prscs single_ldpred2 single_lassosum2 multi_prscsx; do
     donef "$m"
 done
 
@@ -340,6 +375,14 @@ check "LDpred2"   "single_ldpred2/prs_method_individual_scores.txt" 500
 check "LDpred2"   "single_ldpred2/prs_method_performance.csv" 10
 check "lassosum2" "single_lassosum2/prs_method_final_res.txt" 10
 check "lassosum2" "single_lassosum2/prs_method_full_predictions.csv" 500
+
+# --- joint multi-ancestry PRS-CSx ---
+check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/PRScsx_${ANC1}_combined_weights.txt" 100
+check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/PRScsx_${ANC2}_combined_weights.txt" 100
+check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/PRScsx_joint_${ANC1}_score.sscore" 500
+check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/PRScsx_joint_${ANC2}_score.sscore" 500
+check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/${ANC1}_PRS_sscore_Rsqr.txt" 1
+check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/${ANC2}_PRS_sscore_Rsqr.txt" 1
 
 # --- Phase 3: held-out test evaluation (score_test.sh) ---
 for m in CT LDpred2_inf LDpred2_grid lassosum2 PRSice2 PRScsx_${ANC1}; do
@@ -356,6 +399,11 @@ log "Key result snippets:"
     && { echo "  PRSice top row:"; head -2 "$METHOD_RUN/single_prsice/PRSice2/prs_method/PRSice2_outputs.prsice" | sed 's/^/    /'; }
 [[ -s $METHOD_RUN/single_ldpred2/prs_method_performance.csv ]] \
     && { echo "  LDpred2 performance:"; sed 's/^/    /' "$METHOD_RUN/single_ldpred2/prs_method_performance.csv"; }
+echo "  Multi-prscsx R2 (ANC1=${ANC1} / ANC2=${ANC2}):"
+for anc in $ANC1 $ANC2; do
+    f="$METHOD_RUN/multi_prscsx/prs_pipeline/PRScsx/${anc}_PRS_sscore_Rsqr.txt"
+    [[ -s $f ]] && { echo -n "    $anc: "; sed 's/^/    /' "$f"; }
+done
 echo "  Held-out test R2 (score_test.sh, test_evaluation/):"
 for m in CT LDpred2_inf LDpred2_grid lassosum2 PRSice2 PRScsx_${ANC1}; do
     f="$METHOD_RUN/test_evaluation/${m}_results.txt"
@@ -365,11 +413,11 @@ done
 section "SUMMARY"
 ELAPSED="$(( $(date +%s) - START_EPOCH ))"
 if [[ $FAIL -eq 0 ]]; then
-    echo "  ALL SINGLE-ANCESTRY PRS METHODS + HELD-OUT TEST EVALUATION PASSED in ${ELAPSED}s"
+    echo "  ALL SINGLE-ANCESTRY PRS METHODS + MULTI_PRSCSX + HELD-OUT TEST EVALUATION PASSED in ${ELAPSED}s"
     echo "  outputs under: $METHOD_RUN"
 else
     echo "  $FAIL VERIFICATION CHECK(S) FAILED (elapsed ${ELAPSED}s)"
-    echo "  see:  $RUN_LOG (methods) / $SCORE_LOG (score test)"
+    echo "  see:  $RUN_LOG (methods) / $SCORE_LOG (score test) / $MPRSCSX_LOG (multi prscsx)"
     echo "  logs: $(cd "$OUT_DIR/logs" && ls -1 2>/dev/null | tr '\n' ' ')"
     exit 1
 fi
@@ -381,9 +429,10 @@ echo "    resources  : $RESOURCES_DIR"
 echo "    outputs    : $PRS_OUT"
 echo "    run log    : $RUN_LOG"
 echo "    score log  : $SCORE_LOG"
+echo "    mprscsx log: $MPRSCSX_LOG"
 echo
 echo "  Job stats from dry run:"
 grep -E "^(runSingleAncestry|total|waiting)" "$WORK_BASE/dryrun.log" || true
 echo
-echo "  Next up: multi-ancestry methods (multi_prscsx/prosper/sdprs/ctsleb) + PROSPER ref_bim.txt blocker."
+echo "  Next up: remaining multi-ancestry methods (multi_ctsleb/multi_ldpred2/multi_sdprs/multi_prosper) + PROSPER ref_bim.txt blocker."
 exit 0
