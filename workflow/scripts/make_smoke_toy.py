@@ -15,10 +15,12 @@ Also writes an aligned-style sumstats file (SNP CHR BP A1 A2 beta beta_se
 P n_eff, matching prepare_sumstats.R output) for direct debugging.
 
 Usage:
-    make_smoke_toy.py FILEBASE NSNPS NSAMPLES SEED
+    make_smoke_toy.py FILEBASE NSNPS NSAMPLES SEED [IDPREFIX]
 
 FILEBASE e.g. /scratch/.../sim_inputs/AFR/study (writes .bed/.bim/.fam next to
 it, plus ss_aligned.txt in the same directory).
+IDPREFIX (optional, default "f") is the sample-ID prefix in the FAM; use a
+distinct prefix (e.g. "t") so a held-out test sample has unique IIDs.
 """
 import os
 import random
@@ -32,6 +34,7 @@ def main():
     n_snps = int(sys.argv[2])
     n_samples = int(sys.argv[3])
     seed = int(sys.argv[4])
+    prefix = sys.argv[5] if len(sys.argv) > 5 else "f"
     rng = random.Random(seed)
 
     outdir = os.path.dirname(filebase)
@@ -85,7 +88,7 @@ def main():
     with open(filebase + ".fam", "w") as fh:
         for i in range(n_samples):
             sex = rng.choice([1, 2])
-            fh.write("f%d\ti%d\t0\t0\t%d\t%.5f\n" % (i, i, sex, pheno[i]))
+            fh.write("%s%d\t%s%d\t0\t0\t%d\t%.5f\n" % (prefix, i, prefix, i, sex, pheno[i]))
 
     # --- Aligned-style sumstats (prepare_sumstats.R schema), for debugging ---
     with open(os.path.join(outdir, "ss_aligned.txt"), "w") as fh:

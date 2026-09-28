@@ -180,9 +180,10 @@ if [[ ! -e $METHOD_RUN/single_ct.done && ${GDCQC_SMOKE_KEEP:-0} != 1 ]]; then
         log "  $anc toy: $(wc -l < "$b.bim" | tr -d ' ') snps, $(wc -l < "$b.fam" | tr -d ' ') samples @ $b.{bed,bim,fam}"
         head -3 "$b.bim"
     done
-    # Held-out test sample (same variant set, different samples/seed) for the
-    # scoreTestPRS / score_test.sh evaluation (Phase 3).
-    runas "test toy" "$PRSCS_PYTHON" "$GENERATOR" "$SIM_INPUTS/test/study" "$NSNPS" "$NSAMPLES" "$((SEED+2))"
+    # Held-out test sample (same variant set, different samples + unique "t"
+    # IIDs, seed SEED+2) for the scoreTestPRS / score_test.sh evaluation
+    # (Phase 3) so train/test are unambiguous.
+    runas "test toy" "$PRSCS_PYTHON" "$GENERATOR" "$SIM_INPUTS/test/study" "$NSNPS" "$NSAMPLES" "$((SEED+2))" "t"
     b="$SIM_INPUTS/test/study"
     log "  test toy: $(wc -l < "$b.bim" | tr -d ' ') snps, $(wc -l < "$b.fam" | tr -d ' ') samples @ $b.{bed,bim,fam}"
 else
