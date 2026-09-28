@@ -96,6 +96,22 @@ prsPipeline:
       description: |
         Optional study-sample PCA eigenvec file to pass into run_CT.sh; by
         default C+T computes study-sample PCA itself.
+    test_sample:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        PLINK1 prefix (stem without extension) of the held-out test sample scored
+        by the scoreTestPRS rule (wraps src/score_test.sh). When non-empty,
+        run_singleAncestryPRSPipelines / run_allPRSPipelines also build the
+        test-evaluation outputs under method_runs/test_evaluation/.
+    test_pca_eigenvec_file:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Optional PCA eigenvec file for the test sample (FID IID PC1 ...). When
+        unset, score_test.sh computes 6 PCs itself via plink --pca.
 
 prsMethods:
   type: dict

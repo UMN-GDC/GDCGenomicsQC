@@ -38,6 +38,8 @@ prsPipeline:
     afreq_file: null             # optional PLINK2 .afreq for LDpred2/lassosum2
     ld_matrix_dir: null          # shared LD matrix dir (default: <PRS_OUT_DIR>/ld_matrix/<ANC1>)
     gwas_pca_eigenvec_file: null # optional study-sample PCA file for C+T
+    test_sample: null            # held-out test PLINK prefix (stem, no ext) for scoreTestPRS
+    test_pca_eigenvec_file: null # optional test-sample PCA eigenvec file for scoreTestPRS
 
 # SIF container images used by the prs_pipeline method rules (used from phase 7;
 # not vendored). Defaults resolve to <OUT_DIR>/containers/<name>. Pull with:

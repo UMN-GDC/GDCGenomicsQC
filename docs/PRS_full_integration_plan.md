@@ -1,6 +1,6 @@
 # Plan: Full integration of `prs_pipeline` into GDCGenomicsQC
 
-Status: actively implemented on branch `prs_integration` — Phase 2 (single-ancestry slice) is code-complete and smoke-verified (see status + §8 session notes).
+Status: actively implemented on branch `prs_integration` — Phase 2 (single-ancestry slice) and Phase 3 (held-out test evaluation) are code-complete and smoke-verified (see status + §8 session notes).
 Repos involved:
 - `prs_pipeline` (upstream): `/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline` (git remote origin, branch `sandbox_multi_pheno` checked out)
 - GDCGenomicsQC (this repo): branch `prs_integration`; active Snakefile is `workflow/Snakefile`
@@ -131,8 +131,9 @@ Status (2026-09-24): **all five single-ancestry methods (`single_ct`, `single_ld
 - Smoke harness: `workflow/scripts/make_smoke_toy.py` fabricated REAL chr22 HapMap3 bfiles with a phenotype correlated to 2 'causal' SNPs (guarantees real glm p<1e-3 so every C+T threshold bin is populated) and `workflow/scripts/smoke_single_ancestry.sh`, a verbose SLURM-submittable end-to-end test (`sbatch workflow/scripts/smoke_single_ancestry.sh`) that builds toys, seeds the sim subgraph, dry-runs + runs `run_singleAncestryPRSPipelines`, and verifies all five `*.done` markers + key outputs. Verified: full clean run 13/13 jobs, all five methods PASS.
 
 ### Phase 3 — Test evaluation (`score_test.sh`)
-- [ ] Add rule `scoreTestPRS` that takes `method_runs/` outputs + a configured `test_sample` PLINK prefix and runs `src/score_test.sh … --path-repo …` producing `<method>_results.txt`/`<method>_scores.txt` under `method_runs/test_evaluation/`.
-- [ ] Add config keys `prsPipeline.test_sample`/`test_pca_eigenvec_file` (mirroring upstream) and gate the rule so it only builds when set.
+Status (2026-09-28): **implemented and smoke-verified** — `scoreTestPRS` bridges the native per-method `method_runs/` layout to the upstream `{CT,LDpred2,lassosum2,PRSice2,PRScsx}` layout via a `test_evaluation/_stage` symlink dir, provisions `PRSice`+plink on PATH (correcting for `score_test.sh`'s `set -eu` + bare-name calls), runs vendored `src/score_test.sh` with all `--ran-* true`, and `mv`s `<label>_{results,scores}.txt` into `method_runs/test_evaluation/`. Gated on `prsPipeline.test_sample`.
+- [x] Rule `scoreTestPRS` takes `method_runs/` outputs + a configured `test_sample` PLINK prefix and runs `src/score_test.sh … --path-repo …` producing `<method>_results.txt`/`<method>_scores.txt` under `method_runs/test_evaluation/`.
+- [x] Config keys `prsPipeline.test_sample`/`test_pca_eigenvec_file` (mirroring upstream); the rule builds only when set (`[rules.scoreTestPRS.output.done if … else []][0]` in `run_singleAncestryPRSPipelines`/`run_allPRSPipelines`); new target `run_scoreTestPRS`.
 
 ### Phase 4 — Multi-phenotype support
 - [ ] Support `prsPipeline.summary_stats_files` (comma-separated) + `prsPipeline.multi_pheno_file` OR a workflow-native `expand()` over a phenotype list, generating per-phenotype `method_runs/<pheno>/<method>.done` (upstream writes `output_path/prs_pipeline/<pheno>/…`). Decide in Phase 0 whether multi-pheno is in-scope for the first cut.
@@ -170,7 +171,7 @@ Do not attempt all phases at once. Suggested order for a first working cut:
 1. Phase 1 (absorb/vendor the engine + provenance checks).
 2. ~~Phase 2 for `single_ct` + `single_ldpred2` + `single_lassosum2` only (covers the shared `prepare_sumstats` + `afreq` + LD-matrix plumbing and produces real `*.done`)~~ **DONE 2026-09-24** (smoke-tested end-to-end on fabricated toy data; see Phase 2 status above).
 3. ~~Phase 2 remainder of the single-ancestry slice: `single_prsice` (vendored `run_PRSice2.sh` + `PRSice.R`/`PRSice_linux`) and `single_prscs` (new `src/run_PRScs.sh`, PRScsx.py single-pop)~~ **DONE 2026-09-24** (PRSice smoke on fabricated toy; PRS-CS smoke on a real chr22 HapMap3 toy through Snakemake).
-4. Phase 3 (`score_test.sh`) so single-ancestry is evaluable.
+4. ~~Phase 3 (`score_test.sh`) so single-ancestry is evaluable~~ **DONE 2026-09-28** (evaluable: `scoreTestPRS` produces `<method>_{results,scores}.txt` per method on a held-out sample).
 5. The multi-ancestry methods (Phase 2 remainder: `multi_prscsx`, `multi_prosper`, `multi_sdprs`, `multi_ctsleb`), followed by VIPRS (Phase 6), multi-pheno (Phase 4), and data-prep parity (Phase 5) as separate increments.
 6. Phase 8 (schema/example config) throughout, since each increment adds config keys.
 
@@ -187,9 +188,16 @@ Still open (blocking green PRS dry-runs):
 - Multi-phenotype mode remains out of scope for the first cut (deferred to Phase 4).
 - Confirm a writable dev `OUT_DIR` + toy PRS resources for the smoke test (Phase 9). (Smoke harness for the Phase 2 slice: `phenotypeSimulation.input_prefixes` pointing at existing bfiles so the QC/simulation subgraph is skipped; test config `/tmp/opencode/smoke3.yaml`.)
 
-## 8. Session notes — end of 2026-09-24 (briefing for next working session)
+## 8. Session notes
 
-### Where things stand
+### Session 2026-09-28 — Phase 3 (`scoreTestPRS`) implemented & smoke-verified
+- Used as the briefing for next session; the 09-24 notes and §5/§6 below remain the reference for the method engine and gotchas.
+- `scoreTestPRS` + `run_scoreTestPRS` + gating in `workflow/Snakefile`; config keys `prsPipeline.test_sample`/`test_pca_eigenvec_file` in schema + example config.
+- Smoke harness extended: fabricates a held-out test toy (seed+200, distinct IIDs) → runs `run_scoreTestPRS` → verifies `test_evaluation/{CT,LDpred2_inf,LDpred2_grid,lassosum2,PRSice2,PRScsx_<ANC>}_{results,scores}.txt` + `scoreTestPRS.done`. Full e2e PASS in ~216 s (14/14 jobs).
+- Held-out R² ≈ 0 is expected (each toy study is an independent phenotype draw) — Phase 3 verifies plumbing (weights → score → R² files), not effect size.
+- Git: Phase 2 + vendored engine + harness committed as `7d5c841`; this session's Phase 3 changes are the 5 files in the working tree (config schema/example, Snakefile, prsPipelines.smk, smoke harness). `temp_test_script.sh` + `workflow/scripts/__pycache__/` are gitignored.
+
+### Session 2026-09-24 (Phase 2)
 - Branch `prs_integration`; **nothing committed** — all of Phase 2 + the smoke harness are working-tree changes. Review with `git status`/`git diff` before continuing.
 - Modified: `.gitignore`, `config/config.schema.yaml`, `config/example_config.yaml`, `workflow/Snakefile`, `workflow/rules/preparePRSInputs.smk`, `workflow/rules/prsPipelines.smk`, `workflow/scripts/download_prs_resources.sh`, `workflow/scripts/prepare_prs_inputs.sh`, `docs/PRS_full_integration_plan.md`.
 - New (untracked): `workflow/scripts/prs_pipeline/` (vendored engine), `workflow/scripts/make_smoke_toy.py`, `workflow/scripts/smoke_single_ancestry.sh`, `docs/PRS_full_integration_plan.md`.
@@ -211,7 +219,7 @@ Still open (blocking green PRS dry-runs):
 - `.done` markers are intentionally 0-byte → assert with `-e`, not `-s`.
 
 ### Next increments (see §5/§6)
-1. Phase 3 `scoreTestPRS` (`src/score_test.sh`) — makes the single-ancestry methods evaluable. slotted first.
+1. ~~Phase 3 `scoreTestPRS` (`src/score_test.sh`) — makes the single-ancestry methods evaluable~~ **DONE 2026-09-28** (smoke-verified; see §8).
 2. Multi-ancestry: `multi_prscsx` first (same PRScsx.py + `1kg_ref` infra as `single_prscs`, in its joint multi-pop mode); then PROSPER (needs the `ref_bim.txt` relocation + G6 de-hardcoding), `multi_sdprs`, `multi_ctsleb`.
 3. `afreq_file` rule (`plink2 --freq` on the study set), then G6 path cleanup in the C+T/PROSPER wrappers.
 

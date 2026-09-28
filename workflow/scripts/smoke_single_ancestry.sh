@@ -180,6 +180,11 @@ if [[ ! -e $METHOD_RUN/single_ct.done && ${GDCQC_SMOKE_KEEP:-0} != 1 ]]; then
         log "  $anc toy: $(wc -l < "$b.bim" | tr -d ' ') snps, $(wc -l < "$b.fam" | tr -d ' ') samples @ $b.{bed,bim,fam}"
         head -3 "$b.bim"
     done
+    # Held-out test sample (same variant set, different samples/seed) for the
+    # scoreTestPRS / score_test.sh evaluation (Phase 3).
+    runas "test toy" "$PRSCS_PYTHON" "$GENERATOR" "$SIM_INPUTS/test/study" "$NSNPS" "$NSAMPLES" "$((SEED+2))"
+    b="$SIM_INPUTS/test/study"
+    log "  test toy: $(wc -l < "$b.bim" | tr -d ' ') snps, $(wc -l < "$b.fam" | tr -d ' ') samples @ $b.{bed,bim,fam}"
 else
     log "workspace reused, skipping toy generation"
 fi
@@ -224,6 +229,7 @@ prsPipeline:
   seed: ${SEED}
   gwas_fraction: 0.5
   phenotype_index: 1
+  test_sample: $(printf %q "$SIM_INPUTS/test/study")
 
 prsMethods:
   resource_dir: $(printf %q "$RESOURCES_DIR")
@@ -275,6 +281,29 @@ else
     fi
 fi
 
+# ---------------------------------------------------------------- test evaluation (Phase 3)
+section "Running scoreTestPRS on the held-out test sample (snakemake -j $CPUS)"
+SCORE_LOG="$WORK_BASE/scoring_run.log"
+if [[ -e $METHOD_RUN/scoreTestPRS.done && ${GDCQC_SMOKE_KEEP:-0} == 1 ]]; then
+    log "KEEP=1 and scoreTestPRS.done present -- skipping execution"
+else
+    (
+        cd "$WORKFLOW"
+        snakemake -j "$CPUS" $TRACE_ARGS \
+            --verbose \
+            run_scoreTestPRS \
+            --configfile "$CONFIG" \
+            > "$SCORE_LOG" 2>&1
+    )
+    SNAKE_RC=$?
+    log "score test finished with exit code $SNAKE_RC (see $SCORE_LOG)"
+    if [[ $SNAKE_RC -ne 0 ]]; then
+        log "--- last 60 lines of $SCORE_LOG ---"
+        tail -60 "$SCORE_LOG"
+        die "score test run failed (rc=$SNAKE_RC)"
+    fi
+fi
+
 # ---------------------------------------------------------------- verification
 section "Verifying method outputs"
 FAIL=0
@@ -311,6 +340,13 @@ check "LDpred2"   "single_ldpred2/prs_method_performance.csv" 10
 check "lassosum2" "single_lassosum2/prs_method_final_res.txt" 10
 check "lassosum2" "single_lassosum2/prs_method_full_predictions.csv" 500
 
+# --- Phase 3: held-out test evaluation (score_test.sh) ---
+for m in CT LDpred2_inf LDpred2_grid lassosum2 PRSice2 PRScsx_${ANC1}; do
+    check "test-eval" "test_evaluation/${m}_results.txt" 10
+    check "test-eval" "test_evaluation/${m}_scores.txt" 10
+done
+donef "scoreTestPRS"
+
 echo
 log "Key result snippets:"
 [[ -f $METHOD_RUN/single_prscs/prs_pipeline/PRScs/${ANC1}_PRS_sscore_Rsqr.txt ]] \
@@ -319,15 +355,20 @@ log "Key result snippets:"
     && { echo "  PRSice top row:"; head -2 "$METHOD_RUN/single_prsice/PRSice2/prs_method/PRSice2_outputs.prsice" | sed 's/^/    /'; }
 [[ -s $METHOD_RUN/single_ldpred2/prs_method_performance.csv ]] \
     && { echo "  LDpred2 performance:"; sed 's/^/    /' "$METHOD_RUN/single_ldpred2/prs_method_performance.csv"; }
+echo "  Held-out test R2 (score_test.sh, test_evaluation/):"
+for m in CT LDpred2_inf LDpred2_grid lassosum2 PRSice2 PRScsx_${ANC1}; do
+    f="$METHOD_RUN/test_evaluation/${m}_results.txt"
+    [[ -s $f ]] && { echo -n "    $m: "; sed 's/^/    /' "$f" | grep -Ei "r2|r.sq|p.value" | head -1; }
+done
 
 section "SUMMARY"
 ELAPSED="$(( $(date +%s) - START_EPOCH ))"
 if [[ $FAIL -eq 0 ]]; then
-    echo "  ALL SINGLE-ANCESTRY PRS METHODS PASSED in ${ELAPSED}s"
+    echo "  ALL SINGLE-ANCESTRY PRS METHODS + HELD-OUT TEST EVALUATION PASSED in ${ELAPSED}s"
     echo "  outputs under: $METHOD_RUN"
 else
     echo "  $FAIL VERIFICATION CHECK(S) FAILED (elapsed ${ELAPSED}s)"
-    echo "  see:  $RUN_LOG"
+    echo "  see:  $RUN_LOG (methods) / $SCORE_LOG (score test)"
     echo "  logs: $(cd "$OUT_DIR/logs" && ls -1 2>/dev/null | tr '\n' ' ')"
     exit 1
 fi
@@ -338,6 +379,7 @@ echo "    toy inputs : $SIM_INPUTS"
 echo "    resources  : $RESOURCES_DIR"
 echo "    outputs    : $PRS_OUT"
 echo "    run log    : $RUN_LOG"
+echo "    score log  : $SCORE_LOG"
 echo
 echo "  Job stats from dry run:"
 grep -E "^(runSingleAncestry|total|waiting)" "$WORK_BASE/dryrun.log" || true

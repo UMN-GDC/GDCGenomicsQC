@@ -62,6 +62,24 @@ PRS_PRSCS_REF_DIR = (
 PRS_PRSCS_SEED = PRS_METHODS_CONFIG.get("single_prscs", {}).get("seed", 42)
 PRS_PRSCS_PATH_PYTHON = PRS_METHODS_CONFIG.get("single_prscs", {}).get("path_python", None)
 
+# --- Phase 3: test evaluation (score_test.sh) ---
+PRS_TEST_SAMPLE = PRS_CONFIG.get("test_sample", "")
+PRS_TEST_PCA_FILE = PRS_CONFIG.get("test_pca_eigenvec_file", "")
+PRS_TEST_EVAL_DIR = PRS_METHOD_RUN_DIR / "test_evaluation"
+# Staging dir where score_test.sh's upstream layout is bridged to the native
+# per-method layout (see scoreTestPRS); score_test writes into
+# <stage>/test_evaluation, which is then moved up to PRS_TEST_EVAL_DIR.
+PRS_TEST_STAGE_DIR = PRS_METHOD_RUN_DIR / "test_evaluation" / "_stage"
+PRS_TEST_INPUTS = (
+    {
+        "test_bed": Path(PRS_TEST_SAMPLE).with_suffix(".bed"),
+        "test_bim": Path(PRS_TEST_SAMPLE).with_suffix(".bim"),
+        "test_fam": Path(PRS_TEST_SAMPLE).with_suffix(".fam"),
+    }
+    if PRS_TEST_SAMPLE
+    else {}
+)
+
 
 def prs_method_ld_matrix_dir(method):
     return PRS_METHODS_CONFIG.get(method, {}).get("ld_matrix_dir") or str(PRS_LD_MATRIX_DIR)
@@ -485,6 +503,116 @@ rule runSingleAncestryPRSCS:
 
         touch {output.done}
         """
+
+
+rule scoreTestPRS:
+    log:
+        OUT_DIR / "logs" / "scoreTestPRS.log",
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=8000,
+        runtime=720,
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+        ss=rules.alignSumstatsForPRS.output.aligned,
+        ct_done=rules.runSingleAncestryCT.output.done,
+        ct_results=rules.runSingleAncestryCT.output.results,
+        ldpred2_done=rules.runSingleAncestryLDpred2.output.done,
+        ldpred2_inf=rules.runSingleAncestryLDpred2.output.inf_weights,
+        ldpred2_grid=rules.runSingleAncestryLDpred2.output.grid_weights,
+        lassosum2_done=rules.runSingleAncestryLassosum2.output.done,
+        lassosum2_weights=rules.runSingleAncestryLassosum2.output.weights,
+        prsice2_done=rules.runSingleAncestryPRSice.output.done,
+        prsice2_snps=rules.runSingleAncestryPRSice.output.snps,
+        prscs_done=rules.runSingleAncestryPRSCS.output.done,
+        prscs_combined=rules.runSingleAncestryPRSCS.output.combined,
+        **PRS_TEST_INPUTS,
+    output:
+        ct_results=PRS_TEST_EVAL_DIR / "CT_results.txt",
+        ct_scores=PRS_TEST_EVAL_DIR / "CT_scores.txt",
+        ldpred2_inf_results=PRS_TEST_EVAL_DIR / "LDpred2_inf_results.txt",
+        ldpred2_inf_scores=PRS_TEST_EVAL_DIR / "LDpred2_inf_scores.txt",
+        ldpred2_grid_results=PRS_TEST_EVAL_DIR / "LDpred2_grid_results.txt",
+        ldpred2_grid_scores=PRS_TEST_EVAL_DIR / "LDpred2_grid_scores.txt",
+        lassosum2_results=PRS_TEST_EVAL_DIR / "lassosum2_results.txt",
+        lassosum2_scores=PRS_TEST_EVAL_DIR / "lassosum2_scores.txt",
+        prsice2_results=PRS_TEST_EVAL_DIR / "PRSice2_results.txt",
+        prsice2_scores=PRS_TEST_EVAL_DIR / "PRSice2_scores.txt",
+        prscsx_results=PRS_TEST_EVAL_DIR / f"PRScsx_{PRS_ANC1}_results.txt",
+        prscsx_scores=PRS_TEST_EVAL_DIR / f"PRScsx_{PRS_ANC1}_scores.txt",
+        done=PRS_METHOD_RUN_DIR / "scoreTestPRS.done",
+    params:
+        test_sample=PRS_TEST_SAMPLE,
+        test_pca_args=(
+            f"--test-pca-file {shlex.quote(str(PRS_TEST_PCA_FILE))}"
+            if PRS_TEST_PCA_FILE
+            else ""
+        ),
+        binary_target=PRS_CONFIG.get("binary_target", "F"),
+        plink=PRS_PLINK_BIN,
+        stage=PRS_TEST_STAGE_DIR,
+        eval_dir=PRS_TEST_EVAL_DIR,
+        ct_src=PRS_METHOD_RUN_DIR / "single_ct" / "CT",
+        ldpred2_src=PRS_METHOD_RUN_DIR / "single_ldpred2",
+        lassosum2_src=PRS_METHOD_RUN_DIR / "single_lassosum2",
+        prsice2_src=PRS_METHOD_RUN_DIR / "single_prsice" / "PRSice2",
+        prscs_label=PRS_ANC1,
+        prsice_bin=PRS_SRC / "PRSice_linux",
+        script=PRS_SRC / "score_test.sh",
+    shell:
+        """
+        set -euo pipefail
+
+        if [[ -z "{params.test_sample}" ]]; then
+            echo "ERROR: prsPipeline.test_sample is not set; scoreTestPRS requires a test PLINK prefix." >&2
+            exit 1
+        fi
+        if [[ ! -f "{params.test_sample}.fam" ]]; then
+            echo "ERROR: test-sample PLINK files not found at {params.test_sample}.{{bed,bim,fam}}" >&2
+            exit 1
+        fi
+
+        STAGE={params.stage}
+        EVAL={params.eval_dir}
+        mkdir -p "$STAGE" "$EVAL"
+
+        # Bridge the native per-method layout to the upstream layout score_test.sh
+        # expects ({{train_out_dir}}/CT, /LDpred2, /lassosum2, /PRSice2, /PRScsx).
+        ln -sfn {params.ct_src}        "$STAGE/CT"
+        ln -sfn {params.ldpred2_src}   "$STAGE/LDpred2"
+        ln -sfn {params.lassosum2_src} "$STAGE/lassosum2"
+        ln -sfn {params.prsice2_src}   "$STAGE/PRSice2"
+        mkdir -p "$STAGE/PRScsx"
+        ln -sfn {input.prscs_combined} "$STAGE/PRScsx/{params.prscs_label}_combined_weights.txt"
+
+        # Provide PRSice and plink on PATH (score_test.sh calls the bare names).
+        mkdir -p "$STAGE/bin"
+        ln -sfn {params.prsice_bin} "$STAGE/bin/PRSice"
+        export PATH="$STAGE/bin:$PATH"
+        PLINK_BIN="{params.plink}"
+        if [[ "$PLINK_BIN" != "plink" ]]; then
+            export PATH="$(dirname "$PLINK_BIN"):$PATH"
+        fi
+
+        bash {params.script} \\
+            --test-bfile {params.test_sample} \\
+            --train-out-dir "$STAGE" \\
+            {params.test_pca_args} \\
+            --sumstats {input.ss} \\
+            --path-repo {PRS_PIPELINE_PATH} \\
+            --binary-flag {params.binary_target} \\
+            --ran-ct true \\
+            --ran-ldpred2 true \\
+            --ran-lassosum2 true \\
+            --ran-prsice2 true \\
+            --ran-prscsx true > {log} 2>&1
+
+        mv "$STAGE/test_evaluation"/* "$EVAL"/
+        rm -rf "$STAGE"
+        touch {output.done}
+        """
+
 
 CTSLEB_INPUT_DIR = Path(config.get("prsPipeline", {}).get("generated_input_dir", ""))
 CTSLEB_PHENO_PREFIX = config.get("prsMethods", {}).get("multi_ctsleb", {}).get(

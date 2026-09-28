@@ -324,6 +324,11 @@ rule run_singleAncestryPRSPipelines:
         PRS_METHOD_RUN_DIR / "single_prscs.done",
         PRS_METHOD_RUN_DIR / "single_ldpred2.done",
         PRS_METHOD_RUN_DIR / "single_lassosum2.done",
+        [
+            rules.scoreTestPRS.output.done
+            if config.get("prsPipeline", {}).get("test_sample")
+            else []
+        ][0],
 
 
 rule run_multiAncestryPRSPipelines:
@@ -357,6 +362,21 @@ rule run_allPRSPipelines:
         PRS_METHOD_RUN_DIR / "multi_ldpred2.done",
         PRS_METHOD_RUN_DIR / "multi_prosper.done",
         PRS_METHOD_RUN_DIR / "multi_sdprs.done",
+        [
+            rules.scoreTestPRS.output.done
+            if config.get("prsPipeline", {}).get("test_sample")
+            else []
+        ][0],
+
+
+rule run_scoreTestPRS:
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=720,
+    input:
+        rules.scoreTestPRS.output.done,
 
 
 rule runSingleAncestryPrecise:
