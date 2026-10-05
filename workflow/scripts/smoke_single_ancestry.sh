@@ -4,18 +4,21 @@
 #
 # End-to-end SLURM smoke test for the five single-ancestry PRS methods
 # (CT, PRSice2, PRS-CS, LDpred2, lassosum2) plus the joint multi-ancestry
-# PRS-CSx method (multi_prscsx) in GDCGenomicsQC.
+# PRS-CSx (multi_prscsx) and CT-SLEB (multi_ctsleb) methods in GDCGenomicsQC.
 #
 # What it does:
-#   1. Preflights tools (snakemake, Rscript, plink/plink2, PRS-CS python).
+#   1. Preflights tools (snakemake, apptainer, Rscript, plink/plink2, PRS-CS python).
 #   2. Fabricates two small single-ancestry toy PLINK1 sets (AFR + EUR) whose
 #      variants are REAL chr22 HapMap3 SNPs (so PRS-CS LD-overlap works).
 #   3. Seeds the phenotypeSimulation outputs (bypasses the QC/sim QC graph).
 #   4. Writes a full config, dry-runs the graph, then RUNS
-#      `run_singleAncestryPRSPipelines` and `runMultiAncestryPRSCSx` locally
-#      within this allocation.
+#      `run_singleAncestryPRSPipelines`, `runMultiAncestryPRSCSx` and
+#      `runMultiAncestryCTSLEB` under apptainer (`--use-apptainer`) inside this
+#      allocation -- every PRS rule runs in the
+#      ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest container.
 #   5. Verifies all five single method outputs + `.done` markers, the
-#      multi_prscsx outputs for both ancestries, and (Phase 3) prints a table.
+#      multi_prscsx outputs for both ancestries, the multi_ctsleb outputs, and
+#      (Phase 3) prints a table.
 #
 # Run via:
 #   sbatch workflow/scripts/smoke_single_ancestry.sh
@@ -89,6 +92,12 @@ CPUS="${GDCQC_SMOKE_CPUS:-${SLURM_CPUS_ON_NODE:-8}}"
 TRACE_ARGS=""
 [[ ${GDCQC_SMOKE_TRACE:-0} == 1 ]] && TRACE_ARGS="--printshellcmds"
 
+# The PRS rules declare `container:` directives; run them through apptainer with
+# the same binds the production profiles use. Images are cached by snakemake in
+# the (gitignored) workflow/.snakemake/singularity/ run-dir cache.
+APPTAINER_BINDS="--bind /scratch.global,/projects,/spaces,/home"
+APP_OPTS=(--use-apptainer --apptainer-args "$APPTAINER_BINDS")
+
 section "GDCGenomicsQC single-ancestry PRS smoke"
 log "repo root        : $REPO_ROOT"
 log "workflow dir     : $WORKFLOW"
@@ -121,6 +130,9 @@ else
     SNAKEMAKE_BIN="$(command -v snakemake)"
 fi
 log "  snakemake       : $SNAKEMAKE_BIN ($(snakemake --version))"
+
+command -v apptainer >/dev/null 2>&1 || die "apptainer not found (required: the PRS rules run in ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest)"
+log "  apptainer       : $(command -v apptainer)"
 
 R_CANDIDATES=()
 if command -v Rscript >/dev/null 2>&1; then
@@ -226,14 +238,18 @@ phenotypeSimulation:
     ${ANC2}: $(printf %q "$SIM_INPUTS/$ANC2/study")
 
 prsPipeline:
-  path_plink: $(printf %q "$PLINK_BIN")
-  path_plink2: $(printf %q "$PLINK2_BIN")
+  # plink/plink2/path_python intentionally left unset: inside the prs
+  # container they resolve from the image's PATH (bioconda plink/plink2, conda
+  # python with numpy/scipy/h5py).
   n_total_gwas: ${NSAMPLES}
   binary_target: "F"
   seed: ${SEED}
   gwas_fraction: 0.5
   phenotype_index: 1
   test_sample: $(printf %q "$SIM_INPUTS/test/study")
+  # generated_input_dir is the PRS input/output root (preparePRSInputs.smk and
+  # the CTSLEB sumstats/phenotype prep rules both key off it).
+  generated_input_dir: $(printf %q "$PRS_OUT")
 
 prsMethods:
   resource_dir: $(printf %q "$RESOURCES_DIR")
@@ -244,9 +260,10 @@ prsMethods:
     path_code: $(printf %q "$PRSCSX_CODE")
     ld_ref_dir: $(printf %q "$PRSCSX_REF")
     seed: ${SEED}
-    path_python: $(printf %q "$PRSCS_PYTHON")
   multi_prscsx:
     seed: ${SEED}
+  multi_ctsleb:
+    software_dir: $(printf %q "$REPO_ROOT/workflow/scripts/CTSLEB/R")
 EOF
 sed -n '1,2p;s/^\(IN\|OUT\|prs\|INPUT\|REF\)/  \1/p' "$CONFIG" 2>/dev/null | head -5
 log "config written ($(wc -l < "$CONFIG") lines)"
@@ -255,16 +272,23 @@ log "config written ($(wc -l < "$CONFIG") lines)"
 section "Dry-run of run_singleAncestryPRSPipelines + runMultiAncestryPRSCSx"
 (
     cd "$WORKFLOW"
-    snakemake -n -j "$CPUS" $TRACE_ARGS run_singleAncestryPRSPipelines --configfile "$CONFIG" 2>&1 \
+    snakemake -n -j "$CPUS" $TRACE_ARGS "${APP_OPTS[@]}" run_singleAncestryPRSPipelines --configfile "$CONFIG" 2>&1 \
         | tee "$WORK_BASE/dryrun.log" \
         | grep -E "^(Job stats|runSingleAncestry|total|waiting|Nothing to be done|Job counts)" \
         || true
 )
 (
     cd "$WORKFLOW"
-    snakemake -n -j "$CPUS" $TRACE_ARGS runMultiAncestryPRSCSx --configfile "$CONFIG" 2>&1 \
+    snakemake -n -j "$CPUS" $TRACE_ARGS "${APP_OPTS[@]}" runMultiAncestryPRSCSx --configfile "$CONFIG" 2>&1 \
         | tee "$WORK_BASE/dryrun_mprscsx.log" \
         | grep -E "^(Job stats|runMultiAncestry|prepare|total|waiting|Nothing to be done|Job counts)" \
+        || true
+)
+(
+    cd "$WORKFLOW"
+    snakemake -n -j "$CPUS" $TRACE_ARGS "${APP_OPTS[@]}" runMultiAncestryCTSLEB --configfile "$CONFIG" 2>&1 \
+        | tee "$WORK_BASE/dryrun_mctsleb.log" \
+        | grep -E "^(Job stats|runMultiAncestry|prepareCTSLEB|total|waiting|Nothing to be done|Job counts)" \
         || true
 )
 if [[ ${GDCQC_SMOKE_DRYRUN:-0} == 1 ]]; then
@@ -279,7 +303,7 @@ if [[ -e $METHOD_RUN/single_ct.done && -e $METHOD_RUN/single_prscs.done && ${GDC
 else
     (
         cd "$WORKFLOW"
-        snakemake -j "$CPUS" $TRACE_ARGS \
+        snakemake -j "$CPUS" $TRACE_ARGS "${APP_OPTS[@]}" \
             --verbose \
             run_singleAncestryPRSPipelines \
             --configfile "$CONFIG" \
@@ -302,7 +326,7 @@ if [[ -e $METHOD_RUN/scoreTestPRS.done && ${GDCQC_SMOKE_KEEP:-0} == 1 ]]; then
 else
     (
         cd "$WORKFLOW"
-        snakemake -j "$CPUS" $TRACE_ARGS \
+        snakemake -j "$CPUS" $TRACE_ARGS "${APP_OPTS[@]}" \
             --verbose \
             run_scoreTestPRS \
             --configfile "$CONFIG" \
@@ -325,7 +349,7 @@ if [[ -e $METHOD_RUN/multi_prscsx.done && ${GDCQC_SMOKE_KEEP:-0} == 1 ]]; then
 else
     (
         cd "$WORKFLOW"
-        snakemake -j "$CPUS" $TRACE_ARGS \
+        snakemake -j "$CPUS" $TRACE_ARGS "${APP_OPTS[@]}" \
             --verbose \
             runMultiAncestryPRSCSx \
             --configfile "$CONFIG" \
@@ -337,6 +361,29 @@ else
         log "--- last 60 lines of $MPRSCSX_LOG ---"
         tail -60 "$MPRSCSX_LOG"
         die "multi_prscsx run failed (rc=$SNAKE_RC)"
+    fi
+fi
+
+# ---------------------------------------------------------------- multi-ancestry CT-SLEB
+section "Running joint multi-ancestry CT-SLEB (snakemake -j $CPUS)"
+MCTSLEB_LOG="$WORK_BASE/mctsleb_run.log"
+if [[ -e $METHOD_RUN/multi_ctsleb.done && ${GDCQC_SMOKE_KEEP:-0} == 1 ]]; then
+    log "KEEP=1 and multi_ctsleb.done present -- skipping execution"
+else
+    (
+        cd "$WORKFLOW"
+        snakemake -j "$CPUS" $TRACE_ARGS "${APP_OPTS[@]}" \
+            --verbose \
+            runMultiAncestryCTSLEB \
+            --configfile "$CONFIG" \
+            > "$MCTSLEB_LOG" 2>&1
+    )
+    SNAKE_RC=$?
+    log "multi_ctsleb run finished with exit code $SNAKE_RC (see $MCTSLEB_LOG)"
+    if [[ $SNAKE_RC -ne 0 ]]; then
+        log "--- last 60 lines of $MCTSLEB_LOG ---"
+        tail -60 "$MCTSLEB_LOG"
+        die "multi_ctsleb run failed (rc=$SNAKE_RC)"
     fi
 fi
 
@@ -362,7 +409,7 @@ donef() {  # donef <method>
     fi
 }
 
-for m in single_ct single_prsice single_prscs single_ldpred2 single_lassosum2 multi_prscsx; do
+for m in single_ct single_prsice single_prscs single_ldpred2 single_lassosum2 multi_prscsx multi_ctsleb; do
     donef "$m"
 done
 
@@ -384,6 +431,11 @@ check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/PRScsx_joint_${ANC2}_score.s
 check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/${ANC1}_PRS_sscore_Rsqr.txt" 1
 check "mPRS-CSx"  "multi_prscsx/prs_pipeline/PRScsx/${ANC2}_PRS_sscore_Rsqr.txt" 1
 
+# --- joint multi-ancestry CT-SLEB ---
+check "mCT-SLEB"  "multi_ctsleb/${ANC1}_ctsleb_sl_validation_r2.txt" 1
+check "mCT-SLEB"  "multi_ctsleb/${ANC1}_ctsleb_final_coefficients.txt" 10
+check "mCT-SLEB"  "multi_ctsleb/${ANC1}_ctsleb_best_snps.tsv" 1
+
 # --- Phase 3: held-out test evaluation (score_test.sh) ---
 for m in CT LDpred2_inf LDpred2_grid lassosum2 PRSice2 PRScsx_${ANC1}; do
     check "test-eval" "test_evaluation/${m}_results.txt" 10
@@ -404,6 +456,9 @@ for anc in $ANC1 $ANC2; do
     f="$METHOD_RUN/multi_prscsx/prs_pipeline/PRScsx/${anc}_PRS_sscore_Rsqr.txt"
     [[ -s $f ]] && { echo -n "    $anc: "; sed 's/^/    /' "$f"; }
 done
+echo "  Multi-ctsleb super-learner validation R2 (ANC1=${ANC1}):"
+f="$METHOD_RUN/multi_ctsleb/${ANC1}_ctsleb_sl_validation_r2.txt"
+[[ -s $f ]] && { echo -n "    $ANC1: "; grep -v '^#' "$f" | sed 's/^/    /' | head -1; }
 echo "  Held-out test R2 (score_test.sh, test_evaluation/):"
 for m in CT LDpred2_inf LDpred2_grid lassosum2 PRSice2 PRScsx_${ANC1}; do
     f="$METHOD_RUN/test_evaluation/${m}_results.txt"
@@ -413,11 +468,11 @@ done
 section "SUMMARY"
 ELAPSED="$(( $(date +%s) - START_EPOCH ))"
 if [[ $FAIL -eq 0 ]]; then
-    echo "  ALL SINGLE-ANCESTRY PRS METHODS + MULTI_PRSCSX + HELD-OUT TEST EVALUATION PASSED in ${ELAPSED}s"
+    echo "  ALL SINGLE-ANCESTRY PRS METHODS + MULTI_PRSCSX + MULTI_CTSLEB + HELD-OUT TEST EVALUATION PASSED in ${ELAPSED}s"
     echo "  outputs under: $METHOD_RUN"
 else
     echo "  $FAIL VERIFICATION CHECK(S) FAILED (elapsed ${ELAPSED}s)"
-    echo "  see:  $RUN_LOG (methods) / $SCORE_LOG (score test) / $MPRSCSX_LOG (multi prscsx)"
+    echo "  see:  $RUN_LOG (methods) / $SCORE_LOG (score test) / $MPRSCSX_LOG (multi prscsx) / $MCTSLEB_LOG (multi ctsleb)"
     echo "  logs: $(cd "$OUT_DIR/logs" && ls -1 2>/dev/null | tr '\n' ' ')"
     exit 1
 fi
@@ -430,9 +485,10 @@ echo "    outputs    : $PRS_OUT"
 echo "    run log    : $RUN_LOG"
 echo "    score log  : $SCORE_LOG"
 echo "    mprscsx log: $MPRSCSX_LOG"
+echo "    mctsleb log: $MCTSLEB_LOG"
 echo
 echo "  Job stats from dry run:"
 grep -E "^(runSingleAncestry|total|waiting)" "$WORK_BASE/dryrun.log" || true
 echo
-echo "  Next up: remaining multi-ancestry methods (multi_ctsleb/multi_ldpred2/multi_sdprs/multi_prosper) + PROSPER ref_bim.txt blocker."
+echo "  Next up: remaining multi-ancestry methods (multi_ldpred2/multi_sdprs/multi_prosper) + PROSPER ref_bim.txt blocker."
 exit 0
