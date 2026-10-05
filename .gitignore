@@ -34,6 +34,8 @@ workflow/rule_backups/
 profiles/hpc-nosif/
 prs_inputs_hm3/
 CTSLEB/
+!workflow/scripts/CTSLEB/
+!workflow/scripts/CTSLEB/**
 Ref/
 Ref_symlink_backup_20260419_014947/
 backups/
