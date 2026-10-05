@@ -28,8 +28,10 @@ prs_pipeline git checkout (origin remote contains prs_pipeline), since a vendore
 copy's git HEAD is GDCGenomicsQC's, not upstream's.
 
 --prs-pipeline-sif/--prs-helper-sif: SIF container paths (recorded for phase 7,
-not yet consumed). Pull with:
-  apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prsv2:latest
+not yet consumed). The PRS compute rules run inside the GDCGenomicsQC-owned
+`prs` image (built from envs/prs.def, bakes the engine + pinned method repos).
+Pull with:
+  apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest
   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/singleprshelper:latest
 
 Optional environment variables:
