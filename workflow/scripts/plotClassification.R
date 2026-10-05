@@ -131,6 +131,29 @@ if (has_umap && "umap" %in% plot_models) {
     }
 }
 
+if (has_vae && "vae" %in% plot_models) {
+    vae_rf_path <- file.path(args$out_dir, "RFvae.Rds")
+    if (file.exists(vae_rf_path)) {
+        vae_model <- readRDS(vae_rf_path)
+        vae_ref <- ref_plot_df |> filter(model == "vae")
+
+        x_range <- range(vae_ref$x, na.rm = TRUE)
+        y_range <- range(vae_ref$y, na.rm = TRUE)
+
+        grid <- expand.grid(
+            vae_mean1 = seq(x_range[1], x_range[2], length.out = 150),
+            vae_mean2 = seq(y_range[1], y_range[2], length.out = 150)
+        )
+
+        probs <- predict(vae_model, grid)$predictions
+        grid$max_prob <- apply(probs, 1, max)
+
+        contour_list$vae <- grid |>
+            rename(x = vae_mean1, y = vae_mean2) |>
+            mutate(model = "vae")
+    }
+}
+
 contour_df <- bind_rows(contour_list)
 
 if (nrow(sample_plot_df) > 0) {

@@ -416,7 +416,8 @@ The pipeline includes the following rules:
 | `Relatedness` | Check and filter related samples |
 | `PCAreference` | PCA on reference panel and sample projection |
 | `UMAP` | UMAP dimensionality reduction |
-| `estimateAncestry` | Estimate global ancestry using PC/UMAP |
+| `popVAE` | popVAE variational autoencoder latent space (only with `ancestry.model: "vae"`) |
+| `estimateAncestry` | Estimate global ancestry using PC/UMAP/VAE |
 | `classifyAncestry` | Classify ancestry with multiple models |
 | `Phase` | Phase genotypes with SHAPEIT4 |
 | `RFMIX` | Local ancestry inference with RFMIX |

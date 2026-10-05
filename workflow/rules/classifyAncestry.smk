@@ -18,6 +18,7 @@ checkpoint estimateGlobalAncestry:
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
         umap_sample=OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
+        vae=OUT_DIR / "01-globalAncestry" / "vae_latent_coords.txt" if uses_vae() else [],
         lai_global=OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_local_ancestry() else [],
     output:
         pos_prob=OUT_DIR / "01-globalAncestry" / "classificationProbabilities.tsv",
@@ -26,9 +27,15 @@ checkpoint estimateGlobalAncestry:
     params:
         dir=OUT_DIR / "01-globalAncestry",
         script=workflow.source_path("../scripts/trainPredict.R"),
+        use_vae=uses_vae(),
         use_local_ancestry=uses_local_ancestry(),
     shell:
         """
+        if [ "{params.use_vae}" = "True" ]; then
+          vae_arg="--vae {input.vae}"
+        else
+          vae_arg=""
+        fi
         if [ "{params.use_local_ancestry}" = "True" ]; then
           lai_arg="--lai_global {input.lai_global}"
         else
@@ -40,6 +47,7 @@ checkpoint estimateGlobalAncestry:
           --umap_ref {input.umap_ref} \
           --umap_sample {input.umap_sample} \
           --labels {input.labels} \
+          $vae_arg \
           $lai_arg \
           --out {params.dir} \
           --rseed $RANDOM \

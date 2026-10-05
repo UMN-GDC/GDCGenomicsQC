@@ -56,6 +56,8 @@ include: "rules/Crossmap.smk"
 include: "rules/PCAreference.smk"
 include: "rules/PCAinternal.smk"
 include: "rules/umap.smk"
+if uses_vae():
+    include: "rules/popVAE.smk"
 include: "rules/classifyAncestry.smk"
 if get_local_ancestry_method() == "rfmix":
     include: "rules/RFMIX.smk"
@@ -81,6 +83,7 @@ rule all:
              OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
              OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
              OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+             *([OUT_DIR / "01-globalAncestry" / "vae_latent_coords.txt"] if uses_vae() else []),
              OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv"]
             if not has_provided_ancestry() else []
         ),

@@ -166,7 +166,7 @@ The ancestry classification pipeline depends on:
 ```yaml
 ancestry:
     threshold: 0.8  # Minimum posterior probability for classification
-    model: "pca"    # Options: pca, umap, lai (vae not yet implemented); "lai" classifies from local-ancestry proportions (RFMix or Gnomix)
+    model: "pca"    # Options: pca, umap, vae, lai; "lai" classifies from local-ancestry proportions (RFMix or Gnomix). "vae" fits a popVAE autoencoder jointly on reference + study genotypes (requires the popvae container).
     pca_estimation: "projection"  # "projection" or "joint" — how PCA is computed
     # Optional: reported_race: "/path/to/reported_race.tsv"
 
@@ -220,7 +220,7 @@ chromosomes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 
 ancestry:
     threshold: 0.8
-    model: "pca"  # Options: pca, umap, lai (vae not yet implemented); "lai" classifies from local-ancestry proportions (RFMix or Gnomix)
+    model: "pca"  # Options: pca, umap, vae, lai; "lai" classifies from local-ancestry proportions (RFMix or Gnomix)
     pca_estimation: "projection"  # "projection" or "joint"
 
 # Optional: subset samples/variants before ancestry classification
@@ -261,9 +261,12 @@ EOF
 Key parameters:
 
 - ``threshold``: Minimum posterior probability for confident classification (default: 0.8)
-- ``model``: Embedding used for classification—``pca``, ``umap``, or ``lai``
+- ``model``: Embedding used for classification—``pca``, ``umap``, ``vae``, or ``lai``
   (``lai`` classifies from genome-wide local-ancestry proportions produced by
-  either estimator; Note: VAE is not yet implemented)
+  either estimator; ``vae`` fits a popVAE autoencoder jointly on reference +
+  study genotypes, so both embed in a shared latent space, and classifies from
+  those coordinates. VAE requires the popvae container built from
+  ``envs/popvae.def``.)
 - ``pca_estimation``: How PCA components are computed:
   - ``"projection"`` (default): PCA on the 1000G reference panel only, then projects study samples onto those PCs. Fast, reference-consistent.
   - ``"joint"``: Merges study and reference genotypes, computes PCA jointly, then splits by population. Better for capturing study-specific variation but slower.
@@ -325,13 +328,14 @@ snakemake --profile=../profiles/hpc \
 This trains Random Forest models on reference coordinates and predicts ancestry
 probabilities for your samples.
 
-### Step 3: Compare Models (PCA vs UMAP)
+### Step 3: Compare Models (PCA vs UMAP vs VAE)
 
 Modify ``model`` in your config to compare embeddings:
 
 - **PCA** (default): Linear projection, strongest baseline
 - **UMAP**: Nonlinear, good for visualization
-- **VAE**: Not yet implemented
+- **VAE**: Deep-learning latent space fit jointly on reference + study data
+  (probabilistic; handles missing data; more compute-intensive than PCA/UMAP)
 
 ::::{tab-set}
 :::{tab-item} MSI HPC
@@ -623,8 +627,9 @@ This enables rapid iteration when you already have ancestry assignments.
 These questions extend the practical exercise into deeper methodological considerations:
 
 1. **Model comparison**: How do posterior probability distributions differ between
-   PCA and UMAP? Does this align with the simulation findings that PCA
-   remains the strongest baseline? (VAE not yet available for comparison)
+   PCA, UMAP, and VAE? Does PCA remain the strongest baseline, or does the
+   VAE's non-linear shared latent space change classifications at ancestry
+   boundaries?
 
 2. **Threshold selection**: What happens to the number of "uncertain" classifications
    as you vary the threshold from 0.6 to 0.95? How does this affect downstream

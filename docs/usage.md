@@ -442,6 +442,8 @@ internal ones; `--list-targets` only shows explicitly designated end-points.
   - Single-file format conversion and filtering
 * - `pcair`
   - PC-AiR relatedness estimation
+* - `popVAE`
+  - popVAE autoencoder latent-space embedding (only with `ancestry.model: "vae"`)
 * - `estimateAncestry`
   - Global ancestry classification
 * - `classifyAncestry`

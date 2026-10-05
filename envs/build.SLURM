@@ -31,6 +31,7 @@ declare -a DEFINITIONS=(
     "mash"
     "phenotypeSim"
     "crossmap"
+    "popvae"
 )
 
 # Get the array index

@@ -98,6 +98,10 @@ def uses_gnomix():
     return get_local_ancestry_method() == "gnomix"
 
 
+def uses_vae():
+    return config.get("ancestry", {}).get("model", "pca") == "vae"
+
+
 def get_min_samples():
     return config.get("min_samples_per_ancestry", 0)
 

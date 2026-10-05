@@ -38,7 +38,7 @@ read_vae_coords <- function(path) {
     vae_df <- read_table(path, col_names = TRUE, show_col_types = FALSE)
     names(vae_df) <- make.names(names(vae_df), unique = TRUE)
 
-    iid_candidates <- c("IID", "SampleID", "sample_id", "sample", "id", "ID")
+    iid_candidates <- c("IID", "SampleID", "sampleID", "sample_id", "sample", "id", "ID")
     iid_col <- iid_candidates[iid_candidates %in% names(vae_df)][1]
     if (is.na(iid_col)) {
         iid_col <- names(vae_df)[ncol(vae_df)]

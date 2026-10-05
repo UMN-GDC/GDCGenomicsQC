@@ -31,6 +31,9 @@ apptainer push mash.sif oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest
 
 apptainer build --fakeroot phenotypeSim.sif phenotypeSim.def
 apptainer push phenotypeSim.sif oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest
+
+apptainer build --fakeroot popvae.sif popvae.def
+apptainer push popvae.sif oras://ghcr.io/coffm049/gdcgenomicsqc/popvae:latest
 ```
 
 # Module Load
