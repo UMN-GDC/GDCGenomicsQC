@@ -1,0 +1,65 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%arguments
+    # Best practice: Name your environment something consistent
+    ENV_NAME=predlmm-ace
+    # Path to a file holding a GitHub token with read access to
+    # SAONLIB/predlmm-ace (that repo is private). Pass the PATH, never the
+    # token itself: values substituted into %arguments are stored verbatim in
+    # the SIF's embedded definition and can be recovered with
+    # `apptainer inspect --deffile`, so a token passed this way would ship
+    # inside the published image.
+    #
+    #   printf '%s' "$TOKEN" > ~/.config/gdcgenomicsqc/predlmmace.token
+    #   chmod 600 ~/.config/gdcgenomicsqc/predlmmace.token
+    #   apptainer build --fakeroot \
+    #       --build-arg TOKEN_FILE=~/.config/gdcgenomicsqc/predlmmace.token \
+    #       predlmmAce.sif predlmmAce.def
+    #
+    # Left empty, the build fails on the private-repo clone (anonymous access
+    # to SAONLIB/predlmm-ace returns 404).
+    TOKEN_FILE=""
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export PATH="/opt/conda/envs/{{ ENV_NAME }}/bin:$PATH"
+    export LC_ALL=C.UTF-8
+
+%files
+    predlmmAce.yml /app/predlmmAce.yml
+
+%post
+    # predlmm-ace itself is installed from source by the yml's pip: entry
+    # (git+https://github.com/SAONLIB/predlmm-ace.git). It provides the
+    # predlmm-fit / predlmm-profile-se / predlmm-grm-to-nystrom /
+    # predlmm-select-knots console scripts used by
+    # workflow/scripts/run_predlmm_ace.py. gcta comes from conda and is needed
+    # for the dense/sparse GRM and fastGWA steps. git is a dependency because
+    # pip needs it for the git+ requirement.
+    #
+    # The token is read from TOKEN_FILE and handed to git through an ephemeral
+    # credential helper. GIT_CONFIG_* puts the helper in git's environment for
+    # this build only, so the token is never written to ~/.gitconfig, never
+    # appears in the %post script text, and never appears in argv (git runs the
+    # helper in a subshell that inherits the exported variable).
+    if [ -n "{{ TOKEN_FILE }}" ]; then
+        PREDLMM_GH_TOKEN="$(cat "{{ TOKEN_FILE }}")"
+        if [ -z "$PREDLMM_GH_TOKEN" ]; then
+            echo "FATAL: TOKEN_FILE '{{ TOKEN_FILE }}' is empty or unreadable" >&2
+            exit 1
+        fi
+        export PREDLMM_GH_TOKEN
+        export GIT_CONFIG_COUNT=1
+        export GIT_CONFIG_KEY_0=credential.helper
+        export GIT_CONFIG_VALUE_0='!f() { echo username=x-access-token; echo "password=$PREDLMM_GH_TOKEN"; }; f'
+    fi
+
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/predlmmAce.yml
+
+    # Drop the build-time credentials before the filesystem is squashed. A
+    # failed build writes no SIF, so an interrupted run cannot leave a token
+    # behind in a usable image.
+    unset PREDLMM_GH_TOKEN GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+    rm -f /app/predlmmAce.yml
+    /usr/bin/micromamba clean --all -y
