@@ -354,10 +354,11 @@ internalPCA:
     phenotype_file: null
 ```
 
-### Local Ancestry (RFMIX)
+### Local Ancestry (RFMIX or Gnomix)
 ```yaml
 localAncestry:
-  RFMIX: true
+  method: "rfmix"  # "rfmix" (default) or "gnomix"
+  RFMIX: true      # Legacy flag; implied by method: "rfmix"
   test: true
   thin_subjects: 0.1
   figures: "figures"
@@ -418,7 +419,8 @@ The pipeline includes the following rules:
 | `Relatedness` | Check and filter related samples |
 | `PCAreference` | PCA on reference panel and sample projection |
 | `UMAP` | UMAP dimensionality reduction |
-| `estimateAncestry` | Estimate global ancestry using PC/UMAP |
+| `popVAE` | popVAE variational autoencoder latent space (only with `ancestry.model: "vae"`) |
+| `estimateAncestry` | Estimate global ancestry using PC/UMAP/VAE |
 | `classifyAncestry` | Classify ancestry with multiple models |
 | `Phase` | Phase genotypes with SHAPEIT4 |
 | `RFMIX` | Local ancestry inference with RFMIX |

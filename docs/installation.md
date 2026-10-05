@@ -277,6 +277,7 @@ Example configuration:
       threshold: 0.8
 
   localAncestry:
+      method: "rfmix"  # "rfmix" (default) or "gnomix"
       RFMIX: false
       test: false
 
@@ -439,6 +440,7 @@ conda activate snakemake
       threshold: 0.8
 
   localAncestry:
+      method: "rfmix"  # "rfmix" (default) or "gnomix"
       RFMIX: false
       test: false
 
@@ -653,6 +655,8 @@ are automatically pulled based on rule-level `container:` directives.
   - Ancestry reporting environment
 * - `oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest`
   - RFMix local ancestry inference
+* - `docker://bdchen/run_gnomix:0.0.2`
+  - Gnomix local ancestry inference (see `envs/gnomix_bdchen/`)
 * - `oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest`
   - Mash distance estimation
 * - `oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest`

@@ -3,7 +3,7 @@ import pandas as pd
 
 OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
 REF = Path(config.get("REF", "/path/to/ref"))
-ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
+ANCESTRY_MODEL = "lai" if config.get("ancestry", {}).get("model", "pca") == "rfmix" else config.get("ancestry", {}).get("model", "pca")
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 LOCAL_ANCESTRY_CHROMOSOMES = config.get("localAncestry", {}).get("chromosomes") or CHROMOSOMES
 INPUT_IS_PER_CHROMOSOME = "{CHR}" in config.get("INPUT", "")
@@ -70,8 +70,36 @@ def get_exclude_variants(*args, **kwargs):
     return []
 
 
+def get_local_ancestry_method():
+    # "rfmix" (default), "gnomix", or "none".
+    # Explicit localAncestry.method wins; otherwise "rfmix" is implied by the
+    # legacy localAncestry.RFMIX flag or by ancestry.model (classification from
+    # local-ancestry proportions needs local ancestry first). "lai" is the
+    # method-agnostic model name; "rfmix" is accepted as a deprecated alias.
+    m = config.get("localAncestry", {}).get("method", None)
+    if m in ("rfmix", "gnomix"):
+        return m
+    if config.get("localAncestry", {}).get("RFMIX", False):
+        return "rfmix"
+    if config.get("ancestry", {}).get("model", "pca") in ("lai", "rfmix"):
+        return "rfmix"
+    return "none"
+
+
+def uses_local_ancestry():
+    return get_local_ancestry_method() in ("rfmix", "gnomix")
+
+
 def uses_rfmix():
-    return config.get("localAncestry", {}).get("RFMIX", False)
+    return get_local_ancestry_method() == "rfmix"
+
+
+def uses_gnomix():
+    return get_local_ancestry_method() == "gnomix"
+
+
+def uses_vae():
+    return config.get("ancestry", {}).get("model", "pca") == "vae"
 
 
 def get_min_samples():

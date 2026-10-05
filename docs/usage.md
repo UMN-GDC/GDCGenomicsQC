@@ -210,7 +210,7 @@ Overview of the GDC Genomics QC Pipeline stages.
 3.  **Standard QC**: GWAS-level filters (MAF, HWE, missingness)
 4.  **Phasing**: Haplotype estimation via shapeit4
 5.  **Global Ancestry**: PCA/UMAP/VAE with Random Forest classification
-6.  **Local Ancestry**: RFMix for segment-level ancestry inference
+6.  **Local Ancestry**: RFMix or Gnomix for segment-level ancestry inference
 7.  **Per-Ancestry QC**: Ancestry-specific quality control
 
 For more details on each module, see [](genomics.md).
@@ -268,10 +268,12 @@ final_subject_missingness: 0.02      # Final --mind (initialFilter.sh)
 # Ancestry analysis
 ancestry:
     threshold: 0.8
-    model: "pca"  # Options: pca, umap, vae, rfmix
+    model: "pca"  # Options: pca, umap, vae, lai
+    # "lai" classifies from local-ancestry proportions (RFMix or Gnomix)
 
-# Local ancestry (RFMix)
+# Local ancestry (RFMix or Gnomix)
 localAncestry:
+    method: "rfmix"  # "rfmix" (default) or "gnomix"
     RFMIX: false
     test: false
     thin_subjects: 0.1
@@ -386,8 +388,8 @@ snakemake --profile=../profiles/hpc --configfile ../config/config.yaml classifyA
 # Run only initial QC
 snakemake --profile=../profiles/hpc --configfile ../config/config.yaml full/f1.pgen
 
-# Run only RFMix
-snakemake --profile=../profiles/hpc --configfile ../config/config.yaml RFMIX
+# Run only local ancestry (RFMix or Gnomix)
+snakemake --profile=../profiles/hpc --configfile ../config/config.yaml run_lai
 ```
 
 The pipeline ships dozens of rule targets. Use `--list-targets` to discover
@@ -440,6 +442,8 @@ internal ones; `--list-targets` only shows explicitly designated end-points.
   - Single-file format conversion and filtering
 * - `pcair`
   - PC-AiR relatedness estimation
+* - `popVAE`
+  - popVAE autoencoder latent-space embedding (only with `ancestry.model: "vae"`)
 * - `estimateAncestry`
   - Global ancestry classification
 * - `classifyAncestry`
@@ -456,8 +460,8 @@ internal ones; `--list-targets` only shows explicitly designated end-points.
   - Heritability (alias)
 * - `simulatePhenotype`
   - Simulate a quantitative phenotype
-* - `RFMIX`
-  - Local ancestry inference via RFMix
+* - `run_lai`
+  - Local ancestry inference via RFMix or Gnomix (set `localAncestry.method`)
 * - `phase`
   - Phasing via ShapeIt4
 * - `assembleRef`

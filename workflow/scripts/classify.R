@@ -14,11 +14,11 @@ prob_df <- read_delim(file.path(args$out, "classificationProbabilities.tsv"), de
 
 has_umap <- any(colnames(prob_df) %>% str_starts("umap_"))
 has_vae <- any(colnames(prob_df) %>% str_starts("vae_"))
-has_rfmix <- any(colnames(prob_df) %>% str_starts("rfmix_"))
+has_lai <- any(colnames(prob_df) %>% str_starts("lai_"))
 
 result <- prob_df |> select(IID, any_of("FID"))
 
-for (model in c("pca", "umap", "vae", "rfmix")) {
+for (model in c("pca", "umap", "vae", "lai")) {
     prob_cols <- prob_df |> select(starts_with(paste0(model, "_"))) |> colnames()
     if (length(prob_cols) == 0) next
 

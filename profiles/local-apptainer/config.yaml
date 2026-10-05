@@ -1,0 +1,13 @@
+# Local apptainer profile: no SLURM, no env-modules, no conda solves.
+# Software comes from oras://ghcr.io/coffm049/gdcgenomicsqc/* images,
+# cached under ~/.apptainer-cache (first run pulls them; needs network).
+cores: 8
+jobs: 8
+use-apptainer: true
+apptainer-prefix: /home/christian/.apptainer-cache
+apptainer-args: "--bind /home,/tmp"
+software-deployment-method: [apptainer]
+latency-wait: 20
+default-resources:
+  mem_mb: 4000
+  runtime: 60

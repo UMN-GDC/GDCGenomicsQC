@@ -30,6 +30,10 @@ rule estimateLocalAncestryPerChromosome:
     cut -f1,7 -d' ' {input.map} > {output.tempDir}/population.txt
     sed -i '1d' {output.tempDir}/population.txt
     sed -i 's/ /\t/g' {output.tempDir}/population.txt
+
+    # Shared gmaps are in SHAPEIT format (pos, rate, cM); RFMIX expects
+    # (chromosome, position, cM), so reshape a temp copy here.
+    awk -v c={wildcards.CHR} 'BEGIN{{OFS="\t"}} {{print c, $1, $3}}' {input.gmap} > {output.tempDir}/genetic_map.txt
     
     # make 1kg ucsc for RFMIX
     echo "chr{wildcards.CHR} {wildcards.CHR}" > {output.tempDir}/rename_map{wildcards.CHR}.txt
@@ -42,7 +46,7 @@ rule estimateLocalAncestryPerChromosome:
           -f {input.vcf} \
           -r {output.tempDir}/chr{wildcards.CHR}.vcf.gz \
           -m {output.tempDir}/population.txt \
-          -g {input.gmap} \
+          -g {output.tempDir}/genetic_map.txt \
           --crf-weight=3.0 \
           -e 1 \
           -t 10 \
@@ -55,37 +59,10 @@ rule estimateLocalAncestryPerChromosome:
           -f {input.vcf} \
           -r {output.tempDir}/chr{wildcards.CHR}.vcf.gz \
           -m {output.tempDir}/population.txt \
-          -g {input.gmap} \
+          -g {output.tempDir}/genetic_map.txt \
           --n-threads={threads} \
           -o {params.out_dir}/chr{wildcards.CHR}.lai \
           --chromosome={wildcards.CHR}
     fi
 """
 
-
-rule aggregateLocalAncestryResults:
-    log:
-        OUT_DIR / "logs" / "aggregateLocalAncestryResults.log",
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda:
-        "../../envs/ancNreport.yml"
-    envmodules: *([config.get("R_module")] if config.get("R_module") else [])
-    threads: 4
-    resources:
-        nodes=1,
-        mem_mb=32000,
-        runtime=60,
-    input:
-        msp=expand(
-            OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES
-        ),
-        fb=expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES),
-    output:
-        mat=OUT_DIR / "02-localAncestry" / "ancestry_full.txt",
-    params:
-        script=workflow.source_path("../scripts/rfmixGlobal.R"),
-        out_dir=OUT_DIR,
-    shell: """
-        Rscript {params.script} {params.out_dir}
-"""

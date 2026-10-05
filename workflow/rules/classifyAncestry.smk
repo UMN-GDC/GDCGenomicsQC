@@ -18,7 +18,8 @@ checkpoint estimateGlobalAncestry:
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
         umap_sample=OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
-        rfmix_global=OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
+        vae=OUT_DIR / "01-globalAncestry" / "vae_latent_coords.txt" if uses_vae() else [],
+        lai_global=OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_local_ancestry() else [],
     output:
         pos_prob=OUT_DIR / "01-globalAncestry" / "classificationProbabilities.tsv",
         sample_coords=OUT_DIR / "01-globalAncestry" / "sample_coords.tsv",
@@ -26,13 +27,19 @@ checkpoint estimateGlobalAncestry:
     params:
         dir=OUT_DIR / "01-globalAncestry",
         script=workflow.source_path("../scripts/trainPredict.R"),
-        use_rfmix=uses_rfmix(),
+        use_vae=uses_vae(),
+        use_local_ancestry=uses_local_ancestry(),
     shell:
         """
-        if [ "{params.use_rfmix}" = "True" ]; then
-          rfmix_arg="--rfmix_global {input.rfmix_global}"
+        if [ "{params.use_vae}" = "True" ]; then
+          vae_arg="--vae {input.vae}"
         else
-          rfmix_arg=""
+          vae_arg=""
+        fi
+        if [ "{params.use_local_ancestry}" = "True" ]; then
+          lai_arg="--lai_global {input.lai_global}"
+        else
+          lai_arg=""
         fi
         Rscript {params.script} \
           --eigen_ref {input.eigen_ref} \
@@ -40,7 +47,8 @@ checkpoint estimateGlobalAncestry:
           --umap_ref {input.umap_ref} \
           --umap_sample {input.umap_sample} \
           --labels {input.labels} \
-          $rfmix_arg \
+          $vae_arg \
+          $lai_arg \
           --out {params.dir} \
           --rseed $RANDOM \
           --threads {threads}

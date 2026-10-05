@@ -44,6 +44,16 @@ def _shr_dense_prefix(subset=None):
     return OUT_DIR / subset / name if subset else None
 
 
+# Output directives may not be lambdas ("Only input files can be specified as
+# functions"), so the dense-set base name is resolved once at parse time and
+# the {subset} wildcard is carried by the plain path strings below.
+_SHR_BASE = (
+    "f1.b38.ldpruned.unrelated.ldpruned"
+    if SNP_HERIT_RELATED_CONFIG.get("related", True) is False
+    else "f1.b38.ldpruned"
+)
+
+
 if SNP_HERIT_RELATED_ACTIVE:
 
     rule convertToBedForRelatedHerit:
@@ -60,13 +70,13 @@ if SNP_HERIT_RELATED_ACTIVE:
             mem_mb=32000,
             runtime=60,
         input:
-            pgen=lambda w: str(_shr_dense_prefix(w.subset)) + ".pgen",
-            pvar=lambda w: str(_shr_dense_prefix(w.subset)) + ".pvar",
-            psam=lambda w: str(_shr_dense_prefix(w.subset)) + ".psam",
+            pgen=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".pgen"),
+            pvar=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".pvar"),
+            psam=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".psam"),
         output:
-            bed=lambda w: str(_shr_dense_prefix(w.subset)) + ".bed",
-            bim=lambda w: str(_shr_dense_prefix(w.subset)) + ".bim",
-            fam=lambda w: str(_shr_dense_prefix(w.subset)) + ".fam",
+            bed=OUT_DIR / "{subset}" / (_SHR_BASE + ".bed"),
+            bim=OUT_DIR / "{subset}" / (_SHR_BASE + ".bim"),
+            fam=OUT_DIR / "{subset}" / (_SHR_BASE + ".fam"),
         params:
             in_prefix=lambda w, input: str(input.pgen)[:-5],
             out_prefix=lambda w, output: str(output.bed)[:-4],
@@ -86,9 +96,9 @@ if SNP_HERIT_RELATED_ACTIVE:
             mem_mb=32000,
             runtime=360,
         input:
-            grm_bin=lambda w: str(_shr_dense_prefix(w.subset)) + ".grm.bin",
+            grm_bin=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".grm.bin"),
         output:
-            sparse=lambda w: str(_shr_dense_prefix(w.subset)) + "_sparsegrm.grm.sp",
+            sparse=OUT_DIR / "{subset}" / (_SHR_BASE + "_sparsegrm.grm.sp"),
         params:
             grm_prefix=lambda w: str(_shr_dense_prefix(w.subset)),
             out_prefix=lambda w, output: str(output.sparse)[: -len(".grm.sp")],
@@ -109,13 +119,12 @@ if SNP_HERIT_RELATED_ACTIVE:
             mem_mb=64000,
             runtime=1440,
         input:
-            bed=lambda w: str(_shr_dense_prefix(w.subset)) + ".bed",
-            bim=lambda w: str(_shr_dense_prefix(w.subset)) + ".bim",
-            fam=lambda w: str(_shr_dense_prefix(w.subset)) + ".fam",
-            sparse=lambda w: str(_shr_dense_prefix(w.subset)) + "_sparsegrm.grm.sp",
+            bed=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".bed"),
+            bim=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".bim"),
+            fam=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".fam"),
+            sparse=lambda w: OUT_DIR / w.subset / (_SHR_BASE + "_sparsegrm.grm.sp"),
             eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
         output:
-            estimates=OUT_DIR / "{subset}" / SNP_HERIT_RELATED_OUTDIR / "fastgwa_h2.csv",
             fastgwa=OUT_DIR / "{subset}" / SNP_HERIT_RELATED_OUTDIR / "fastgwa.fastGWA",
             fastgwa_log=OUT_DIR / "{subset}" / SNP_HERIT_RELATED_OUTDIR / "fastgwa.log",
         params:
@@ -129,7 +138,7 @@ if SNP_HERIT_RELATED_ACTIVE:
             scripts_dir=SCRIPTS_DIR,
         shell:
             """
-            mkdir -p "$(dirname {output.estimates})"
+            mkdir -p "$(dirname {output.fastgwa})"
             gcta --bfile {params.bed_prefix} \\
                 --grm-sparse {params.sparse_prefix} \\
                 --fastGWA-mlm \\
@@ -139,6 +148,7 @@ if SNP_HERIT_RELATED_ACTIVE:
                 {params.covar_flag} \\
                 --out {params.gcta_prefix}
             """
+
     rule finalizeRelatedHeritFastGWA:
         log:
             OUT_DIR / "logs" / "finalizeRelatedHeritFastGWA_{subset}.log",
@@ -172,9 +182,9 @@ if SNP_HERIT_RELATED_ACTIVE:
             mem_mb=32000,
             runtime=1440,
         input:
-            grm_bin=lambda w: str(_shr_dense_prefix(w.subset)) + ".grm.bin",
-            grm_id=lambda w: str(_shr_dense_prefix(w.subset)) + ".grm.id",
-            grm_Nbin=lambda w: str(_shr_dense_prefix(w.subset)) + ".grm.N.bin",
+            grm_bin=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".grm.bin"),
+            grm_id=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".grm.id"),
+            grm_Nbin=lambda w: OUT_DIR / w.subset / (_SHR_BASE + ".grm.N.bin"),
             eigenvec=OUT_DIR / "{subset}" / "internal_pca_plink2.eigenvec",
         output:
             estimates=OUT_DIR / "{subset}" / SNP_HERIT_RELATED_OUTDIR / "predlmm_ace_h2.csv",

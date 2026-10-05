@@ -1,0 +1,12 @@
+name: popvae
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python=3.10
+  - pip
+  - git
+  - plink
+  - plink2
+prefix: /opt/conda/envs/popvae

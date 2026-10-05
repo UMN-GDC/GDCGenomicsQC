@@ -1,0 +1,12 @@
+# Local profile: no SLURM, no env-modules.
+# Software is provisioned via conda (conda-standalone in the snakemake env).
+# Apptainer is available in the snakemake env but not used by default;
+# to use containers instead, run with:
+#   --software-deployment-method apptainer --apptainer-prefix /home/christian/.apptainer-cache --apptainer-args "--bind /home"
+cores: 4
+jobs: 4
+use-conda: true
+latency-wait: 20
+default-resources:
+  mem_mb: 4000
+  runtime: 60
