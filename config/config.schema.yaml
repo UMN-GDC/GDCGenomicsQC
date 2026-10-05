@@ -401,6 +401,95 @@ snpHerit:
         Added to MASH's built-in missing markers. Applied at file load time. Overrides the
         previous stopgap of chaining pheno_filter/covar_filter expressions per column.
 
+snpHeritRelated:
+  type: dict
+  default: {}
+  description: |
+    SNP heritability estimation on samples that may include close relatives,
+    using fastGWA (GCTA) and/or PredLMM-ACE (SAONLIB). Can also be used on an
+    unrelated homogeneous subset with related: false.
+  schema:
+    pheno:
+      type: str
+      nullable: true
+      default: null
+      description: Path to phenotype file with FID/IID phenotype column(s). Required to activate.
+    covar:
+      type: str
+      nullable: true
+      default: null
+      description: Path to covariate file with FID/IID columns (optional).
+    methods:
+      type: list
+      default: ["fastgwa", "predlmm_ace"]
+      description: Methods to run. Any of "fastgwa", "predlmm_ace".
+    related:
+      type: bool
+      default: true
+      description: |
+        If false, use the unrelated LD-pruned GRM within the subset
+        (e.g. for a homogeneous ancestry subset such as AFR).
+    subset:
+      type: str
+      nullable: true
+      default: null
+      description: Subset (ancestry) key under OUT_DIR for DAG mode. Required for DAG mode runs.
+    output_dir:
+      type: str
+      default: "03-snpHeritability"
+      description: Output directory under OUT_DIR/{subset} in DAG mode.
+    npc:
+      type: int
+      default: 10
+      description: Number of PCs from the internal eigenvector file to use as covariates.
+    mpheno:
+      type: int
+      default: 1
+      description: Phenotype column index (1 = first column after FID/IID) for fastGWA --mpheno.
+    model:
+      type: str
+      default: "auto"
+      enum: ["auto", "ACE", "AE"]
+      description: |
+        Variance-component model for PredLMM-ACE. "auto" uses ACE when
+        identifiable (multi-member families present) and falls back to AE.
+    family_column:
+      type: str
+      default: "FID"
+      description: Column identifying household/family membership for PredLMM-ACE.
+    rank:
+      type: int
+      default: 5000
+      description: Nystrom rank (knot count) for PredLMM-ACE.
+    seed:
+      type: int
+      default: 20260918
+      description: Random seed for knot selection.
+    sparse_cutoff:
+      type: float
+      default: 0.05
+      description: GRM threshold for the sparse GRM used by fastGWA.
+    grm_prefix:
+      type: str
+      nullable: true
+      default: null
+      description: External-mode dense GRM prefix (.grm.bin/.grm.id/.grm.N.bin).
+    bed_prefix:
+      type: str
+      nullable: true
+      default: null
+      description: External-mode plink bed/bim/fam prefix (required for fastgwa).
+    pca_input:
+      type: str
+      nullable: true
+      default: null
+      description: External-mode eigenvector file used for PC covariates.
+    out:
+      type: str
+      nullable: true
+      default: null
+      description: External-mode output prefix (reads _fastgwa_h2.csv / _predlmm_ace_h2.csv suffixes).
+
 prsMethods:
   type: dict
   default: {}

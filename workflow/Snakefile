@@ -60,6 +60,7 @@ include: "rules/plotQC.smk"
 if config.get("phenotypeSimulation", {}).get("enabled", False):
     include: "rules/simulatePhenotype2.smk"
 include: "rules/snpHerit.smk"
+include: "rules/snpHeritRelated.smk"
 include: "rules/preparePRSInputs.smk"
 include: "rules/prsPipelines.smk"
 
@@ -408,6 +409,35 @@ if config.get("snpHerit", {}).get("pheno"):
             input:
                 OUT_DIR / SNP_HERIT_SUBSET / SNP_HERIT_DAG_OUTPUT,
 
+
+if config.get("snpHeritRelated", {}).get("pheno"):
+    _shr_targets = []
+    if SNP_HERIT_RELATED_EXTERNAL:
+        if "fastgwa" in SNP_HERIT_RELATED_METHODS:
+            _shr_targets.append(SNP_HERIT_RELATED_CONFIG["out"] + "_fastgwa_h2.csv")
+        if "predlmm_ace" in SNP_HERIT_RELATED_METHODS:
+            _shr_targets.append(SNP_HERIT_RELATED_CONFIG["out"] + "_predlmm_ace_h2.csv")
+        rule run_snpHeritRelated:
+            threads: 1
+            resources:
+                nodes=1,
+                mem_mb=4000,
+                runtime=420,
+            input:
+                _shr_targets
+    else:
+        if "fastgwa" in SNP_HERIT_RELATED_METHODS:
+            _shr_targets.append(OUT_DIR / SNP_HERIT_RELATED_SUBSET / SNP_HERIT_RELATED_OUTDIR / "fastgwa_h2.csv")
+        if "predlmm_ace" in SNP_HERIT_RELATED_METHODS:
+            _shr_targets.append(OUT_DIR / SNP_HERIT_RELATED_SUBSET / SNP_HERIT_RELATED_OUTDIR / "predlmm_ace_h2.csv")
+        rule run_snpHeritRelated:
+            threads: 1
+            resources:
+                nodes=1,
+                mem_mb=4000,
+                runtime=420,
+            input:
+                _shr_targets
 
 rule run_snpHeritSimulated:
     threads: 1

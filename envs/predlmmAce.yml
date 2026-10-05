@@ -1,0 +1,14 @@
+name: predlmm-ace
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python>=3.9
+  - numpy
+  - pandas
+  - scipy
+  - gcta
+  - pip
+  - pip:
+    - git+https://github.com/SAONLIB/predlmm-ace.git

@@ -236,6 +236,27 @@ snpHerit:
     # Column name for family ID in phenotype/covariate files (case-insensitive match)
     fid_col: "FID"
 
+# Related-sample SNP heritability (fastGWA / PredLMM-ACE).
+# Set pheno to enable. Use related: false + subset: "<ANC>" for an
+# unrelated homogeneous subset (e.g. AFR).
+# snpHeritRelated:
+#     pheno: "/path/to/pheno.txt"        # FID IID pheno_col
+#     covar: null
+#     methods: ["fastgwa", "predlmm_ace"]
+#     related: true
+#     subset: "EUR"                       # required in DAG mode
+#     output_dir: "03-snpHeritability"
+#     npc: 10
+#     mpheno: 1
+#     model: "auto"                       # auto (ACE if identifiable else AE), ACE, or AE
+#     family_column: "FID"
+#     rank: 5000
+#     sparse_cutoff: 0.05
+#     # External mode (skip pipeline DAG; provide direct paths):
+#     # grm_prefix: "/path/to/prefix"      # prefix.grm.bin/.grm.id/.grm.N.bin
+#     # bed_prefix: "/path/to/prefix"      # prefix.bed/.bim/.fam (needed for fastgwa)
+#     # pca_input: "/path/to/internal_pca_plink2.eigenvec"
+#     # out: "/path/to/out_prefix"
 
 # =============================================================================
 # Phenotype Simulation (Testing)
