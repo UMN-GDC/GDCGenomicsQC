@@ -5,10 +5,8 @@ PRS_SIM_CONFIG = config.get("phenotypeSimulation", {})
 # Default = the vendored in-repo copy; prs_pipeline_path may override it (e.g. for
 # legacy MSI configs). prs_pipeline_ref records the upstream source commit (pin).
 PRS_PIPELINE_PATH = Path(
-    config.get(
-        "prs_pipeline_path",
-        str(Path(workflow.basedir) / "scripts" / "prs_pipeline"),
-    )
+    config.get("prs_pipeline_path")
+    or str(Path(workflow.basedir) / "scripts" / "prs_pipeline")
 )
 PRS_PIPELINE_PIN = config.get(
     "prs_pipeline_ref",
@@ -74,8 +72,10 @@ rule checkPRSPipelinePath:
 rule preparePRSInputs:
     log:
         OUT_DIR / "logs" / "preparePRSInputs.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
     conda:
-        "../../envs/phenotypeSim.yml"
+        "../../envs/prs.yml"
     threads: 4
     resources:
         nodes=1,
@@ -136,6 +136,10 @@ rule preparePRSInputs:
 rule runSingleAncestryPRS:
     log:
         OUT_DIR / "logs" / f"runSingleAncestryPRS_{PRS_ANC1}.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 4
     resources:
         nodes=1,
@@ -169,6 +173,11 @@ rule runSingleAncestryPRS:
             echo "Missing single-ancestry PRS script: {params.script}" >> {log}
             exit 1
         fi
+
+        # PRSice2: drive the vendored PRSice.R + static PRSice_linux directly (same
+        # pattern as runSingleAncestryPRSice; matches both the conda-PRSice `prs`
+        # image and any image lacking a `PRSice` command).
+        export PRSICE_CMD="Rscript {PRS_PIPELINE_PATH}/src/PRSice.R --prsice {PRS_PIPELINE_PATH}/src/PRSice_linux"
 
         bash {params.script} {params.flags} -C {input.config} >> {log} 2>&1
 
