@@ -204,6 +204,55 @@ prsMethods:
           description: >
             Explicit python interpreter for PRScsx.py (defaults to
             single_prscs.path_python, then python3/python on PATH).
+    multi_ctsleb:
+      type: dict
+      default: {}
+      description: |
+        CT-SLEB joint multi-ancestry PRS (2D clumping/thresholding + empirical
+        Bayes + super-learning) for the target (ANC1) population, using the
+        ancestry-2 GWAS as the auxiliary/reference population. CTSLEB R sources
+        are vendored at workflow/scripts/CTSLEB/R by default; the reference
+        (LD-clumping) PLINK panels default to the ANC1/ANC2 study samples but
+        should point at e.g. 1000G reference panels for real analyses.
+      schema:
+        software_dir:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            Directory containing the CTSLEB R source files (default:
+            <repo>/workflow/scripts/CTSLEB/R; or the unpacked
+            <PRS_RESOURCE_DIR>/software/ctsleb.tar.gz born by
+            download_prs_resources.sh).
+        target_ref_plink:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            PLINK prefix (bed/bim/fam) used as the target-ancestry LD reference
+            for clumping (default: the ANC1 study sample; for real analyses use
+            e.g. the 1000G panel for the target ancestry).
+        aux_ref_plink:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            PLINK prefix used as the auxiliary/reference-ancestry LD reference
+            for clumping (default: the ANC2 study sample).
+        pheno_prefix:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            Prefix for the tuning/validation phenotype file names written by
+            prepareCTSLEBPhenotypes (default: <ANC1>_HM3).
+        out_prefix:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            Prefix for CTSLEB output files inside the method run dir (default:
+            <ANC1>_ctsleb).
 
 REF:
   type: str
