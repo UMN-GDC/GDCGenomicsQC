@@ -21,10 +21,12 @@ vcf_template: null
 # Output directory for pipeline results
 OUT_DIR: "/path/to/output/directory"
 
-# Absorbed prs_pipeline method engine: the vendored copy at
+# Absorbed prs_pipeline method engine: the vendored in-repo copy at
 # workflow/scripts/prs_pipeline/ is used by default (see VENDORED.md there).
-# Override only for legacy configs pointing at an external checkout:
-# prs_pipeline_path: "/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
+# Leave prs_pipeline_path null; set it only for legacy configs pointing at an
+# external checkout:
+# prs_pipeline_path: "/some/other/path/prs_pipeline"
+prs_pipeline_path: null
 # Provenance pin: upstream sandbox_multi_pheno @ f71cf4f (2026-08-20), verified
 # against git HEAD only when prs_pipeline_path is a genuine upstream checkout.
 prs_pipeline_ref: "f71cf4f1031ff6231bc9f8abc9f96ebdc6f17bdf"
