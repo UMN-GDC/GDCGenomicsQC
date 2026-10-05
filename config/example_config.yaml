@@ -59,6 +59,12 @@ prsMethods:
     #     ld_ref_dir: null        # PRS-CSx LD ref dir (per-pop ldblk_1kg_<pop>/)
     #     seed: 42                # MCMC seed
     #     path_python: null       # python with numpy+scipy+h5py
+    # multi_ctsleb:               # joint multi-ancestry CT-SLEB PRS (target = ANC1)
+    #     software_dir: null      # dir of CTSLEB R sources (default: <repo>/workflow/scripts/CTSLEB/R)
+    #     target_ref_plink: null  # target-ancestry LD ref prefix for clumping (default: ANC1 study sample)
+    #     aux_ref_plink: null     # aux/reference-ancestry LD ref prefix (default: ANC2 study sample)
+    #     pheno_prefix: null      # tune/validation pheno file prefix (default: <ANC1>_HM3)
+    #     out_prefix: null        # output file prefix (default: <ANC1>_ctsleb)
 
 # Reference data directory (required for various operations)
 REF: "/path/to/reference/data"
