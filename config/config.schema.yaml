@@ -31,12 +31,14 @@ OUT_DIR:
 prs_pipeline_path:
   type: str
   nullable: true
-  default: "/projects/standard/gdc/public/prs_methods/scripts/GDCGenomicsQC/workflow/scripts/prs_pipeline"
+  default: null
   description: |
-    Path to the absorbed prs_pipeline method engine. Defaults to the vendored
-    copy at workflow/scripts/prs_pipeline (see VENDORED.md there); override only
-    for legacy MSI configs. A check rule (checkPRSPipelinePath) verifies the key
-    files exist. See docs/PRS_full_integration_plan.md.
+    Path to the absorbed prs_pipeline method engine. null (the default) resolves
+    to the vendored in-repo copy at workflow/scripts/prs_pipeline, relative to the
+    workflow directory, so the checkout location does not matter (see VENDORED.md
+    there). Set only to point a legacy config at an external checkout. A check
+    rule (checkPRSPipelinePath) verifies the key files exist.
+    See docs/PRS_full_integration_plan.md.
 
 prs_pipeline_ref:
   type: str
