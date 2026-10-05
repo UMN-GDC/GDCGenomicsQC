@@ -8,12 +8,14 @@ PRS_METHODS_CONFIG = config.get("prsMethods", {})
 
 # SIF container paths used by upstream prs_pipeline method rules. Resolve from
 # config under prsMethods.containers (keys: prsv2, singleprshelper); default to a
-# Phase-7 landing spot under OUT_DIR/containers (the SIFs are not vendored). Pull:
-#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prsv2:latest
+# Phase-7 landing spot under OUT_DIR/containers (the SIFs are not vendored). The
+# primary image is the GDCGenomicsQC-owned `prs` build (envs/prs.def), which bakes
+# the vendored engine + pinned method repos into /opt/gdcgenomicsqc. Pull:
+#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest
 #   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/singleprshelper:latest
 PRS_CONTAINERS = {
     "prsv2": PRS_METHODS_CONFIG.get("containers", {}).get(
-        "prsv2", str(OUT_DIR / "containers" / "prsv2_latest.sif")
+        "prsv2", str(OUT_DIR / "containers" / "prs_latest.sif")
     ),
     "singleprshelper": PRS_METHODS_CONFIG.get("containers", {}).get(
         "singleprshelper", str(OUT_DIR / "containers" / "singleprshelper_latest.sif")
@@ -126,6 +128,10 @@ def prs_method_extra_args(method):
 rule preparePRSMethodResources:
     log:
         OUT_DIR / "logs" / "preparePRSMethodResources.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 1
     resources:
         nodes=1,
@@ -166,6 +172,10 @@ rule preparePRSMethodResources:
 rule alignSumstatsForPRS:
     log:
         OUT_DIR / "logs" / "alignSumstatsForPRS.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 1
     resources:
         nodes=1,
@@ -210,6 +220,10 @@ rule makeStudyPhenoFile:
 rule convertStudyBedToRDS:
     log:
         OUT_DIR / "logs" / "convertStudyBedToRDS.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 1
     resources:
         nodes=1,
@@ -233,6 +247,10 @@ rule convertStudyBedToRDS:
 rule generateLDMatrix:
     log:
         OUT_DIR / "logs" / "generateLDMatrix.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 4
     resources:
         nodes=1,
@@ -260,6 +278,10 @@ rule generateLDMatrix:
 rule runSingleAncestryCT:
     log:
         OUT_DIR / "logs" / "runSingleAncestryCT.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 4
     resources:
         nodes=1,
@@ -312,6 +334,10 @@ rule runSingleAncestryCT:
 rule runSingleAncestryLDpred2:
     log:
         OUT_DIR / "logs" / "runSingleAncestryLDpred2.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 4
     resources:
         nodes=1,
@@ -365,6 +391,10 @@ rule runSingleAncestryLDpred2:
 rule runSingleAncestryLassosum2:
     log:
         OUT_DIR / "logs" / "runSingleAncestryLassosum2.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 4
     resources:
         nodes=1,
@@ -419,6 +449,10 @@ rule runSingleAncestryLassosum2:
 rule runSingleAncestryPRSice:
     log:
         OUT_DIR / "logs" / "runSingleAncestryPRSice.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 4
     resources:
         nodes=1,
@@ -465,6 +499,10 @@ rule runSingleAncestryPRSice:
 rule runSingleAncestryPRSCS:
     log:
         OUT_DIR / "logs" / "runSingleAncestryPRSCS.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 8
     resources:
         nodes=1,
@@ -490,8 +528,8 @@ rule runSingleAncestryPRSCS:
         path_code=PRS_PRSCS_PATH_CODE,
         ref_dir=PRS_PRSCS_REF_DIR,
         seed=PRS_PRSCS_SEED,
-        path_python=lambda wildcards: PRS_PRSCS_PATH_PYTHON or shutil.which("python3") or shutil.which("python") or "python",
-        rscript=lambda wildcards: shutil.which("Rscript") or "Rscript",
+        path_python=lambda wildcards: PRS_PRSCS_PATH_PYTHON or "",
+        rscript=lambda wildcards: "Rscript",
         script=PRS_SRC / "run_PRScs.sh",
     shell:
         """
@@ -523,6 +561,10 @@ rule runSingleAncestryPRSCS:
 rule scoreTestPRS:
     log:
         OUT_DIR / "logs" / "scoreTestPRS.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 1
     resources:
         nodes=1,
@@ -715,49 +757,13 @@ rule prepareCTSLEBPhenotypes:
         wc -l {output.tuning} {output.validation} >> {log}
         """
 
-rule runMultiAncestryCTSLEB:
-    log:
-        OUT_DIR / "logs" / "runMultiAncestryCTSLEB.log",
-    threads: 4
-    resources:
-        nodes=1,
-        mem_mb=32000,
-        runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-        env=rules.preparePRSInputs.output.env,
-        target_sumstats=rules.prepareCTSLEBSumstats.output.target_ss,
-        training_sumstats=rules.prepareCTSLEBSumstats.output.training_ss,
-        study_bed=rules.preparePRSInputs.output.study_bed,
-        study_anc2_bed=rules.preparePRSInputs.output.study_anc2_bed,
-        study_pheno=rules.preparePRSInputs.output.target_study_pheno,
-        study_anc2_pheno=rules.preparePRSInputs.output.training_study_pheno,
-        tuning_pheno=rules.prepareCTSLEBPhenotypes.output.tuning,
-        validation_pheno=rules.prepareCTSLEBPhenotypes.output.validation,
-    output:
-        done=PRS_METHOD_RUN_DIR / "multi_ctsleb.done",
-    params:
-        method="multi_ctsleb",
-        command=prs_method_command_quoted("multi_ctsleb"),
-        extra=prs_method_extra_args("multi_ctsleb"),
-        out_dir=PRS_METHOD_RUN_DIR / "multi_ctsleb",
-        script=Path(workflow.basedir) / "scripts" / "run_prs_pipeline_adapter.sh",
-    shell:
-        """
-        PRS_METHOD_COMMAND={params.command} bash {params.script} \
-            --method {params.method} \
-            --prs-inputs-env {input.env} \
-            --resource-dir {PRS_RESOURCE_DIR} \
-            --out-dir {params.out_dir} \
-            {params.extra} \
-            --done {output.done} \
-            > {log} 2>&1
-        """
-
-
 rule runMultiAncestryPRSCSx:
     log:
         OUT_DIR / "logs" / "runMultiAncestryPRSCSx.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
+    conda:
+        "../../envs/prs.yml"
     threads: 4
     resources:
         nodes=1,
@@ -793,8 +799,8 @@ rule runMultiAncestryPRSCSx:
         path_code=PRS_PRSCSX_PATH_CODE,
         ref_dir=PRS_PRSCSX_REF_DIR,
         seed=PRS_PRSCSX_SEED,
-        path_python=lambda wildcards: PRS_PRSCSX_PATH_PYTHON or shutil.which("python3") or shutil.which("python") or "python",
-        rscript=lambda wildcards: shutil.which("Rscript") or "Rscript",
+        path_python=lambda wildcards: PRS_PRSCSX_PATH_PYTHON or "",
+        rscript=lambda wildcards: "Rscript",
         script=PRS_SRC / "run_PRScsx.sh",
     shell:
         """
