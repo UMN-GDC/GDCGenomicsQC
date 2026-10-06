@@ -1,0 +1,4 @@
+cores: 4
+use-apptainer: true
+apptainer-args: "--bind /scratch.global,/projects,/spaces,/home"
+latency-wait: 20
