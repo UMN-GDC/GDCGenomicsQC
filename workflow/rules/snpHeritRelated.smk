@@ -9,6 +9,11 @@ SNP_HERIT_RELATED_METHODS = [str(m).lower() for m in SNP_HERIT_RELATED_METHODS]
 SNP_HERIT_RELATED_OUTDIR = SNP_HERIT_RELATED_CONFIG.get("output_dir", "03-snpHeritability")
 SNP_HERIT_RELATED_SUBSET = SNP_HERIT_RELATED_CONFIG.get("subset")
 
+# Image built from envs/predlmmAce.def (see envs/README.md). Quoted so the
+# oras:// prefix is not mistaken for a path; used together with the conda
+# directive so the cluster can still build envs/predlmmAce.yml directly.
+PREDLMM_ACE_CONTAINER = "oras://ghcr.io/coffm049/gdcgenomicsqc/predlmmace:latest"
+
 if SNP_HERIT_RELATED_CONFIG:
     valid_methods = {"fastgwa", "predlmm_ace"}
     bad = set(SNP_HERIT_RELATED_METHODS) - valid_methods
@@ -90,6 +95,8 @@ if SNP_HERIT_RELATED_ACTIVE:
             OUT_DIR / "logs" / "makeSparseGrmForRelatedHerit_{subset}.log",
         conda:
             "../../envs/predlmmAce.yml",
+        container:
+            PREDLMM_ACE_CONTAINER,
         threads: 8,
         resources:
             nodes=1,
@@ -113,6 +120,8 @@ if SNP_HERIT_RELATED_ACTIVE:
             OUT_DIR / "logs" / "estimateRelatedHeritFastGWA_{subset}.log",
         conda:
             "../../envs/predlmmAce.yml",
+        container:
+            PREDLMM_ACE_CONTAINER,
         threads: 16,
         resources:
             nodes=1,
@@ -154,6 +163,8 @@ if SNP_HERIT_RELATED_ACTIVE:
             OUT_DIR / "logs" / "finalizeRelatedHeritFastGWA_{subset}.log",
         conda:
             "../../envs/predlmmAce.yml",
+        container:
+            PREDLMM_ACE_CONTAINER,
         threads: 1,
         resources:
             nodes=1,
@@ -176,6 +187,8 @@ if SNP_HERIT_RELATED_ACTIVE:
             OUT_DIR / "logs" / "estimateRelatedHeritPredLMMAce_{subset}.log",
         conda:
             "../../envs/predlmmAce.yml",
+        container:
+            PREDLMM_ACE_CONTAINER,
         threads: 8,
         resources:
             nodes=1,
@@ -241,6 +254,8 @@ if SNP_HERIT_RELATED_ACTIVE:
         rule makeSparseGrm_ext:
             conda:
                 "../../envs/predlmmAce.yml",
+            container:
+                PREDLMM_ACE_CONTAINER,
             threads: 8,
             resources:
                 nodes=1, mem_mb=32000, runtime=360,
@@ -260,6 +275,8 @@ if SNP_HERIT_RELATED_ACTIVE:
         rule estimateRelatedHeritFastGWA_ext:
             conda:
                 "../../envs/predlmmAce.yml",
+            container:
+                PREDLMM_ACE_CONTAINER,
             threads: 16,
             resources:
                 nodes=1, mem_mb=64000, runtime=1440,
@@ -295,6 +312,8 @@ if SNP_HERIT_RELATED_ACTIVE:
         rule finalizeExtFastGWA:
             conda:
                 "../../envs/predlmmAce.yml",
+            container:
+                PREDLMM_ACE_CONTAINER,
             threads: 1,
             resources:
                 nodes=1, mem_mb=8000, runtime=30,
@@ -312,6 +331,8 @@ if SNP_HERIT_RELATED_ACTIVE:
         rule estimateRelatedHeritPredLMMAce_ext:
             conda:
                 "../../envs/predlmmAce.yml",
+            container:
+                PREDLMM_ACE_CONTAINER,
             threads: 8,
             resources:
                 nodes=1, mem_mb=32000, runtime=1440,
