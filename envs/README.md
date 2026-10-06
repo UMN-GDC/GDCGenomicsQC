@@ -35,7 +35,7 @@ apptainer push phenotypeSim.sif oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypes
 apptainer build --fakeroot popvae.sif popvae.def
 apptainer push popvae.sif oras://ghcr.io/coffm049/gdcgenomicsqc/popvae:latest
 
-apptainer build --fakeroot predlmmAce.sif predlmmAce.def --build-arg TOKEN_FILE=~/.config/gdcgenomicsqc/predlmmace.token
+apptainer build --fakeroot --build-arg TOKEN_FILE=~/.config/gdcgenomicsqc/predlmmace.token predlmmAce.sif predlmmAce.def
 apptainer push predlmmAce.sif oras://ghcr.io/coffm049/gdcgenomicsqc/predlmmace:latest
 ```
 
