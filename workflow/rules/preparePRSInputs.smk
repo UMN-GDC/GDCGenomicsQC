@@ -6,11 +6,13 @@ PRS_SIM_ANCESTRIES = PRS_SIM_CONFIG.get("ancestries", ["AFR", "EUR"])
 PRS_SIMULATIONS = PRS_SIM_CONFIG.get("simulations", [])
 PRS_SIM_NAME = PRS_SIMULATIONS[0]["name"] if PRS_SIMULATIONS else "default"
 
+
 # Per-ancestry simulation directories (pipeline output)
 def prs_sim_dir(anc):
     if PRS_SIM_CONFIG.get("simulations_dir"):
         return Path(PRS_SIM_CONFIG["simulations_dir"])
     return OUT_DIR / anc / "simulations" / PRS_SIM_NAME
+
 
 PRS_ANC1 = PRS_SIM_ANCESTRIES[0]
 PRS_ANC2 = PRS_SIM_ANCESTRIES[1]
@@ -23,17 +25,6 @@ PRS_OUT_DIR = Path(
 
 
 rule preparePRSInputs:
-    log:
-        OUT_DIR / "logs" / "preparePRSInputs.log",
-    conda:
-        "../../envs/ancNreport.yml"
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    threads: 4
-    resources:
-        nodes=1,
-        mem_mb=16000,
-        runtime=120,
     input:
         anc1_bed=prs_sim_dir(PRS_ANC1) / "simulated.bed",
         anc1_bim=prs_sim_dir(PRS_ANC1) / "simulated.bim",
@@ -45,20 +36,45 @@ rule preparePRSInputs:
         target_sumstats=PRS_OUT_DIR / "gwas" / "target_sumstats.txt",
         training_sumstats=PRS_OUT_DIR / "gwas" / "training_sumstats.txt",
         target_single_sumstats=PRS_OUT_DIR / "gwas" / "target_sumstats_singlePRS.txt",
-        training_single_sumstats=PRS_OUT_DIR / "gwas" / "training_sumstats_singlePRS.txt",
+        training_single_sumstats=PRS_OUT_DIR
+        / "gwas"
+        / "training_sumstats_singlePRS.txt",
         target_gwas_pheno=PRS_OUT_DIR / "metadata" / f"{PRS_ANC1}_gwas.pheno",
         target_study_pheno=PRS_OUT_DIR / "metadata" / f"{PRS_ANC1}_study.pheno",
         training_gwas_pheno=PRS_OUT_DIR / "metadata" / f"{PRS_ANC2}_gwas.pheno",
         training_study_pheno=PRS_OUT_DIR / "metadata" / f"{PRS_ANC2}_study.pheno",
-        study_bed=PRS_OUT_DIR / "anc1_plink_files" / f"{PRS_ANC1}_simulation_study_sample.bed",
-        study_bim=PRS_OUT_DIR / "anc1_plink_files" / f"{PRS_ANC1}_simulation_study_sample.bim",
-        study_fam=PRS_OUT_DIR / "anc1_plink_files" / f"{PRS_ANC1}_simulation_study_sample.fam",
-        study_anc2_bed=PRS_OUT_DIR / "anc2_plink_files" / f"{PRS_ANC2}_simulation_study_sample.bed",
-        study_anc2_bim=PRS_OUT_DIR / "anc2_plink_files" / f"{PRS_ANC2}_simulation_study_sample.bim",
-        study_anc2_fam=PRS_OUT_DIR / "anc2_plink_files" / f"{PRS_ANC2}_simulation_study_sample.fam",
+        study_bed=PRS_OUT_DIR
+        / "anc1_plink_files"
+        / f"{PRS_ANC1}_simulation_study_sample.bed",
+        study_bim=PRS_OUT_DIR
+        / "anc1_plink_files"
+        / f"{PRS_ANC1}_simulation_study_sample.bim",
+        study_fam=PRS_OUT_DIR
+        / "anc1_plink_files"
+        / f"{PRS_ANC1}_simulation_study_sample.fam",
+        study_anc2_bed=PRS_OUT_DIR
+        / "anc2_plink_files"
+        / f"{PRS_ANC2}_simulation_study_sample.bed",
+        study_anc2_bim=PRS_OUT_DIR
+        / "anc2_plink_files"
+        / f"{PRS_ANC2}_simulation_study_sample.bim",
+        study_anc2_fam=PRS_OUT_DIR
+        / "anc2_plink_files"
+        / f"{PRS_ANC2}_simulation_study_sample.fam",
         env=PRS_OUT_DIR / "prs_inputs.env",
         prscsx_config=PRS_OUT_DIR / "prs_prscsx_generated.conf",
         single_config=PRS_OUT_DIR / f"prs_single_ancestry_{PRS_ANC1}_generated.conf",
+    log:
+        OUT_DIR / "logs" / "preparePRSInputs.log",
+    conda:
+        "../../envs/ancNreport.yml"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=120,
     params:
         sim_dir_anc1=str(prs_sim_dir(PRS_ANC1)),
         sim_dir_anc2=str(prs_sim_dir(PRS_ANC2)),
@@ -84,20 +100,11 @@ rule preparePRSInputs:
             --seed {params.seed} \
             --fid-col {params.fid_col} \
             --iid-col {params.iid_col} \
-            > {log} 2>&1
+            >{log} 2>&1
         """
 
 
 rule runSingleAncestryPRS:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
-    log:
-        OUT_DIR / "logs" / f"runSingleAncestryPRS_{PRS_ANC1}.log",
-    threads: 4
-    resources:
-        nodes=1,
-        mem_mb=16000,
-        runtime=240,
     input:
         config=rules.preparePRSInputs.output.single_config,
         target_sumstats=rules.preparePRSInputs.output.target_single_sumstats,
@@ -106,6 +113,15 @@ rule runSingleAncestryPRS:
         study_fam=rules.preparePRSInputs.output.study_fam,
     output:
         done=PRS_OUT_DIR / f"single_ancestry_{PRS_ANC1}.done",
+    log:
+        OUT_DIR / "logs" / f"runSingleAncestryPRS_{PRS_ANC1}.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=240,
     params:
         script=PRS_CONFIG.get(
             "single_ancestry_script",
@@ -115,16 +131,16 @@ rule runSingleAncestryPRS:
         """
         set -euo pipefail
 
-        echo "Running single-ancestry PRS pipeline" > {log}
-        echo "Script: {params.script}" >> {log}
-        echo "Config: {input.config}" >> {log}
+        echo "Running single-ancestry PRS pipeline" >{log}
+        echo "Script: {params.script}" >>{log}
+        echo "Config: {input.config}" >>{log}
 
         if [[ ! -f "{params.script}" ]]; then
-            echo "Missing single-ancestry PRS script: {params.script}" >> {log}
+            echo "Missing single-ancestry PRS script: {params.script}" >>{log}
             exit 1
         fi
 
-        bash {params.script} -C {input.config} >> {log} 2>&1
+        bash {params.script} -C {input.config} >>{log} 2>&1
 
         touch {output.done}
         """

@@ -1,0 +1,103 @@
+{
+  "title": "GDCGenomicsQC: Genomic Quality Control Pipeline",
+  "description": "A Snakemake-based pipeline for comprehensive genomic quality control, including relatedness estimation, global/local ancestry classification, SNP heritability estimation (AdjHE, PredLMM-ACE, fastGWA), and polygenic risk scoring across multiple ancestries. Designed for HPC environments with SLURM scheduling and containerized execution via Apptainer/Singularity.",
+  "keywords": [
+    "genomics",
+    "quality-control",
+    "ancestry",
+    "heritability",
+    "polygenic-risk-score",
+    "snakemake",
+    "bioinformatics",
+    "GWAS",
+    "population-genetics"
+  ],
+  "license": "MIT",
+  "version": "1.0.0",
+  "publication_date": "2026-10-07",
+  "creators": [
+    {
+      "name": "Coffman, Christian",
+      "affiliation": "University of Minnesota, Masonic Institute for the Developing Brain"
+    },
+    {
+      "name": "DeGolier, Kody",
+      "affiliation": "University of Minnesota, Masonic Institute for the Developing Brain"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Basu, Saonli",
+      "affiliation": "University of Minnesota",
+      "type": "Supervisor"
+    },
+    {
+      "name": "Anderson, Michael",
+      "affiliation": "University of Minnesota, Masonic Institute for the Developing Brain"
+    },
+    {
+      "name": "Tran, Long"
+    }
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/UMN-GDC/GDCGenomicsQC",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://gdcgenomicsqc.readthedocs.io",
+      "relation": "isDocumentedBy",
+      "resource_type": "publication"
+    }
+  ],
+  "funding_references": [
+    {
+      "funder_name": "UMN-MIDB-GDC",
+      "award_number": "M1015",
+      "award_title": "Building Genomics Data Commons Infrastructure for Omics Research"
+    }
+  ],
+  "references": [
+    "Coffman et al. (2026). GDCGenomicsQC: A modular pipeline for genomic quality control in diverse populations. bioRxiv.",
+    "Yang et al. (2011). GCTA: A tool for genome-wide complex trait analysis. AJHG.",
+    "Jiang et al. (2019). A resource-efficient tool for mixed model association analysis of large-scale data. Nature Genetics.",
+    "Seal et al. (2021). PredLMM: Rapid estimation of SNP heritability using Gaussian predictive process. PLOS Genetics.",
+    "Chang et al. (2015). Second-generation PLINK: rising to the challenge of larger and richer datasets. GigaScience."
+  ],
+  "communities": [
+    {
+      "identifier": "hbcd"
+    },
+    {
+      "identifier": "neuroimaging"
+    },
+    {
+      "identifier": "genomics"
+    }
+  ],
+  "access_right": "open",
+  "resource_type": {
+    "type": "software",
+    "title": "Software"
+  },
+  "subjects": [
+    {
+      "subject": "Genomics",
+      "scheme": "MeSH"
+    },
+    {
+      "subject": "Quality Control",
+      "scheme": "MeSH"
+    },
+    {
+      "subject": "Population Genetics",
+      "scheme": "MeSH"
+    },
+    {
+      "subject": "Bioinformatics",
+      "scheme": "MeSH"
+    }
+  ],
+  "metadata_version": "4"
+}

@@ -21,13 +21,12 @@ python PRScsx.py --ref_dir=PATH_TO_REFERENCE --bim_prefix=VALIDATION_BIM_PREFIX 
 """
 
 
+import getopt
 import os
 import sys
-import getopt
 
-import parse_genet
 import mcmc_gtb
-import gigrnd
+import parse_genet
 
 
 def parse_param():
@@ -42,7 +41,7 @@ def parse_param():
 
     if len(sys.argv) > 1:
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "h", long_opts_list)          
+            opts, args = getopt.getopt(sys.argv[1:], "h", long_opts_list)
         except:
             print('* Option not recognized.')
             print('* Use --help for usage information.\n')
@@ -95,7 +94,7 @@ def parse_param():
     elif param_dict['out_name'] == None:
         print('* Please specify the prefix of the output file using --out_name\n')
         sys.exit(2)
-    elif (len(param_dict['sst_file']) != len(param_dict['n_gwas']) or 
+    elif (len(param_dict['sst_file']) != len(param_dict['n_gwas']) or
           len(param_dict['sst_file']) != len(param_dict['pop'])):
         print('* Length of sst_file, n_gwas and pop does not match\n')
         sys.exit(2)

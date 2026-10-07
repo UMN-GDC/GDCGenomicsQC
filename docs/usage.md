@@ -212,6 +212,7 @@ Overview of the GDC Genomics QC Pipeline stages.
 5.  **Global Ancestry**: PCA/UMAP/VAE with Random Forest classification
 6.  **Local Ancestry**: RFMix for segment-level ancestry inference
 7.  **Per-Ancestry QC**: Ancestry-specific quality control
+8.  **Release Filter** (optional): De-identification, keep-list generation, derivative filtering, and validation for release datasets
 
 For more details on each module, see [](genomics.md).
 
@@ -285,6 +286,55 @@ internalPCA:
     plot: true
     color_by: null
     phenotype_file: null
+```
+
+### Release Filter Configuration
+
+The release filter pipeline handles de-identification, release keep-list generation, derivative filtering, and validation. Enable with `enabled: true`.
+
+```yaml
+releaseFilter:
+    enabled: true
+    # Core inputs (required)
+    source_fam: "/path/to/QC_passed.fam"        # All post-QC subjects (raw IDs)
+    identifiers: "/path/to/release_identifiers.csv"  # pscid -> release_candid (+ suffix)
+    keep_list: "/path/to/keep_list.txt"         # Output for plink2 --keep
+    temp_fam: "/path/to/temp.fam"               # De-identified .fam (all QC-passing)
+    crosswalk: "/path/to/release_identifiers.csv"  # For de-identification step
+
+    # Optional exclusion sources
+    exclusion_sources:
+        - "/path/to/HBCDexclusions.csv"
+    par_visit: "/path/to/par_visit.csv"         # Eligible subjects (raw IDs)
+    batch_info: "/path/to/batch_info.txt"       # Optional output
+    removed_individuals: "/path/to/removed.txt" # Optional output
+
+    # ID column names
+    id_col: "IID"
+    release_id_col: "release_candid"
+    suffix_col: "relationship"                  # C/M column
+    pscid_col: "pscid"
+
+    # Derivative files to process
+    derivatives:
+        bed: "/path/to/data.bed"                # Filter with plink2 --keep
+        bim: "/path/to/data.bim"
+        fam: "/path/to/data.fam"
+        # OR pgen/pvar/psam
+        # pgen: "/path/to/data.pgen"
+        # pvar: "/path/to/data.pvar"
+        # psam: "/path/to/data.psam"
+        grm_bin: "/path/to/grm_prefix"          # .grm.bin/.grm.id/.grm.N.bin
+        grm_gz: "/path/to/grm.gz"               # Filter .grm.gz
+        eigenvectors:
+            - "/path/to/internal_pca_plink2.eigenvec"
+        cnv_files:
+            - "/path/to/CNV_slim.txt"
+        cnv_col: "sample_id"
+        deidentify_files:                       # Raw ID -> de-ID
+            - "/path/to/external_CNV.txt"
+
+    validate: true
 ```
 
 See [](genomics.md) for detailed descriptions of all configuration options.
@@ -454,6 +504,8 @@ internal ones; `--list-targets` only shows explicitly designated end-points.
   - SNP heritability estimation (GCTA)
 * - `snpHerit`
   - Heritability (alias)
+* - `run_releaseFilter`
+  - Release filter: de-identification, keep-list, filtering, validation
 * - `simulatePhenotype`
   - Simulate a quantitative phenotype
 * - `RFMIX`
@@ -463,6 +515,31 @@ internal ones; `--list-targets` only shows explicitly designated end-points.
 * - `assembleRef`
   - Assemble 1000 Genomes reference panel
 ```
+
+### Release Filter Pipeline
+
+Run the release filter pipeline to produce a de-identified, filtered release dataset:
+
+```bash
+# Using the gdcgenomicsqc wrapper (MSI/Sandbox)
+gdcgenomicsqc run_releaseFilter --configfile ../config/config.yaml
+
+# Or with snakemake directly
+snakemake --profile=../profiles/hpc --configfile ../config/config.yaml run_releaseFilter
+```
+
+The release filter produces:
+- **Keep-list** (`keep_list.txt`) — one-column release IIDs for `plink2 --keep`
+- **Temp FAM** (`temp.fam`) — de-identified .fam with all QC-passing subjects (preserves row order)
+- **Filtered derivatives** — all specified files filtered to the release keep-list:
+  - PLINK bed/bim/fam or pgen/pvar/psam via `plink2 --keep`
+  - GRM binary (.grm.bin/.grm.id/.grm.N.bin) via matrix subsetting
+  - GRM text gzipped (.grm.gz) via line filtering
+  - Eigenvectors (.eigenvec) via row filtering
+  - CNV files via sample_id column filtering
+  - Generic tabular files via ID column filtering
+- **De-identified files** — raw ID files converted using crosswalk
+- **Validation report** — confirms no excluded IDs leaked, all IIDs match pattern, GRM dimensions correct
 
 ### QC naming convention
 

@@ -9,20 +9,32 @@ PRS_RESOURCE_DIR = Path(
 PRS_METHOD_RUN_DIR = PRS_OUT_DIR / "method_runs"
 
 PRS_EXTERNAL = PRS_CONFIG.get("external", {})
-PRS_USE_EXTERNAL = bool(PRS_EXTERNAL.get("target_bed") and PRS_EXTERNAL.get("target_sumstats"))
+PRS_USE_EXTERNAL = bool(
+    PRS_EXTERNAL.get("target_bed") and PRS_EXTERNAL.get("target_sumstats")
+)
+
 
 def prs_method_enabled(method):
     """Check if a PRS method is enabled (true/false in config)."""
     return PRS_METHODS_CONFIG.get(method, {}).get("enabled", False)
 
+
 def get_enabled_prs_methods():
     """Return list of enabled PRS method names."""
     methods = [
-        "single_ct", "single_prsice", "single_prscs", "single_ldpred2",
-        "single_lassosum2", "multi_ctsleb", "multi_prscsx", "multi_ldpred2",
-        "multi_prosper", "multi_sdprs",
+        "single_ct",
+        "single_prsice",
+        "single_prscs",
+        "single_ldpred2",
+        "single_lassosum2",
+        "multi_ctsleb",
+        "multi_prscsx",
+        "multi_ldpred2",
+        "multi_prosper",
+        "multi_sdprs",
     ]
     return [m for m in methods if prs_method_enabled(m)]
+
 
 def get_method_extra_args(method):
     """Get extra arguments for a PRS method from config."""
@@ -46,25 +58,34 @@ def get_prs_target_bed(wildcards):
         return PRS_EXTERNAL.get("target_bed")
     return rules.preparePRSInputs.output.study_bed
 
+
 def get_prs_target_bim(wildcards):
     if PRS_USE_EXTERNAL:
-        return PRS_EXTERNAL.get("target_bim") or PRS_EXTERNAL.get("target_bed").replace(".bed", ".bim")
+        return PRS_EXTERNAL.get("target_bim") or PRS_EXTERNAL.get("target_bed").replace(
+            ".bed", ".bim"
+        )
     return rules.preparePRSInputs.output.study_bim
+
 
 def get_prs_target_fam(wildcards):
     if PRS_USE_EXTERNAL:
-        return PRS_EXTERNAL.get("target_fam") or PRS_EXTERNAL.get("target_bed").replace(".bed", ".fam")
+        return PRS_EXTERNAL.get("target_fam") or PRS_EXTERNAL.get("target_bed").replace(
+            ".bed", ".fam"
+        )
     return rules.preparePRSInputs.output.study_fam
+
 
 def get_prs_target_sumstats(wildcards):
     if PRS_USE_EXTERNAL:
         return PRS_EXTERNAL.get("target_sumstats")
     return rules.preparePRSInputs.output.target_single_sumstats
 
+
 def get_prs_target_pheno(wildcards):
     if PRS_USE_EXTERNAL:
         return PRS_EXTERNAL.get("target_pheno")
     return rules.preparePRSInputs.output.target_study_pheno
+
 
 def get_prs_env_path(wildcards):
     if PRS_USE_EXTERNAL:
@@ -90,18 +111,18 @@ def get_prs_env_vars(wildcards):
 
 
 rule preparePRSMethodResources:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    output:
+        ready=PRS_RESOURCE_DIR / "resources.ready",
+        ld_dir=directory(PRS_RESOURCE_DIR / "ld"),
     log:
         OUT_DIR / "logs" / "preparePRSMethodResources.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=60,
-    output:
-        ready=PRS_RESOURCE_DIR / "resources.ready",
-        ld_dir=directory(PRS_RESOURCE_DIR / "ld"),
     params:
         resource_dir=PRS_RESOURCE_DIR,
     shell:
@@ -118,22 +139,43 @@ rule preparePRSMethodResources:
 
 
 if PRS_USE_EXTERNAL:
+
     rule prepareExternalPRSInputs:
-        container:
-            "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
-        log:
-            OUT_DIR / "logs" / "prepareExternalPRSInputs.log",
         output:
             env=PRS_OUT_DIR / "external_prs_inputs.env",
+        log:
+            OUT_DIR / "logs" / "prepareExternalPRSInputs.log",
+        container:
+            "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
         params:
             target_bed=PRS_EXTERNAL.get("target_bed"),
-            target_bim=PRS_EXTERNAL.get("target_bim") or PRS_EXTERNAL.get("target_bed").replace(".bed", ".bim").replace(".pgen", ".pvar"),
-            target_fam=PRS_EXTERNAL.get("target_fam") or PRS_EXTERNAL.get("target_bed").replace(".bed", ".fam").replace(".pgen", ".psam"),
+            target_bim=PRS_EXTERNAL.get("target_bim")
+            or PRS_EXTERNAL.get("target_bed")
+            .replace(".bed", ".bim")
+            .replace(".pgen", ".pvar"),
+            target_fam=PRS_EXTERNAL.get("target_fam")
+            or PRS_EXTERNAL.get("target_bed")
+            .replace(".bed", ".fam")
+            .replace(".pgen", ".psam"),
             target_sumstats=PRS_EXTERNAL.get("target_sumstats"),
             target_pheno=PRS_EXTERNAL.get("target_pheno"),
             anc2_bed=PRS_EXTERNAL.get("anc2_bed", None),
-            anc2_bim=PRS_EXTERNAL.get("anc2_bim") or PRS_EXTERNAL.get("anc2_bed").replace(".bed", ".bim").replace(".pgen", ".pvar") if PRS_EXTERNAL.get("anc2_bed") else None,
-            anc2_fam=PRS_EXTERNAL.get("anc2_fam") or PRS_EXTERNAL.get("anc2_bed").replace(".bed", ".fam").replace(".pgen", ".psam") if PRS_EXTERNAL.get("anc2_bed") else None,
+            anc2_bim=(
+                PRS_EXTERNAL.get("anc2_bim")
+                or PRS_EXTERNAL.get("anc2_bed")
+                .replace(".bed", ".bim")
+                .replace(".pgen", ".pvar")
+                if PRS_EXTERNAL.get("anc2_bed")
+                else None
+            ),
+            anc2_fam=(
+                PRS_EXTERNAL.get("anc2_fam")
+                or PRS_EXTERNAL.get("anc2_bed")
+                .replace(".bed", ".fam")
+                .replace(".pgen", ".psam")
+                if PRS_EXTERNAL.get("anc2_bed")
+                else None
+            ),
             training_sumstats=PRS_EXTERNAL.get("training_sumstats", None),
             training_pheno=PRS_EXTERNAL.get("training_pheno", None),
             pcs=PRS_EXTERNAL.get("pcs", None),
@@ -141,40 +183,40 @@ if PRS_USE_EXTERNAL:
             fid_col=PRS_CONFIG.get("fid_col", "FID"),
         run:
             import os
+
             os.makedirs(os.path.dirname("{output.env}"), exist_ok=True)
-            
             with open("{output.env}", "w") as f:
-                f.write(f'target_sample_plink.bed={params.target_bed}\n')
-                f.write(f'target_sample_plink.bim={params.target_bim}\n')
-                f.write(f'target_sample_plink.fam={params.target_fam}\n')
-                f.write(f'target_sumstats_file={params.target_sumstats}\n')
-                f.write(f'target_study_pheno_file={params.target_pheno}\n')
+                f.write(f"target_sample_plink.bed={params.target_bed}\n")
+                f.write(f"target_sample_plink.bim={params.target_bim}\n")
+                f.write(f"target_sample_plink.fam={params.target_fam}\n")
+                f.write(f"target_sumstats_file={params.target_sumstats}\n")
+                f.write(f"target_study_pheno_file={params.target_pheno}\n")
                 if params.anc2_bed:
-                    f.write(f'study_sample_plink_anc2.bed={params.anc2_bed}\n')
-                    f.write(f'study_sample_plink_anc2.bim={params.anc2_bim}\n')
-                    f.write(f'study_sample_plink_anc2.fam={params.anc2_fam}\n')
-                    f.write(f'training_sumstats_file={params.training_sumstats}\n')
-                    f.write(f'training_study_pheno_file={params.training_pheno}\n')
+                    f.write(f"study_sample_plink_anc2.bed={params.anc2_bed}\n")
+                    f.write(f"study_sample_plink_anc2.bim={params.anc2_bim}\n")
+                    f.write(f"study_sample_plink_anc2.fam={params.anc2_fam}\n")
+                    f.write(f"training_sumstats_file={params.training_sumstats}\n")
+                    f.write(f"training_study_pheno_file={params.training_pheno}\n")
                 if params.pcs:
-                    f.write(f'pcs_file={params.pcs}\n')
-                f.write(f'iid_col={params.iid_col}\n')
-                f.write(f'fid_col={params.fid_col}\n')
+                    f.write(f"pcs_file={params.pcs}\n")
+                f.write(f"iid_col={params.iid_col}\n")
+                f.write(f"fid_col={params.fid_col}\n")
 
 
 rule runSingleAncestryCT:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "single_ct.done",
     log:
         OUT_DIR / "logs" / "runSingleAncestryCT.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=16000,
         runtime=240,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "single_ct.done",
     params:
         enabled=prs_method_enabled("single_ct"),
         out_dir=PRS_METHOD_RUN_DIR / "single_ct",
@@ -197,24 +239,25 @@ rule runSingleAncestryCT:
             --pheno "{params.env_vars[target_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
+
 rule runSingleAncestryLassosum2:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "single_lassosum2.done",
     log:
         OUT_DIR / "logs" / "runSingleAncestryLassosum2.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=64000,
         runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "single_lassosum2.done",
     params:
         enabled=prs_method_enabled("single_lassosum2"),
         out_dir=PRS_METHOD_RUN_DIR / "single_lassosum2",
@@ -237,25 +280,25 @@ rule runSingleAncestryLassosum2:
             --pheno "{params.env_vars[target_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
 
 rule runSingleAncestryPRSice:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "single_prsice.done",
     log:
         OUT_DIR / "logs" / "runSingleAncestryPRSice.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=16000,
         runtime=240,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "single_prsice.done",
     params:
         enabled=prs_method_enabled("single_prsice"),
         out_dir=PRS_METHOD_RUN_DIR / "single_prsice",
@@ -277,25 +320,25 @@ rule runSingleAncestryPRSice:
             --pheno "{params.env_vars[target_study_pheno_file]}" \
             --out {params.out_dir}/prsice \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
 
 rule runSingleAncestryPRSCS:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "single_prscs.done",
     log:
         OUT_DIR / "logs" / "runSingleAncestryPRSCS.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=32000,
         runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "single_prscs.done",
     params:
         enabled=prs_method_enabled("single_prscs"),
         out_dir=PRS_METHOD_RUN_DIR / "single_prscs",
@@ -314,25 +357,25 @@ rule runSingleAncestryPRSCS:
             --target-pheno "{params.env_vars[target_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
 
 rule runSingleAncestryLDpred2:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "single_ldpred2.done",
     log:
         OUT_DIR / "logs" / "runSingleAncestryLDpred2.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=64000,
         runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "single_ldpred2.done",
     params:
         enabled=prs_method_enabled("single_ldpred2"),
         out_dir=PRS_METHOD_RUN_DIR / "single_ldpred2",
@@ -354,25 +397,25 @@ rule runSingleAncestryLDpred2:
             --bim "{params.env_vars[study_sample_plink.bim]}" \
             --out {params.out_dir}/ldpred2 \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
 
 rule runMultiAncestryCTSLEB:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "multi_ctsleb.done",
     log:
         OUT_DIR / "logs" / "runMultiAncestryCTSLEB.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=32000,
         runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "multi_ctsleb.done",
     params:
         enabled=prs_method_enabled("multi_ctsleb"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_ctsleb",
@@ -399,25 +442,25 @@ rule runMultiAncestryCTSLEB:
             --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
 
 rule runMultiAncestryPRSCSx:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "multi_prscsx.done",
     log:
         OUT_DIR / "logs" / "runMultiAncestryPRSCSx.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=32000,
         runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "multi_prscsx.done",
     params:
         enabled=prs_method_enabled("multi_prscsx"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_prscsx",
@@ -438,25 +481,25 @@ rule runMultiAncestryPRSCSx:
             --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
 
 rule runMultiAncestryLDpred2:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "multi_ldpred2.done",
     log:
         OUT_DIR / "logs" / "runMultiAncestryLDpred2.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=64000,
         runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "multi_ldpred2.done",
     params:
         enabled=prs_method_enabled("multi_ldpred2"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_ldpred2",
@@ -483,25 +526,25 @@ rule runMultiAncestryLDpred2:
             --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
 
 rule runMultiAncestryPROSPER:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "multi_prosper.done",
     log:
         OUT_DIR / "logs" / "runMultiAncestryPROSPER.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=64000,
         runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "multi_prosper.done",
     params:
         enabled=prs_method_enabled("multi_prosper"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_prosper",
@@ -522,25 +565,25 @@ rule runMultiAncestryPROSPER:
             --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
 
 rule runMultiAncestrySDPRS:
-    container:
-        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
+    input:
+        resources=rules.preparePRSMethodResources.output.ready,
+    output:
+        done=PRS_METHOD_RUN_DIR / "multi_sdprs.done",
     log:
         OUT_DIR / "logs" / "runMultiAncestrySDPRS.log",
+    container:
+        "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prspipeline:v1"
     threads: 4
     resources:
         nodes=1,
         mem_mb=64000,
         runtime=720,
-    input:
-        resources=rules.preparePRSMethodResources.output.ready,
-    output:
-        done=PRS_METHOD_RUN_DIR / "multi_sdprs.done",
     params:
         enabled=prs_method_enabled("multi_sdprs"),
         out_dir=PRS_METHOD_RUN_DIR / "multi_sdprs",
@@ -561,7 +604,7 @@ rule runMultiAncestrySDPRS:
             --anc2-pheno "{params.env_vars[training_study_pheno_file]}" \
             --out-dir {params.out_dir} \
             {params.extra} \
-            > {log} 2>&1
+            >{log} 2>&1
         touch {output.done}
         """
 
@@ -570,17 +613,59 @@ rule runAllEnabledPRS:
     """Run all PRS methods that are enabled in config."""
     input:
         resources=rules.preparePRSMethodResources.output.ready,
-        external_env=rules.prepareExternalPRSInputs.output.env if PRS_USE_EXTERNAL else [],
-        single_ct_done=PRS_METHOD_RUN_DIR / "single_ct.done" if prs_method_enabled("single_ct") else [],
-        single_prsice_done=PRS_METHOD_RUN_DIR / "single_prsice.done" if prs_method_enabled("single_prsice") else [],
-        single_prscs_done=PRS_METHOD_RUN_DIR / "single_prscs.done" if prs_method_enabled("single_prscs") else [],
-        single_ldpred2_done=PRS_METHOD_RUN_DIR / "single_ldpred2.done" if prs_method_enabled("single_ldpred2") else [],
-        single_lassosum2_done=PRS_METHOD_RUN_DIR / "single_lassosum2.done" if prs_method_enabled("single_lassosum2") else [],
-        multi_ctsleb_done=PRS_METHOD_RUN_DIR / "multi_ctsleb.done" if prs_method_enabled("multi_ctsleb") else [],
-        multi_prscsx_done=PRS_METHOD_RUN_DIR / "multi_prscsx.done" if prs_method_enabled("multi_prscsx") else [],
-        multi_ldpred2_done=PRS_METHOD_RUN_DIR / "multi_ldpred2.done" if prs_method_enabled("multi_ldpred2") else [],
-        multi_prosper_done=PRS_METHOD_RUN_DIR / "multi_prosper.done" if prs_method_enabled("multi_prosper") else [],
-        multi_sdprs_done=PRS_METHOD_RUN_DIR / "multi_sdprs.done" if prs_method_enabled("multi_sdprs") else [],
+        external_env=(
+            rules.prepareExternalPRSInputs.output.env if PRS_USE_EXTERNAL else []
+        ),
+        single_ct_done=(
+            PRS_METHOD_RUN_DIR / "single_ct.done"
+            if prs_method_enabled("single_ct")
+            else []
+        ),
+        single_prsice_done=(
+            PRS_METHOD_RUN_DIR / "single_prsice.done"
+            if prs_method_enabled("single_prsice")
+            else []
+        ),
+        single_prscs_done=(
+            PRS_METHOD_RUN_DIR / "single_prscs.done"
+            if prs_method_enabled("single_prscs")
+            else []
+        ),
+        single_ldpred2_done=(
+            PRS_METHOD_RUN_DIR / "single_ldpred2.done"
+            if prs_method_enabled("single_ldpred2")
+            else []
+        ),
+        single_lassosum2_done=(
+            PRS_METHOD_RUN_DIR / "single_lassosum2.done"
+            if prs_method_enabled("single_lassosum2")
+            else []
+        ),
+        multi_ctsleb_done=(
+            PRS_METHOD_RUN_DIR / "multi_ctsleb.done"
+            if prs_method_enabled("multi_ctsleb")
+            else []
+        ),
+        multi_prscsx_done=(
+            PRS_METHOD_RUN_DIR / "multi_prscsx.done"
+            if prs_method_enabled("multi_prscsx")
+            else []
+        ),
+        multi_ldpred2_done=(
+            PRS_METHOD_RUN_DIR / "multi_ldpred2.done"
+            if prs_method_enabled("multi_ldpred2")
+            else []
+        ),
+        multi_prosper_done=(
+            PRS_METHOD_RUN_DIR / "multi_prosper.done"
+            if prs_method_enabled("multi_prosper")
+            else []
+        ),
+        multi_sdprs_done=(
+            PRS_METHOD_RUN_DIR / "multi_sdprs.done"
+            if prs_method_enabled("multi_sdprs")
+            else []
+        ),
     output:
         done=OUT_DIR / "prs_all_completed.done",
     log:
@@ -589,7 +674,7 @@ rule runAllEnabledPRS:
         enabled_methods=get_enabled_prs_methods(),
     shell:
         """
-        echo "All enabled PRS methods completed." > {log} 2>&1
-        echo "Enabled methods: {params.enabled_methods}" >> {log} 2>&1
+        echo "All enabled PRS methods completed." >{log} 2>&1
+        echo "Enabled methods: {params.enabled_methods}" >>{log} 2>&1
         touch {output.done}
         """

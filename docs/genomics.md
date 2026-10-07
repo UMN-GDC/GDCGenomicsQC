@@ -369,3 +369,103 @@ $ rfmix -f study.phased.vcf.gz \
         --chromosome=chr${CHR} \
         -o output_ancestry
 ```
+
+### Module 8: Release Filter (Optional)
+
+The release filter pipeline handles de-identification, release keep-list generation, derivative filtering, and validation for release datasets. It can be applied at any intermediate stage of the pipeline (post-QC, post-PCA, post-imputation, etc.).
+
+#### Configuration
+
+Enable with `releaseFilter.enabled: true` in `config.yaml`:
+
+```yaml
+releaseFilter:
+    enabled: true
+    # Core inputs (required)
+    source_fam: "/path/to/QC_passed.fam"        # All post-QC subjects (raw IDs)
+    identifiers: "/path/to/release_identifiers.csv"  # pscid -> release_candid (+ suffix)
+    keep_list: "/path/to/keep_list.txt"         # Output for plink2 --keep
+    temp_fam: "/path/to/temp.fam"               # De-identified .fam (all QC-passing)
+    crosswalk: "/path/to/release_identifiers.csv"  # For de-identification step
+
+    # Optional exclusion sources
+    exclusion_sources:
+        - "/path/to/HBCDexclusions.csv"
+    par_visit: "/path/to/par_visit.csv"         # Eligible subjects (raw IDs)
+    batch_info: "/path/to/batch_info.txt"       # Optional output
+    removed_individuals: "/path/to/removed.txt" # Optional output
+
+    # ID column names
+    id_col: "IID"
+    release_id_col: "release_candid"
+    suffix_col: "relationship"                  # C/M column
+    pscid_col: "pscid"
+
+    # Derivative files to process
+    derivatives:
+        bed: "/path/to/data.bed"                # Filter with plink2 --keep
+        bim: "/path/to/data.bim"
+        fam: "/path/to/data.fam"
+        # OR pgen/pvar/psam
+        # pgen: "/path/to/data.pgen"
+        # pvar: "/path/to/data.pvar"
+        # psam: "/path/to/data.psam"
+        grm_bin: "/path/to/grm_prefix"          # .grm.bin/.grm.id/.grm.N.bin
+        grm_gz: "/path/to/grm.gz"               # Filter .grm.gz
+        eigenvectors:
+            - "/path/to/internal_pca_plink2.eigenvec"
+        cnv_files:
+            - "/path/to/CNV_slim.txt"
+        cnv_col: "sample_id"
+        deidentify_files:                       # Raw ID -> de-ID
+            - "/path/to/external_CNV.txt"
+
+    validate: true
+```
+
+#### Pipeline Stages
+
+1.  **Build Release Keep** (`buildReleaseKeep`) — Reads post-QC subjects, applies par-visit and exclusion filters, maps raw IDs to release IDs via crosswalk, outputs `keep_list.txt` (for plink2 --keep) and `temp.fam` (de-identified FAM with all QC-passing subjects, preserving row order).
+
+2.  **Filter Genomics with PLINK2** (`filterGenomicsWithPlink2` / `filterPgenWithPlink2`) — Runs `plink2 --keep keep_list.txt` on PLINK bed/bim/fam or pgen/pvar/psam.
+
+3.  **De-identify Files** (`deidentifyFiles`) — Converts raw ID files (CNV, external files) using crosswalk (pscid -> release_candid + suffix). Supports CNV, GRM.id, eigenvec, generic tabular.
+
+4.  **Filter Derivatives** (`filterDerivatives`) — Subsets derivatives to keep-list:
+    - GRM binary (.grm.bin/.grm.id/.grm.N.bin) via matrix subsetting
+    - GRM text gzipped (.grm.gz) via line filtering
+    - Eigenvectors (.eigenvec) via row filtering
+    - CNV files via sample_id column
+    - Generic tabular files via ID column
+
+5.  **Validate Release** (`validateRelease`) — Checks all outputs:
+    - All IIDs match pattern `^\d{10}[CM]$`
+    - No excluded IIDs appear in outputs
+    - All output IIDs are subset of keep-list
+    - GRM dimensions match .fam row count
+
+#### Running
+
+```bash
+# Using wrapper
+gdcgenomicsqc run_releaseFilter --configfile config.yaml
+
+# Or with snakemake directly
+snakemake --profile=../profiles/hpc --configfile config.yaml run_releaseFilter
+```
+
+#### Outputs
+
+| File | Description |
+|------|-------------|
+| `keep_list.txt` | One-column release IIDs for `plink2 --keep` |
+| `temp.fam` | De-identified .fam (all QC-passing, preserves row order) |
+| `*_filtered.bed/.bim/.fam` | PLINK filtered via `--keep` |
+| `*_filtered.pgen/.pvar/.psam` | PGEN filtered via `--keep` |
+| `*_filtered.grm.bin/.id/.N.bin` | GRM binary subset |
+| `*_filtered.grm.gz` | GRM text gzipped subset |
+| `*_filtered.eigenvec` | Eigenvec row-filtered |
+| `*_filtered.cnv` | CNV row-filtered by sample_id |
+| `*_deid` | De-identified files (raw ID -> release ID) |
+| `batch_info.txt` | Optional batch info (IID visit plate) |
+| `removed_individuals.txt` | Excluded IIDs for documentation |

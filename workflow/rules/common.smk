@@ -5,7 +5,9 @@ OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
 REF = Path(config.get("REF", "/path/to/ref"))
 ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
-LOCAL_ANCESTRY_CHROMOSOMES = config.get("localAncestry", {}).get("chromosomes") or CHROMOSOMES
+LOCAL_ANCESTRY_CHROMOSOMES = (
+    config.get("localAncestry", {}).get("chromosomes") or CHROMOSOMES
+)
 INPUT_IS_PER_CHROMOSOME = "{CHR}" in config.get("INPUT", "")
 
 
@@ -27,7 +29,9 @@ def _read_ancestry_file():
     sep, col = _get_ancestry_file_params()
     sep = sep if sep else "\t"
     # Auto-detect header: if first row contains non-string values or looks like data, don't use header
-    header_arg = 0 if config.get("ancestry", {}).get("ancestry_file_header", True) else None
+    header_arg = (
+        0 if config.get("ancestry", {}).get("ancestry_file_header", True) else None
+    )
     df = pd.read_csv(ancestry_file, sep=sep, header=header_arg)
     if col is not None:
         if str(col).isdigit():
@@ -101,7 +105,10 @@ def get_provided_ancestry_file_path():
 
 checkpoint createProvidedAncestryKeepFiles:
     output:
-        expand(OUT_DIR / "01-globalAncestry" / "keep_{ANC}.txt", ANC=get_provided_ancestries())
+        expand(
+            OUT_DIR / "01-globalAncestry" / "keep_{ANC}.txt",
+            ANC=get_provided_ancestries(),
+        ),
     run:
         result = _read_ancestry_file()
         if result is not None:
@@ -156,7 +163,9 @@ def get_ancestry_file(wildcards):
 def get_classification_probs(wildcards):
     if has_provided_ancestry():
         return []
-    checkpoint_output = checkpoints.estimateGlobalAncestry.get(**wildcards).output.pos_prob
+    checkpoint_output = checkpoints.estimateGlobalAncestry.get(
+        **wildcards
+    ).output.pos_prob
     return checkpoint_output
 
 

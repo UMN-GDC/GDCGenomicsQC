@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Wrapper around PredLMM-ACE: align GRM/knots/metadata and run predlmm-fit."""
-import argparse, json, re, subprocess, sys
+import argparse
+import json
+import re
+import subprocess
+import sys
 from pathlib import Path
+
 import pandas as pd
 
 
@@ -122,7 +127,6 @@ def main():
     df = pd.DataFrame([row])
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)
-    print(df.to_string(index=False))
 
 
 if __name__ == "__main__":

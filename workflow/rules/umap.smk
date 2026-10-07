@@ -1,22 +1,23 @@
 rule applyUmapDimensionalityReduction:
-    log:
-        OUT_DIR / "logs" / "applyUmapDimensionalityReduction.log",
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda:
-        "../../envs/ancNreport.yml"
-    envmodules: *([config.get("R_module")] if config.get("R_module") else [])
-    threads: 8
-    resources:
-        nodes=1,
-        mem_mb=64000,
-        runtime=2880,
     input:
         eigen=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
     output:
         OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
         OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+    log:
+        OUT_DIR / "logs" / "applyUmapDimensionalityReduction.log",
+    conda:
+        "../../envs/ancNreport.yml"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    envmodules:
+        *([config.get("R_module")] if config.get("R_module") else []),
+    threads: 8
+    resources:
+        nodes=1,
+        mem_mb=64000,
+        runtime=2880,
     params:
         npc=10,
         neighbors=50,
@@ -25,13 +26,12 @@ rule applyUmapDimensionalityReduction:
         scripts_dir=SCRIPTS_DIR,
     shell:
         """
-    echo "Running UMAP:"
+        echo "Running UMAP:"
 
-    Rscript {params.scripts_dir}/Umap.R --eigens {input.eigen} --out {params.outputPrefix} \
-      --npc {params.npc} --neighbors {params.neighbors} \
-      --sample {input.sample} \
-      --threads {threads} \
-      --ncoords {params.ncoords} \
-      --seed $RANDOM
-
-    """
+        Rscript {params.scripts_dir}/Umap.R --eigens {input.eigen} --out {params.outputPrefix} \
+            --npc {params.npc} --neighbors {params.neighbors} \
+            --sample {input.sample} \
+            --threads {threads} \
+            --ncoords {params.ncoords} \
+            --seed $RANDOM
+        """

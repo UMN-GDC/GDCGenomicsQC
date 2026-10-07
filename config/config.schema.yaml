@@ -490,6 +490,149 @@ snpHeritRelated:
       default: null
       description: External-mode output prefix (reads _fastgwa_h2.csv / _predlmm_ace_h2.csv suffixes).
 
+releaseFilter:
+  type: dict
+  default: {}
+  description: |
+    Release filter: de-identification, keep-list generation, derivative filtering,
+    and validation. Can be applied at any intermediate stage of the pipeline.
+    Set enabled: true to activate.
+  schema:
+    enabled:
+      type: bool
+      default: false
+      description: Activate release filter pipeline
+    # Core inputs (required when enabled)
+    source_fam:
+      type: str
+      nullable: true
+      default: null
+      description: Path to PLINK .fam or .psam with all post-QC subjects (raw IDs)
+    identifiers:
+      type: str
+      nullable: true
+      default: null
+      description: Crosswalk file mapping raw_id -> release_id (+ optional suffix)
+    keep_list:
+      type: str
+      nullable: true
+      default: null
+      description: Output path for one-column release keep-list (for plink2 --keep)
+    temp_fam:
+      type: str
+      nullable: true
+      default: null
+      description: Output path for de-identified .fam (all QC-passing, preserves row order)
+    # Optional inputs
+    crosswalk:
+      type: str
+      nullable: true
+      default: null
+      description: Crosswalk for de-identification step (pscid -> release_candid)
+    exclusion_sources:
+      type: list
+      default: []
+      description: List of exclusion files (CSV/TSV/Excel) to remove from release
+    par_visit:
+      type: str
+      nullable: true
+      default: null
+      description: Optional file of eligible subjects (raw IDs) for release
+    batch_info:
+      type: str
+      nullable: true
+      default: null
+      description: Optional output: batch info file (IID visit plate_number)
+    removed_individuals:
+      type: str
+      nullable: true
+      default: null
+      description: Optional output: list of excluded IIDs for documentation
+    id_col:
+      type: str
+      default: "IID"
+      description: ID column name in source files
+    release_id_col:
+      type: str
+      default: "release_candid"
+      description: Release ID column name in crosswalk
+    suffix_col:
+      type: str
+      nullable: true
+      default: null
+      description: Optional C/M suffix column in crosswalk
+    pscid_col:
+      type: str
+      default: "pscid"
+      description: pscid column name in crosswalk (for de-ID step)
+    # Derivative files to filter/de-identify/validate
+    derivatives:
+      type: dict
+      default: {}
+      description: Derivative files to process
+      schema:
+        bed:
+          type: str
+          nullable: true
+          default: null
+          description: PLINK .bed/.bim/.fam to filter with --keep
+        bim:
+          type: str
+          nullable: true
+          default: null
+        fam:
+          type: str
+          nullable: true
+          default: null
+        pgen:
+          type: str
+          nullable: true
+          default: null
+          description: PLINK .pgen/.pvar/.psam to filter with --keep
+        pvar:
+          type: str
+          nullable: true
+          default: null
+        psam:
+          type: str
+          nullable: true
+          default: null
+        grm_bin:
+          type: str
+          nullable: true
+          default: null
+          description: GRM binary prefix (.grm.bin/.grm.id/.grm.N.bin) to filter
+        grm_gz:
+          type: str
+          nullable: true
+          default: null
+          description: GRM text gzipped (.grm.gz) to filter
+        eigenvectors:
+          type: list
+          default: []
+          description: List of eigenvec files to filter
+        cnv_files:
+          type: list
+          default: []
+          description: List of CNV files to filter/de-identify
+        cnv_col:
+          type: str
+          default: "sample_id"
+          description: CNV sample ID column name
+        generic_files:
+          type: list
+          default: []
+          description: List of generic files to filter (each: {path, id_col, out_path})
+        deidentify_files:
+          type: list
+          default: []
+          description: List of files to de-identify using crosswalk
+    # Validation
+    validate:
+      type: bool
+      default: true
+      description: Run validation on all outputs
+
 prsMethods:
   type: dict
   default: {}

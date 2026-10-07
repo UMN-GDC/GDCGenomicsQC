@@ -1,12 +1,4 @@
 checkpoint estimateGlobalAncestry:
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda:
-        "../../envs/ancNreport.yml"
-    resources:
-        nodes=1,
-        mem_mb=64000,
-        runtime=2880,
     input:
         labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
         eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
@@ -25,20 +17,27 @@ checkpoint estimateGlobalAncestry:
             category="Global ancestry",
         ),
         ancestry=OUT_DIR / "01-globalAncestry" / "latentDistantRelatedness.tsv",
+    conda:
+        "../../envs/ancNreport.yml"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    resources:
+        nodes=1,
+        mem_mb=64000,
+        runtime=2880,
     params:
         dir=OUT_DIR / "01-globalAncestry",
         scripts_dir=SCRIPTS_DIR,
     shell:
         """
-    echo "Running ancestry estimation:"
+        echo "Running ancestry estimation:"
 
-    Rscript {params.scripts_dir}/classification.R  \
-      --eigen_ref {input.eigen_ref} \
-      --eigen_sample {input.eigen_sample} \
-      --umap_ref {input.umap_ref} \
-      --umap_sample {input.umap_sample} \
-      --labels {input.labels} \
-      --out {params.dir} \
-      --rseed $RANDOM
-
-    """
+        Rscript {params.scripts_dir}/classification.R \
+            --eigen_ref {input.eigen_ref} \
+            --eigen_sample {input.eigen_sample} \
+            --umap_ref {input.umap_ref} \
+            --umap_sample {input.umap_sample} \
+            --labels {input.labels} \
+            --out {params.dir} \
+            --rseed $RANDOM
+        """

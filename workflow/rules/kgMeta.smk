@@ -1,10 +1,4 @@
 checkpoint kgMeta:
-    log:
-        OUT_DIR / "logs" / "download1000GenomesMetadata.log",
-    resources:
-        nodes=1,
-        mem_mb=32000,
-        runtime=60,
     output:
         highcovPop=protected(REF / "1000G_highcoverage" / "population.txt"),
         highcovPed=protected(REF / "1000G_highcoverage" / "pedigree.txt"),
@@ -14,6 +8,12 @@ checkpoint kgMeta:
         gr38fastagz2=protected(REF / "hg38.fa.gz"),
         shapemap=protected(REF / "1000G_highcoverage" / "genetic_maps.b38.tar.gz"),
         crossmap=protected(REF / "CrossMap" / "hg19ToHg38.over.chain.gz"),
+    log:
+        OUT_DIR / "logs" / "download1000GenomesMetadata.log",
+    resources:
+        nodes=1,
+        mem_mb=32000,
+        runtime=60,
     params:
         highcovPop="https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/20130606_g1k_3202_samples_ped_population.txt",
         highcovPed="https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/1kGP.3202_samples.pedigree_info.txt",
@@ -35,9 +35,8 @@ checkpoint kgMeta:
         mkdir -p {REF}/gmaps
         tar -xzf {output.shapemap} -C {REF}/gmaps
 
-        gunzip -c {output.gr38fastagz} > {output.gr38fasta}
-        gunzip -c {output.gr38fastagz2} > {output.gr38fasta2}
-
+        gunzip -c {output.gr38fastagz} >{output.gr38fasta}
+        gunzip -c {output.gr38fastagz2} >{output.gr38fasta2}
 
         wget -O {output.crossmap} {params.crossmap}
         """
@@ -49,11 +48,11 @@ def get_shapemap(wildcards):
 
 checkpoint splitMapChr:
     input:
-        shapemap=get_shapemap
+        shapemap=get_shapemap,
     output:
-        map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt")
+        map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt"),
     shell:
         """
         zcat {input.shapemap} \
-            | awk -v chr={wildcards.chr} 'NR>1 {{OFS="\t"}} {{print $2, $1, $3}}' > {output.map_chr}
+            | awk -v chr={wildcards.chr} 'NR>1 {{OFS="\t"}} {{print $2, $1, $3}}' >{output.map_chr}
         """

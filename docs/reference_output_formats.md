@@ -121,6 +121,24 @@ Abbreviations used in the table:
 | `sex_discrepancy.txt` / `sex_discrepancy_{CHR}.txt` | FID IID of samples with mismatched sex. | Remove sex-mismatched samples before downstream analysis | PLINK2 (`--remove`), any text tool | `readr::read_table("sex_discrepancy.txt", col_names=F)` | `pandas.read_table("sex_discrepancy.txt", header=None)` |
 | `het_fail_ind.txt` / `het_fail_clean.txt` / `fail-het-qc.txt` | FID IID of samples failing heterozygosity ±3SD filter. | Remove heterozygosity outliers before GWAS/PRS | PLINK2 (`--remove`), any text tool | `readr::read_table("het_fail_ind.txt", col_names=F)` | `pandas.read_table("het_fail_ind.txt", header=None)` |
 
+## Release Filter formats
+
+| Ext | Info | Use | Tools | R | Py |
+|-----|------|-----|-------|----|----|
+| `keep_list.txt` | One-column release IIDs (release_candid + C/M). Direct input to `plink2 --keep`. | Sample filtering for release dataset | PLINK2 (`--keep`), any text tool | `readr::read_table("keep_list.txt", col_names="IID")` | `pandas.read_table("keep_list.txt", header=None, names=["IID"])` |
+| `temp.fam` | De-identified .fam with all QC-passing subjects. FID=release_candid, IID=release_candid+C/M. Preserves original row order to match .bed. | Input to `plink2 --bfile ... --fam temp.fam` for correct .bed reading | PLINK2 (`--fam`), any text tool | `readr::read_table("temp.fam", col_names=c("FID","IID","PAT","MAT","SEX","PHENO"))` | `pandas.read_table("temp.fam", header=None, names=["FID","IID","PAT","MAT","SEX","PHENO"])` |
+| `batch_info.txt` | Tab-delimited: IID visit plate_number. Matches `temp.fam` IIDs 1:1. | Release documentation, batch-effect correction | Any text tool | `readr::read_tsv("batch_info.txt")` | `pandas.read_table("batch_info.txt", sep="\t")` |
+| `removed_individuals.txt` | One-column excluded IIDs (release_candid+C/M). | Documentation, audit trail | Any text tool | `readr::read_table("removed_individuals.txt", col_names="IID")` | `pandas.read_table("removed_individuals.txt", header=None, names=["IID"])` |
+| `*_filtered.bed/.bim/.fam` | PLINK filtered via `--keep keep_list.txt`. Same format as standard .bed/.bim/.fam but subset to release IIDs. | Release-ready PLINK binary files | PLINK2, standard PLINK tools | Same as standard .bed/.bim/.fam | Same as standard .bed/.bim/.fam |
+| `*_filtered.pgen/.pvar/.psam` | PGEN filtered via `plink2 --keep`. Same format as standard .pgen/.pvar/.psam but subset to release IIDs. | Release-ready PGEN files | PLINK2, standard PGEN tools | Same as standard .pgen/.pvar/.psam | Same as standard .pgen/.pvar/.psam |
+| `*_filtered.grm.bin/.grm.id/.grm.N.bin` | GRM binary subset to release IIDs. `.grm.bin`: lower-triangular float32; `.grm.id`: FID IID order; `.grm.N.bin`: per-pair non-missing counts. | Release GRM for heritability/GREML | GCTA, BOLT-REML, LDAK | Same as standard .grm.bin/.grm.id/.grm.N.bin | Same as standard .grm.bin/.grm.id/.grm.N.bin |
+| `*_filtered.grm.gz` | GRM text gzipped subset. One line per pair: IID1 IID2 value. | Release GRM text for inspection/debug | gzip, any text tool | `readr::read_table("file.grm.gz")` | `pandas.read_table("file.grm.gz", compression="gzip")` |
+| `*_filtered.eigenvec` | Eigenvec row-filtered to release IIDs. Columns: #IID FID PC1 PC2... | Release PCs for GWAS covariates | PLINK2, GCTA, R/Py | Same as standard .eigenvec | Same as standard .eigenvec |
+| `*_filtered.cnv` | CNV file row-filtered by sample_id column. | Release CNV data | Any text tool | Same as standard CNV | Same as standard CNV |
+| `*_deid` | De-identified file (raw ID -> release_candid+C/M via crosswalk). Input formats: CNV, GRM.id, eigenvec, generic tabular. | De-identified derivatives for external sharing | Any text tool | `readr::read_table("file_deid")` | `pandas.read_table("file_deid")` |
+| `removed_individuals.txt` | One-column excluded IIDs. | Audit trail | Any text tool | `readr::read_table("removed_individuals.txt", col_names="IID")` | `pandas.read_table("removed_individuals.txt", header=None, names=["IID"])` |
+| `batch_info.txt` | Tab-delimited: IID visit plate_number. | Batch-effect documentation | Any text tool | `readr::read_tsv("batch_info.txt")` | `pandas.read_table("batch_info.txt", sep="\t")` |
+
 - **R**: `readr::read_tsv("file.ext")`, `data.table::fread("file.ext")`, or `utils::read.table("file.ext", header=TRUE)`
 - **Py**: `pandas.read_table("file.ext")`, `polars.read_csv("file.ext", separator="\t")`
 

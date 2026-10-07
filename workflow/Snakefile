@@ -7,17 +7,21 @@ from snakemake.utils import validate
 
 report: "../report/stylesheet.css"
 
+
 # Paths in include and configfile are relative to the Snakefile
 # paths inside the rules are relative to where you run the command.
 
 CHROMOSOMES = config.get("chromosomes", list(range(1, 23)))
 CHR_REGEX = "|".join(str(c) for c in CHROMOSOMES)
 
+
 wildcard_constraints:
-    CHR=CHR_REGEX
+    CHR=CHR_REGEX,
+
 
 def input_is_per_chromosome():
     return "{CHR}" in config.get("INPUT", "")
+
 
 OUT_DIR = Path(config.get("OUT_DIR", "/path/to/out"))
 REF = Path(config.get("REF", "/path/to/ref"))
@@ -25,6 +29,7 @@ STORAGE_PREFIX = Path(os.path.abspath(config.get("local-storage-prefix", "/tmp")
 ANCESTRY_MODEL = config.get("ancestry", {}).get("model", "pca")
 
 SCRIPTS_DIR = (Path(workflow.basedir) / "scripts").resolve()
+
 
 ruleorder: convertPgenToVcf > compressAndIndexVcf
 ruleorder: createProvidedAncestryKeepFiles > classifySamplesByAncestry
@@ -36,7 +41,6 @@ ruleorder: createProvidedAncestryKeepFiles > classifySamplesByAncestry
 #         "Ancestry Analysis": "../report/ancestry_intro.rst",
 #         "Ancestry Specific QC": "../report/ancestrySpecificqc_intro.rst",
 #     }
-
 
 
 include: "rules/common.smk"
@@ -57,12 +61,19 @@ include: "rules/classifyAncestry.smk"
 include: "rules/RFMIX.smk"
 include: "rules/plotKaryotypeAncestry.smk"
 include: "rules/plotQC.smk"
+
+
 if config.get("phenotypeSimulation", {}).get("enabled", False):
+
     include: "rules/simulatePhenotype2.smk"
+
+
 include: "rules/snpHerit.smk"
 include: "rules/snpHeritRelated.smk"
+include: "rules/releaseFilter.smk"
 include: "rules/preparePRSInputs.smk"
 include: "rules/prsPipelines.smk"
+
 
 def _qc_outputs_for_subset(subset):
     """All QC metrics and key derivative files for one data subset."""
@@ -72,82 +83,96 @@ def _qc_outputs_for_subset(subset):
     # ── QC metrics (from initialFilter.sh) ──
     if INPUT_IS_PER_CHROMOSOME:
         for CHR in CHROMOSOMES:
-            files.extend([
-                prefix / f"initial_{CHR}.smiss",
-                prefix / f"initial_{CHR}.vmiss",
-                prefix / f"MAF_check_{CHR}.afreq",
-                prefix / f"f1.f2_{CHR}.hardy",
-                prefix / f"f1.f2_{CHR}.het",
-            ])
+            files.extend(
+                [
+                    prefix / f"initial_{CHR}.smiss",
+                    prefix / f"initial_{CHR}.vmiss",
+                    prefix / f"MAF_check_{CHR}.afreq",
+                    prefix / f"f1.f2_{CHR}.hardy",
+                    prefix / f"f1.f2_{CHR}.het",
+                ]
+            )
     else:
-        files.extend([
-            prefix / "initial.smiss",
-            prefix / "initial.vmiss",
-            prefix / "MAF_check.afreq",
-            prefix / "f1.b38.f2.hardy",
-            prefix / "f1.b38.f2.het",
-        ])
+        files.extend(
+            [
+                prefix / "initial.smiss",
+                prefix / "initial.vmiss",
+                prefix / "MAF_check.afreq",
+                prefix / "f1.b38.f2.hardy",
+                prefix / "f1.b38.f2.het",
+            ]
+        )
 
     # ── pgen backbone ──
     if INPUT_IS_PER_CHROMOSOME:
         for CHR in CHROMOSOMES:
-            files.extend([
-                prefix / f"f1_{CHR}.pgen",
-                prefix / f"f1.ldpruned_{CHR}.pgen",
-                prefix / f"f1.f2_{CHR}.pgen",
-            ])
+            files.extend(
+                [
+                    prefix / f"f1_{CHR}.pgen",
+                    prefix / f"f1.ldpruned_{CHR}.pgen",
+                    prefix / f"f1.f2_{CHR}.pgen",
+                ]
+            )
         # Crossmap produces per-chromosome f1.b38_{CHR}.pgen in this mode;
         # there is no single-file f1.b38.pgen / f1.b38.f2.pgen merge.
-        files.extend(
-            prefix / f"f1.b38_{CHR}.pgen" for CHR in CHROMOSOMES
-        )
+        files.extend(prefix / f"f1.b38_{CHR}.pgen" for CHR in CHROMOSOMES)
         # b38 LD-pruned backbone comes from the standalone crossmapLdPrunedToB38.
         files.append(prefix / "f1.b38.ldpruned.pgen")
     else:
         files.append(prefix / "f1.pgen")
-        files.extend([
-            prefix / "f1.b38.pgen",
-            prefix / "f1.b38.ldpruned.pgen",
-            prefix / "f1.b38.f2.pgen",
-            prefix / "f1.b38.f2.ldpruned.pgen",
-        ])
+        files.extend(
+            [
+                prefix / "f1.b38.pgen",
+                prefix / "f1.b38.ldpruned.pgen",
+                prefix / "f1.b38.f2.pgen",
+                prefix / "f1.b38.f2.ldpruned.pgen",
+            ]
+        )
 
     # ── Relatedness / GRM ──
-    files.extend([
-        prefix / "f1.b38.ldpruned.unrelated.pgen",
-        prefix / "f1.b38.ldpruned.unrelated_ids.txt",
-        prefix / "f1.b38.ldpruned.grm.bin",
-        prefix / "f1.b38.ldpruned.grm.id",
-        prefix / "f1.b38.ldpruned.grm.N.bin",
-        prefix / "f1.b38.ldpruned.unrelated.ldpruned.pgen",
-        prefix / "f1.b38.ldpruned.unrelated.ldpruned.grm.bin",
-        prefix / "f1.b38.ldpruned.unrelated.ldpruned.grm.id",
-        prefix / "f1.b38.ldpruned.unrelated.ldpruned.grm.N.bin",
-    ])
+    files.extend(
+        [
+            prefix / "f1.b38.ldpruned.unrelated.pgen",
+            prefix / "f1.b38.ldpruned.unrelated_ids.txt",
+            prefix / "f1.b38.ldpruned.grm.bin",
+            prefix / "f1.b38.ldpruned.grm.id",
+            prefix / "f1.b38.ldpruned.grm.N.bin",
+            prefix / "f1.b38.ldpruned.unrelated.ldpruned.pgen",
+            prefix / "f1.b38.ldpruned.unrelated.ldpruned.grm.bin",
+            prefix / "f1.b38.ldpruned.unrelated.ldpruned.grm.id",
+            prefix / "f1.b38.ldpruned.unrelated.ldpruned.grm.N.bin",
+        ]
+    )
 
     # ── Internal PCA ──
     if config.get("internalPCA", {}).get("method", "plink2") in ("plink2", "both"):
-        files.extend([
-            prefix / "internal_pca_plink2.eigenvec",
-            prefix / "internal_pca_plink2.eigenval",
-        ])
+        files.extend(
+            [
+                prefix / "internal_pca_plink2.eigenvec",
+                prefix / "internal_pca_plink2.eigenval",
+            ]
+        )
 
     # ── QC plots ──
     if INPUT_IS_PER_CHROMOSOME:
         for CHR in CHROMOSOMES:
-            files.extend([
-                prefix / "figures" / f"smiss_{CHR}.svg",
-                prefix / "figures" / f"vmiss_{CHR}.svg",
-                prefix / "figures" / f"hwe_histogram_{CHR}.svg",
-                prefix / "figures" / f"het_distribution_{CHR}.svg",
-            ])
+            files.extend(
+                [
+                    prefix / "figures" / f"smiss_{CHR}.svg",
+                    prefix / "figures" / f"vmiss_{CHR}.svg",
+                    prefix / "figures" / f"hwe_histogram_{CHR}.svg",
+                    prefix / "figures" / f"het_distribution_{CHR}.svg",
+                ]
+            )
     else:
-        files.extend([
-            prefix / "figures" / "smiss.svg",
-            prefix / "figures" / "vmiss.svg",
-            prefix / "figures" / "hwe_histogram.svg",
-            prefix / "figures" / "het_distribution.svg",
-        ])
+        files.extend(
+            [
+                prefix / "figures" / "smiss.svg",
+                prefix / "figures" / "vmiss.svg",
+                prefix / "figures" / "hwe_histogram.svg",
+                prefix / "figures" / "het_distribution.svg",
+            ]
+        )
     files.append(prefix / "figures" / "relatedness_histogram.svg")
 
     return files
@@ -157,21 +182,31 @@ rule all:
     input:
         # ── Global ancestry classification ──
         expand(
-            OUT_DIR / "01-globalAncestry" / "keep_{ANC}.txt", ANC=get_provided_ancestries()
-        ) if has_provided_ancestry() else [],
+            OUT_DIR / "01-globalAncestry" / "keep_{ANC}.txt",
+            ANC=get_provided_ancestries(),
+        )
+        if has_provided_ancestry()
+        else [],
         lambda wildcards: (
-            [OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
-             OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
-             OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
-             OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
-             OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv"]
-            if not has_provided_ancestry() else []
+            [
+                OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+                OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
+                OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
+                OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
+                OUT_DIR / "01-globalAncestry" / "ancestry_classifications.tsv",
+            ]
+            if not has_provided_ancestry()
+            else []
         ),
         # ── Local ancestry ──
         lambda wildcards: (
-            [OUT_DIR / "02-localAncestry" / "ancestry_full.txt"] +
-            expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES)
-            if (not has_provided_ancestry() and uses_rfmix()) else []
+            [OUT_DIR / "02-localAncestry" / "ancestry_full.txt"]
+            + expand(
+                OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv",
+                CHR=LOCAL_ANCESTRY_CHROMOSOMES,
+            )
+            if (not has_provided_ancestry() and uses_rfmix())
+            else []
         ),
         # ── All QC outputs per subset ──
         _qc_outputs_for_subset("full"),
@@ -181,10 +216,15 @@ rule all:
 
 
 if input_is_per_chromosome():
+
     ruleorder: convertPlinkPerChromosome > concatLdPruned
     ruleorder: convertPlinkPerChromosome > concatPgen
+
 else:
+
     ruleorder: convertPlinkSingleFile
+
+
 # include: "rules/trainGnomix.smk"
 
 
@@ -193,22 +233,19 @@ rule assembleRef:
     input:
         ancient(REF / "1000G_highcoverage" / "population.txt"),
         ancient(REF / "1000G_highcoverage" / "pedigree.txt"),
-        ancient(expand(
-            REF
-            / "1000G_highcoverage"
-            / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
-            CHR=range(1, 23),
-        )),
+        ancient(
+            expand(
+                REF
+                / "1000G_highcoverage"
+                / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
+                CHR=range(1, 23),
+            )
+        ),
         ancient(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen"),
         ancient(expand(REF / "gmaps" / "hg38map.chr{CHR}.txt", CHR=range(1, 23))),
 
 
 rule run_initialQC:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=60,
     input:
         lambda wildcards: (
             expand(OUT_DIR / "full" / "f1_{CHR}.pgen", CHR=CHROMOSOMES)
@@ -235,51 +272,58 @@ rule run_initialQC:
                 OUT_DIR / "full" / "heterozygosity.het",
             ]
         ),
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=60,
+
 
 rule run_pca:
+    input:
+        labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
+        eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
+        eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,  # 1 week
-    input:
-        labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
-        eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
-        eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
 
 
 rule run_estimateAdmixing:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
     input:
         labels=ancient(REF / "1000G_highcoverage" / "population.txt"),
         eigen_ref=OUT_DIR / "01-globalAncestry" / "refRefPCscores.sscore",
         eigen_sample=OUT_DIR / "01-globalAncestry" / "sampleRefPCscores.sscore",
         umap_ref=OUT_DIR / "01-globalAncestry" / "umap_ref.csv",
         umap_sample=OUT_DIR / "01-globalAncestry" / "umap_sample.csv",
-        rfmix_global=lambda wildcards: OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
-
-
-rule run_classifyAncestry:
+        rfmix_global=lambda wildcards: (
+            OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else []
+        ),
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,
+
+
+rule run_classifyAncestry:
     input:
-        rfmix=lambda wildcards: OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else [],
-        classification_probability=OUT_DIR / "01-globalAncestry" / "classificationProbabilities.tsv",
-
-
-rule run_ancestryQC:
+        rfmix=lambda wildcards: (
+            OUT_DIR / "02-localAncestry" / "ancestry_full.txt" if uses_rfmix() else []
+        ),
+        classification_probability=OUT_DIR
+        / "01-globalAncestry"
+        / "classificationProbabilities.tsv",
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
-        runtime=420,  # 1 week
+        runtime=420,
+
+
+rule run_ancestryQC:
     input:
         lambda wildcards: (
             expand(
@@ -305,109 +349,150 @@ rule run_ancestryQC:
                 ANCESTRY=get_ancestries(wildcards),
             )
         ),
-
-
-rule run_relatedness:
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,  # 1 week
+
+
+rule run_relatedness:
     input:
         OUT_DIR / "full" / "f1.b38.ldpruned.unrelated.pgen",
         lambda wildcards: expand(
             OUT_DIR / "{ANCESTRY}" / "f1.b38.ldpruned.unrelated.pgen",
             ANCESTRY=get_ancestries(wildcards),
         ),
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=420,  # 1 week
 
 
 rule run_rfmix:
+    input:
+        lambda wildcards: (
+            (
+                expand(
+                    OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
+                    CHR=LOCAL_ANCESTRY_CHROMOSOMES,
+                )
+                + expand(
+                    OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv",
+                    CHR=LOCAL_ANCESTRY_CHROMOSOMES,
+                )
+            )
+            if uses_rfmix()
+            else []
+        ),
+        ancestry=lambda wildcards: (
+            [OUT_DIR / "02-localAncestry" / "ancestry_full.txt"]
+            if uses_rfmix()
+            else []
+        ),
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,
-    input:
-        lambda wildcards: (
-            expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz", CHR=LOCAL_ANCESTRY_CHROMOSOMES) +
-            expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=LOCAL_ANCESTRY_CHROMOSOMES)
-        ) if uses_rfmix() else [],
-        ancestry=lambda wildcards: [OUT_DIR / "02-localAncestry" / "ancestry_full.txt"] if uses_rfmix() else [],
 
 
 rule run_qcPlots:
+    input:
+        lambda wildcards: (
+            [
+                OUT_DIR / "full" / "figures" / "smiss.svg",
+                OUT_DIR / "full" / "figures" / "vmiss.svg",
+            ]
+            if not input_is_per_chromosome()
+            else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "hwe_histogram.svg"]
+            if not input_is_per_chromosome()
+            else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "het_distribution.svg"]
+            if not input_is_per_chromosome()
+            else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "relatedness_histogram.svg"]
+            if not input_is_per_chromosome()
+            else []
+        ),
+        lambda wildcards: (
+            [OUT_DIR / "full" / "figures" / "pcair_pcs.svg"]
+            if config.get("internalPCA", {}).get("method", "plink2")
+            in ["pcair", "both"]
+            else []
+        ),
+        OUT_DIR
+        / "01-globalAncestry"
+        / f"classificationProbability_stacked_{ANCESTRY_MODEL}.svg",
+        OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=60,
-    input:
-        lambda wildcards: (
-            [OUT_DIR / "full" / "figures" / "smiss.svg",
-             OUT_DIR / "full" / "figures" / "vmiss.svg"]
-            if not input_is_per_chromosome() else []
-        ),
-        lambda wildcards: (
-            [OUT_DIR / "full" / "figures" / "hwe_histogram.svg"]
-            if not input_is_per_chromosome() else []
-        ),
-        lambda wildcards: (
-            [OUT_DIR / "full" / "figures" / "het_distribution.svg"]
-            if not input_is_per_chromosome() else []
-        ),
-        lambda wildcards: (
-            [OUT_DIR / "full" / "figures" / "relatedness_histogram.svg"]
-            if not input_is_per_chromosome() else []
-        ),
-        lambda wildcards: (
-            [OUT_DIR / "full" / "figures" / "pcair_pcs.svg"]
-            if config.get("internalPCA", {}).get("method", "plink2") in ["pcair", "both"]
-            else []
-        ),
-        OUT_DIR / "01-globalAncestry" / f"classificationProbability_stacked_{ANCESTRY_MODEL}.svg",
-        OUT_DIR / "01-globalAncestry" / "ancestry_classification_space.svg",
 
 
 rule run_simulatePhenotype:
+    input:
+        lambda wildcards: (
+            (
+                lambda sim_cfg, ancs: expand(
+                    OUT_DIR
+                    / "{ancestry}"
+                    / "simulations"
+                    / "{sim_name}"
+                    / "simulated.bed",
+                    ancestry=ancs,
+                    sim_name=[s["name"] for s in sim_cfg.get("simulations", [])],
+                )
+            )(
+                config.get("phenotypeSimulation", {}),
+                config.get("phenotypeSimulation", {}).get("ancestries", []),
+            )
+            if (
+                config.get("phenotypeSimulation", {}).get("enabled", False)
+                and config.get("phenotypeSimulation", {}).get("ancestries", [])
+                and config.get("phenotypeSimulation", {}).get("simulations", [])
+            )
+            else []
+        ),
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,
-    input:
-        lambda wildcards: (
-            lambda sim_cfg, ancs: expand(
-                OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bed",
-                ancestry=ancs,
-                sim_name=[s["name"] for s in sim_cfg.get("simulations", [])],
-            )
-        )(config.get("phenotypeSimulation", {}), config.get("phenotypeSimulation", {}).get("ancestries", [])) if (
-            config.get("phenotypeSimulation", {}).get("enabled", False)
-            and config.get("phenotypeSimulation", {}).get("ancestries", [])
-            and config.get("phenotypeSimulation", {}).get("simulations", [])
-        ) else [],
-
 
 
 if config.get("snpHerit", {}).get("pheno"):
     if SNP_HERIT_EXTERNAL:
+
         rule run_snpHerit:
-            threads: 1
-            resources:
-                nodes=1,
-                mem_mb=4000,
-                runtime=420,
             input:
-                Path(SNP_HERIT_OUT)
-    else:
-        rule run_snpHerit:
+                Path(SNP_HERIT_OUT),
             threads: 1
             resources:
                 nodes=1,
                 mem_mb=4000,
                 runtime=420,
+
+    else:
+
+        rule run_snpHerit:
             input:
                 OUT_DIR / SNP_HERIT_SUBSET / SNP_HERIT_DAG_OUTPUT,
+            threads: 1
+            resources:
+                nodes=1,
+                mem_mb=4000,
+                runtime=420,
 
 
 if config.get("snpHeritRelated", {}).get("pheno"):
@@ -417,79 +502,123 @@ if config.get("snpHeritRelated", {}).get("pheno"):
             _shr_targets.append(SNP_HERIT_RELATED_CONFIG["out"] + "_fastgwa_h2.csv")
         if "predlmm_ace" in SNP_HERIT_RELATED_METHODS:
             _shr_targets.append(SNP_HERIT_RELATED_CONFIG["out"] + "_predlmm_ace_h2.csv")
+
         rule run_snpHeritRelated:
+            input:
+                _shr_targets,
             threads: 1
             resources:
                 nodes=1,
                 mem_mb=4000,
                 runtime=420,
-            input:
-                _shr_targets
+
     else:
         if "fastgwa" in SNP_HERIT_RELATED_METHODS:
-            _shr_targets.append(OUT_DIR / SNP_HERIT_RELATED_SUBSET / SNP_HERIT_RELATED_OUTDIR / "fastgwa_h2.csv")
+            _shr_targets.append(
+                OUT_DIR
+                / SNP_HERIT_RELATED_SUBSET
+                / SNP_HERIT_RELATED_OUTDIR
+                / "fastgwa_h2.csv"
+            )
         if "predlmm_ace" in SNP_HERIT_RELATED_METHODS:
-            _shr_targets.append(OUT_DIR / SNP_HERIT_RELATED_SUBSET / SNP_HERIT_RELATED_OUTDIR / "predlmm_ace_h2.csv")
+            _shr_targets.append(
+                OUT_DIR
+                / SNP_HERIT_RELATED_SUBSET
+                / SNP_HERIT_RELATED_OUTDIR
+                / "predlmm_ace_h2.csv"
+            )
+
         rule run_snpHeritRelated:
+            input:
+                _shr_targets,
             threads: 1
             resources:
                 nodes=1,
                 mem_mb=4000,
                 runtime=420,
-            input:
-                _shr_targets
+
+
+if config.get("releaseFilter", {}).get("enabled", False):
+    _rf_targets = [config["releaseFilter"]["keep_list"], config["releaseFilter"]["temp_fam"]]
+    # Add filtered derivative outputs
+    deriv = config.get("releaseFilter", {}).get("derivatives", {})
+    if deriv.get("grm_bin"):
+        _rf_targets.extend([
+            deriv["grm_bin"] + ".filtered.grm.bin",
+            deriv["grm_bin"] + ".filtered.grm.id",
+            deriv["grm_bin"] + ".filtered.grm.N.bin",
+        ])
+    if deriv.get("grm_gz"):
+        _rf_targets.append(deriv["grm_gz"].replace(".grm.gz", "_filtered.grm.gz"))
+    if deriv.get("eigenvectors"):
+        _rf_targets.extend([f + "_filtered" for f in deriv["eigenvectors"]])
+    if deriv.get("cnv_files"):
+        _rf_targets.extend([f + "_filtered" for f in deriv["cnv_files"]])
+    if deriv.get("generic_files"):
+        _rf_targets.extend([g["out_path"] if "out_path" in g else g["path"] + "_filtered" for g in deriv["generic_files"]])
+    if deriv.get("deidentify_files"):
+        _rf_targets.extend([f + "_deid" for f in deriv["deidentify_files"]])
 
 rule run_snpHeritSimulated:
+    input:
+        lambda wildcards: (
+            (
+                lambda sim_cfg, subsets: expand(
+                    OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "herit.csv",
+                    subset=subsets,
+                    sim_name=[s["name"] for s in sim_cfg.get("simulations", [])],
+                )
+            )(
+                config.get("phenotypeSimulation", {}),
+                config.get("phenotypeSimulation", {}).get("ancestries", []),
+            )
+            if (
+                config.get("phenotypeSimulation", {}).get("enabled", False)
+                and config.get("phenotypeSimulation", {}).get("ancestries", [])
+                and config.get("phenotypeSimulation", {}).get("simulations", [])
+            )
+            else []
+        ),
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,
-    input:
-        lambda wildcards: (
-            lambda sim_cfg, subsets: expand(
-                OUT_DIR / "{subset}" / "simulations" / "{sim_name}" / "herit.csv",
-                subset=subsets,
-                sim_name=[s["name"] for s in sim_cfg.get("simulations", [])],
-            )
-        )(config.get("phenotypeSimulation", {}), config.get("phenotypeSimulation", {}).get("ancestries", [])) if (
-            config.get("phenotypeSimulation", {}).get("enabled", False)
-            and config.get("phenotypeSimulation", {}).get("ancestries", [])
-            and config.get("phenotypeSimulation", {}).get("simulations", [])
-        ) else [],
 
 
 rule run_PCAinternal:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
     input:
         lambda wildcards: (
             lambda ancs: (
                 (
-                    expand(OUT_DIR / "{anc}" / "pcair_pcaobj.RDS", anc=ancs) +
-                    expand(OUT_DIR / "{anc}" / "pcrelate_kinship.RDS", anc=ancs) +
-                    expand(OUT_DIR / "{anc}" / "pcair_coordinates.tsv", anc=ancs)
-                    if config.get("internalPCA", {}).get("method", "plink2") in ["pcair", "both"]
+                    expand(OUT_DIR / "{anc}" / "pcair_pcaobj.RDS", anc=ancs)
+                    + expand(OUT_DIR / "{anc}" / "pcrelate_kinship.RDS", anc=ancs)
+                    + expand(OUT_DIR / "{anc}" / "pcair_coordinates.tsv", anc=ancs)
+                    if config.get("internalPCA", {}).get("method", "plink2")
+                    in ["pcair", "both"]
                     else []
-                ) + (
-                    expand(OUT_DIR / "{anc}" / "internal_pca_plink2.eigenvec", anc=ancs) +
-                    expand(OUT_DIR / "{anc}" / "internal_pca_plink2.eigenval", anc=ancs)
-                    if config.get("internalPCA", {}).get("method", "plink2") in ["plink2", "both"]
+                )
+                + (
+                    expand(
+                        OUT_DIR / "{anc}" / "internal_pca_plink2.eigenvec", anc=ancs
+                    )
+                    + expand(
+                        OUT_DIR / "{anc}" / "internal_pca_plink2.eigenval", anc=ancs
+                    )
+                    if config.get("internalPCA", {}).get("method", "plink2")
+                    in ["plink2", "both"]
                     else []
                 )
             )
         )(get_ancestries(wildcards) + ["full"]),
-
-
-rule run_preparePRSInputs:
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,
+
+
+rule run_preparePRSInputs:
     input:
         Path(
             config.get("prsPipeline", {}).get(
@@ -502,14 +631,14 @@ rule run_preparePRSInputs:
             )
         )
         / "prs_inputs.env",
-
-
-rule run_singleAncestryPRS:
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,
+
+
+rule run_singleAncestryPRS:
     input:
         Path(
             config.get("prsPipeline", {}).get(
@@ -522,42 +651,42 @@ rule run_singleAncestryPRS:
             )
         )
         / f"single_ancestry_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}.done",
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=420,
 
 
 rule run_singleAncestryPRSPipelines:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
     input:
         PRS_METHOD_RUN_DIR / "single_ct.done",
         PRS_METHOD_RUN_DIR / "single_prsice.done",
         PRS_METHOD_RUN_DIR / "single_prscs.done",
         PRS_METHOD_RUN_DIR / "single_ldpred2.done",
         PRS_METHOD_RUN_DIR / "single_lassosum2.done",
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=420,
 
 
 rule run_multiAncestryPRSPipelines:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
     input:
         PRS_METHOD_RUN_DIR / "multi_ctsleb.done",
         PRS_METHOD_RUN_DIR / "multi_prscsx.done",
         PRS_METHOD_RUN_DIR / "multi_ldpred2.done",
         PRS_METHOD_RUN_DIR / "multi_prosper.done",
         PRS_METHOD_RUN_DIR / "multi_sdprs.done",
-
-
-rule run_allPRSPipelines:
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,
+
+
+rule run_allPRSPipelines:
     input:
         PRS_METHOD_RUN_DIR / "single_ct.done",
         PRS_METHOD_RUN_DIR / "single_prsice.done",
@@ -569,32 +698,34 @@ rule run_allPRSPipelines:
         PRS_METHOD_RUN_DIR / "multi_ldpred2.done",
         PRS_METHOD_RUN_DIR / "multi_prosper.done",
         PRS_METHOD_RUN_DIR / "multi_sdprs.done",
-
-
-rule runSingleAncestryPrecise:
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=420,
+
+
+rule runSingleAncestryPrecise:
     input:
         PRS_METHOD_RUN_DIR / "single_prsice.done",
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=420,
 
 
 ##### GOOD UP TO HERE
 
 
 rule run_train_gnomix:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,  # 1 week
     input:
         expand(
             f"{config.get('OUT_DIR', '/path/to/out')}/03-localAncestry/chr{{CHR}}_ancestry_gnomix",
             CHR=LOCAL_ANCESTRY_CHROMOSOMES,
         ),
-
-
-
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=4000,
+        runtime=420,  # 1 week

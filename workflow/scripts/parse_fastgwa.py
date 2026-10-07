@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Parse h2 (Heritability), Vg, Ve, Vp and p-value from a fastGWA log file."""
-import argparse, re, sys
+import argparse
+import re
+import sys
 from pathlib import Path
+
 import pandas as pd
 
 
@@ -24,7 +27,6 @@ def main():
                 comp[f"{name}_se"] = float(mm.group(2))
     row = {"h2": h2, "pval": pval, **comp}
     pd.DataFrame([row]).to_csv(args.out, index=False)
-    print(pd.DataFrame([row]).to_string(index=False))
 
 
 if __name__ == "__main__":

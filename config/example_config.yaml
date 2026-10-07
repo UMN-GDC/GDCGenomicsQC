@@ -258,6 +258,50 @@ snpHerit:
 #     # pca_input: "/path/to/internal_pca_plink2.eigenvec"
 #     # out: "/path/to/out_prefix"
 
+# Release Filter: de-identification, keep-list, derivative filtering & validation
+# Set enabled: true to activate. Can be applied at any intermediate stage.
+# releaseFilter:
+#     enabled: true
+#     source_fam: "/path/to/QC_passed.fam"          # All post-QC subjects (raw IDs)
+#     identifiers: "/path/to/release_identifiers.csv"  # pscid -> release_candid (+ suffix)
+#     keep_list: "/path/to/keep_list.txt"           # Output for plink2 --keep
+#     temp_fam: "/path/to/temp.fam"                 # De-identified .fam (all QC-passing)
+#     crosswalk: "/path/to/release_identifiers.csv" # For de-identification step
+#     exclusion_sources:                            # Exclusion lists to apply
+#         - "/path/to/HBCDexclusions.csv"
+#         - "/path/to/Exclude_Summary.xlsx"
+#     par_visit: "/path/to/par_visit.csv"           # Optional: eligible subjects
+#     batch_info: "/path/to/batch_info.txt"         # Optional output
+#     removed_individuals: "/path/to/removed.txt"   # Optional output
+#     id_col: "IID"
+#     release_id_col: "release_candid"
+#     suffix_col: "relationship"                    # C/M column
+#     pscid_col: "pscid"
+#     derivatives:
+#         bed: "/path/to/data.bed"                  # Filter with plink2 --keep
+#         bim: "/path/to/data.bim"
+#         fam: "/path/to/data.fam"
+#         # OR pgen/pvar/psam
+#         # pgen: "/path/to/data.pgen"
+#         # pvar: "/path/to/data.pvar"
+#         # psam: "/path/to/data.psam"
+#         grm_bin: "/path/to/prefix"                # .grm.bin/.grm.id/.grm.N.bin
+#         grm_gz: "/path/to/grm.gz"                 # Filter .grm.gz
+#         eigenvectors:                             # Filter PC eigenvecs
+#             - "/path/to/internal_pca_plink2.eigenvec"
+#             - "/path/to/pcair_coordinates.tsv"
+#         cnv_files:                                # Filter/de-ID CNV
+#             - "/path/to/CNV_slim.txt"
+#             - "/path/to/CNV_bookmarks.csv"
+#         cnv_col: "sample_id"
+#         generic_files:
+#             - path: "/path/to/file.tsv"
+#               id_col: "sample_id"
+#               out_path: "/path/to/file_filtered.tsv"
+#         deidentify_files:                         # Raw ID -> de-ID
+#             - "/path/to/external_CNV.txt"
+#     validate: true
+
 # =============================================================================
 # Phenotype Simulation (Testing)
 # =============================================================================

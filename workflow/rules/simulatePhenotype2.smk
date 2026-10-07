@@ -7,16 +7,19 @@ SIM_INPUT_PREFIXES = SIM_CFG.get("input_prefixes") or {}
 if not SIM_ANCESTRIES:
     raise ValueError("phenotypeSimulation.ancestries must be specified")
 
+
 def get_sim_input_prefix(anc):
     if anc in SIM_INPUT_PREFIXES:
         return SIM_INPUT_PREFIXES[anc]
     return str(OUT_DIR / anc / "f1")
+
 
 def get_sim_cfg(sim_name):
     for s in SIM_CFG.get("simulations", []):
         if s.get("name") == sim_name:
             return s
     return {}
+
 
 _sim_inputs = {}
 for anc in SIM_ANCESTRIES:
@@ -36,36 +39,57 @@ SIM_ANC_NAMES_STR = ",".join(SIM_ANCESTRIES)
 SIM_PGEN_PREFIXES_STR = ",".join(get_sim_input_prefix(anc) for anc in SIM_ANCESTRIES)
 SIM_SCRIPT_DIR = str(SCRIPTS_DIR)
 
+
 rule simulatePhenotypes:
+    input:
+        **_sim_inputs,
+    output:
+        _sim_outputs,
     log:
         OUT_DIR / "logs" / "simulatePhenotypes_{sim_name}.log",
-    container:
-        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
     conda:
         "../../envs/phenotypeSim.yml"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1"
     threads: 8
     resources:
         nodes=1,
         mem_mb=32000,
         runtime=240,
-    input:
-        **_sim_inputs,
-    output:
-        _sim_outputs,
     params:
         anc_names=SIM_ANC_NAMES_STR,
         pgen_prefixes=SIM_PGEN_PREFIXES_STR,
         out_dirs=lambda w: ",".join(
             str(OUT_DIR / anc / "simulations" / w.sim_name) for anc in SIM_ANCESTRIES
         ),
-        corr_matrix_json=lambda w: json.dumps(get_sim_cfg(w.sim_name).get("corr_matrix", [])),
-        heritability=lambda w: str(get_sim_cfg(w.sim_name).get("heritability", SIM_CFG.get("heritability", 0.4))),
+        corr_matrix_json=lambda w: json.dumps(
+            get_sim_cfg(w.sim_name).get("corr_matrix", [])
+        ),
+        heritability=lambda w: str(
+            get_sim_cfg(w.sim_name).get(
+                "heritability", SIM_CFG.get("heritability", 0.4)
+            )
+        ),
         maf=lambda w: str(get_sim_cfg(w.sim_name).get("maf", SIM_CFG.get("maf", 0.05))),
         seed=lambda w: str(get_sim_cfg(w.sim_name).get("seed", SIM_CFG.get("seed", 42))),
-        n_sims=lambda w: str(get_sim_cfg(w.sim_name).get("n_sims", SIM_CFG.get("n_sims", 10))),
-        skip_thinning=lambda w: str(get_sim_cfg(w.sim_name).get("skip_thinning", SIM_CFG.get("skip_thinning", True))).lower(),
-        thin_count_snps=lambda w: str(get_sim_cfg(w.sim_name).get("thin_count_snps", SIM_CFG.get("thin_count_snps", 1000000))),
-        thin_count_inds=lambda w: str(get_sim_cfg(w.sim_name).get("thin_count_inds", SIM_CFG.get("thin_count_inds", 10000))),
+        n_sims=lambda w: str(
+            get_sim_cfg(w.sim_name).get("n_sims", SIM_CFG.get("n_sims", 10))
+        ),
+        skip_thinning=lambda w: str(
+            get_sim_cfg(w.sim_name).get(
+                "skip_thinning", SIM_CFG.get("skip_thinning", True)
+            )
+        ).lower(),
+        thin_count_snps=lambda w: str(
+            get_sim_cfg(w.sim_name).get(
+                "thin_count_snps", SIM_CFG.get("thin_count_snps", 1000000)
+            )
+        ),
+        thin_count_inds=lambda w: str(
+            get_sim_cfg(w.sim_name).get(
+                "thin_count_inds", SIM_CFG.get("thin_count_inds", 10000)
+            )
+        ),
         script_dir=SIM_SCRIPT_DIR,
     shell:
         """
@@ -85,23 +109,35 @@ rule simulatePhenotypes:
 
 
 rule computeSimGRM:
-    container:
-        "docker://gfanz/plink2:latest"
-    conda:
-        "../../envs/phenotypeSim.yml"
-    threads: 4
-    resources:
-        nodes=1,
-        mem_mb=16000,
-        runtime=120,
     input:
         bed=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bed",
         bim=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bim",
         fam=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.fam",
     output:
-        grm_bin=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.bin",
-        grm_id=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.id",
-        grm_nbin=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.grm.N.bin",
+        grm_bin=OUT_DIR
+        / "{ancestry}"
+        / "simulations"
+        / "{sim_name}"
+        / "simulated.grm.bin",
+        grm_id=OUT_DIR
+        / "{ancestry}"
+        / "simulations"
+        / "{sim_name}"
+        / "simulated.grm.id",
+        grm_nbin=OUT_DIR
+        / "{ancestry}"
+        / "simulations"
+        / "{sim_name}"
+        / "simulated.grm.N.bin",
+    conda:
+        "../../envs/phenotypeSim.yml"
+    container:
+        "docker://gfanz/plink2:latest"
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=120,
     params:
         prefix=lambda w, input: str(input.bed)[:-4],
     shell:
@@ -111,21 +147,25 @@ rule computeSimGRM:
 
 
 rule computeSimPCA:
-    container:
-        "docker://gfanz/plink2:latest"
-    conda:
-        "../../envs/phenotypeSim.yml"
-    threads: 4
-    resources:
-        nodes=1,
-        mem_mb=16000,
-        runtime=120,
     input:
         bed=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bed",
         bim=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.bim",
         fam=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.fam",
     output:
-        eigenvec=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.eigenvec",
+        eigenvec=OUT_DIR
+        / "{ancestry}"
+        / "simulations"
+        / "{sim_name}"
+        / "simulated.eigenvec",
+    conda:
+        "../../envs/phenotypeSim.yml"
+    container:
+        "docker://gfanz/plink2:latest"
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=120,
     params:
         prefix=lambda w, input: str(input.bed)[:-4],
     shell:
@@ -135,20 +175,24 @@ rule computeSimPCA:
 
 
 rule extractSimPheno:
-    container:
-        "docker://gfanz/plink2:latest"
+    input:
+        fam=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.fam",
+    output:
+        pheno=OUT_DIR
+        / "{ancestry}"
+        / "simulations"
+        / "{sim_name}"
+        / "simulated_pheno1.pheno",
     conda:
         "../../envs/phenotypeSim.yml"
+    container:
+        "docker://gfanz/plink2:latest"
     threads: 1
     resources:
         nodes=1,
         mem_mb=4000,
         runtime=60,
-    input:
-        fam=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated.fam",
-    output:
-        pheno=OUT_DIR / "{ancestry}" / "simulations" / "{sim_name}" / "simulated_pheno1.pheno",
     shell:
         """
-        awk 'BEGIN{{OFS=" "; print "FID", "IID", "1"}}{{print $1, $2, $6}}' {input.fam} > {output.pheno}
+        awk 'BEGIN{{OFS=" "; print "FID", "IID", "1"}}{{print $1, $2, $6}}' {input.fam} >{output.pheno}
         """

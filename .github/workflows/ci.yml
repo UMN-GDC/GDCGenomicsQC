@@ -1,0 +1,214 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [development, main]
+    tags: ['v*']
+  pull_request:
+    branches: [development, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.11'
+  SNAKEMAKE_VERSION: '8.25.0'
+
+jobs:
+  lint-and-validate:
+    name: Lint & Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq yamllint
+
+      - name: Lint YAML configs
+        run: |
+          yamllint -c .yamllint.yml . 2>/dev/null || yamllint config/ workflow/ profiles/ envs/ 2>/dev/null
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install lint tools
+        run: |
+          pip install --quiet ruff==0.5.* snakefmt==0.12.*
+
+      - name: Lint Python scripts
+        run: |
+          ruff check workflow/scripts/ --exit-non-zero-on-fix
+          snakefmt --check workflow/scripts/
+
+      - name: Lint Snakefiles
+        run: |
+          snakefmt --check workflow/Snakefile workflow/rules/ --exclude workflow/rules/Crossmap.smk
+
+      - name: Validate Snakemake workflow (lint + dry-run)
+        run: |
+          pip install --quiet "snakemake>=${{ env.SNAKEMAKE_VERSION }}"
+          snakemake --lint --snakefile workflow/Snakefile 2>&1 | head -30
+          snakemake --dry-run --snakefile workflow/Snakefile \
+            --configfile config/sandboxToy.yaml \
+            --use-conda --conda-frontend mamba \
+            --printshellcmds 2>&1 | head -50
+
+      - name: Validate config schema
+        run: |
+          pip install --quiet pyyaml
+          python -c "import yaml; f=open('config/config.schema.yaml'); s=yaml.safe_load(f); print('Config schema OK: {} top-level keys'.format(len(s)))"
+
+  test-on-development:
+    name: Extended Tests (development branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: lint-and-validate
+    if: github.ref == 'refs/heads/development' && github.event_name == 'push'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install mamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          micromamba-version: '1.5.8'
+          environment-file: envs/snakemake.yml
+          cache-environment: true
+          create-args: >-
+            -n test-env
+            python=3.11
+            snakemake=${{ env.SNAKEMAKE_VERSION }}
+            pytest
+
+      - name: Run sandboxToy pipeline (quick test)
+        shell: bash -el {0}
+        env:
+          MAMBA_EXE: ${{ env.MAMBA_ROOT_DIR }}/bin/micromamba
+          MAMBA_ROOT_PREFIX: ${{ env.MAMBA_ROOT_DIR }}
+        run: |
+          micromamba activate test-env
+          cd workflow
+          snakemake --cores 2 --use-conda \
+            --configfile ../config/sandboxToy.yaml \
+            --profile ../profiles/interactive \
+            --dry-run 2>&1 | tail -20
+
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint-and-validate
+    if: github.event_name == 'pull_request' && github.base_ref == 'development'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Sphinx docs
+        run: |
+          pip install -r docs/requirements.txt
+          cd docs
+          sphinx-build -b html . _build/html --keep-going -q
+
+  promote-to-main:
+    name: Promote to Main (Manual Approval)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [lint-and-validate, test-on-development, build-docs]
+    if: github.ref == 'refs/heads/development' && github.event_name == 'push'
+    environment: production
+    steps:
+      - name: Create PR to main (auto)
+        if: github.repository_owner == 'UMN-GDC'
+        run: |
+          echo "Development branch passed all checks (lint, test, docs)."
+          echo "Ready for manual promotion to main."
+          echo "Owner should merge development -> main via PR or direct push."
+          echo "See: https://github.com/${{ github.repository }}/compare/main...development"
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: lint-and-validate
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            git log --pretty=format:"- %s (%h)" > CHANGELOG_TEMP.md
+          else
+            git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" > CHANGELOG_TEMP.md
+          fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG_TEMP.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Changes
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Installation
+            ```bash
+            # Conda (recommended)
+            conda env create -n snakemake snakemake snakemake-executor-plugin-slurm
+            conda activate snakemake
+
+            # Or use pre-built containers
+            apptainer pull oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest
+            ```
+
+            ## Documentation
+            https://gdcgenomicsqc.readthedocs.io/en/latest/
+
+            ## Citation
+            If you use this pipeline, please cite:
+            > Coffman & Anderson (2024). GDCGenomicsQC: A modular pipeline for genomic quality control in diverse populations.
+
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+
+  deploy-docs:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint-and-validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build docs
+        run: |
+          pip install -r docs/requirements.txt
+          cd docs
+          sphinx-build -b html . _build/html --keep-going
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build/html
+          force_orphan: true

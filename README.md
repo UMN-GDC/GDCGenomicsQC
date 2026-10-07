@@ -7,6 +7,10 @@
 ![R](https://img.shields.io/badge/r-%23276DC3.svg?style=for-the-badge&logo=r&logoColor=white)
 ![Shell Script](https://img.shields.io/badge/shell_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 [![Documentation](https://img.shields.io/badge/docs-readthedocs-blue?style=for-the-badge&logo=readthedocs)](https://gdcgenomicsqc.readthedocs.io/en/latest/)
+[![CI](https://img.shields.io/github/actions/workflow/status/UMN-GDC/GDCGenomicsQC/ci.yml?branch=main&style=for-the-badge&logo=githubactions)](https://github.com/UMN-GDC/GDCGenomicsQC/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg?style=for-the-badge)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![Release](https://img.shields.io/github/v/release/UMN-GDC/GDCGenomicsQC?style=for-the-badge&logo=github)](https://github.com/UMN-GDC/GDCGenomicsQC/releases)
 
 A quality control pipeline for genomics data developed by the Masonic Institute of the Developing Brain at the University of Minnesota. The pipeline is built utilizing [Plink](https://www.cog-genomics.org/plink/), [Liftover](https://genome.ucsc.edu/cgi-bin/hgLiftOver), [R-language](https://www.r-project.org/), [Python](https://www.python.org/), and [bash](https://www.gnu.org/software/bash/), and  housed in a [Docker image](https://hub.docker.com/_/docker). The steps in the pipeline are detailed [here](https://gdcgenomicsqc.readthedocs.io/en/latest/)
 
@@ -481,6 +485,45 @@ If you’re looking for ways to get started, here's a list of ways to help us im
 ## Tests
 This is still under construction
 
+## Development & CI/CD
+
+### Branch Strategy
+```
+feature/* → PR → development  → [CI passes] → Owner merges → main → [Release tag] → Release
+```
+
+### CI Pipeline (GitHub Actions)
+| Job | Trigger | Description |
+|-----|---------|-------------|
+| `lint-and-validate` | All pushes/PRs | YAML lint, Python lint (ruff), Snakefile fmt, Snakemake dry-run |
+| `test-on-development` | Push to `development` | Extended dry-run with toy data |
+| `promote-to-main` | Push to `development` | Manual approval gate (environment: production) |
+| `release` | Push tag `v*` | GitHub Release + changelog |
+| `deploy-docs` | Push to `main` | Sphinx → GitHub Pages |
+
+### Local Pre-Commit Checks
+```bash
+# Install tools (in predlmm-ace or snakemake env)
+pip install ruff snakefmt yamllint
+
+# Run all checks
+yamllint -c .yamllint.yml .
+ruff check workflow/scripts/
+snakefmt --check workflow/scripts/
+snakefmt --check workflow/Snakefile workflow/rules/ --exclude workflow/rules/Crossmap.smk
+snakemake --dry-run --snakefile workflow/Snakefile --configfile config/sandboxToy.yaml --use-conda --conda-frontend mamba
+```
+
+> **Note**: `workflow/rules/Crossmap.smk` is excluded from `snakefmt --check` due to shell block indentation patterns that `shfmt` cannot parse consistently.
+
+### Release Process
+1. Update `CHANGELOG.md`
+2. Tag release: `git tag -a v1.2.3 -m "Release v1.2.3" && git push origin v1.2.3`
+3. GitHub Actions creates Release + deploys docs
+4. Create Zenodo record from GitHub release (for DOI)
+
+### Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 # License
 

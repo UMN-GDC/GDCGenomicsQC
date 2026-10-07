@@ -1,0 +1,79 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["workflow/scripts"]
+exclude = [
+  "workflow/scripts/PRScsx.py",
+  "workflow/scripts/PRSice.R",
+  "workflow/scripts/PROSPER.R",
+  "workflow/scripts/rfmix2_to_bed.R",
+  "workflow/scripts/rfmixGlobal.R",
+  "workflow/scripts/rfmixPlot.R",
+  "workflow/scripts/rfmix_to_ancestry.R",
+  "workflow/scripts/ldpred2.R",
+  "workflow/scripts/lassosum2.R",
+  "workflow/scripts/ctsleb.R",
+  "workflow/scripts/trainPredict.R",
+  "workflow/scripts/classify.R",
+  "workflow/scripts/classifyVAE.R",
+  "workflow/scripts/combine_ids_script.R",
+  "workflow/scripts/plotKaryotypeAncestry.R",
+  "workflow/scripts/plotClassification.R",
+  "workflow/scripts/plotHeterozygosity.R",
+  "workflow/scripts/plotHWE.R",
+  "workflow/scripts/plotLocalAncestry.R",
+  "workflow/scripts/plotMissingness.R",
+  "workflow/scripts/plotPCAIR.R",
+  "workflow/scripts/plotPosterior.R",
+  "workflow/scripts/plotProbabilityDensity.R",
+  "workflow/scripts/plotRelatedness.R",
+  "workflow/scripts/test_karyotype.R",
+  "workflow/scripts/test_karyotype_standalone.R",
+  "workflow/scripts/test_rfmixGlobal.R",
+  "workflow/scripts/Umap.R",
+  "workflow/scripts/01simEffects.R",
+  "workflow/scripts/02adjustPheno.R",
+  "workflow/scripts/03finalizePhenotype.R",
+  "workflow/scripts/runPhenotypeSimulation.R",
+  "workflow/scripts/heterozygosity_outliers_list.R",
+  "workflow/scripts/chromosome_average.R",
+  "workflow/scripts/align_alleles.sh",
+  "workflow/scripts/filterStandard.sh",
+  "workflow/scripts/initialFilter.sh",
+  "workflow/scripts/run_king.sh",
+  "workflow/scripts/run_pcair_pcrelate.R",
+  "workflow/scripts/run_primus.sh",
+  "workflow/scripts/run_prs_pipeline_adapter.sh",
+  "workflow/scripts/run_rfmix_plots.sh",
+  "workflow/scripts/run_snp_herit.R",
+  "workflow/scripts/update_plink_files.R",
+  "workflow/scripts/QC_template.SLURM",
+]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "N",   # pep8-naming
+  "UP",  # pyupgrade
+  "C4",  # flake8-comprehensions
+  "B",   # flake8-bugbear
+  "SIM", # flake8-simplify
+  "T20", # flake8-print
+]
+ignore = [
+  "E501", # line too long (handled by formatter)
+  "SIM102", # nested if (sometimes clearer)
+  "B008",   # function calls in default args (intentional in scripts)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint.isort]
+known-first-party = ["predlmm_ace", "MASH"]
+combine-as-imports = true

@@ -1,28 +1,49 @@
 rule assemble1000GenomesReference:
-    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
-    conda: "../../envs/ancNreport.yml"
-    envmodules: *[m for m in (config.get("samtools_module"), config.get("plink_module")) if m]
+    input:
+        vcf=expand(
+            REF
+            / "1000G_highcoverage"
+            / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz",
+            CHR=range(1, 23),
+        ),
+        fasta=ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
+    output:
+        tempDir=temp(directory(REF / "intermediates")),
+        highcovPgen=protected(
+            REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen"
+        ),
+        highcovPvar=protected(
+            REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar"
+        ),
+        highcovPsam=protected(
+            REF / "1000G_highcoverage" / "1000G_highCoveragephased.psam"
+        ),
+        ldPgen=protected(
+            REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"
+        ),
+        ldPvar=protected(
+            REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"
+        ),
+        ldPsam=protected(
+            REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"
+        ),
+        fastafai=protected(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa.fai"),
+    conda:
+        "../../envs/ancNreport.yml"
+    container:
+        "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    envmodules:
+        *[m for m in (config.get("samtools_module"), config.get("plink_module")) if m],
     threads: 8
     resources:
-        nodes = 1,
-        mem_mb = 32000,
-        runtime = 180,
-    output:
-        tempDir = temp(directory(REF / "intermediates")),
-        highcovPgen = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pgen"),
-        highcovPvar = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pvar"),
-        highcovPsam = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.psam"),
-        ldPgen = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pgen"),
-        ldPvar = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.pvar"),
-        ldPsam = protected(REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned.psam"),
-        fastafai = protected(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa.fai"),
-    input:
-        vcf = expand(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz", CHR = range(1, 23)),
-        fasta = ancient(REF / "Homo_sapiens.GRCh38.dna.primary_assembly.fa"),
+        nodes=1,
+        mem_mb=32000,
+        runtime=180,
     params:
-        highcovPgen = REF / "1000G_highcoverage" / "1000G_highCoveragephased",
-        ldPgen = REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
-    shell: """
+        highcovPgen=REF / "1000G_highcoverage" / "1000G_highCoveragephased",
+        ldPgen=REF / "1000G_highcoverage" / "1000G_highCoveragephased.pruned",
+    shell:
+        """
         samtools faidx {input.fasta}
         mkdir -p {output.tempDir}
         rm -f {output.tempDir}/mergelist.txt
@@ -36,14 +57,13 @@ rule assemble1000GenomesReference:
                 --snps-only 'just-acgt' \
                 --rm-dup force-first \
                 --out {output.tempDir}/${{FILE_NAME%.vcf.gz}}
-            echo "{output.tempDir}/${{FILE_NAME%.vcf.gz}}" >> {output.tempDir}/mergelist.txt
+            echo "{output.tempDir}/${{FILE_NAME%.vcf.gz}}" >>{output.tempDir}/mergelist.txt
         done
 
         plink2 --pmerge-list {output.tempDir}/mergelist.txt \
             --make-pgen \
             --threads {threads} \
             --out {output.tempDir}/full
-        
 
         plink2 --pfile {output.tempDir}/full \
             --make-pgen \
@@ -57,16 +77,15 @@ rule assemble1000GenomesReference:
             --out {output.tempDir}/full3
 
         plink2 --pfile {output.tempDir}/full3 \
-               --indep-pairphase 1000kb 1 0.1 \
-               --threads {threads} \
-               --out {output.tempDir}/full3
-        
-        plink2 --pfile {output.tempDir}/full3 \
-               --threads {threads} \
-               --extract {output.tempDir}/full3.prune.in \
-               --king-cutoff 0.0884 \
-               --out {output.tempDir}/full3
+            --indep-pairphase 1000kb 1 0.1 \
+            --threads {threads} \
+            --out {output.tempDir}/full3
 
+        plink2 --pfile {output.tempDir}/full3 \
+            --threads {threads} \
+            --extract {output.tempDir}/full3.prune.in \
+            --king-cutoff 0.0884 \
+            --out {output.tempDir}/full3
 
         # only unrelated in reference sets
         plink2 --pfile {output.tempDir}/full3 \
@@ -74,7 +93,6 @@ rule assemble1000GenomesReference:
             --keep {output.tempDir}/full3.king.cutoff.in.id \
             --make-pgen \
             --out {params.highcovPgen}
-
 
         plink2 --pfile {output.tempDir}/full3 \
             --threads {threads} \

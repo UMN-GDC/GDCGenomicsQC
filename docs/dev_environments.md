@@ -226,3 +226,97 @@ gdcgenomicsqc --configfile config.yaml rule_name
 - [Snakemake Executor Plugins (Slurm)](https://snakemake.readthedocs.io/en/stable/executor_tutorial/standard.html)
 - [Snakemake Profiles](https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#profiles)
 - [Snakemake Container Integration](https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#containers-and-singularity)
+
+## Continuous Integration / Continuous Deployment
+
+### GitHub Actions Workflow
+
+The pipeline includes a CI/CD workflow at `.github/workflows/ci.yml` that runs on:
+
+- **Push to `development` or `main` branches**
+- **Pull requests to `development` or `main`**
+- **Version tags (`v*`)**
+- **Manual dispatch**
+
+#### Workflow Jobs
+
+| Job | Trigger | Purpose |
+|-----|---------|---------|
+| `lint-and-validate` | All pushes/PRs | Code quality + workflow validation |
+| `test-on-development` | Push to `development` | Extended dry-run with toy data |
+| `promote-to-main` | Push to `development` | Manual approval gate before main |
+| `release` | Push version tag (`v*`) | Create GitHub Release + changelog |
+| `deploy-docs` | Push to `main` | Build & deploy Sphinx docs to GitHub Pages |
+
+#### Linting & Validation (runs on every push/PR)
+
+```bash
+# YAML configs
+yamllint -c .yamllint.yml .
+
+# Python scripts (ruff + snakefmt)
+ruff check workflow/scripts/ --exit-non-zero-on-fix
+snakefmt --check workflow/scripts/
+
+# Snakefiles (snakefmt) - Crossmap.smk excluded due to shell block formatting issue
+snakefmt --check workflow/Snakefile workflow/rules/ --exclude workflow/rules/Crossmap.smk
+
+# Snakemake dry-run validation
+snakemake --dry-run --snakefile workflow/Snakefile \
+  --configfile config/sandboxToy.yaml --use-conda --conda-frontend mamba
+```
+
+> **Note**: `workflow/rules/Crossmap.smk` is excluded from `snakefmt --check` because its multi-line shell blocks contain indentation patterns that `snakefmt` / `shfmt` cannot parse consistently. The file is manually formatted and functionally correct.
+
+#### Branch Promotion Workflow
+
+```
+feature/* → PR → development  → [CI passes] → Owner merges → main → [Release tag] → Release
+                              ↑
+                              └─ Manual approval gate (environment: production)
+```
+
+1. **Develop** on feature branches
+2. **PR to `development`** → CI runs lint + validation
+3. **Owner reviews** → merges `development` → `main` (manual PR or direct push)
+3. **Tag release** (`git tag v1.2.3 && git push origin v1.2.3`) → triggers `release` job
+
+#### Local Pre-Commit Checks
+
+Developers should run these locally before pushing:
+
+```bash
+# Install tools
+conda activate predlmm-ace  # or snakemake env
+pip install ruff snakefmt yamllint
+
+# Run all checks
+yamllint -c .yamllint.yml .
+ruff check workflow/scripts/
+snakefmt --check workflow/scripts/
+snakefmt --check workflow/Snakefile workflow/rules/ --exclude workflow/rules/Crossmap.smk
+snakemake --dry-run --snakefile workflow/Snakefile --configfile config/sandboxToy.yaml --use-conda --conda-frontend mamba
+```
+
+#### Adding MSI Self-Hosted Runners (Future)
+
+For building container images on MSI HPC:
+
+```yaml
+# .github/workflows/ci.yml - add to build-containers job
+runs-on: [self-hosted, msi, linux]
+# Requires: GitHub self-hosted runner registered on MSI with apptainer/singularity
+```
+
+---
+
+## Release Process
+
+1. **Update CHANGELOG.md** with release notes
+2. **Tag release**: `git tag -a v1.2.3 -m "Release v1.2.3"` and `git push origin v1.2.3`
+3. **GitHub Actions** automatically:
+   - Runs full CI
+   - Generates changelog from commits since last tag
+   - Creates GitHub Release with artifacts
+4. **Zenodo**: Manually create Zenodo record from GitHub release (or enable auto-sync)
+5. **Documentation** auto-deploys to GitHub Pages on `main` push
