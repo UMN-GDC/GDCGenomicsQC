@@ -24,6 +24,9 @@ mkdir -p $APPTAINER_TMPDIR
 mkdir -p $APPTAINER_CACHEDIR
 
 # Array of definitions to build
+# predlmmAce installs from a private repo, so it needs a token file:
+#   apptainer build --fakeroot --build-arg TOKEN_FILE=<path> predlmmAce.sif predlmmAce.def
+# see envs/README.md; pass the PATH, never the token itself.
 declare -a DEFINITIONS=(
     "ancNreport"
     "genomeUtils"
@@ -31,6 +34,8 @@ declare -a DEFINITIONS=(
     "mash"
     "phenotypeSim"
     "crossmap"
+    "popvae"
+    "predlmmAce"
 )
 
 # Get the array index
@@ -39,7 +44,21 @@ DEF="${DEFINITIONS[$INDEX]}"
 
 echo "Building $DEF..."
 
-apptainer build --fakeroot "${DEF}.sif" "${DEF}.def"
+BUILD_ARGS=()
+if [ "$DEF" = "predlmmAce" ]; then
+    # predlmm-ace lives in a private repo; see envs/README.md for token setup.
+    TOKEN_FILE="${PREDLMMACE_TOKEN_FILE:-$HOME/.config/gdcgenomicsqc/predlmmace.token}"
+    if [ ! -r "$TOKEN_FILE" ]; then
+        echo "ERROR: cannot read token file '$TOKEN_FILE'." >&2
+        echo "Set PREDLMMACE_TOKEN_FILE or create the default one; see envs/README.md" >&2
+        exit 1
+    fi
+    # Pass the path only: the token itself must never reach --build-arg, since
+    # %arguments values are stored in the SIF and recoverable after the push.
+    BUILD_ARGS=(--build-arg "TOKEN_FILE=$TOKEN_FILE")
+fi
+
+apptainer build --fakeroot "${BUILD_ARGS[@]}" "${DEF}.sif" "${DEF}.def"
 
 echo "Done building $DEF"
 

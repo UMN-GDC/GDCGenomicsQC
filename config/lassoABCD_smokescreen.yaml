@@ -158,6 +158,7 @@ snpHerit:
 
 # Tool settings
 localAncestry:
+    method: "rfmix"
     RFMIX: true
     test: false
     thin_subjects: 0.1

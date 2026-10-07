@@ -8,7 +8,7 @@ module use "$HOME/GDCGenomicsQC/envs"
 module load gdcgenomicsSandbox
 
 #gdcgenomicsqc --until run_classifyAncestry --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml"
-#gdcgenomicsqc --until run_rfmix --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml"
+#gdcgenomicsqc --until run_lai --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml"
 #gdcgenomicsqc --until run_snpHerit --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml" --unlock
+#gdcgenomicsqc --until run_snpHerit --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml"
 gdcgenomicsqc --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml"
-# gdcgenomicsqc --configfile "$HOME/GDCGenomicsQC/config/sandboxABCD_smokescreen.yaml" # --unlock

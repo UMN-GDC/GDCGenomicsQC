@@ -25,7 +25,7 @@ ref_data <- read_delim(file.path(args$out_dir, "ref_coords.tsv"), delim = "\t") 
 
 has_umap <- any(str_starts(colnames(sample_coords), "umap_"))
 has_vae <- any(str_starts(colnames(sample_coords), "vae_"))
-has_rfmix <- any(str_starts(colnames(classification_df), "rfmix_"))
+has_lai <- any(str_starts(colnames(classification_df), "lai_"))
 
 sample_list <- list()
 ref_list <- list()
@@ -71,16 +71,16 @@ if (has_vae && all(c("vae_mean1", "vae_mean2") %in% colnames(sample_coords))) {
 available_models <- c("pca")
 if (has_umap) available_models <- c(available_models, "umap")
 if (has_vae) available_models <- c(available_models, "vae")
-if (has_rfmix) available_models <- c(available_models, "rfmix")
+if (has_lai) available_models <- c(available_models, "lai")
 
-rfmix_models <- available_models[available_models != "rfmix"]
+plot_models <- available_models[available_models != "lai"]
 
-sample_plot_df <- bind_rows(sample_list[rfmix_models])
-ref_plot_df <- bind_rows(ref_list[rfmix_models])
+sample_plot_df <- bind_rows(sample_list[plot_models])
+ref_plot_df <- bind_rows(ref_list[plot_models])
 
 contour_list <- list()
 
-if (!is.null(args$rf_model) && file.exists(args$rf_model) && "pca" %in% rfmix_models) {
+if (!is.null(args$rf_model) && file.exists(args$rf_model) && "pca" %in% plot_models) {
     rf_model <- readRDS(args$rf_model)
     rf_vars <- all.vars(formula(rf_model))
 
@@ -108,7 +108,7 @@ if (!is.null(args$rf_model) && file.exists(args$rf_model) && "pca" %in% rfmix_mo
         mutate(model = "pca")
 }
 
-if (has_umap && "umap" %in% rfmix_models) {
+if (has_umap && "umap" %in% plot_models) {
     umap_rf_path <- file.path(args$out_dir, "RFumap.Rds")
     if (file.exists(umap_rf_path)) {
         umap_model <- readRDS(umap_rf_path)
@@ -128,6 +128,29 @@ if (has_umap && "umap" %in% rfmix_models) {
         contour_list$umap <- grid |>
             rename(x = umap_1, y = umap_2) |>
             mutate(model = "umap")
+    }
+}
+
+if (has_vae && "vae" %in% plot_models) {
+    vae_rf_path <- file.path(args$out_dir, "RFvae.Rds")
+    if (file.exists(vae_rf_path)) {
+        vae_model <- readRDS(vae_rf_path)
+        vae_ref <- ref_plot_df |> filter(model == "vae")
+
+        x_range <- range(vae_ref$x, na.rm = TRUE)
+        y_range <- range(vae_ref$y, na.rm = TRUE)
+
+        grid <- expand.grid(
+            vae_mean1 = seq(x_range[1], x_range[2], length.out = 150),
+            vae_mean2 = seq(y_range[1], y_range[2], length.out = 150)
+        )
+
+        probs <- predict(vae_model, grid)$predictions
+        grid$max_prob <- apply(probs, 1, max)
+
+        contour_list$vae <- grid |>
+            rename(x = vae_mean1, y = vae_mean2) |>
+            mutate(model = "vae")
     }
 }
 
@@ -151,5 +174,5 @@ if (nrow(sample_plot_df) > 0) {
         theme(legend.position = "bottom")
 
     ggsave(file.path(args$out_dir, "ancestry_classification_space.svg"),
-        plot = p, width = 1920, height = 800 * length(rfmix_models), units = "px")
+        plot = p, width = 1920, height = 800 * length(plot_models), units = "px")
 }

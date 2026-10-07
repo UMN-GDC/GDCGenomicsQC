@@ -91,14 +91,25 @@ internalPCA:
 build: "GRCh38"
 
 ancestry:
-    threshold: 0.8
-    model: "pca"
-
     # Minimum posterior probability for ancestry assignment (0-1)
     threshold: 0.8
-    
-    # Ancestry inference method: "pca", "umap", "vae", or "rfmix"
+
+    # Options: pca, umap, vae, lai (classifies from local-ancestry proportions)
+    #
+    # "vae" fits a popVAE variational autoencoder jointly on 1000G reference +
+    # study genotypes and classifies from the learned latent space. Requires the
+    # popvae container (envs/popvae.def) which must be available locally or on
+    # GHCR. Optional hyperparameters live under "vae" below.
     model: "pca"
+
+    # popVAE hyperparameters (only used when model: "vae")
+    vae:
+        seed: null      # integer to make popVAE reproducible; random if null
+        max_epochs: 500
+        patience: 300
+        batch_size: 32
+        depth: 6
+        width: 128
 
     # Bypass mode: Provide your own ancestry labels instead of running prediction
     # Format: Tab-separated file with two columns (IID, ancestry), no header
@@ -110,7 +121,9 @@ ancestry:
     ancestry_file: null
 
 localAncestry:
-    # Run RFMix for local ancestry inference
+    # Local ancestry estimator: "rfmix" (default) or "gnomix"
+    method: "rfmix"
+    # Legacy flag below; implied by method: "rfmix". Run RFMix local ancestry.
     RFMIX: false
     
     # Run in test mode (subset of data)

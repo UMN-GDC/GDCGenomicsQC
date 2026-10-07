@@ -1,0 +1,23 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%arguments
+    # Best practice: Name your environment something consistent
+    ENV_NAME=popvae
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export PATH="/opt/conda/envs/{{ ENV_NAME }}/bin:$PATH"
+    export LC_ALL=C.UTF-8
+
+%files
+    popvae.yml /app/popvae.yml
+
+%post
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/popvae.yml
+    # Install popvae from source, then delete the clone so only the installed
+    # package remains in the image. The module is run as `python -m popvae`.
+    /usr/bin/micromamba run -n {{ ENV_NAME }} git clone --depth 1 https://github.com/kr-colab/popvae.git /tmp/popvae
+    cd /tmp/popvae && /usr/bin/micromamba run -n {{ ENV_NAME }} pip install --no-cache-dir ./
+    rm -rf /tmp/popvae
+    /usr/bin/micromamba clean --all -y

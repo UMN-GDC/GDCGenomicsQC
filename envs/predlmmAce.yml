@@ -10,5 +10,7 @@ dependencies:
   - scipy
   - gcta
   - pip
+  # required to install the predlmm-ace git+https: pip requirement below
+  - git
   - pip:
     - git+https://github.com/SAONLIB/predlmm-ace.git
