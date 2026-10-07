@@ -361,12 +361,4 @@ if RELEASE_FILTER_ACTIVE:
                     {params.generic_files and '--generic ' + ' '.join([f'{g["path"]} {g["id_col"]}' for g in params.generic_files]) or ''}
                 """
 
-    # Top-level target
-    if _ALL_FILT:
-        rule run_releaseFilter:
-            input:
-                _ALL_FILT
-            log:
-                OUT_DIR / "logs" / "run_releaseFilter.log",
-            shell:
-                "echo 'Release filter pipeline completed successfully'"
+    # Top-level target is defined in Snakefile as run_releaseFilter
