@@ -1,34 +1,46 @@
 #!/usr/bin/env Rscript
 
+# optparse (not argparse): this runs inside the upstream `singleprshelper`
+# image, which ships optparse but not argparse.
 suppressPackageStartupMessages({
-  library(argparse)
-  library(data.table)
+  library(optparse)
 })
 
-parser <- ArgumentParser(description = "Run PROSPER multi-ancestry PRS workflow")
-parser$add_argument("--package", required = TRUE, help = "Path to PROSPER package directory")
-parser$add_argument("--out-dir", required = TRUE, help = "Output directory")
-parser$add_argument("--plink2", required = TRUE, help = "Path to plink2 executable")
-parser$add_argument("--target-sumstats", required = TRUE)
-parser$add_argument("--aux-sumstats", required = TRUE)
-parser$add_argument("--pop", required = TRUE, help = "Comma-separated population labels in the same order as summary stats")
-parser$add_argument("--lassosum-param-files", required = TRUE, help = "Comma-separated lassosum2 tuning parameter files in the same order as summary stats")
-parser$add_argument("--prefix", required = TRUE, help = "Target-population output prefix")
-parser$add_argument("--tuning-bfile", required = TRUE, help = "PLINK prefix for tuning set")
-parser$add_argument("--testing-bfile", required = TRUE, help = "PLINK prefix for testing set")
-parser$add_argument("--pheno-tuning", default = NULL)
-parser$add_argument("--covar-tuning", default = NULL)
-parser$add_argument("--pheno-testing", default = NULL)
-parser$add_argument("--covar-testing", default = NULL)
-parser$add_argument("--sl-library", default = "SL.glmnet,SL.ridge,SL.lm")
-parser$add_argument("--linear-score", default = "TRUE")
-parser$add_argument("--cleanup", default = "TRUE")
-parser$add_argument("--chrom", default = "1-22")
-parser$add_argument("--ll", default = "5")
-parser$add_argument("--lc", default = "5")
-parser$add_argument("--ncores", default = "1")
-parser$add_argument("--verbose", default = "1")
-args <- parser$parse_args()
+opt_list <- list(
+  make_option("--package", type = "character", help = "Path to PROSPER package directory"),
+  make_option("--out-dir", type = "character", help = "Output directory"),
+  make_option("--plink2", type = "character", default = "plink2", help = "Path to plink2 executable"),
+  make_option("--target-sumstats", type = "character"),
+  make_option("--aux-sumstats", type = "character"),
+  make_option("--pop", type = "character", help = "Comma-separated population labels in the same order as summary stats"),
+  make_option("--lassosum-param-files", type = "character", help = "Comma-separated lassosum2 tuning parameter files in the same order as summary stats"),
+  make_option("--prefix", type = "character", help = "Target-population output prefix"),
+  make_option("--tuning-bfile", type = "character", help = "PLINK prefix for tuning set"),
+  make_option("--testing-bfile", type = "character", help = "PLINK prefix for testing set"),
+  make_option("--pheno-tuning", type = "character", default = NULL),
+  make_option("--covar-tuning", type = "character", default = NULL),
+  make_option("--pheno-testing", type = "character", default = NULL),
+  make_option("--covar-testing", type = "character", default = NULL),
+  make_option("--sl-library", type = "character", default = "SL.glmnet,SL.ridge,SL.lm"),
+  make_option("--linear-score", type = "logical", default = TRUE),
+  make_option("--cleanup", type = "logical", default = TRUE),
+  make_option("--chrom", type = "character", default = "1-22"),
+  make_option("--ll", type = "character", default = "5"),
+  make_option("--lc", type = "character", default = "5"),
+  make_option("--ncores", type = "character", default = "1"),
+  make_option("--verbose", type = "character", default = "1")
+)
+parser <- OptionParser(option_list = opt_list)
+args <- parse_args(parser)
+# This optparse build keeps dashes in dest names (e.g. "out-dir").
+names(args) <- gsub("-", "_", names(args))
+
+needed <- c("package", "out_dir", "target_sumstats", "aux_sumstats", "pop",
+            "lassosum_param_files", "prefix", "tuning_bfile")
+missing <- needed[unlist(lapply(needed, function(x) is.null(args[[x]])))]
+if (length(missing) > 0) {
+  stop("Missing required PROSPER options: ", paste(missing, collapse = ", "))
+}
 
 dir.create(args$out_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -61,21 +73,31 @@ run_rscript <- function(script, args_vec) {
   cmd <- c(script, args_vec)
   rscript <- file.path(R.home("bin"), "Rscript")
 
-  prosper_bin <- "/scratch.global/saonli/conda-envs/prosper/bin"
-  Sys.setenv(PATH = paste(prosper_bin, Sys.getenv("PATH"), sep = ":"))
+  # Optional compiler toolchain override (no hard-coded host paths): set
+  # PROSPER_BIN to a directory to prepend to PATH, and PROSPER_MAKEVARS to a
+  # Makevars path to point R at for sourceCpp. Inside singleprshelper both are
+  # usually unset (the image ships its own compilers).
+  prosper_bin <- Sys.getenv("PROSPER_BIN", "")
+  if (nzchar(prosper_bin) && dir.exists(prosper_bin)) {
+    Sys.setenv(PATH = paste(prosper_bin, Sys.getenv("PATH"), sep = ":"))
+  }
 
-  makevars_dir <- tempfile("r_makevars_")
-  dir.create(makevars_dir, recursive = TRUE, showWarnings = FALSE)
-  makevars <- file.path(makevars_dir, "Makevars")
-  writeLines(c(
-    "CC=gcc",
-    "CXX=g++",
-    "CXX11=g++",
-    "CXX14=g++",
-    "CXX17=g++",
-    "CXX20=g++"
-  ), makevars)
-  Sys.setenv(R_MAKEVARS_USER = makevars)
+  makevars <- Sys.getenv("PROSPER_MAKEVARS", "")
+  if (nzchar(makevars)) {
+    makevars_dir <- dirname(makevars)
+    if (!dir.exists(makevars_dir)) {
+      dir.create(makevars_dir, recursive = TRUE, showWarnings = FALSE)
+    }
+    writeLines(c(
+      "CC=gcc",
+      "CXX=g++",
+      "CXX11=g++",
+      "CXX14=g++",
+      "CXX17=g++",
+      "CXX20=g++"
+    ), makevars)
+    Sys.setenv(R_MAKEVARS_USER = makevars)
+  }
 
   message("Running: ", rscript, " ", paste(cmd, collapse = " "))
   status <- system2(rscript, cmd)
@@ -137,7 +159,7 @@ if (!file.exists(r2_file)) {
   stop("PROSPER finished but did not create expected R2 file: ", r2_file)
 }
 
-if (tolower(args$linear_score) == "true" && !file.exists(prs_file)) {
+if (isTRUE(args$linear_score) && !file.exists(prs_file)) {
   stop("PROSPER finished but did not create expected PRS file: ", prs_file)
 }
 

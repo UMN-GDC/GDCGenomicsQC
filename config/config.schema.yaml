@@ -255,6 +255,66 @@ prsMethods:
           description: >
             Prefix for CTSLEB output files inside the method run dir (default:
             <ANC1>_ctsleb).
+    multi_prosper:
+      type: dict
+      default: {}
+      description: |
+        PROSPER joint multi-ancestry PRS (lassosum2 tuning -> penalized
+        regression -> SuperLearner ensemble). Runs inside the upstream
+        `singleprshelper` container (PROSPER.R/lassosum2.R need
+        RcppArmadillo/doMC + a compiler). PROSPER.R/lassosum2.R hard-code
+        <package>/ref_bim.txt, so the workflow copies the package into a
+        writable per-run dir (method_runs/multi_prosper/PROSPER_pkg) and writes
+        ref_bim.txt there from the ANC1 study BIM.
+      schema:
+        software_dir:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            Path to the PROSPER R package (must contain scripts/{PROSPER.R,
+            lassosum2.R, tuning_testing.R} + lassosum2.cpp/PROSPER.cpp for
+            sourceCpp). Default:
+            /projects/standard/gdc/public/prs_methods/scripts/PROSPER.
+        target_pop:
+          type: str
+          nullable: true
+          default: null
+          description: "Ancestry label for the target (ANC1) population (default: ANC1)."
+        aux_pop:
+          type: str
+          nullable: true
+          default: null
+          description: "Ancestry label for the aux/reference (ANC2) population (default: ANC2)."
+        chrom:
+          type: str
+          nullable: true
+          default: null
+          description: "Chromosome range for lassosum2/PROSPER (default: 1-22)."
+        ncores:
+          type: int
+          default: 1
+          description: Cores for the PROSPER R scripts.
+        ll:
+          type: int
+          default: 5
+          description: Number of lambda path points for PROSPER.R.
+        lc:
+          type: int
+          default: 5
+          description: Number of c path points for PROSPER.R.
+        plink2:
+          type: str
+          nullable: true
+          default: null
+          description: >
+            plink2 binary for tuning_testing.R scoring (default: prsMethods.
+            plink2, then plink2 on the container PATH).
+        rscript:
+          type: str
+          nullable: true
+          default: null
+          description: "Rscript binary for lassosum2.R (default: Rscript on the container PATH)."
 
 REF:
   type: str

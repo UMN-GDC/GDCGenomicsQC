@@ -67,6 +67,16 @@ prsMethods:
     #     aux_ref_plink: null     # aux/reference-ancestry LD ref prefix (default: ANC2 study sample)
     #     pheno_prefix: null      # tune/validation pheno file prefix (default: <ANC1>_HM3)
     #     out_prefix: null        # output file prefix (default: <ANC1>_ctsleb)
+    # multi_prosper:              # PROSPER joint multi-ancestry PRS (runs in the singleprshelper image)
+    #     software_dir: "/projects/standard/gdc/public/prs_methods/scripts/PROSPER"
+    #     target_pop: null        # target (ANC1) ancestry label (default: ANC1)
+    #     aux_pop: null           # aux/reference (ANC2) ancestry label (default: ANC2)
+    #     chrom: "1-22"           # chromosome range for lassosum2/PROSPER
+    #     ncores: 1               # cores for the PROSPER R scripts
+    #     ll: 5                   # lambda path points for PROSPER.R
+    #     lc: 5                   # c path points for PROSPER.R
+    #     plink2: null            # plink2 for tuning_testing scoring (default: plink2)
+    #     rscript: null           # Rscript for lassosum2.R (default: Rscript)
 
 # Reference data directory (required for various operations)
 REF: "/path/to/reference/data"

@@ -1,7 +1,36 @@
 PROSPER_INPUT_DIR = Path(config.get("prsPipeline", {}).get("generated_input_dir", ""))
 
-
-
+# PROSPER (joint multi-ancestry PRS: penalized regression + super-learning) runs
+# inside the upstream `singleprshelper` container (oras://ghcr.io/mainsqu33ze/
+# gdcgenomicsqc/singleprshelper:latest) — PROSPER.R/lassosum2.R need
+# RcppArmadillo, doMC, etc. + a compiler (sourceCpp) that the generic `prs`
+# image does not ship. The PROSPER R package lives on the host/gdc (bound via
+# /projects in the profiles); a writable per-run copy carrying ref_bim.txt is
+# made by preparePROSPERPackage because PROSPER.R/lassosum2.R read
+# <PATH_package>/ref_bim.txt and the shared checkout is non-writable.
+PROSPER_METHOD_CONFIG = config.get("prsMethods", {}).get("multi_prosper", {})
+PROSPER_SOFTWARE_DIR = PROSPER_METHOD_CONFIG.get(
+    "software_dir",
+    "/projects/standard/gdc/public/prs_methods/scripts/PROSPER",
+)
+PROSPER_TARGET_POP = PROSPER_METHOD_CONFIG.get("target_pop", PRS_ANC1)
+PROSPER_AUX_POP = PROSPER_METHOD_CONFIG.get("aux_pop", PRS_ANC2)
+PROSPER_CHROM = PROSPER_METHOD_CONFIG.get("chrom", "1-22")
+PROSPER_NCORES = PROSPER_METHOD_CONFIG.get("ncores", 1)
+PROSPER_LL = PROSPER_METHOD_CONFIG.get("ll", 5)
+PROSPER_LC = PROSPER_METHOD_CONFIG.get("lc", 5)
+PROSPER_CONTAINER = "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/singleprshelper:latest"
+# Writable per-run package copy + ref_bim.txt (see preparePROSPERPackage).
+PROSPER_PKG_DIR = PRS_METHOD_RUN_DIR / "multi_prosper" / "PROSPER_pkg"
+# Where PROSPER.R / tuning_testing.R write (after_ensemble_<TARGET_POP>/…).
+PROSPER_RUN_DIR = PRS_METHOD_RUN_DIR / "multi_prosper" / "PROSPER"
+PROSPER_AFTER_ENSEMBLE_DIR = PROSPER_RUN_DIR / ("after_ensemble_" + PROSPER_TARGET_POP)
+PROSPER_PLINK2 = (
+    PROSPER_METHOD_CONFIG.get("plink2")
+    or config.get("prsMethods", {}).get("plink2")
+    or "plink2"
+)
+PROSPER_RSCRIPT = PROSPER_METHOD_CONFIG.get("rscript", "Rscript")
 
 
 
@@ -57,6 +86,92 @@ rule preparePROSPERSumstats:
             handle.write(f"Wrote: {output.training_ss}\n")
 
 
+# PROSPER.R / lassosum2.R hard-code <PATH_package>/ref_bim.txt + scripts/ and
+# <PATH_package>/<pop>/chr*_LD.RData. The package's LD reference dirs (AFR,
+# EUR, ...) are large (multi-GB each), so the per-run package dir mirrors the
+# shared checkout with symlinks for those, carrying a real ref_bim.txt
+# (preferring the package's own — its LD blocks were built against it).
+rule preparePROSPERPackage:
+    log:
+        OUT_DIR / "logs" / "preparePROSPERPackage.log",
+    threads: 1
+    resources:
+        nodes=1,
+        mem_mb=2000,
+        runtime=60,
+    input:
+        bim=rules.preparePRSInputs.output.study_bim,
+    output:
+        ref_bim=PROSPER_PKG_DIR / "ref_bim.txt",
+        prosper_r=PROSPER_PKG_DIR / "scripts" / "PROSPER.R",
+        lassosum2_r=PROSPER_PKG_DIR / "scripts" / "lassosum2.R",
+        tuning_testing_r=PROSPER_PKG_DIR / "scripts" / "tuning_testing.R",
+    params:
+        software_dir=PROSPER_SOFTWARE_DIR,
+    shell:
+        """
+        set -euo pipefail
+
+        if [[ ! -d {params.software_dir}/scripts ]]; then
+            echo "PROSPER package not found at {params.software_dir}/scripts" >&2
+            echo "Set prsMethods.multi_prosper.software_dir to the PROSPER R package" >&2
+            exit 1
+        fi
+
+        PKG_DIR=$(dirname {output.ref_bim})
+        mkdir -p "$PKG_DIR/scripts"
+        cp -r {params.software_dir}/scripts/. "$PKG_DIR/scripts/"
+
+        # plink2 --score refuses to impute allele frequencies when the scoring
+        # set has <50 samples. Patch the vendored copies (not the shared
+        # checkout) so every --score call loads --read-freq <bfile>.afreq,
+        # which preparePROSPERTuningTestingSets generates alongside each set.
+        sed -i \
+            -e 's|" --bfile ", bfile_tuning,|" --bfile ", bfile_tuning,\\n                " --read-freq ", paste0(bfile_tuning, ".afreq"),|' \
+            -e 's|" --bfile ", bfile_testing,|" --bfile ", bfile_testing,\\n                " --read-freq ", paste0(bfile_testing, ".afreq"),|' \
+            "$PKG_DIR/scripts/lassosum2.R"
+        sed -i \
+            -e 's|" --bfile ",opt$bfile_tuning,|" --bfile ",opt$bfile_tuning,\\n              " --read-freq ", paste0(opt$bfile_tuning, ".afreq"),|' \
+            -e 's|" --bfile ",opt$bfile_testing,|" --bfile ",opt$bfile_testing,\\n              " --read-freq ", paste0(opt$bfile_testing, ".afreq"),|' \
+            "$PKG_DIR/scripts/tuning_testing.R"
+
+        # plink2 --score emits 5 baseline/aux .sscore columns
+        # (#FID IID PHENO1 ALLELE_CT NAMED_ALLELE_DOSAGE_SUM) before the score
+        # _SUM columns; the upstream scripts drop only 4, leaving one extra
+        # soup column that makes the ensemble matmult non-conformable. Drop 5.
+        sed -i 's|SCORE <- SCORE\[,-1:-4\]|SCORE <- SCORE[,-1:-5]|g' \
+            "$PKG_DIR/scripts/lassosum2.R" \
+            "$PKG_DIR/scripts/tuning_testing.R"
+
+        if [[ -f {params.software_dir}/ref_bim.txt ]]; then
+            # Reference BIM that the shipped LD blocks were built against.
+            cp {params.software_dir}/ref_bim.txt {output.ref_bim}
+        else
+            # Fallback: derive a 6-col BIM from the study (no matching LD blocks).
+            awk 'BEGIN{{OFS="\\t"}} {{print $1, $2, $3, $4, $5, $6}}' {input.bim} > {output.ref_bim}
+        fi
+
+        # Symlink per-population LD reference dirs (read-only loads inside the
+        # container); skip non-LD artifacts shipped in the package root.
+        for pop_dir in {params.software_dir}/*/; do
+            pop=$(basename "$pop_dir")
+            case "$pop" in
+                scripts|.git|example|PROSPER_example_results|PROSPER_example_results_2) continue ;;
+            esac
+            if compgen -G "$pop_dir"chr*_LD.RData > /dev/null; then
+                ln -sfn "$pop_dir" "$PKG_DIR/$pop"
+            fi
+        done
+
+        echo "Copied PROSPER package from {params.software_dir}" > {log}
+        echo "Package dir: $PKG_DIR" >> {log}
+        echo "Wrote {output.ref_bim} ($(wc -l < {output.ref_bim}) SNPs)" >> {log}
+        echo "LD ref dirs:" >> {log}
+        find "$PKG_DIR" -maxdepth 1 -type l | sort >> {log}
+        echo "LD block files: $(find -L "$PKG_DIR" -name 'chr*_LD.RData' | wc -l)" >> {log}
+        """
+
+
 
 rule preparePROSPERTuningTestingSets:
     log:
@@ -70,23 +185,36 @@ rule preparePROSPERTuningTestingSets:
         bed=rules.preparePRSInputs.output.study_bed,
         bim=rules.preparePRSInputs.output.study_bim,
         fam=rules.preparePRSInputs.output.study_fam,
+        aux_bed=rules.preparePRSInputs.output.study_anc2_bed,
+        aux_fam=rules.preparePRSInputs.output.study_anc2_fam,
     output:
-        tuning_keep=PROSPER_INPUT_DIR / "metadata" / "AFR_PROSPER_tuning.keep",
-        testing_keep=PROSPER_INPUT_DIR / "metadata" / "AFR_PROSPER_testing.keep",
-        tuning_pheno=PROSPER_INPUT_DIR / "metadata" / "AFR_PROSPER_tuning.pheno",
-        testing_pheno=PROSPER_INPUT_DIR / "metadata" / "AFR_PROSPER_testing.pheno",
-        tuning_bed=PROSPER_INPUT_DIR / "prosper" / "AFR_tuning.bed",
-        tuning_bim=PROSPER_INPUT_DIR / "prosper" / "AFR_tuning.bim",
-        tuning_fam=PROSPER_INPUT_DIR / "prosper" / "AFR_tuning.fam",
-        testing_bed=PROSPER_INPUT_DIR / "prosper" / "AFR_testing.bed",
-        testing_bim=PROSPER_INPUT_DIR / "prosper" / "AFR_testing.bim",
-        testing_fam=PROSPER_INPUT_DIR / "prosper" / "AFR_testing.fam",
-        ref_bim="/scratch.global/saonli/GDCGenomicsQC/prs_resources/software/PROSPER/ref_bim.txt",
+        tuning_keep=PROSPER_INPUT_DIR / "metadata" / f"{PRS_ANC1}_PROSPER_tuning.keep",
+        testing_keep=PROSPER_INPUT_DIR / "metadata" / f"{PRS_ANC1}_PROSPER_testing.keep",
+        tuning_pheno=PROSPER_INPUT_DIR / "metadata" / f"{PRS_ANC1}_PROSPER_tuning.pheno",
+        testing_pheno=PROSPER_INPUT_DIR / "metadata" / f"{PRS_ANC1}_PROSPER_testing.pheno",
+        tuning_bed=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_tuning.bed",
+        tuning_bim=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_tuning.bim",
+        tuning_fam=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_tuning.fam",
+        testing_bed=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_testing.bed",
+        testing_bim=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_testing.bim",
+        testing_fam=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_testing.fam",
+        aux_tuning_bed=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC2}_tuning.bed",
+        aux_tuning_bim=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC2}_tuning.bim",
+        aux_tuning_fam=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC2}_tuning.fam",
+        aux_tuning_pheno=PROSPER_INPUT_DIR / "metadata" / f"{PRS_ANC2}_PROSPER_tuning.pheno",
+        # plink2 --score refuses to impute allele frequencies from <50 samples;
+        # the vendored lassosum2.R / tuning_testing.R are patched (see
+        # preparePROSPERPackage) to pass --read-freq pointing at these.
+        tuning_afreq=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_tuning.afreq",
+        testing_afreq=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_testing.afreq",
+        aux_tuning_afreq=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC2}_tuning.afreq",
     params:
         plink2=config.get("prsMethods", {}).get("plink2", "/projects/standard/gdc/public/plink2"),
         study_prefix=lambda wc, input: str(input.bed)[:-4],
         tuning_prefix=lambda wc, output: str(output.tuning_bed)[:-4],
         testing_prefix=lambda wc, output: str(output.testing_bed)[:-4],
+        aux_prefix=lambda wc, output: str(output.aux_tuning_bed)[:-4],
+        aux_base=lambda wc, input: str(input.aux_bed)[:-4],
     shell:
         """
         set -euo pipefail
@@ -107,19 +235,28 @@ rule preparePROSPERTuningTestingSets:
           --bfile {params.study_prefix} \
           --keep {output.tuning_keep} \
           --make-bed \
+          --freq \
           --out {params.tuning_prefix}
 
         {params.plink2} \
           --bfile {params.study_prefix} \
           --keep {output.testing_keep} \
           --make-bed \
+          --freq \
           --out {params.testing_prefix}
 
-        awk 'BEGIN{{OFS="\t"}} {{print $1,$2,$3,$4,$5,$6}}' \
-        {output.tuning_bim} > {output.ref_bim}
+        # Aux (ANC2) tuning set for lassosum2: whole ANC2 study sample + fam pheno.
+        {params.plink2} \
+          --bfile {params.aux_base} \
+          --make-bed \
+          --freq \
+          --out {params.aux_prefix}
+        awk '{{print $1, $2, $6}}' {input.aux_fam} > {output.aux_tuning_pheno}
+
         echo "Prepared PROSPER tuning/testing PLINK sets" > {log}
         wc -l {output.tuning_keep} {output.testing_keep} >> {log}
         wc -l {output.tuning_pheno} {output.testing_pheno} >> {log}
+        wc -l {input.aux_fam} >> {log}
         """
 
 
@@ -131,48 +268,43 @@ rule preparePROSPERLassosumParams:
         nodes=1,
         mem_mb=32000,
         runtime=720,
+    container:
+        PROSPER_CONTAINER
     input:
+        ref_bim=rules.preparePROSPERPackage.output.ref_bim,
         target_sumstats=rules.preparePROSPERSumstats.output.target_ss,
         training_sumstats=rules.preparePROSPERSumstats.output.training_ss,
         tuning_bed=rules.preparePROSPERTuningTestingSets.output.tuning_bed,
         tuning_bim=rules.preparePROSPERTuningTestingSets.output.tuning_bim,
         tuning_fam=rules.preparePROSPERTuningTestingSets.output.tuning_fam,
         tuning_pheno=rules.preparePROSPERTuningTestingSets.output.tuning_pheno,
+        tuning_afreq=rules.preparePROSPERTuningTestingSets.output.tuning_afreq,
+        aux_tuning_bed=rules.preparePROSPERTuningTestingSets.output.aux_tuning_bed,
+        aux_tuning_pheno=rules.preparePROSPERTuningTestingSets.output.aux_tuning_pheno,
+        aux_tuning_afreq=rules.preparePROSPERTuningTestingSets.output.aux_tuning_afreq,
     output:
         target_param=PRS_METHOD_RUN_DIR / "multi_prosper" / "lassosum2_AFR" / "param.txt",
         aux_param=PRS_METHOD_RUN_DIR / "multi_prosper" / "lassosum2_EUR" / "param.txt",
     params:
-        package=config.get("prsMethods", {}).get("multi_prosper", {}).get(
-            "software_dir",
-            "/scratch.global/saonli/GDCGenomicsQC/prs_resources/software/PROSPER",
-        ),
-        plink2=config.get("prsMethods", {}).get("multi_prosper", {}).get(
-            "plink2",
-            config.get("prsMethods", {}).get("plink2", "/projects/standard/gdc/public/plink2"),
-        ),
-        rscript=config.get("prsMethods", {}).get("multi_prosper", {}).get(
-            "rscript",
-            "/scratch.global/saonli/conda-envs/ctsleb/bin/Rscript",
-        ),
-        target_pop=config.get("prsMethods", {}).get("multi_prosper", {}).get("target_pop", "AFR"),
-        aux_pop=config.get("prsMethods", {}).get("multi_prosper", {}).get("aux_pop", "EUR"),
-        chrom=config.get("prsMethods", {}).get("multi_prosper", {}).get("chrom", "1-22"),
-        ncores=config.get("prsMethods", {}).get("multi_prosper", {}).get("ncores", 1),
+        package=PROSPER_PKG_DIR,
+        plink2=PROSPER_PLINK2,
+        rscript=PROSPER_RSCRIPT,
+        target_pop=PROSPER_TARGET_POP,
+        aux_pop=PROSPER_AUX_POP,
+        chrom=PROSPER_CHROM,
+        ncores=PROSPER_NCORES,
         tuning_prefix=lambda wc, input: str(input.tuning_bed)[:-4],
+        aux_prefix=lambda wc, input: str(input.aux_tuning_bed)[:-4],
         target_out=lambda wc, output: str(Path(output.target_param).parent),
         aux_out=lambda wc, output: str(Path(output.aux_param).parent),
     shell:
         r"""
         set -euo pipefail
-        module load gcc/11.3.0
-        export PATH="/scratch.global/saonli/conda-envs/prosper/bin:$PATH"
-        export CC="gcc"
-        export CXX="g++"
-        export CXX11="g++"
-        export CXX14="g++"
-        export CXX17="g++"
-        export CXX20="g++"
-        export MAKEFLAGS="CC=gcc CXX=g++ CXX11=g++ CXX14=g++ CXX17=g++ CXX20=g++"
+
+        # NOTE: no CC/CXX/MAKEFLAGS overrides here. singleprshelper is a conda
+        # R image whose R sees itself compiled with the conda toolchain
+        # (x86_64-conda-linux-gnu-cc/c++), and Rcpp::sourceCpp compiles cleanly
+        # with R's own Makeconf. Pointing CC at a bare "gcc" would break it.
         mkdir -p "$(dirname {output.target_param})" "$(dirname {output.aux_param})"
 
         find_lassosum_param() {{
@@ -229,8 +361,8 @@ rule preparePROSPERLassosumParams:
           --FILE_sst {input.training_sumstats} \
           --pop {params.aux_pop} \
           --chrom {params.chrom} \
-          --bfile_tuning {params.tuning_prefix} \
-          --pheno_tuning {input.tuning_pheno} \
+          --bfile_tuning {params.aux_prefix} \
+          --pheno_tuning {input.aux_tuning_pheno} \
           --NCORES {params.ncores} \
           >> {log} 2>&1
         find_lassosum_param "{params.aux_out}" "{output.aux_param}" >> {log} 2>&1
@@ -245,37 +377,57 @@ rule runMultiAncestryPROSPER:
         nodes=1,
         mem_mb=32000,
         runtime=720,
+    container:
+        PROSPER_CONTAINER
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
-        env=rules.preparePRSInputs.output.env,
+        ref_bim=rules.preparePROSPERPackage.output.ref_bim,
         target_sumstats=rules.preparePROSPERSumstats.output.target_ss,
         training_sumstats=rules.preparePROSPERSumstats.output.training_ss,
         lassosum_target=rules.preparePROSPERLassosumParams.output.target_param,
         lassosum_aux=rules.preparePROSPERLassosumParams.output.aux_param,
         tuning_bed=rules.preparePROSPERTuningTestingSets.output.tuning_bed,
-        tuning_bim=rules.preparePROSPERTuningTestingSets.output.tuning_bim,
-        tuning_fam=rules.preparePROSPERTuningTestingSets.output.tuning_fam,
         tuning_pheno=rules.preparePROSPERTuningTestingSets.output.tuning_pheno,
+        tuning_afreq=rules.preparePROSPERTuningTestingSets.output.tuning_afreq,
         testing_bed=rules.preparePROSPERTuningTestingSets.output.testing_bed,
-        testing_bim=rules.preparePROSPERTuningTestingSets.output.testing_bim,
-        testing_fam=rules.preparePROSPERTuningTestingSets.output.testing_fam,
         testing_pheno=rules.preparePROSPERTuningTestingSets.output.testing_pheno,
+        testing_afreq=rules.preparePROSPERTuningTestingSets.output.testing_afreq,
+        wrapper=Path(workflow.basedir) / "scripts" / "run_prosper_wrapper.R",
     output:
         done=PRS_METHOD_RUN_DIR / "multi_prosper.done",
+        r2=PROSPER_AFTER_ENSEMBLE_DIR / "R2.txt",
+        prs=PROSPER_AFTER_ENSEMBLE_DIR / "PROSPER_prs_file.txt",
     params:
-        method="multi_prosper",
-        command=prs_method_command_quoted("multi_prosper"),
-        extra=prs_method_extra_args("multi_prosper"),
-        out_dir=PRS_METHOD_RUN_DIR / "multi_prosper",
-        script=Path(workflow.basedir) / "scripts" / "run_prs_pipeline_adapter.sh",
+        package=PROSPER_PKG_DIR,
+        plink2=PROSPER_PLINK2,
+        rscript=PROSPER_RSCRIPT,
+        target_pop=PROSPER_TARGET_POP,
+        aux_pop=PROSPER_AUX_POP,
+        chrom=PROSPER_CHROM,
+        ncores=PROSPER_NCORES,
+        ll=PROSPER_LL,
+        lc=PROSPER_LC,
+        out_dir=PROSPER_RUN_DIR,
+        tuning_prefix=lambda wc, input: str(input.tuning_bed)[:-4],
+        testing_prefix=lambda wc, input: str(input.testing_bed)[:-4],
     shell:
         """
-        PRS_METHOD_COMMAND={params.command} bash {params.script} \
-            --method {params.method} \
-            --prs-inputs-env {input.env} \
-            --resource-dir {PRS_RESOURCE_DIR} \
-            --out-dir {params.out_dir} \
-            {params.extra} \
-            --done {output.done} \
+        set -euo pipefail
+        mkdir -p {params.out_dir}
+        {params.rscript} {input.wrapper} \\
+            --package {params.package} \\
+            --out-dir {params.out_dir} \\
+            --plink2 {params.plink2} \\
+            --target-sumstats {input.target_sumstats} \\
+            --aux-sumstats {input.training_sumstats} \\
+            --pop {params.target_pop},{params.aux_pop} \\
+            --lassosum-param-files {input.lassosum_target},{input.lassosum_aux} \\
+            --prefix {params.target_pop} \\
+            --tuning-bfile {params.tuning_prefix} \\
+            --testing-bfile {params.testing_prefix} \\
+            --pheno-tuning {input.tuning_pheno} \\
+            --pheno-testing {input.testing_pheno} \\
+            --chrom {params.chrom} \\
+            --ll {params.ll} --lc {params.lc} --ncores {params.ncores} \\
             > {log} 2>&1
+        touch {output.done}
         """
