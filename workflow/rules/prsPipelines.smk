@@ -83,10 +83,11 @@ PRS_PRSCSX_PATH_PYTHON = PRS_METHODS_CONFIG.get(
 PRS_TEST_SAMPLE = PRS_CONFIG.get("test_sample", "")
 PRS_TEST_PCA_FILE = PRS_CONFIG.get("test_pca_eigenvec_file", "")
 PRS_TEST_EVAL_DIR = PRS_METHOD_RUN_DIR / "test_evaluation"
-# Staging dir where score_test.sh's upstream layout is bridged to the native
-# per-method layout (see scoreTestPRS); score_test writes into
-# <stage>/test_evaluation, which is then moved up to PRS_TEST_EVAL_DIR.
-PRS_TEST_STAGE_DIR = PRS_METHOD_RUN_DIR / "test_evaluation" / "_stage"
+# Staging dir (a sibling of PRS_TEST_EVAL_DIR, not inside it) where
+# score_test.sh's upstream layout is bridged to the native per-method layout
+# (see scoreTestPRS); score_test writes into <stage>/test_evaluation, which is
+# then moved up to PRS_TEST_EVAL_DIR.
+PRS_TEST_STAGE_DIR = PRS_METHOD_RUN_DIR / "test_evaluation_stage"
 PRS_TEST_INPUTS = (
     {
         "test_bed": Path(PRS_TEST_SAMPLE).with_suffix(".bed"),
@@ -632,7 +633,10 @@ rule scoreTestPRS:
 
         STAGE={params.stage}
         EVAL={params.eval_dir}
-        mkdir -p "$STAGE" "$EVAL"
+        # Start clean: EVAL may hold stale outputs from a prior run (including a
+        # PRSice2/ subdir) that would make the final `mv` fail ("Directory not empty").
+        rm -rf "$STAGE" "$EVAL"
+        mkdir -p "$STAGE"
 
         # Bridge the native per-method layout to the upstream layout score_test.sh
         # expects ({{train_out_dir}}/CT, /LDpred2, /lassosum2, /PRSice2, /PRScsx).
@@ -665,7 +669,7 @@ rule scoreTestPRS:
             --ran-prsice2 true \\
             --ran-prscsx true > {log} 2>&1
 
-        mv "$STAGE/test_evaluation"/* "$EVAL"/
+        mv "$STAGE/test_evaluation" "$EVAL"
         rm -rf "$STAGE"
         touch {output.done}
         """

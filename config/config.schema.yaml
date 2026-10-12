@@ -264,8 +264,9 @@ prsMethods:
         `singleprshelper` container (PROSPER.R/lassosum2.R need
         RcppArmadillo/doMC + a compiler). PROSPER.R/lassosum2.R hard-code
         <package>/ref_bim.txt, so the workflow copies the package into a
-        writable per-run dir (method_runs/multi_prosper/PROSPER_pkg) and writes
-        ref_bim.txt there from the ANC1 study BIM.
+        writable per-run dir (method_runs/multi_prosper/PROSPER_pkg) and places
+        ref_bim.txt there — copying the package's own ref_bim.txt if present,
+        otherwise writing it from the ANC1 study BIM.
       schema:
         software_dir:
           type: str
