@@ -103,6 +103,10 @@ case "$METHOD" in
     require_sumstats_columns "$training_sumstats_file" "training"
     require_plink_prefix "$study_sample_plink_anc2" "ancestry-2 study sample"
     [[ -z "${training_study_pheno_file:-}" ]] || require_file "$training_study_pheno_file" "ancestry-2 study phenotype"
+    if [[ "$METHOD" == "multi_ctsleb" ]]; then
+      require_plink_prefix "${target_ld_reference_plink:-}" "CT-SLEB target LD reference"
+      require_plink_prefix "${aux_ld_reference_plink:-}" "CT-SLEB auxiliary LD reference"
+    fi
     ;;
   *)
     echo "Unknown PRS method: $METHOD" >&2
@@ -123,6 +127,8 @@ training_study_pheno_file	${training_study_pheno_file:-}
 study_sample_plink	$study_sample_plink
 study_sample_plink_anc2	${study_sample_plink_anc2:-}
 reference_SNPS_bim	${reference_SNPS_bim:-}
+target_ld_reference_plink	${target_ld_reference_plink:-}
+aux_ld_reference_plink	${aux_ld_reference_plink:-}
 ld_ref_dir	$LD_REF_DIR
 ld_ref_prefix	$LD_REF_PREFIX
 ld_matrix_dir	$LD_MATRIX_DIR
@@ -132,6 +138,7 @@ EOF
 
 export METHOD RESOURCE_DIR OUT_DIR LD_REF_DIR LD_REF_PREFIX LD_MATRIX_DIR SOFTWARE_DIR
 export target_sumstats_file training_sumstats_file study_sample_plink study_sample_plink_anc2 reference_SNPS_bim
+export target_ld_reference_plink aux_ld_reference_plink
 export target_gwas_pheno_file target_study_pheno_file training_gwas_pheno_file training_study_pheno_file
 
 if [[ -n "${PRS_METHOD_COMMAND:-}" ]]; then

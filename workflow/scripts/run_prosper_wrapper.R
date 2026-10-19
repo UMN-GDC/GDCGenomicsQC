@@ -1,34 +1,55 @@
 #!/usr/bin/env Rscript
 
 suppressPackageStartupMessages({
-  library(argparse)
   library(data.table)
 })
 
-parser <- ArgumentParser(description = "Run PROSPER multi-ancestry PRS workflow")
-parser$add_argument("--package", required = TRUE, help = "Path to PROSPER package directory")
-parser$add_argument("--out-dir", required = TRUE, help = "Output directory")
-parser$add_argument("--plink2", required = TRUE, help = "Path to plink2 executable")
-parser$add_argument("--target-sumstats", required = TRUE)
-parser$add_argument("--aux-sumstats", required = TRUE)
-parser$add_argument("--pop", required = TRUE, help = "Comma-separated population labels in the same order as summary stats")
-parser$add_argument("--lassosum-param-files", required = TRUE, help = "Comma-separated lassosum2 tuning parameter files in the same order as summary stats")
-parser$add_argument("--prefix", required = TRUE, help = "Target-population output prefix")
-parser$add_argument("--tuning-bfile", required = TRUE, help = "PLINK prefix for tuning set")
-parser$add_argument("--testing-bfile", required = TRUE, help = "PLINK prefix for testing set")
-parser$add_argument("--pheno-tuning", default = NULL)
-parser$add_argument("--covar-tuning", default = NULL)
-parser$add_argument("--pheno-testing", default = NULL)
-parser$add_argument("--covar-testing", default = NULL)
-parser$add_argument("--sl-library", default = "SL.glmnet,SL.ridge,SL.lm")
-parser$add_argument("--linear-score", default = "TRUE")
-parser$add_argument("--cleanup", default = "TRUE")
-parser$add_argument("--chrom", default = "1-22")
-parser$add_argument("--ll", default = "5")
-parser$add_argument("--lc", default = "5")
-parser$add_argument("--ncores", default = "1")
-parser$add_argument("--verbose", default = "1")
-args <- parser$parse_args()
+# Keep this wrapper runnable in the existing PROSPER R environment, which has
+# data.table but not the optional argparse package. All CLI options take a
+# value, so base R parsing is sufficient and avoids a separate dependency.
+parse_arguments <- function(argv) {
+  defaults <- list(
+    pheno_tuning = NULL,
+    covar_tuning = NULL,
+    pheno_testing = NULL,
+    covar_testing = NULL,
+    sl_library = "SL.glmnet,SL.ridge,SL.lm",
+    linear_score = "TRUE",
+    cleanup = "TRUE",
+    chrom = "1-22",
+    ll = "5",
+    lc = "5",
+    ncores = "1",
+    verbose = "1"
+  )
+  required <- c(
+    "package", "out_dir", "plink2", "target_sumstats", "aux_sumstats",
+    "pop", "lassosum_param_files", "prefix", "tuning_bfile", "testing_bfile"
+  )
+  values <- defaults
+  index <- 1L
+
+  while (index <= length(argv)) {
+    option <- argv[[index]]
+    if (!startsWith(option, "--") || index == length(argv)) {
+      stop("Expected --option value pairs; received: ", option)
+    }
+    key <- gsub("-", "_", sub("^--", "", option))
+    value <- argv[[index + 1L]]
+    values[[key]] <- value
+    index <- index + 2L
+  }
+
+  missing <- required[!vapply(required, function(key) {
+    !is.null(values[[key]]) && nzchar(values[[key]])
+  }, logical(1))]
+  if (length(missing) > 0L) {
+    stop("Missing required arguments: ", paste(paste0("--", gsub("_", "-", missing)), collapse = ", "))
+  }
+  values
+}
+
+args <- parse_arguments(commandArgs(trailingOnly = TRUE))
 
 dir.create(args$out_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -140,6 +161,23 @@ if (!file.exists(r2_file)) {
 if (tolower(args$linear_score) == "true" && !file.exists(prs_file)) {
   stop("PROSPER finished but did not create expected PRS file: ", prs_file)
 }
+
+r2 <- fread(r2_file)
+if (!all(c("tuning_R2", "testing_R2") %in% names(r2)) || nrow(r2) != 1L) {
+  stop("Unexpected PROSPER R2.txt format; expected one row with tuning_R2 and testing_R2.")
+}
+testing_pheno <- if (!is.null(args$pheno_testing) && nzchar(args$pheno_testing)) {
+  fread(args$pheno_testing)
+} else {
+  fread(paste0(args$testing_bfile, ".fam"))
+}
+fair_metrics <- data.table(
+  method = "PROSPER",
+  tuning_r2 = as.numeric(r2$tuning_R2[[1]]),
+  test_r2 = as.numeric(r2$testing_R2[[1]]),
+  test_n = nrow(testing_pheno)
+)
+fwrite(fair_metrics, file.path(after_dir, "PROSPER_fair_metrics.tsv"), sep = "\t")
 
 message("PROSPER completed successfully.")
 message("Final PRS file: ", prs_file)

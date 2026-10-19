@@ -314,6 +314,8 @@ rule prepareCTSLEBPhenotypes:
         runtime=60,
     input:
         fam=rules.preparePRSInputs.output.study_fam,
+        tuning_pheno=rules.preparePRSInputs.output.target_tuning_pheno,
+        testing_pheno=rules.preparePRSInputs.output.target_testing_pheno,
     output:
         tuning=CTSLEB_INPUT_DIR / "metadata" / f"{CTSLEB_PHENO_PREFIX}_tuning.pheno",
         validation=CTSLEB_INPUT_DIR / "metadata" / f"{CTSLEB_PHENO_PREFIX}_validation.pheno",
@@ -323,12 +325,10 @@ rule prepareCTSLEBPhenotypes:
 
         mkdir -p $(dirname {output.tuning})
 
-        N=$(wc -l < {input.fam})
-        N_TUNE=$((N / 2))
-        awk -v n_tune="$N_TUNE" -v tune="{output.tuning}" -v valid="{output.validation}" '
-            NR <= n_tune {{ print $6 > tune; next }}
-            {{ print $6 > valid }}
-        ' {input.fam}
+        # CT-SLEB's wrapper indexes the full study PLINK file as tuning rows
+        # followed by validation rows. The common split preserves that order.
+        awk 'NR > 1 {{ print $3 }}' {input.tuning_pheno} > {output.tuning}
+        awk 'NR > 1 {{ print $3 }}' {input.testing_pheno} > {output.validation}
 
         echo "Created CTSLEB phenotype splits:" > {log}
         wc -l {output.tuning} {output.validation} >> {log}
@@ -349,6 +349,12 @@ rule runMultiAncestryCTSLEB:
         training_sumstats=rules.prepareCTSLEBSumstats.output.training_ss,
         study_bed=rules.preparePRSInputs.output.study_bed,
         study_anc2_bed=rules.preparePRSInputs.output.study_anc2_bed,
+        target_ld_reference_bed=rules.preparePRSInputs.output.target_ld_reference_bed,
+        target_ld_reference_bim=rules.preparePRSInputs.output.target_ld_reference_bim,
+        target_ld_reference_fam=rules.preparePRSInputs.output.target_ld_reference_fam,
+        aux_ld_reference_bed=rules.preparePRSInputs.output.aux_ld_reference_bed,
+        aux_ld_reference_bim=rules.preparePRSInputs.output.aux_ld_reference_bim,
+        aux_ld_reference_fam=rules.preparePRSInputs.output.aux_ld_reference_fam,
         study_pheno=rules.preparePRSInputs.output.target_study_pheno,
         study_anc2_pheno=rules.preparePRSInputs.output.training_study_pheno,
         tuning_pheno=rules.prepareCTSLEBPhenotypes.output.tuning,
@@ -389,6 +395,8 @@ rule runMultiAncestryPRSCSx:
         target_sumstats=rules.preparePRSInputs.output.target_sumstats,
         training_sumstats=rules.preparePRSInputs.output.training_sumstats,
         study_pheno=rules.preparePRSInputs.output.target_study_pheno,
+        testing_keep=rules.preparePRSInputs.output.target_testing_keep,
+        testing_pheno=rules.preparePRSInputs.output.target_testing_pheno,
         study_anc2_pheno=rules.preparePRSInputs.output.training_study_pheno,
     output:
         done=PRS_METHOD_RUN_DIR / "multi_prscsx.done",

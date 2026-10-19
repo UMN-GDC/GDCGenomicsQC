@@ -2,7 +2,6 @@
 
 library(argparse)
 library(tidyverse)
-library(mvtnorm)
 
 parser <- ArgumentParser(description = "Run complete phenotype simulation pipeline")
 parser$add_argument("--ancestry1", type = "character", required = TRUE,
@@ -113,84 +112,120 @@ file.copy(base_fam_2, sim_fam_2, overwrite = TRUE)
 
 cat("Base .fam files created\n\n")
 
-simEffects <- function(anc1_afreq, anc2_afreq, herit, rho, maf) {
-    anc1 <- read_table(anc1_afreq)
-    C_ANC1 <- sum(anc1$ALT_FREQS > maf, na.rm = TRUE)
-    anc2 <- read_table(anc2_afreq)
-    C_ANC2 <- sum(anc2$ALT_FREQS > maf, na.rm = TRUE)
+validate_simulation_parameters <- function(herit, rho, maf) {
+    if (herit <= 0 || herit >= 1) stop("heritability must be strictly between 0 and 1")
+    if (rho < -1 || rho > 1) stop("rho must be between -1 and 1")
+    if (maf <= 0 || maf >= 0.5) stop("maf must be strictly between 0 and 0.5")
+}
 
+run_or_stop <- function(command, command_args) {
+    status <- system2(command, args = command_args)
+    if (!identical(status, 0L)) {
+        stop(sprintf("Command failed (%s): %s", status, paste(c(command, command_args), collapse = " ")))
+    }
+}
+
+get_score_ids <- function(score_data) {
+    fid_col <- intersect(c("#FID", "FID", "X.FID"), names(score_data))
+    if (length(fid_col) != 1 || !all(c("IID", "SCORE1_AVG") %in% names(score_data))) {
+        stop("PLINK score file must contain FID, IID, and SCORE1_AVG columns")
+    }
+    fid_col <- fid_col[[1]]
+    tibble(
+        FID = as.character(score_data[[fid_col]]),
+        IID = as.character(score_data[["IID"]]),
+        genetic_score = score_data[["SCORE1_AVG"]]
+    )
+}
+
+simEffects <- function(anc1_afreq, anc2_afreq, herit, rho, maf) {
+    anc1 <- read_table(anc1_afreq, show_col_types = FALSE)
+    anc2 <- read_table(anc2_afreq, show_col_types = FALSE)
     combined <- inner_join(anc1, anc2, by = c("#CHROM", "ID", "REF", "ALT"), suffix = c("_1", "_2"))
+
+    if (nrow(combined) == 0) stop("No variants overlap between ancestry frequency files")
 
     combined <- combined %>%
         mutate(
-            sdEff_1 = case_when(
-                is.na(ALT_FREQS_1) ~ 0,
-                ALT_FREQS_1 < maf ~ 0,
-                .default = sqrt(herit / C_ANC1)
-            ),
-            sdEff_2 = case_when(
-                is.na(ALT_FREQS_2) ~ 0,
-                ALT_FREQS_2 < maf ~ 0,
-                .default = sqrt(herit / C_ANC2)
-            )
+            maf_1 = pmin(ALT_FREQS_1, 1 - ALT_FREQS_1),
+            maf_2 = pmin(ALT_FREQS_2, 1 - ALT_FREQS_2),
+            eligible_1 = !is.na(maf_1) & maf_1 >= maf,
+            eligible_2 = !is.na(maf_2) & maf_2 >= maf,
+            shared_eligible = eligible_1 & eligible_2
         )
 
-    betas <- matrix(NA, nrow = nrow(combined), ncol = 2)
-    cov_matrix <- matrix(c(
-        combined$sdEff_1[1], (rho * herit) / (sqrt(C_ANC1) * sqrt(C_ANC2)),
-        (rho * herit) / (sqrt(C_ANC2) * sqrt(C_ANC1)), combined$sdEff_2[1]
-    ), ncol = 2)
+    c_anc1 <- sum(combined$eligible_1)
+    c_anc2 <- sum(combined$eligible_2)
+    if (c_anc1 == 0 || c_anc2 == 0) stop("No variants pass the MAF threshold in one or both ancestries")
+    if (sum(combined$shared_eligible) < 2) stop("At least two shared MAF-eligible variants are required to simulate rho")
 
-    for (i in 1:nrow(combined)) {
-        cov_matrix[1, 1] <- combined$sdEff_1[i]
-        cov_matrix[2, 2] <- combined$sdEff_2[i]
-        cov_matrix[1, 2] <- (rho * herit) / (sqrt(C_ANC1) * sqrt(C_ANC2))
-        cov_matrix[2, 1] <- (rho * herit) / (sqrt(C_ANC2) * sqrt(C_ANC1))
+    # Effects are generated on the standardized-genotype scale. Shared eligible
+    # variants use correlated normal draws; ancestry-specific variants are independent.
+    z1 <- rnorm(nrow(combined))
+    z2 <- rnorm(nrow(combined))
+    beta_std_1 <- ifelse(combined$eligible_1, sqrt(herit / c_anc1) * z1, 0)
+    beta_std_2 <- ifelse(combined$eligible_2, sqrt(herit / c_anc2) * z2, 0)
+    beta_std_2[combined$shared_eligible] <- sqrt(herit / c_anc2) * (
+        rho * z1[combined$shared_eligible] + sqrt(1 - rho^2) * z2[combined$shared_eligible]
+    )
 
-        if (any(is.na(cov_matrix)) || any(is.nan(cov_matrix))) {
-            betas[i, ] <- c(0, 0)
-        } else {
-            betas[i, 1:2] <- rmvnorm(n = 1, mean = c(0, 0), sigma = cov_matrix)
-        }
-    }
-
-    combined$effs_1 <- betas[, 1] * sqrt(2 * combined$ALT_FREQS_1 * (1 - combined$ALT_FREQS_1))
-    combined$effs_2 <- betas[, 2] * sqrt(2 * combined$ALT_FREQS_2 * (1 - combined$ALT_FREQS_2))
-
-    combined$effs_1 <- combined$effs_1 * sqrt(herit / sum(combined$effs_1^2, na.rm = TRUE))
-    combined$effs_2 <- combined$effs_2 * sqrt(herit / sum(combined$effs_2^2, na.rm = TRUE))
-
-    return(combined)
+    combined$beta_std_1 <- beta_std_1
+    combined$beta_std_2 <- beta_std_2
+    combined$effs_1 <- ifelse(combined$eligible_1, beta_std_1 / sqrt(2 * combined$ALT_FREQS_1 * (1 - combined$ALT_FREQS_1)), 0)
+    combined$effs_2 <- ifelse(combined$eligible_2, beta_std_2 / sqrt(2 * combined$ALT_FREQS_2 * (1 - combined$ALT_FREQS_2)), 0)
+    combined
 }
 
-adjustPheno <- function(effects_file, sscore_file, herit) {
-    pheno <- read_table(sscore_file)
-    sd_score <- sd(pheno$SCORE1_AVG, na.rm = TRUE)
+write_score_weights <- function(effects, ancestry, effects_file) {
+    effect_column <- if (ancestry == 1) "effs_1" else "effs_2"
+    weights <- effects %>%
+        transmute(`#ID` = ID, REF, BETA = .data[[effect_column]])
+    write_delim(weights, effects_file, delim = "\t")
+}
 
-    effects <- read_delim(effects_file, delim = "\t")
+calibrate_score_weights <- function(effects_file, sscore_file, herit) {
+    score_data <- read_table(sscore_file, show_col_types = FALSE)
+    score_sd <- sd(score_data$SCORE1_AVG, na.rm = TRUE)
+    if (!is.finite(score_sd) || score_sd <= 0) stop("Initial genetic score has zero or non-finite variance")
 
-    if (sd_score > 0) {
-        effects[, 3] <- effects[, 3] / sd_score * sqrt(herit)
-    }
-
+    effects <- read_delim(effects_file, delim = "\t", show_col_types = FALSE)
+    effects$BETA <- effects$BETA / score_sd * sqrt(herit)
     write_delim(effects, effects_file, delim = "\t")
 }
 
-finalizePheno <- function(sscore_file, pheno_file, herit) {
-    pheno <- read_table(sscore_file)
-    pheno <- pheno %>%
-        mutate(
-            error = rnorm(n = nrow(pheno), 0, sqrt(1 - herit)),
-            error = error / sd(error, na.rm = TRUE) * sqrt(1 - herit),
-            pheno = SCORE1_AVG + error
-        ) %>%
-        select(-error)
+finalizePheno <- function(sscore_file, herit) {
+    genetic_score <- get_score_ids(read_table(sscore_file, show_col_types = FALSE))
+    residual <- rnorm(nrow(genetic_score), 0, sqrt(1 - herit))
+    residual <- residual / sd(residual) * sqrt(1 - herit)
 
-    write_delim(pheno, pheno_file, delim = "\t")
+    genetic_score %>%
+        mutate(
+            residual = residual,
+            phenotype = genetic_score + residual,
+            realized_h2 = var(genetic_score) / var(phenotype)
+        )
+}
+
+append_phenotype_to_fam <- function(sim_fam, phenotype_data, sim_i) {
+    fam <- read_table(sim_fam, col_names = FALSE, show_col_types = FALSE)
+    fam_ids <- transmute(fam, FID = as.character(X1), IID = as.character(X2))
+    matched <- match(paste(fam_ids$FID, fam_ids$IID), paste(phenotype_data$FID, phenotype_data$IID))
+    if (anyNA(matched)) stop(sprintf("Could not match every individual in %s to its simulated phenotype", sim_fam))
+
+    fam <- fam %>% mutate(!!paste0("pheno_", sim_i) := phenotype_data$phenotype[matched])
+    write_delim(fam, sim_fam, col_names = FALSE, delim = " ")
+    fam
 }
 
 cat("STEP 3: Running simulations\n")
 cat("-----------------------------------\n")
+
+validate_simulation_parameters(herit, rho, maf)
+truth_dir <- file.path(args$out_dir, "simulation_truth")
+work_dir <- file.path(args$out_dir, "simulation_work")
+dir.create(truth_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(work_dir, recursive = TRUE, showWarnings = FALSE)
+simulation_manifest <- vector("list", n_sims)
 
 for (sim_i in 1:n_sims) {
     cat(sprintf("Running simulation %d of %d...\n", sim_i, n_sims))
@@ -201,50 +236,52 @@ for (sim_i in 1:n_sims) {
     cat(sprintf("  [Sim %d] Generating SNP effect sizes...\n", sim_i))
     combined_effs <- simEffects(paste0(anc1File, ".afreq"), paste0(anc2File, ".afreq"), herit, rho, maf)
 
-    write_delim(combined_effs %>% select(`#ID` = ID, REF, effs_1), paste0(anc1File, "Effects.csv"), delim = "\t")
-    write_delim(combined_effs %>% select(`#ID` = ID, REF, effs_2), paste0(anc2File, "Effects.csv"), delim = "\t")
+    effects_file_1 <- file.path(work_dir, paste0(args$anc1_name, "_score_weights.tsv"))
+    effects_file_2 <- file.path(work_dir, paste0(args$anc2_name, "_score_weights.tsv"))
+    score_prefix_1 <- file.path(work_dir, paste0(args$anc1_name, "_sim", sprintf("%03d", sim_i), "_score"))
+    score_prefix_2 <- file.path(work_dir, paste0(args$anc2_name, "_sim", sprintf("%03d", sim_i), "_score"))
+    write_score_weights(combined_effs, 1, effects_file_1)
+    write_score_weights(combined_effs, 2, effects_file_2)
 
     cat(sprintf("  [Sim %d] Computing PRS (round 1)...\n", sim_i))
-    system2("plink2", args = c("--pfile", anc1File, "--score", paste0(anc1File, "Effects.csv"),
-        "1", "2", "3", "header", "--out", anc1File))
-    system2("plink2", args = c("--pfile", anc2File, "--score", paste0(anc2File, "Effects.csv"),
-        "1", "2", "3", "header", "--out", anc2File))
+    run_or_stop("plink2", c("--pfile", anc1File, "--score", effects_file_1, "1", "2", "3", "header", "--out", score_prefix_1))
+    run_or_stop("plink2", c("--pfile", anc2File, "--score", effects_file_2, "1", "2", "3", "header", "--out", score_prefix_2))
 
     cat(sprintf("  [Sim %d] Adjusting phenotype for heritability...\n", sim_i))
-    adjustPheno(paste0(anc1File, "Effects.csv"), paste0(anc1File, ".sscore"), herit)
-    adjustPheno(paste0(anc2File, "Effects.csv"), paste0(anc2File, ".sscore"), herit)
+    calibrate_score_weights(effects_file_1, paste0(score_prefix_1, ".sscore"), herit)
+    calibrate_score_weights(effects_file_2, paste0(score_prefix_2, ".sscore"), herit)
 
     cat(sprintf("  [Sim %d] Computing PRS (round 2)...\n", sim_i))
-    system2("plink2", args = c("--pfile", anc1File, "--score", paste0(anc1File, "Effects.csv"),
-        "1", "2", "3", "header", "--out", anc1File))
-    system2("plink2", args = c("--pfile", anc2File, "--score", paste0(anc2File, "Effects.csv"),
-        "1", "2", "3", "header", "--out", anc2File))
+    run_or_stop("plink2", c("--pfile", anc1File, "--score", effects_file_1, "1", "2", "3", "header", "--out", score_prefix_1))
+    run_or_stop("plink2", c("--pfile", anc2File, "--score", effects_file_2, "1", "2", "3", "header", "--out", score_prefix_2))
 
     cat(sprintf("  [Sim %d] Finalizing phenotype with noise...\n", sim_i))
-    finalizePheno(paste0(anc1File, ".sscore"), paste0(anc1File, ".pheno"), herit)
-    finalizePheno(paste0(anc2File, ".sscore"), paste0(anc2File, ".pheno"), herit)
+    pheno_1_data <- finalizePheno(paste0(score_prefix_1, ".sscore"), herit)
+    pheno_2_data <- finalizePheno(paste0(score_prefix_2, ".sscore"), herit)
+    write_delim(pheno_1_data, file.path(truth_dir, sprintf("%s_sim%03d_truth.tsv.gz", args$anc1_name, sim_i)), delim = "\t")
+    write_delim(pheno_2_data, file.path(truth_dir, sprintf("%s_sim%03d_truth.tsv.gz", args$anc2_name, sim_i)), delim = "\t")
 
-    # Read the last column from the .pheno file
-    pheno_1_data <- read_table(paste0(anc1File, ".pheno"), col_names = TRUE)
-    pheno_2_data <- read_table(paste0(anc2File, ".pheno"), col_names = TRUE)
-    
-    pheno_1 <- pheno_1_data[[ncol(pheno_1_data)]]
-    pheno_2 <- pheno_2_data[[ncol(pheno_2_data)]]
+    fam_1 <- append_phenotype_to_fam(sim_fam_1, pheno_1_data, sim_i)
+    fam_2 <- append_phenotype_to_fam(sim_fam_2, pheno_2_data, sim_i)
 
-    # Read the current .fam file
-    fam_1 <- read_table(sim_fam_1, col_names = FALSE)
-    fam_2 <- read_table(sim_fam_2, col_names = FALSE)
-
-    # Add the new phenotype column
-    fam_1 <- fam_1 %>% mutate(!!paste0("pheno_", sim_i) := pheno_1)
-    fam_2 <- fam_2 %>% mutate(!!paste0("pheno_", sim_i) := pheno_2)
-
-    # Write the updated .fam file (space-separated, as is typical for PLINK)
-    write_delim(fam_1, sim_fam_1, col_names = FALSE, delim = " ")
-    write_delim(fam_2, sim_fam_2, col_names = FALSE, delim = " ")
+    shared <- combined_effs$shared_eligible
+    simulation_manifest[[sim_i]] <- tibble(
+        simulation = sim_i,
+        seed = current_seed,
+        requested_h2 = herit,
+        requested_rho = rho,
+        n_effect_variants_anc1 = sum(combined_effs$eligible_1),
+        n_effect_variants_anc2 = sum(combined_effs$eligible_2),
+        n_shared_effect_variants = sum(shared),
+        realized_effect_rho = cor(combined_effs$beta_std_1[shared], combined_effs$beta_std_2[shared]),
+        realized_h2_anc1 = unique(pheno_1_data$realized_h2),
+        realized_h2_anc2 = unique(pheno_2_data$realized_h2)
+    )
 
     cat(sprintf("  [Sim %d] Phenotype appended to .fam file (Total columns: %d)\n", sim_i, ncol(fam_1)))
 }
+
+write_delim(bind_rows(simulation_manifest), file.path(truth_dir, "simulation_manifest.tsv"), delim = "\t")
 
 cat("\nSTEP 4: Creating PLINK binary files\n")
 cat("-----------------------------------\n")

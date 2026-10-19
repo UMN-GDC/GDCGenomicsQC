@@ -90,6 +90,8 @@ rule simulateBivariatePhenotypes:
         skip_thinning=SIM_CONFIG.get("skip_thinning", True),
         thin_count_snps=SIM_CONFIG.get("thin_count_snps", 1000000),
         thin_count_inds=SIM_CONFIG.get("thin_count_inds", 10000),
+        analysis_variant_mode=SIM_CONFIG.get("analysis_variant_mode", "none"),
+        prscsx_snpinfo=SIM_CONFIG.get("prscsx_snpinfo", ""),
         anc1=ANC1,
         anc2=ANC2,
         anc1_prefix=get_sim_input_prefix(ANC1),
@@ -108,7 +110,7 @@ rule simulateBivariatePhenotypes:
 
         if [[ "{params.anc1_kind}" == "bfile" ]]; then
             anc1_pfile="{output.sim_dir}/{params.anc1}_input"
-            plink2 --bfile "/scratch.global/saonli/GDCGenomicsQC/CTSLEB/AFR/CTSLEB_AFR" \
+            plink2 --bfile "{params.anc1_prefix}" \
   	--set-all-var-ids 'chr@:#:$r:$a' \
   	--rm-dup force-first \
   	--make-pgen \
@@ -117,12 +119,52 @@ rule simulateBivariatePhenotypes:
 
         if [[ "{params.anc2_kind}" == "bfile" ]]; then
             anc2_pfile="{output.sim_dir}/{params.anc2}_input"
-         plink2 --bfile "/scratch.global/saonli/GDCGenomicsQC/CTSLEB/EUR/CTSLEB_EUR" \
+            plink2 --bfile "{params.anc2_prefix}" \
   	--set-all-var-ids 'chr@:#:$r:$a' \
   	--rm-dup force-first \
   	--make-pgen \
   	--out "$anc2_pfile"
         fi
+
+        case "{params.analysis_variant_mode}" in
+          none) ;;
+          prscsx_hm3_intersection)
+            ref_snpinfo="{params.prscsx_snpinfo}"
+            [[ -f "$ref_snpinfo" ]] || {{
+                echo "Missing PRS-CSx 1KG HapMap3 metadata: $ref_snpinfo" >&2
+                exit 1
+            }}
+
+            # Simulate effects only at loci shared by both ancestries and the
+            # PRS-CSx 1KG HapMap3 reference. Native variant IDs are retained.
+            awk 'NR == FNR {{if (FNR > 1) ref[$1 ":" $3] = 1; next}} NR > 1 {{key = $1 ":" $2; if (key in ref) print key "\t" $3}}' \
+                "$ref_snpinfo" "${{anc1_pfile}}.pvar" > "{output.sim_dir}/{params.anc1}_hm3_keys.tsv"
+            awk 'NR == FNR {{if (FNR > 1) ref[$1 ":" $3] = 1; next}} NR > 1 {{key = $1 ":" $2; if (key in ref) print key "\t" $3}}' \
+                "$ref_snpinfo" "${{anc2_pfile}}.pvar" > "{output.sim_dir}/{params.anc2}_hm3_keys.tsv"
+            awk -v anc1_out="{output.sim_dir}/{params.anc1}_hm3.extract" -v anc2_out="{output.sim_dir}/{params.anc2}_hm3.extract" '
+                NR == FNR {{anc1[$1] = $2; next}}
+                $1 in anc1 {{print anc1[$1] > anc1_out; print $2 > anc2_out}}
+            ' "{output.sim_dir}/{params.anc1}_hm3_keys.tsv" "{output.sim_dir}/{params.anc2}_hm3_keys.tsv"
+
+            n_shared=$(awk 'END {{print NR+0}}' "{output.sim_dir}/{params.anc1}_hm3.extract")
+            (( n_shared >= 100000 )) || {{
+                echo "Only $n_shared shared PRS-CSx/HM3 variants were found." >&2
+                exit 1
+            }}
+            echo "Simulating on $n_shared shared PRS-CSx/HM3 variants per ancestry."
+
+            anc1_filtered="{output.sim_dir}/{params.anc1}_hm3_input"
+            anc2_filtered="{output.sim_dir}/{params.anc2}_hm3_input"
+            plink2 --pfile "$anc1_pfile" --extract "{output.sim_dir}/{params.anc1}_hm3.extract" --make-pgen --out "$anc1_filtered"
+            plink2 --pfile "$anc2_pfile" --extract "{output.sim_dir}/{params.anc2}_hm3.extract" --make-pgen --out "$anc2_filtered"
+            anc1_pfile="$anc1_filtered"
+            anc2_pfile="$anc2_filtered"
+            ;;
+          *)
+            echo "Unsupported phenotypeSimulation.analysis_variant_mode: {params.analysis_variant_mode}" >&2
+            exit 2
+            ;;
+        esac
 
         Rscript {params.script_dir}/runPhenotypeSimulation.R \
             --ancestry1 "$anc1_pfile" \
