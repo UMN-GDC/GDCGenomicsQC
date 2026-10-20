@@ -190,28 +190,58 @@ make_split_files() {
 }
 
 make_pheno_file() {
-  local fam="$1"
-  local out="$2"
+  local subset_fam="$1"
+  local simulation_fam="$2"
+  local out="$3"
   local pheno_col=$((5 + PHENO_INDEX))
 
-  awk -v col="$pheno_col" 'BEGIN {print "FID\tIID\tPHENO"} NF >= col && $col != "NA" && $col != "-9" {print $1 "\t" $2 "\t" $col}' "$fam" > "$out"
+  # PLINK subset .fam files retain only phenotype column 1.  Recover the
+  # requested replicate phenotype from the original multi-phenotype .fam.
+  awk -v col="$pheno_col" '
+    BEGIN {print "FID\tIID\tPHENO"}
+    NR == FNR {
+      if (NF >= col && $col != "NA" && $col != "-9") {
+        pheno[$1 SUBSEP $2] = $col
+      }
+      next
+    }
+    {
+      key = $1 SUBSEP $2
+      if (key in pheno) {
+        print $1 "\t" $2 "\t" pheno[key]
+        n++
+      } else {
+        missing++
+      }
+    }
+    END {
+      if (missing > 0) {
+        printf "Missing selected phenotype for %d participants in %s\\n", missing, ARGV[2] > "/dev/stderr"
+        exit 1
+      }
+      if (n == 0) {
+        printf "No phenotype values found in column %d of %s\\n", col, ARGV[1] > "/dev/stderr"
+        exit 1
+      }
+    }
+  ' "$simulation_fam" "$subset_fam" > "$out"
 }
 
 make_tuning_testing_files() {
-  local fam="$1"
-  local anc="$2"
+  local study_fam="$1"
+  local simulation_fam="$2"
+  local anc="$3"
   local n n_tuning pheno_col
   local tuning_keep="$OUT_DIR/metadata/${anc}_tuning.keep"
   local testing_keep="$OUT_DIR/metadata/${anc}_testing.keep"
   local tuning_pheno="$OUT_DIR/metadata/${anc}_tuning.pheno"
   local testing_pheno="$OUT_DIR/metadata/${anc}_testing.pheno"
 
-  n=$(awk 'NF >= 6 {n++} END {print n+0}' "$fam")
+  n=$(awk 'NF >= 6 {n++} END {print n+0}' "$study_fam")
   if [[ "$n" -lt 4 ]]; then
     echo "Need at least four study participants to create tuning/testing splits; found $n" >&2
     exit 1
   fi
-  pheno_col=$((5 + PHENO_INDEX))
   if (( TUNING_N > 0 )); then
     n_tuning="$TUNING_N"
     if (( n_tuning + TESTING_N != n )); then
@@ -221,27 +251,53 @@ make_tuning_testing_files() {
   else
     n_tuning=$((n / 2))
   fi
+  pheno_col=$((5 + PHENO_INDEX))
 
   # The study cohort was randomly selected from the simulated population.
   # Preserve its row order because the existing CT-SLEB implementation indexes
   # its tuning and validation PRS matrices in this same order.
   awk -v n_tuning="$n_tuning" -v pheno_col="$pheno_col" \
+      -v expected_n="$n" \
       -v tuning_keep="$tuning_keep" -v testing_keep="$testing_keep" \
       -v tuning_pheno="$tuning_pheno" -v testing_pheno="$testing_pheno" '
     BEGIN {
       print "FID\tIID\tPHENO" > tuning_pheno
       print "FID\tIID\tPHENO" > testing_pheno
     }
-    NR <= n_tuning {
+    NR == FNR {
+      if (NF >= pheno_col && $pheno_col != "NA" && $pheno_col != "-9") {
+        pheno[$1 SUBSEP $2] = $pheno_col
+      }
+      next
+    }
+    {
+      key = $1 SUBSEP $2
+      if (!(key in pheno)) {
+        missing++
+        next
+      }
+      sample_index++
+    }
+    sample_index <= n_tuning {
       print $1, $2 > tuning_keep
-      print $1 "\t" $2 "\t" $pheno_col > tuning_pheno
+      print $1 "\t" $2 "\t" pheno[key] > tuning_pheno
       next
     }
     {
       print $1, $2 > testing_keep
-      print $1 "\t" $2 "\t" $pheno_col > testing_pheno
+      print $1 "\t" $2 "\t" pheno[key] > testing_pheno
     }
-  ' "$fam"
+    END {
+      if (missing > 0) {
+        printf "Missing selected phenotype for %d study participants\\n", missing > "/dev/stderr"
+        exit 1
+      }
+      if (sample_index != expected_n) {
+        printf "Expected %d study participants with the selected phenotype; found %d\\n", expected_n, sample_index > "/dev/stderr"
+        exit 1
+      }
+    }
+  ' "$simulation_fam" "$study_fam"
 
   echo "Shared ${anc} tuning/testing split: ${n_tuning}/$((n - n_tuning)) participants"
 }
@@ -364,8 +420,8 @@ process_ancestry() {
   "$PLINK2_BIN_RESOLVED" --bfile "$out_prefix" --keep "$OUT_DIR/metadata/${anc}_ld_reference.keep" --make-bed --out "$ld_reference_prefix"
   "$PLINK2_BIN_RESOLVED" --bfile "$out_prefix" --keep "$OUT_DIR/metadata/${anc}_study.keep" --make-bed --out "$study_prefix"
 
-  make_pheno_file "${gwas_prefix}.fam" "$gwas_pheno"
-  make_pheno_file "${study_prefix}.fam" "$study_pheno"
+  make_pheno_file "${gwas_prefix}.fam" "${sim_prefix}.fam" "$gwas_pheno"
+  make_pheno_file "${study_prefix}.fam" "${sim_prefix}.fam" "$study_pheno"
   run_glm "$gwas_prefix" "$gwas_pheno" "$glm_prefix"
 }
 
@@ -416,7 +472,10 @@ make_ld_reduced_study_set() {
 
 make_analysis_variant_extracts "$SIM_DIR/${ANC1}_simulation" "$SIM_DIR/${ANC2}_simulation"
 process_ancestry "$ANC1" "anc1_plink_files"
-make_tuning_testing_files "$OUT_DIR/anc1_plink_files/${ANC1}_simulation_study_sample.fam" "$ANC1"
+make_tuning_testing_files \
+  "$OUT_DIR/anc1_plink_files/${ANC1}_simulation_study_sample.fam" \
+  "$SIM_DIR/${ANC1}_simulation.fam" \
+  "$ANC1"
 make_ld_reduced_study_set "$OUT_DIR/anc1_plink_files/${ANC1}_simulation_study_sample" "$ANC1"
 format_sumstats "$OUT_DIR/gwas/${ANC1}_glm" "$OUT_DIR/gwas/target_sumstats.txt"
 format_single_prs_sumstats "$OUT_DIR/gwas/target_sumstats.txt" "$OUT_DIR/gwas/target_sumstats_singlePRS.txt"
