@@ -73,6 +73,7 @@ include: "rules/snpHerit.smk"
 include: "rules/snpHeritRelated.smk"
 include: "rules/releaseFilter.smk"
 include: "rules/preparePRSInputs.smk"
+include: "rules/gwas.smk"
 include: "rules/prsPipelines.smk"
 
 def _qc_outputs_for_subset(subset):
@@ -189,6 +190,12 @@ rule all:
         _qc_outputs_for_subset("full"),
         lambda wildcards: sum(
             (_qc_outputs_for_subset(a) for a in get_ancestries(wildcards)), []
+        ),
+        # ── GWAS (only when gwas.pheno is configured) ──
+        lambda wildcards: (
+            sum((_gwas_outputs_for_subset(a) for a in gwas_subsets()), [])
+            if GWAS_ACTIVE
+            else []
         ),
 
 

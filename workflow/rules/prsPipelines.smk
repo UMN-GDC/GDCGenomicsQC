@@ -9,8 +9,25 @@ PRS_RESOURCE_DIR = Path(
 PRS_METHOD_RUN_DIR = PRS_OUT_DIR / "method_runs"
 
 PRS_EXTERNAL = PRS_CONFIG.get("external", {})
+GWAS_PR_CONFIG = config.get("gwas", {}).get("prs", {})
+PRS_FROM_GWAS = bool(GWAS_PR_CONFIG.get("enabled", False))
+PRS_GWAS_STAGED = PRS_OUT_DIR / "gwas_staged"
+if PRS_FROM_GWAS:
+    # The GWAS module stages a discovery-only sumstats file and a target
+    # genotype/phenotype set restricted to samples excluded from discovery.
+    PRS_EXTERNAL = {
+        "target_bed": str(PRS_GWAS_STAGED / "target.bed"),
+        "target_bim": str(PRS_GWAS_STAGED / "target.bim"),
+        "target_fam": str(PRS_GWAS_STAGED / "target.fam"),
+        "target_sumstats": str(PRS_GWAS_STAGED / "target_sumstats.tsv"),
+        "target_pheno": str(PRS_GWAS_STAGED / "target_pheno.tsv"),
+        "pcs": str(PRS_GWAS_STAGED / "target_pcs.tsv"),
+    }
 PRS_USE_EXTERNAL = bool(
     PRS_EXTERNAL.get("target_bed") and PRS_EXTERNAL.get("target_sumstats")
+)
+PRS_GWAS_READY = (
+    str(PRS_GWAS_STAGED / "staged.ready") if PRS_FROM_GWAS else []
 )
 
 
@@ -141,6 +158,8 @@ rule preparePRSMethodResources:
 if PRS_USE_EXTERNAL:
 
     rule prepareExternalPRSInputs:
+        input:
+            staged=PRS_GWAS_READY,
         output:
             env=PRS_OUT_DIR / "external_prs_inputs.env",
         log:

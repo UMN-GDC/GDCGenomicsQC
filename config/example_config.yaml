@@ -271,6 +271,40 @@ snpHerit:
 #     # pca_input: "/path/to/internal_pca_plink2.eigenvec"
 #     # out: "/path/to/out_prefix"
 
+# Genome-wide association testing (standard PLINK2 / fastGWA / TRACTOR).
+# Set pheno to enable. GWAS runs on "full" plus every inferred ancestry
+# subset (or an explicit gwas.subsets list). With gwas.prs.enabled the
+# samples are split deterministically into discovery (GWAS) and target (PRS)
+# sets so the PRS evaluation never reuses discovery samples.
+# gwas:
+#     pheno: "/path/to/pheno.txt"        # FID IID pheno_col
+#     mpheno: 1
+#     qcovar: null                       # optional quantitative covariates (FID IID ...)
+#     eigenvec: null                      # default OUT_DIR/{subset}/internal_pca_plink2.eigenvec
+#     npc: 10
+#     methods: ["standard", "fastgwa"]   # add "tractor" for local-ancestry-aware GWAS
+#     subsets: null                       # null = full + inferred ancestries
+#     subset: "full"                      # subset staged for PRS
+#     bed_prefix: "f1.b38"                # converted to .bed for testing
+#     grm_prefix: "f1.b38.ldpruned"       # used by fastgwa_mode: mlm
+#     fastgwa_mode: "lr"                  # lr (no GRM) or mlm (sparse GRM)
+#     sparse_cutoff: 0.05
+#     output_dir: "04-gwas"
+#     gwas_fraction: 0.5
+#     seed: 42
+#     tractor:
+#         num_ancestries: 2
+#         method: "linear"
+#         dir: "02-localAncestry"
+#         vcf_pattern: "chr{CHR}.phased.vcf.gz"
+#         msp_pattern: "chr{CHR}.lai.msp.tsv"
+#     prs:
+#         enabled: true                   # split + feed discovery sumstats to prsPipeline
+#         source_subset: "full"
+#         target_subset: "full"           # must equal source_subset
+#         method: "standard"              # standard | fastgwa | tractor
+#         tractor_ancestry: 0             # used when method: tractor
+
 # Release Filter: de-identification, keep-list, derivative filtering & validation
 # Set enabled: true to activate. Can be applied at any intermediate stage.
 # releaseFilter:

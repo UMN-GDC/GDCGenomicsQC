@@ -1,0 +1,29 @@
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%arguments
+    # Best practice: Name your environment something consistent
+    ENV_NAME=tractor
+    # Pinned upstream commit for reproducible builds (Tractor v1.4.0 line).
+    TRACTOR_COMMIT=2860728d22dbf37a816afcf9d41ef42f15facce8
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export PATH="/opt/conda/envs/{{ ENV_NAME }}/bin:/opt/Tractor/scripts:$PATH"
+    export LC_ALL=C.UTF-8
+
+%files
+    tractor.yml /app/tractor.yml
+
+%post
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/tractor.yml
+
+    # Tractor is distributed as scripts rather than a package (MIT licensed).
+    # Pin the commit and drop the git history so the image is reproducible.
+    /usr/bin/micromamba run -n {{ ENV_NAME }} git clone https://github.com/Atkinson-Lab/Tractor.git /opt/Tractor
+    cd /opt/Tractor
+    /usr/bin/micromamba run -n {{ ENV_NAME }} git checkout {{ TRACTOR_COMMIT }}
+    rm -rf /opt/Tractor/.git
+
+    rm -f /app/tractor.yml
+    /usr/bin/micromamba clean --all -y

@@ -579,6 +579,146 @@ snpHeritRelated:
       default: null
       description: External-mode output prefix (reads _fastgwa_h2.csv / _predlmm_ace_h2.csv suffixes).
 
+gwas:
+  type: dict
+  default: {}
+  description: |
+    Genome-wide association testing on "full" plus inferred ancestry subsets.
+    Set pheno to activate. Three methods are available: "standard" (PLINK2
+    --glm), "fastgwa" (GCTA fastGWA) and "tractor" (local-ancestry-aware
+    regression using the LAI tract output). Discovery/target splitting and the
+    PRS tie-in are controlled by gwas.prs.
+  schema:
+    pheno:
+      type: str
+      nullable: true
+      default: null
+      description: Path to phenotype file with FID/IID phenotype column(s). Required to activate.
+    mpheno:
+      type: int
+      default: 1
+      description: Phenotype column index (1 = first column after FID/IID).
+    qcovar:
+      type: str
+      nullable: true
+      default: null
+      description: Optional quantitative covariate file (FID IID ...); used together with the PCs.
+    eigenvec:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Eigenvector file used for PCs. May contain a {subset} placeholder.
+        Defaults to OUT_DIR/{subset}/internal_pca_plink2.eigenvec.
+    npc:
+      type: int
+      default: 10
+      description: Number of PCs used as covariates (0 disables PCs).
+    methods:
+      type: list
+      default: ["standard", "fastgwa"]
+      description: Methods to run. Any of "standard", "fastgwa", "tractor".
+    subsets:
+      type: list
+      nullable: true
+      default: null
+      description: |
+        Subsets to test. Default (null) is "full" plus every ancestry inferred
+        by the global-ancestry checkpoint.
+    subset:
+      type: str
+      default: "full"
+      description: |
+        Subset used when staging GWAS results for the PRS pipeline
+        (gwas.prs.enabled). Must be present in gwas.subsets.
+    bed_prefix:
+      type: str
+      default: "f1.b38"
+      description: PLINK pgen bed prefix template under OUT_DIR/{subset} (converted to bed for GWAS).
+    grm_prefix:
+      type: str
+      default: "f1.b38.ldpruned"
+      description: Dense GRM prefix under OUT_DIR/{subset}, used by fastGWA-mlm.
+    fastgwa_mode:
+      type: str
+      default: "lr"
+      enum: ["lr", "mlm"]
+      description: |
+        "lr" runs --fastGWA-lr (no GRM, works everywhere). "mlm" builds a
+        sparse GRM restricted to the discovery samples and runs --fastGWA-mlm.
+    sparse_cutoff:
+      type: float
+      default: 0.05
+      description: GRM cutoff for the sparse GRM used by fastGWA-mlm.
+    output_dir:
+      type: str
+      default: "04-gwas"
+      description: Output directory under OUT_DIR/{subset}.
+    gwas_fraction:
+      type: float
+      default: 0.5
+      description: Fraction of samples used for GWAS discovery when gwas.prs.enabled is true.
+    seed:
+      type: int
+      default: 42
+      description: Seed for the deterministic discovery/target split.
+    tractor:
+      type: dict
+      default: {}
+      description: TRACTOR configuration (only used when "tractor" is in gwas.methods).
+      schema:
+        num_ancestries:
+          type: int
+          default: 2
+          description: Number of local ancestries in the MSP file.
+        method:
+          type: str
+          default: "linear"
+          enum: ["linear", "logistic"]
+          description: TRACTOR regression model.
+        dir:
+          type: str
+          default: "02-localAncestry"
+          description: Directory (under OUT_DIR) containing the phased VCF and MSP files.
+        vcf_pattern:
+          type: str
+          default: "chr{CHR}.phased.vcf.gz"
+          description: Phased VCF filename pattern (may include {CHR}).
+        msp_pattern:
+          type: str
+          default: "chr{CHR}.lai.msp.tsv"
+          description: MSP filename pattern (may include {CHR}).
+    prs:
+      type: dict
+      default: {}
+      description: |
+        Optional discovery/target split and PRS tie-in. When enabled, GWAS uses
+        gwas_fraction of samples and the PRS pipeline is fed the remaining
+        target samples plus the discovery-only summary statistics.
+      schema:
+        enabled:
+          type: bool
+          default: false
+          description: Activate the split and stage GWAS results for the PRS pipeline.
+        source_subset:
+          type: str
+          default: "full"
+          description: Subset whose GWAS summary statistics are passed to PRS.
+        target_subset:
+          type: str
+          default: "full"
+          description: |
+            Target genotype subset for PRS. Must equal source_subset; use
+            prsPipeline.external for cross-ancestry transfer.
+        method:
+          type: str
+          default: "standard"
+          description: Which GWAS method provides the PRS summary statistics (standard/fastgwa/tractor).
+        tractor_ancestry:
+          type: int
+          default: 0
+          description: Ancestry index used when method is "tractor".
+
 releaseFilter:
   type: dict
   default: {}
