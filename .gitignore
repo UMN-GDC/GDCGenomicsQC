@@ -106,6 +106,12 @@ gcta64
 *.sif
 !data/toySim/toy.*
 data/toyData/toy_GSA*
+!reproducibility/fixtures/*.vcf
+!reproducibility/fixtures/*.fa
+!reproducibility/fixtures/reference/**/*.pvar
+!reproducibility/fixtures/*.pvar
+!reproducibility/fixtures/*.tsv
+!reproducibility/fixtures/*.json
 
 /.quarto/
 qc.sif

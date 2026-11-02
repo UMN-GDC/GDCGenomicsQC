@@ -1,0 +1,24 @@
+# Render this template with reproducibility/scripts/run_smoke_test.sh.
+INPUT: "@REPO_ROOT@/reproducibility/fixtures/synthetic.vcf"
+OUT_DIR: "@RUN_DIR@/output"
+REF: "@REPO_ROOT@/reproducibility/fixtures/reference"
+local-storage-prefix: "@RUN_DIR@/.snakemake/storage"
+chromosomes: [1]
+build: "GRCh38"
+relatedness: {method: "0"}
+SEX_CHECK: false
+GRM: false
+thin: false
+internalPCA: {method: "plink2", npc: 2, plot: false, color_by: null, phenotype_file: null}
+ancestry:
+  threshold: 0.8
+  model: "pca"
+  ancestry_file: "@REPO_ROOT@/reproducibility/fixtures/provided_ancestry.tsv"
+localAncestry: {RFMIX: false, test: true, thin_subjects: 1.0, figures: "figures", chromosomes: [1]}
+phenotypeSimulation: {enabled: false}
+prsMethods: {single_ct: {enabled: false}, single_prsice: {enabled: false}, single_prscs: {enabled: false}, single_ldpred2: {enabled: false}, single_lassosum2: {enabled: false}, multi_ctsleb: {enabled: false}, multi_prscsx: {enabled: false}, multi_ldpred2: {enabled: false}, multi_prosper: {enabled: false}, multi_sdprs: {enabled: false}}
+plink_module: null
+bcftools_module: null
+shapeit_module: null
+rfmix_module: null
+samtools_module: null

@@ -1,0 +1,7 @@
+#CHROM	POS	ID	REF	ALT
+chr1	101	chr1:101:A:G	A	G
+chr1	205	chr1:205:C:T	C	T
+chr1	318	chr1:318:G:A	G	A
+chr1	422	chr1:422:T:C	T	C
+chr1	537	chr1:537:A:C	A	C
+chr1	641	chr1:641:C:G	C	G

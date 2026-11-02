@@ -1,0 +1,29 @@
+{
+  "fixture_version": "1.0.0",
+  "samples": [
+    "SYN001",
+    "SYN002",
+    "SYN003",
+    "SYN004",
+    "SYN005",
+    "SYN006",
+    "SYN007",
+    "SYN008",
+    "SYN009",
+    "SYN010",
+    "SYN011",
+    "SYN012"
+  ],
+  "sample_count": 12,
+  "variant_count": 6,
+  "build": "GRCh38",
+  "provided_ancestry": "EUR",
+  "expected_variant_ids": [
+    "chr1:101:A:G",
+    "chr1:205:C:T",
+    "chr1:318:G:A",
+    "chr1:422:T:C",
+    "chr1:537:A:C",
+    "chr1:641:C:G"
+  ]
+}

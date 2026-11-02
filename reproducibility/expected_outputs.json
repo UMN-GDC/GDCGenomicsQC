@@ -1,0 +1,19 @@
+{
+  "fixture_version": "1.0.0",
+  "target": "run_initialQC",
+  "required_files": [
+    "full/f1.pgen",
+    "full/f1.pvar",
+    "full/f1.psam",
+    "full/f1.b38.f2.pgen",
+    "full/initial.smiss",
+    "full/initial.vmiss",
+    "full/MAF_check.afreq",
+    "full/standardFilter.hardy",
+    "full/heterozygosity.het"
+  ],
+  "minimum_counts": {
+    "samples": 12,
+    "variants": 6
+  }
+}
