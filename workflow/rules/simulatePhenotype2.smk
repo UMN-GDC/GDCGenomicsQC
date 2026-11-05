@@ -137,12 +137,12 @@ rule computeSimGRM:
     resources:
         nodes=1,
         mem_mb=16000,
-        runtime=120,
+        runtime=360,
     params:
         prefix=lambda w, input: str(input.bed)[:-4],
     shell:
         """
-        plink2 --bfile {params.prefix} --make-grm-bin --out {params.prefix}
+        plink2 --bfile {params.prefix} --make-grm-bin --threads {threads} --out {params.prefix}
         """
 
 
@@ -165,12 +165,12 @@ rule computeSimPCA:
     resources:
         nodes=1,
         mem_mb=16000,
-        runtime=120,
+        runtime=360,
     params:
         prefix=lambda w, input: str(input.bed)[:-4],
     shell:
         """
-        plink2 --bfile {params.prefix} --pca --out {params.prefix}
+        plink2 --bfile {params.prefix} --pca --threads {threads} --out {params.prefix}
         """
 
 
