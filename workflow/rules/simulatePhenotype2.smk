@@ -194,5 +194,5 @@ rule extractSimPheno:
         runtime=60,
     shell:
         """
-        awk 'BEGIN{{OFS=" "; print "FID", "IID", "1"}}{{print $1, $2, $6}}' {input.fam} >{output.pheno}
+        awk 'BEGIN{{OFS=" "; print "FID", "IID", "pheno_1"}}{{print $1, $2, $6}}' {input.fam} >{output.pheno}
         """
