@@ -27,6 +27,7 @@ checkpoint estimateGlobalAncestry:
     params:
         dir=OUT_DIR / "01-globalAncestry",
         script=workflow.source_path("../scripts/trainPredict.R"),
+        seed=str(config.get("ancestry", {}).get("seed") or "$RANDOM"),
         use_vae=uses_vae(),
         use_local_ancestry=uses_local_ancestry(),
     shell:
@@ -50,7 +51,7 @@ checkpoint estimateGlobalAncestry:
           $vae_arg \
           $lai_arg \
           --out {params.dir} \
-          --rseed $RANDOM \
+          --rseed {params.seed} \
           --threads {threads}
         """
 

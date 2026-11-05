@@ -134,6 +134,13 @@ ancestry:
         alias for "lai". "vae" fits a popVAE variational autoencoder
         jointly on 1000G reference + study genotypes and classifies from
         the learned latent space (requires the popvae container).
+    seed:
+      type: int
+      nullable: true
+      default: null
+      description: |
+        Seed for the ancestry-classification model. Set this for a
+        reproducible validation or benchmark; random if unset.
     vae:
       type: dict
       default: {}
@@ -771,12 +778,12 @@ releaseFilter:
       type: str
       nullable: true
       default: null
-      description: Optional output: batch info file (IID visit plate_number)
+      description: "Optional output: batch info file (IID visit plate_number)"
     removed_individuals:
       type: str
       nullable: true
       default: null
-      description: Optional output: list of excluded IIDs for documentation
+      description: "Optional output: list of excluded IIDs for documentation"
     id_col:
       type: str
       default: "IID"
@@ -851,7 +858,7 @@ releaseFilter:
         generic_files:
           type: list
           default: []
-          description: List of generic files to filter (each: {path, id_col, out_path})
+          description: "List of generic files to filter (each: {path, id_col, out_path})"
         deidentify_files:
           type: list
           default: []

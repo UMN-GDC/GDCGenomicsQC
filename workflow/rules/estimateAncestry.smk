@@ -28,6 +28,7 @@ checkpoint estimateGlobalAncestry:
     params:
         dir=OUT_DIR / "01-globalAncestry",
         scripts_dir=SCRIPTS_DIR,
+        seed=str(config.get("ancestry", {}).get("seed") or "$RANDOM"),
     shell:
         """
         echo "Running ancestry estimation:"
@@ -39,5 +40,5 @@ checkpoint estimateGlobalAncestry:
             --umap_sample {input.umap_sample} \
             --labels {input.labels} \
             --out {params.dir} \
-            --rseed $RANDOM
+            --rseed {params.seed}
         """

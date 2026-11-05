@@ -2,10 +2,10 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [development, main]
+    branches: [development, main, v1]
     tags: ['v*']
   pull_request:
-    branches: [development, main]
+    branches: [development, main, v1]
   workflow_dispatch:
 
 permissions:
@@ -65,6 +65,29 @@ jobs:
         run: |
           pip install --quiet pyyaml
           python -c "import yaml; f=open('config/config.schema.yaml'); s=yaml.safe_load(f); print('Config schema OK: {} top-level keys'.format(len(s)))"
+
+  reproducibility-fixture:
+    name: Reproducibility fixture contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate and check the public fixture
+        run: |
+          python3 reproducibility/scripts/generate_fixture.py --output-dir reproducibility/fixtures
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("reproducibility/fixtures")
+          truth = json.loads((root / "truth.json").read_text())
+          assert truth["sample_count"] == 60
+          assert truth["variant_count"] == 6
+          assert (root / "synthetic.vcf").is_file()
+          assert (root / "reference/CrossMap/hg19ToHg38.over.chain.gz").is_file()
+          print("Fixture contract OK")
+          PY
 
   test-on-development:
     name: Extended Tests (development branch)
