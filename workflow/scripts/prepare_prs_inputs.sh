@@ -19,6 +19,7 @@ Options:
   --seed N            Random seed (default: 42)
   --fid-col NAME      FID column name (default: FID)
   --iid-col NAME      IID column name (default: IID)
+USAGE
 }
 
 SIM_DIR=""
@@ -96,12 +97,41 @@ make_split_files() {
 }
 
 make_pheno_file() {
-  local fam="$1"
-  local out="$2"
+  local subset_fam="$1"
+  local source_fam="$2"
+  local out="$3"
   local pheno_col=$((5 + PHENO_INDEX))
 
-  awk -v col="$pheno_col" -v fid="$FID_COL" -v iid="$IID_COL" \
-    'BEGIN {print fid "\t" iid "\tPHENO"} NF >= col && $col != "NA" && $col != "-9" {print $1 "\t" $2 "\t" $col}' "$fam" > "$out"
+  # PLINK subset .fam files retain only phenotype column 1. Recover the
+  # requested phenotype from the original multi-phenotype .fam.
+  awk -v col="$pheno_col" -v fid="$FID_COL" -v iid="$IID_COL" '
+    BEGIN {print fid "\t" iid "\tPHENO"}
+    NR == FNR {
+      if (NF >= col && $col != "NA" && $col != "-9") {
+        pheno[$1 SUBSEP $2] = $col
+      }
+      next
+    }
+    {
+      key = $1 SUBSEP $2
+      if (key in pheno) {
+        print $1 "\t" $2 "\t" pheno[key]
+        n++
+      } else {
+        missing++
+      }
+    }
+    END {
+      if (missing > 0) {
+        printf "Missing selected phenotype for %d participants in %s\n", missing, ARGV[2] > "/dev/stderr"
+        exit 1
+      }
+      if (n == 0) {
+        printf "No phenotype values found in column %d of %s\n", col, ARGV[1] > "/dev/stderr"
+        exit 1
+      }
+    }
+  ' "$source_fam" "$subset_fam" > "$out"
 }
 
 run_glm() {
@@ -191,8 +221,8 @@ process_ancestry() {
   plink2 --bfile "$out_prefix" --keep "$OUT_DIR/metadata/${anc}_gwas.keep" --make-bed --out "$gwas_prefix"
   plink2 --bfile "$out_prefix" --keep "$OUT_DIR/metadata/${anc}_study.keep" --make-bed --out "$study_prefix"
 
-  make_pheno_file "${gwas_prefix}.fam" "$gwas_pheno"
-  make_pheno_file "${study_prefix}.fam" "$study_pheno"
+  make_pheno_file "${gwas_prefix}.fam" "${sim_prefix}.fam" "$gwas_pheno"
+  make_pheno_file "${study_prefix}.fam" "${sim_prefix}.fam" "$study_pheno"
   run_glm "$gwas_prefix" "$gwas_pheno" "$glm_prefix"
 }
 
