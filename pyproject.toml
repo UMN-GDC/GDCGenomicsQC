@@ -43,7 +43,6 @@ exclude = [
   "workflow/scripts/run_king.sh",
   "workflow/scripts/run_pcair_pcrelate.R",
   "workflow/scripts/run_primus.sh",
-  "workflow/scripts/run_prs_pipeline_adapter.sh",
   "workflow/scripts/run_rfmix_plots.sh",
   "workflow/scripts/run_snp_herit.R",
   "workflow/scripts/update_plink_files.R",

@@ -95,14 +95,6 @@ Abbreviations used in the table:
 | `simulated.fam` | PLINK1 `.fam` with simulated phenotypes in column 6. | Validate heritability estimation (compare input h2 to estimated h2), power analysis for PRS/GWAS | PLINK1.9, GCTA, any analysis software | `genio::read_plink("simulated")$fam`; `readr::read_table("simulated.fam", col_names=F)` | `pandas.read_table("simulated.fam", header=None)` |
 | `simulated_pheno1.pheno` | Extracted phenotype column from simulation. Columns: `FID` `IID` `PHENO`. | Direct phenotype input for heritability/GWAS on simulated data | Same as `.pheno` | `readr::read_tsv("simulated_pheno1.pheno")` | `pandas.read_table("simulated_pheno1.pheno")` |
 
-## PRS intermediate formats
-
-| Ext | Info | Use | Tools | R | Py |
-|-----|------|-----|-------|----|----|
-| `{method}_manifest.tsv` | Key-value pairs of all input paths for a PRS method run. Columns: `KEY` `VALUE`. | Debugging PRS pipeline, understanding input file paths used by each PRS method | Any text tool | `readr::read_tsv("manifest.tsv")`; `tibble::deframe()` | `pandas.read_table("manifest.tsv")`; `df.set_index("KEY")["VALUE"]` |
-| `prs_inputs.env` | KEY=VALUE environment variable file. Paths to all inputs required by the PRS pipelines. | Sourced by shell scripts; can be `source`'d in R or Python to access paths programmatically | Shell (`source`), any text tool | `read.table("prs_inputs.env", sep="=")` | `pandas.read_table("prs_inputs.env", sep="=", comment="#")` |
-| `prs_prscsx_generated.conf` / `prs_single_ancestry_*_generated.conf` | KEY=VALUE configuration files for PRS-CSx and single-ancestry PRS methods. | PRS method configuration, reproducibility | PRS-CSx, PRS-CS, any text tool | `read.table("file.conf", sep="=") %>% deframe()` | `pandas.read_table("file.conf", sep="=", comment="#")` |
-
 ## R object formats
 
 | Ext | Info | Use | Tools | R | Py |

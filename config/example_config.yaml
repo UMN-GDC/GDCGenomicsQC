@@ -273,9 +273,7 @@ snpHerit:
 
 # Genome-wide association testing (standard PLINK2 / fastGWA / TRACTOR).
 # Set pheno to enable. GWAS runs on "full" plus every inferred ancestry
-# subset (or an explicit gwas.subsets list). With gwas.prs.enabled the
-# samples are split deterministically into discovery (GWAS) and target (PRS)
-# sets so the PRS evaluation never reuses discovery samples.
+# subset (or an explicit gwas.subsets list).
 # gwas:
 #     pheno: "/path/to/pheno.txt"        # FID IID pheno_col
 #     mpheno: 1
@@ -284,26 +282,17 @@ snpHerit:
 #     npc: 10
 #     methods: ["standard", "fastgwa"]   # add "tractor" for local-ancestry-aware GWAS
 #     subsets: null                       # null = full + inferred ancestries
-#     subset: "full"                      # subset staged for PRS
 #     bed_prefix: "f1.b38"                # converted to .bed for testing
 #     grm_prefix: "f1.b38.ldpruned"       # used by fastgwa_mode: mlm
 #     fastgwa_mode: "lr"                  # lr (no GRM) or mlm (sparse GRM)
 #     sparse_cutoff: 0.05
 #     output_dir: "04-gwas"
-#     gwas_fraction: 0.5
-#     seed: 42
 #     tractor:
 #         num_ancestries: 2
 #         method: "linear"
 #         dir: "02-localAncestry"
 #         vcf_pattern: "chr{CHR}.phased.vcf.gz"
 #         msp_pattern: "chr{CHR}.lai.msp.tsv"
-#     prs:
-#         enabled: true                   # split + feed discovery sumstats to prsPipeline
-#         source_subset: "full"
-#         target_subset: "full"           # must equal source_subset
-#         method: "standard"              # standard | fastgwa | tractor
-#         tractor_ancestry: 0             # used when method: tractor
 
 # Release Filter: de-identification, keep-list, derivative filtering & validation
 # Set enabled: true to activate. Can be applied at any intermediate stage.
@@ -352,12 +341,12 @@ snpHerit:
 # =============================================================================
 # Phenotype Simulation (Testing)
 # =============================================================================
-# Simulate phenotypes with controlled heritability for testing PRS methods
+# Simulate phenotypes with controlled heritability for pipeline validation
 phenotypeSimulation:
     # Ancestries to simulate for
     ancestries: ["AFR", "EUR"]
     
-    # Directory containing simulation output (used by PRS pipeline)
+    # Directory containing simulation output
     # Set this when using pre-computed simulation files instead of running simulation
     simulations_dir: null
     
@@ -398,71 +387,7 @@ phenotypeSimulation:
 
 # =============================================================================
 # =============================================================================
-# PRS Pipeline Inputs
 # =============================================================================
-prsPipeline:
-    # Column name for individual ID (case-insensitive)
-    iid_col: "IID"
-    # Column name for family ID (case-insensitive)
-    fid_col: "FID"
-    
-    # External data mode: Use external GWAS and genotype data instead of simulation
-    # If set, the pipeline will use these files directly without running preparePRSInputs
-    # Leave empty/null to use simulation-based inputs from phenotypeSimulation
-    external:
-        # Required for single-ancestry PRS:
-        target_bed: null          # Path to target PLINK bed file (without extension)
-        target_sumstats: null    # Path to GWAS summary statistics (tsv/txt format)
-        target_pheno: null       # Path to target phenotype file
-        
-        # Optional - for multi-ancestry PRS:
-        anc2_bed: null           # Path to ancestry2 PLINK bed file
-        training_sumstats: null  # Path to training GWAS summary stats
-        training_pheno: null     # Path to training phenotype file
-        
-        # Optional:
-        target_bim: null         # Explicit bim path (if not automatically derived)
-        target_fam: null         # Explicit fam path (if not automatically derived)
-        anc2_bim: null           # Explicit anc2 bim path
-        anc2_fam: null           # Explicit anc2 fam path
-        pcs: null                # Path to PCs file (for methods that use PCs)
-
-# =============================================================================
-# PRS Methods Configuration
-# =============================================================================
-# Set enabled: true for methods you want to run
-# Commands are defined in workflow/rules/prsPipelines.smk (software is in container)
-prsMethods:
-  # Single ancestry methods
-  single_ct:
-    enabled: false
-  single_prsice:
-    enabled: true
-  single_prscs:
-    enabled: false
-  single_ldpred2:
-    enabled: true
-  single_lassosum2:
-    enabled: false
-    # Column name for individual ID (case-insensitive)
-    iid_col: "IID"
-    # Column name for family ID (case-insensitive)
-    fid_col: "FID"
-  
-  # Multi ancestry methods
-  multi_ctsleb:
-    enabled: false
-  multi_prscsx:
-    enabled: false
-    ld_ref_dir: ""  # Optional: path to LD reference directory
-  multi_ldpred2:
-    enabled: false
-  multi_prosper:
-    enabled: false
-  multi_sdprs:
-    enabled: false
-
-
 # =============================================================================
 # Data Conversion Options
 # =============================================================================

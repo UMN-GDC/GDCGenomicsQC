@@ -145,53 +145,10 @@ phenotypeSimulation:
           thin_count_snps: 1000000
           thin_count_inds: 10000
 
-    # Directory containing pre-computed simulation outputs (used by PRS)
     simulations_dir: null
 
     # Legacy GRM prefix (unused in new architecture)
     prefix: null
-
-# PRS Pipeline Inputs
-prsPipeline:
-    iid_col: "IID"
-    fid_col: "FID"
-    
-    # Use external data instead of simulation (optional)
-    # external:
-    #     target_bed: "/path/to/genotypes"
-    #     target_sumstats: "/path/to/gwas.tsv"
-    #     target_pheno: "/path/to/pheno.tsv"
-
-# PRS Methods Configuration
-# Set enabled: true for methods you want to run
-# Commands are defined in workflow/rules/prsPipelines.smk (software is in container)
-prsMethods:
-  # Single ancestry methods
-  single_ct:
-    enabled: false
-  single_prsice:
-    enabled: true
-  single_prscs:
-    enabled: false
-  single_ldpred2:
-    enabled: true
-  single_lassosum2:
-    enabled: false
-    iid_col: "IID"
-    fid_col: "FID"
-  
-  # Multi ancestry methods
-  multi_ctsleb:
-    enabled: false
-  multi_prscsx:
-    enabled: false
-    ld_ref_dir: ""  # Optional: path to LD reference directory
-  multi_ldpred2:
-    enabled: false
-  multi_prosper:
-    enabled: false
-  multi_sdprs:
-    enabled: false
 
 # Environment module names for HPC env-modules deployment.
 # Set to null to skip env-modules and fall back to container/conda.

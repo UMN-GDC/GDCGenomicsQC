@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert GWAS output (PLINK2, GCTA fastGWA, TRACTOR) to PRS-ready sumstats.
+"""Convert GWAS output from PLINK2, GCTA fastGWA, or TRACTOR to a common table.
 
 Output columns (tab-separated, one header line)::
 

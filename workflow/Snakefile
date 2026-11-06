@@ -72,9 +72,7 @@ if config.get("phenotypeSimulation", {}).get("enabled", False):
 include: "rules/snpHerit.smk"
 include: "rules/snpHeritRelated.smk"
 include: "rules/releaseFilter.smk"
-include: "rules/preparePRSInputs.smk"
 include: "rules/gwas.smk"
-include: "rules/prsPipelines.smk"
 
 def _qc_outputs_for_subset(subset):
     """All QC metrics and key derivative files for one data subset."""
@@ -537,103 +535,6 @@ rule run_PCAinternal:
                 )
             )
         )(get_ancestries(wildcards) + ["full"]),
-
-
-rule run_preparePRSInputs:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
-    input:
-        Path(
-            config.get("prsPipeline", {}).get(
-                "generated_input_dir",
-                str(
-                    OUT_DIR
-                    / "prs_inputs"
-                    / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
-                ),
-            )
-        )
-        / "prs_inputs.env",
-
-
-rule run_singleAncestryPRS:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
-    input:
-        Path(
-            config.get("prsPipeline", {}).get(
-                "generated_input_dir",
-                str(
-                    OUT_DIR
-                    / "prs_inputs"
-                    / f"{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[1]}"
-                ),
-            )
-        )
-        / f"single_ancestry_{config.get('phenotypeSimulation', {}).get('ancestries', ['AFR', 'EUR'])[0]}.done",
-
-
-rule run_singleAncestryPRSPipelines:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
-    input:
-        PRS_METHOD_RUN_DIR / "single_ct.done",
-        PRS_METHOD_RUN_DIR / "single_prsice.done",
-        PRS_METHOD_RUN_DIR / "single_prscs.done",
-        PRS_METHOD_RUN_DIR / "single_ldpred2.done",
-        PRS_METHOD_RUN_DIR / "single_lassosum2.done",
-
-
-rule run_multiAncestryPRSPipelines:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
-    input:
-        PRS_METHOD_RUN_DIR / "multi_ctsleb.done",
-        PRS_METHOD_RUN_DIR / "multi_prscsx.done",
-        PRS_METHOD_RUN_DIR / "multi_ldpred2.done",
-        PRS_METHOD_RUN_DIR / "multi_prosper.done",
-        PRS_METHOD_RUN_DIR / "multi_sdprs.done",
-
-
-rule run_allPRSPipelines:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
-    input:
-        PRS_METHOD_RUN_DIR / "single_ct.done",
-        PRS_METHOD_RUN_DIR / "single_prsice.done",
-        PRS_METHOD_RUN_DIR / "single_prscs.done",
-        PRS_METHOD_RUN_DIR / "single_ldpred2.done",
-        PRS_METHOD_RUN_DIR / "single_lassosum2.done",
-        PRS_METHOD_RUN_DIR / "multi_ctsleb.done",
-        PRS_METHOD_RUN_DIR / "multi_prscsx.done",
-        PRS_METHOD_RUN_DIR / "multi_ldpred2.done",
-        PRS_METHOD_RUN_DIR / "multi_prosper.done",
-        PRS_METHOD_RUN_DIR / "multi_sdprs.done",
-
-
-rule runSingleAncestryPrecise:
-    threads: 1
-    resources:
-        nodes=1,
-        mem_mb=4000,
-        runtime=420,
-    input:
-        PRS_METHOD_RUN_DIR / "single_prsice.done",
 
 
 ##### GOOD UP TO HERE

@@ -68,7 +68,7 @@ Two modes:
 Used at every stage:
 - **PCA projection**: study PCs against 1KG space
 - **Random forest**: ancestry boundaries learned from 1KG in projected PC space
-- **LD reference**: for PRS clumping, LDpred2, phasing
+- **LD reference**: for phasing, local-ancestry inference, and relatedness analysis
 - **Assembled by `assembleRef`**: downloads raw VCFs from 1KG server, merges, LD prunes. Takes hours, run once per reference version, outputs shared by all users
 
 - **Config keys unlock analysis branches:**
@@ -103,7 +103,6 @@ module load gdcgenomicsSandbox
   - `predictAncestry.smk`: random forest classification
   - `simulatePhenotype2.smk`: synthetic phenotypes
   - `snpHerit.smk`: heritability estimation
-  - `prsPipelines.smk`: PRSice-2, LDpred2, etc.
   - `phase.smk` + `RFMIX.smk`/`gnomix.smk` (selected by `localAncestry.method`): ShapeIt4 phasing + local ancestry inference
 - **Independently extensible**: add `rules/my_new_method.smk` + one import line in `Snakefile`. Available to everyone, no merge conflicts, no breaking changes
 - **How it comes together**: `module load gdcgenomicsSandbox` -> `gdcgenomicsqc` wrapper -> `--profile` (where to run) + `--snakefile` (what to run) + your targets/configfile -> one command resolves the full DAG, submits HPC jobs, produces all outputs
@@ -171,8 +170,8 @@ Config changes (`OUT_DIR`, `chromosomes`, QC thresholds) are the only edits need
 ## Discussion
 
 - **How is this different from writing your own SLURM scripts?** Manual SLURM arrays: one failed job in 50 forces restart or manual tracking. Snakemake tracks per-file, not per-script. Failed `--hwe` does not re-run `--maf` and `--geno`. Minimal re-execution.
-- **You change `ancestry.threshold` from 0.8 to 0.9.** Does Snakemake re-run everything or just classification? It checks file modification times and input hashes. Only changed rules re-run. Downstream analyses (heritability, PRS) that depend on the new classification files also re-run automatically.
+- **You change `ancestry.threshold` from 0.8 to 0.9.** Does Snakemake re-run everything or just classification? It checks file modification times and input hashes. Only changed rules re-run. Downstream analyses that depend on the new classification files also re-run automatically.
 - **How would you contribute this pipeline to a consortium?** Share your config file. `envs/` and `gdcgenomicsqc` wrapper are version-controlled. Anyone clones the repo, edits config, runs wrapper = full pipeline. Consortium needs a new module? Someone adds a rule file. No one else changes their workflow.
-- **Why does rule-file-per-stage matter?** New PRS method? Write `rules/my_prs_method.smk`, add one import line to `Snakefile`. No merge conflicts, no "my version is different", no monkey-patching a file someone else is editing. Anyone contributes a module without coordination overhead.
+- **Why does rule-file-per-stage matter?** New analysis method? Add one dedicated rule file and import it in the `Snakefile`. This isolates changes and keeps contributions reviewable.
 
 See the [QC Pipeline Tutorial](https://gdcgenomicsqc.readthedocs.io/en/latest/tutorial_qc_pipeline.html) for a step-by-step walkthrough of each target and its outputs.

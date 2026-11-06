@@ -8,8 +8,7 @@ from pathlib import Path
 #
 # Subsets follow the same convention as the rest of the pipeline: "full" plus
 # every ancestry predicted by the global-ancestry checkpoint (or the explicit
-# `gwas.subsets` list). Discovery/target splitting and PRS wiring are described
-# in docs/.
+# `gwas.subsets` list).
 
 GWAS_CONFIG = config.get("gwas", {})
 GWAS_ACTIVE = bool(GWAS_CONFIG.get("pheno"))
@@ -24,15 +23,6 @@ GWAS_QCOVAR = GWAS_CONFIG.get("qcovar")
 GWAS_NPC = int(GWAS_CONFIG.get("npc", 10))
 GWAS_HAS_COVAR = GWAS_NPC > 0 or bool(GWAS_QCOVAR)
 GWAS_SPARSE_CUTOFF = GWAS_CONFIG.get("sparse_cutoff", 0.05)
-GWAS_FRACTION = float(GWAS_CONFIG.get("gwas_fraction", 0.5))
-GWAS_SEED = int(GWAS_CONFIG.get("seed", 42))
-GWAS_PR_CONFIG = GWAS_CONFIG.get("prs", {})
-GWAS_PR_ENABLED = bool(GWAS_PR_CONFIG.get("enabled", False))
-GWAS_PR_SOURCE_SUBSET = GWAS_PR_CONFIG.get(
-    "source_subset", GWAS_CONFIG.get("subset", "full")
-)
-GWAS_PR_TARGET_SUBSET = GWAS_PR_CONFIG.get("target_subset", GWAS_PR_SOURCE_SUBSET)
-
 TRACTOR_CONFIG = GWAS_CONFIG.get("tractor", {})
 TRACTOR_NUM_ANCS = int(TRACTOR_CONFIG.get("num_ancestries", 2))
 TRACTOR_METHOD = TRACTOR_CONFIG.get("method", "linear")
@@ -56,13 +46,6 @@ if GWAS_ACTIVE:
             "gwas.methods includes 'tractor' but no local ancestry output is available"
             " (set ancestry.model to rfmix/gnomix)"
         )
-    if GWAS_PR_ENABLED and GWAS_PR_TARGET_SUBSET != GWAS_PR_SOURCE_SUBSET:
-        raise ValueError(
-            "gwas.prs.target_subset must equal gwas.prs.source_subset;"
-            " use prsPipeline.external for cross-ancestry transfer"
-        )
-
-
 def gwas_subsets():
     """Populations to test: explicit config list, else full + inferred ancestries."""
     explicit = GWAS_CONFIG.get("subsets")
@@ -162,9 +145,9 @@ if GWAS_ACTIVE:
             plink2 --pfile {params.in_prefix} --make-bed --out {params.out_prefix} --threads {threads}
             """
 
-    rule gwasSampleSplit:
+    rule selectGwasSamples:
         log:
-            OUT_DIR / "logs" / "gwasSampleSplit_{subset}.log",
+            OUT_DIR / "logs" / "selectGwasSamples_{subset}.log",
         conda:
             "../../envs/ancNreport.yml",
         threads: 1,
@@ -176,20 +159,11 @@ if GWAS_ACTIVE:
             fam=OUT_DIR / "{subset}" / (GWAS_BED_PREFIX + ".fam"),
         output:
             gwas_keep=_gwas_outdir("{subset}") / "samples.gwas.keep",
-            prs_keep=_gwas_outdir("{subset}") / "samples.prs.keep",
-        params:
-            fraction=GWAS_FRACTION,
-            seed=GWAS_SEED,
-            split_flag="--split" if GWAS_PR_ENABLED else "",
         shell:
             """
             python {SCRIPTS_DIR}/select_gwas_samples.py \
                 --fam {input.fam} \
-                --gwas-keep {output.gwas_keep} \
-                --prs-keep {output.prs_keep} \
-                --fraction {params.fraction} \
-                --seed {params.seed} \
-                {params.split_flag}
+                --gwas-keep {output.gwas_keep}
             """
 
     rule prepareGwasInputs:
@@ -209,13 +183,9 @@ if GWAS_ACTIVE:
             ),
             qcovar=lambda w: [GWAS_QCOVAR] if GWAS_QCOVAR else [],
             gwas_keep=_gwas_outdir("{subset}") / "samples.gwas.keep",
-            prs_keep=_gwas_outdir("{subset}") / "samples.prs.keep",
         output:
             gwas_pheno=_gwas_outdir("{subset}") / "gwas_pheno.tsv",
-            prs_pheno=_gwas_outdir("{subset}") / "prs_pheno.tsv",
             gwas_covar=_gwas_outdir("{subset}") / "gwas_covar.tsv",
-            prs_covar=_gwas_outdir("{subset}") / "prs_covar.tsv",
-            prs_pcs=_gwas_outdir("{subset}") / "prs_pcs.tsv",
             tractor_pheno=_gwas_outdir("{subset}") / "tractor_pheno.tsv",
             covar_columns=_gwas_outdir("{subset}") / "gwas_covar.tsv.columns",
         params:
@@ -236,12 +206,8 @@ if GWAS_ACTIVE:
                 {params.eigenvec_flag} \
                 {params.qcovar_flag} \
                 --gwas-keep {input.gwas_keep} \
-                --prs-keep {input.prs_keep} \
                 --gwas-pheno {output.gwas_pheno} \
-                --prs-pheno {output.prs_pheno} \
                 --gwas-covar {output.gwas_covar} \
-                --prs-covar {output.prs_covar} \
-                --prs-pcs {output.prs_pcs} \
                 --tractor-pheno {output.tractor_pheno}
             """
 
@@ -561,79 +527,6 @@ if GWAS_ACTIVE:
                         --output {params.sumstats_prefix}${{anc}}.sumstats.tsv
                 done
                 """
-
-    if GWAS_PR_ENABLED:
-        if "standard" in GWAS_METHODS:
-            _gwas_pr_default_method = "standard"
-        elif "fastgwa" in GWAS_METHODS:
-            _gwas_pr_default_method = "fastgwa"
-        else:
-            _gwas_pr_default_method = "tractor"
-        GWAS_PR_METHOD = str(
-            GWAS_PR_CONFIG.get("method", _gwas_pr_default_method)
-        ).lower()
-        if GWAS_PR_METHOD not in GWAS_METHODS:
-            raise ValueError(
-                f"gwas.prs.method '{GWAS_PR_METHOD}' is not in gwas.methods {GWAS_METHODS}"
-            )
-        GWAS_PR_TRACTOR_ANC = int(GWAS_PR_CONFIG.get("tractor_ancestry", 0))
-        if GWAS_PR_METHOD == "tractor" and GWAS_PR_TRACTOR_ANC >= TRACTOR_NUM_ANCS:
-            raise ValueError(
-                f"gwas.prs.tractor_ancestry must be < tractor.num_ancestries"
-                f" ({TRACTOR_NUM_ANCS})"
-            )
-        _gwas_pr_base = _gwas_outdir(GWAS_PR_SOURCE_SUBSET)
-
-        rule stageGwasForPrs:
-            log:
-                OUT_DIR / "logs" / "stageGwasForPrs.log",
-            container:
-                GWAS_PLINK2_CONTAINER,
-            conda:
-                "../../envs/ancNreport.yml",
-            envmodules:
-                *([config.get("plink_module")] if config.get("plink_module") else []),
-            threads: 4,
-            resources:
-                nodes=1,
-                mem_mb=16000,
-                runtime=120,
-            input:
-                bed=OUT_DIR / GWAS_PR_TARGET_SUBSET / (GWAS_BED_PREFIX + ".bed"),
-                bim=OUT_DIR / GWAS_PR_TARGET_SUBSET / (GWAS_BED_PREFIX + ".bim"),
-                fam=OUT_DIR / GWAS_PR_TARGET_SUBSET / (GWAS_BED_PREFIX + ".fam"),
-                keep=_gwas_outdir(GWAS_PR_TARGET_SUBSET) / "samples.prs.keep",
-                pheno=_gwas_outdir(GWAS_PR_TARGET_SUBSET) / "prs_pheno.tsv",
-                pcs=_gwas_outdir(GWAS_PR_TARGET_SUBSET) / "prs_pcs.tsv",
-                sumstats=_gwas_method_sumstats(
-                    GWAS_PR_SOURCE_SUBSET, GWAS_PR_METHOD, GWAS_PR_TRACTOR_ANC
-                ),
-            output:
-                bed=PRS_OUT_DIR / "gwas_staged" / "target.bed",
-                bim=PRS_OUT_DIR / "gwas_staged" / "target.bim",
-                fam=PRS_OUT_DIR / "gwas_staged" / "target.fam",
-                pheno=PRS_OUT_DIR / "gwas_staged" / "target_pheno.tsv",
-                pcs=PRS_OUT_DIR / "gwas_staged" / "target_pcs.tsv",
-                sumstats=PRS_OUT_DIR / "gwas_staged" / "target_sumstats.tsv",
-                ready=PRS_OUT_DIR / "gwas_staged" / "staged.ready",
-            params:
-                bed_prefix=lambda w: str(
-                    OUT_DIR / GWAS_PR_TARGET_SUBSET / GWAS_BED_PREFIX
-                ),
-                out_prefix=lambda w: str(PRS_OUT_DIR / "gwas_staged" / "target"),
-            shell:
-                """
-                plink2 --bfile {params.bed_prefix} \
-                    --keep {input.keep} \
-                    --make-bed \
-                    --threads {threads} \
-                    --out {params.out_prefix}
-                cp {input.pheno} {output.pheno}
-                cp {input.pcs} {output.pcs}
-                cp {input.sumstats} {output.sumstats}
-                touch {output.ready}
-                """
-
 
 if GWAS_ACTIVE:
 

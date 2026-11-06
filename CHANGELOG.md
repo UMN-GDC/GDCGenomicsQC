@@ -32,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global ancestry classification (PCA, UMAP, RFMix local ancestry)
 - SNP heritability estimation (AdjHE, GCTA, PredLMM, SWD, COMBAT, Covbat)
 - Phenotype simulation with controlled heritability
-- Polygenic risk scoring (single and multi-ancestry methods: C+T, PRSice, PRS-CS, LDpred2, lassosum2, PRS-CSx, PROSPER)
 - Containerized execution via Apptainer/Singularity
 - HPC profiles (MSI, sandbox, interactive)
 - Automated report generation with Sphinx/ReadTheDocs

@@ -98,7 +98,6 @@ snakemake --use-singularity --profile ../profiles/hpc --configfile /path/to/your
     - Assess global and local ancestry
     - Controls for relatedness and genetic ancestry in QC steps
     - SNP-heritability methods for multiple ancestries
-    - PRS methods for multiple ancestries
     - Easy extensibility, reproducibility, and modularity
 
 - Workflow management with [Snakemake](https://snakemake.github.io/)

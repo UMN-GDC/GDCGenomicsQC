@@ -208,4 +208,4 @@ release/
 - Use `keep_list.txt` with `plink2 --keep` for any downstream analysis
 - Use `temp.fam` with `plink2 --bfile ... --fam temp.fam` for correct .bed reading
 - Share de-identified derivatives (`*_filtered.*`, `*_deid`) with collaborators
-- Run GWAS/PRS/heritability on the filtered release dataset
+- Run GWAS or heritability analyses on the filtered release dataset

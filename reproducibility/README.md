@@ -17,7 +17,7 @@ configuration with absolute paths; runs `run_initialQC`; and verifies the
 required output files and minimum retained sample/variant counts. It exercises
 the v1 single-file input, GRCh38 ID normalization, basic QC, and standard-QC
 paths. It does not test liftover, reference projection, VAE, RFMix, Gnomix,
-GWAS, release filtering, heritability, or PRS. The expected contract is in
+GWAS, release filtering, or heritability. The expected contract is in
 `expected_outputs.json`, and ground truth for the fixture is in
 `fixtures/truth.json`.
 

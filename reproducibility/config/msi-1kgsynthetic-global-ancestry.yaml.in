@@ -30,7 +30,6 @@ ancestry:
 
 localAncestry: {method: "none", RFMIX: false, test: true, thin_subjects: 1.0, figures: "figures", chromosomes: [1]}
 phenotypeSimulation: {enabled: false}
-prsMethods: {single_ct: {enabled: false}, single_prsice: {enabled: false}, single_prscs: {enabled: false}, single_ldpred2: {enabled: false}, single_lassosum2: {enabled: false}, multi_ctsleb: {enabled: false}, multi_prscsx: {enabled: false}, multi_ldpred2: {enabled: false}, multi_prosper: {enabled: false}, multi_sdprs: {enabled: false}}
 
 # Null values deliberately exercise the configured Apptainer environments.
 plink_module: null

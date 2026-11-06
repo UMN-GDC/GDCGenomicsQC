@@ -343,7 +343,7 @@ phenotypeSimulation:
       type: str
       nullable: true
       default: null
-      description: Directory containing pre-computed simulation results (used by PRS)
+      description: Directory containing pre-computed simulation results
     prefix:
       type: str
       nullable: true
@@ -593,8 +593,7 @@ gwas:
     Genome-wide association testing on "full" plus inferred ancestry subsets.
     Set pheno to activate. Three methods are available: "standard" (PLINK2
     --glm), "fastgwa" (GCTA fastGWA) and "tractor" (local-ancestry-aware
-    regression using the LAI tract output). Discovery/target splitting and the
-    PRS tie-in are controlled by gwas.prs.
+    regression using the LAI tract output).
   schema:
     pheno:
       type: str
@@ -632,12 +631,6 @@ gwas:
       description: |
         Subsets to test. Default (null) is "full" plus every ancestry inferred
         by the global-ancestry checkpoint.
-    subset:
-      type: str
-      default: "full"
-      description: |
-        Subset used when staging GWAS results for the PRS pipeline
-        (gwas.prs.enabled). Must be present in gwas.subsets.
     bed_prefix:
       type: str
       default: "f1.b38"
@@ -661,14 +654,6 @@ gwas:
       type: str
       default: "04-gwas"
       description: Output directory under OUT_DIR/{subset}.
-    gwas_fraction:
-      type: float
-      default: 0.5
-      description: Fraction of samples used for GWAS discovery when gwas.prs.enabled is true.
-    seed:
-      type: int
-      default: 42
-      description: Seed for the deterministic discovery/target split.
     tractor:
       type: dict
       default: {}
@@ -695,37 +680,6 @@ gwas:
           type: str
           default: "chr{CHR}.lai.msp.tsv"
           description: MSP filename pattern (may include {CHR}).
-    prs:
-      type: dict
-      default: {}
-      description: |
-        Optional discovery/target split and PRS tie-in. When enabled, GWAS uses
-        gwas_fraction of samples and the PRS pipeline is fed the remaining
-        target samples plus the discovery-only summary statistics.
-      schema:
-        enabled:
-          type: bool
-          default: false
-          description: Activate the split and stage GWAS results for the PRS pipeline.
-        source_subset:
-          type: str
-          default: "full"
-          description: Subset whose GWAS summary statistics are passed to PRS.
-        target_subset:
-          type: str
-          default: "full"
-          description: |
-            Target genotype subset for PRS. Must equal source_subset; use
-            prsPipeline.external for cross-ancestry transfer.
-        method:
-          type: str
-          default: "standard"
-          description: Which GWAS method provides the PRS summary statistics (standard/fastgwa/tractor).
-        tractor_ancestry:
-          type: int
-          default: 0
-          description: Ancestry index used when method is "tractor".
-
 releaseFilter:
   type: dict
   default: {}
@@ -868,85 +822,6 @@ releaseFilter:
       type: bool
       default: true
       description: Run validation on all outputs
-
-prsMethods:
-  type: dict
-  default: {}
-  description: PRS methods configuration (single and multi ancestry methods)
-  schema:
-    single_ct:
-      type: dict
-      default: {enabled: false}
-      schema:
-        enabled:
-          type: bool
-          default: false
-    single_prsice:
-      type: dict
-      default: {enabled: true}
-      schema:
-        enabled:
-          type: bool
-          default: true
-    single_prscs:
-      type: dict
-      default: {enabled: false}
-      schema:
-        enabled:
-          type: bool
-          default: false
-    single_ldpred2:
-      type: dict
-      default: {enabled: true}
-      schema:
-        enabled:
-          type: bool
-          default: true
-    single_lassosum2:
-      type: dict
-      default: {enabled: false}
-      schema:
-        enabled:
-          type: bool
-          default: false
-    multi_ctsleb:
-      type: dict
-      default: {enabled: false}
-      schema:
-        enabled:
-          type: bool
-          default: false
-    multi_prscsx:
-      type: dict
-      default: {enabled: false, ld_ref_dir: ""}
-      schema:
-        enabled:
-          type: bool
-          default: false
-        ld_ref_dir:
-          type: str
-          default: ""
-    multi_ldpred2:
-      type: dict
-      default: {enabled: false}
-      schema:
-        enabled:
-          type: bool
-          default: false
-    multi_prosper:
-      type: dict
-      default: {enabled: false}
-      schema:
-        enabled:
-          type: bool
-          default: false
-    multi_sdprs:
-      type: dict
-      default: {enabled: false}
-      schema:
-        enabled:
-          type: bool
-          default: false
 
 keep_samples:
   type: str

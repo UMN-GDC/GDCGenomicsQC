@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare per-subset phenotype/covariate files for GWAS and PRS.
+"""Prepare per-subset phenotype/covariate files for GWAS.
 
 Reads a user phenotype table (``FID IID phenotype [phenotype ...]``) and an
 optional quantitative covariate table, selects one phenotype and the first
 ``--npc`` principal components, and writes FID/IID-restricted tables for the
-discovery (GWAS) and target (PRS) sample sets.
+GWAS sample set.
 """
 
 import argparse
@@ -80,12 +80,8 @@ def main():
     parser.add_argument("--qcovar", default=None,
                         help="Optional quantitative covariate table (FID IID ...)")
     parser.add_argument("--gwas-keep", required=True)
-    parser.add_argument("--prs-keep", required=True)
     parser.add_argument("--gwas-pheno", required=True)
-    parser.add_argument("--prs-pheno", required=True)
     parser.add_argument("--gwas-covar", required=True)
-    parser.add_argument("--prs-covar", required=True)
-    parser.add_argument("--prs-pcs", required=True)
     parser.add_argument("--tractor-pheno", required=True)
     args = parser.parse_args()
 
@@ -124,10 +120,9 @@ def main():
             qcovar_rows[key] = [row[i] for i in qcols]
 
     gwas_keep = read_keep(args.gwas_keep)
-    prs_keep = read_keep(args.prs_keep)
     covar_names = pc_names + qcovar_names
 
-    def select(keep, want_pheno):
+    def select(keep):
         out = []
         for row in rows:
             fid = row[fid_idx] if use_fid else row[iid_idx]
@@ -160,10 +155,9 @@ def main():
             out.append([fid, iid, pheno] + covars)
         return out
 
-    gwas_rows = select(gwas_keep, True)
-    prs_rows = select(prs_keep, False)
+    gwas_rows = select(gwas_keep)
     if not gwas_rows:
-        sys.exit("No discovery samples remain after intersecting phenotype/covariates")
+        sys.exit("No GWAS samples remain after intersecting phenotype/covariates")
 
     write_table(args.gwas_pheno, ["FID", "IID", "PHENO"], [r[:3] for r in gwas_rows])
     write_table(args.tractor_pheno, ["FID", "IID", "PHENO"] + covar_names,
@@ -171,21 +165,10 @@ def main():
     write_table(args.gwas_covar, ["FID", "IID"] + covar_names,
                 [r[:2] + r[3:] for r in gwas_rows])
 
-    if prs_rows:
-        write_table(args.prs_pheno, ["FID", "IID", "PHENO"], [r[:3] for r in prs_rows])
-        write_table(args.prs_covar, ["FID", "IID"] + covar_names,
-                    [r[:2] + r[3:] for r in prs_rows])
-    else:
-        write_table(args.prs_pheno, ["FID", "IID", "PHENO"], [])
-        write_table(args.prs_covar, ["FID", "IID"] + covar_names, [])
-
-    write_table(args.prs_pcs, ["FID", "IID"] + pc_names,
-                [r[:2] + r[3:3 + len(pc_names)] for r in prs_rows])
-
     with open(args.gwas_covar + ".columns", "w") as handle:
         handle.write("\n".join(covar_names) + ("\n" if covar_names else ""))
 
-    print(f"Discovery samples: {len(gwas_rows)}; target samples: {len(prs_rows)}")
+    print(f"GWAS samples: {len(gwas_rows)}")
     print(f"Covariates ({len(covar_names)}): {', '.join(covar_names) or 'none'}")
 
 

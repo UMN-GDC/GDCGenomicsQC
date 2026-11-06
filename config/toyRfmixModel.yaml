@@ -77,35 +77,6 @@ phenotypeSimulation:
     simulations_dir: null
     prefix: null
 
-prsPipeline:
-    iid_col: "IID"
-    fid_col: "FID"
-
-prsMethods:
-  single_ct:
-    enabled: false
-  single_prsice:
-    enabled: true
-  single_prscs:
-    enabled: false
-  single_ldpred2:
-    enabled: true
-  single_lassosum2:
-    enabled: false
-    iid_col: "IID"
-    fid_col: "FID"
-  multi_ctsleb:
-    enabled: false
-  multi_prscsx:
-    enabled: false
-    ld_ref_dir: ""
-  multi_ldpred2:
-    enabled: false
-  multi_prosper:
-    enabled: false
-  multi_sdprs:
-    enabled: false
-
 plink_module: null
 bcftools_module: null
 shapeit_module: null
