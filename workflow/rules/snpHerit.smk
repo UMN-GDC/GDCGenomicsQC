@@ -279,7 +279,7 @@ if SIM_CFG.get("enabled", False):
         threads: 8
         resources:
             nodes=1,
-            mem_mb=32000,
+            mem_mb=64000,
             runtime=720,
         params:
             argfile=lambda w: OUT_DIR
