@@ -108,20 +108,30 @@ rule simulateBivariatePhenotypes:
 
         if [[ "{params.anc1_kind}" == "bfile" ]]; then
             anc1_pfile="{output.sim_dir}/{params.anc1}_input"
-            plink2 --bfile "/scratch.global/saonli/GDCGenomicsQC/CTSLEB/AFR/CTSLEB_AFR" \
-  	--set-all-var-ids 'chr@:#:$r:$a' \
-  	--rm-dup force-first \
-  	--make-pgen \
-  	--out "$anc1_pfile"
+            awk -F'\t' -v OFS='\t' -v map="{output.sim_dir}/{params.anc1}_idmap.txt" '{{
+                new=$2;
+                if (new ~ /^rs[0-9]/) sub(/:.*/, "", new);
+                print new, $2 > map
+            }}' "{params.anc1_prefix}.bim"
+            plink2 --bfile "{params.anc1_prefix}" \
+                --update-name "{output.sim_dir}/{params.anc1}_idmap.txt" 1 2 \
+                --rm-dup force-first \
+                --make-pgen \
+                --out "$anc1_pfile"
         fi
 
         if [[ "{params.anc2_kind}" == "bfile" ]]; then
             anc2_pfile="{output.sim_dir}/{params.anc2}_input"
-         plink2 --bfile "/scratch.global/saonli/GDCGenomicsQC/CTSLEB/EUR/CTSLEB_EUR" \
-  	--set-all-var-ids 'chr@:#:$r:$a' \
-  	--rm-dup force-first \
-  	--make-pgen \
-  	--out "$anc2_pfile"
+            awk -F'\t' -v OFS='\t' -v map="{output.sim_dir}/{params.anc2}_idmap.txt" '{{
+                new=$2;
+                if (new ~ /^rs[0-9]/) sub(/:.*/, "", new);
+                print new, $2 > map
+            }}' "{params.anc2_prefix}.bim"
+            plink2 --bfile "{params.anc2_prefix}" \
+                --update-name "{output.sim_dir}/{params.anc2}_idmap.txt" 1 2 \
+                --rm-dup force-first \
+                --make-pgen \
+                --out "$anc2_pfile"
         fi
 
         Rscript {params.script_dir}/runPhenotypeSimulation.R \

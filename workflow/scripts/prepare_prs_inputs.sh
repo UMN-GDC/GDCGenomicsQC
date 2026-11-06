@@ -4,16 +4,17 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  prepare_prs_inputs.sh --sim-dir DIR --out-dir DIR --anc1 AFR --anc2 EUR [--phenotype-index 1] [--gwas-fraction 0.5] [--seed 42] [--plink2-bin plink2] [--prs-pipeline-dir DIR]
+  prepare_prs_inputs.sh --sim-dir DIR --out-dir DIR --anc1 AFR --anc2 EUR [--phenotype-index 1] [--gwas-fraction 0.5] [--seed 42] [--test-fraction 0] [--test-prefix DIR/STEM] [--plink2-bin plink2]
 
 Creates PRS pipeline inputs from simulated ancestry-specific PLINK files:
   - gwas/target_sumstats.txt and gwas/training_sumstats.txt for PRS-CSx
-  - gwas/target_sumstats_singlePRS.txt and gwas/training_sumstats_singlePRS.txt for single-ancestry prs_pipeline
+  - gwas/target_sumstats_singlePRS.txt and gwas/training_sumstats_singlePRS.txt for single-ancestry PRS methods
   - anc1_plink_files/<ANC1>_simulation_gwas.{bed,bim,fam}
   - anc1_plink_files/<ANC1>_simulation_study_sample.{bed,bim,fam}
   - anc2_plink_files/<ANC2>_simulation_gwas.{bed,bim,fam}
   - anc2_plink_files/<ANC2>_simulation_study_sample.{bed,bim,fam}
   - metadata/<ANC>_gwas.pheno and metadata/<ANC>_study.pheno
+  - test_prefix.{bed,bim,fam} when --test-fraction is non-zero
 USAGE
 }
 
@@ -24,10 +25,9 @@ ANC2="EUR"
 PHENO_INDEX="1"
 GWAS_FRACTION="0.5"
 SEED="42"
+TEST_FRACTION="0"
+TEST_PREFIX=""
 PLINK2_BIN="plink2"
-# Default to the vendored absorbed prs_pipeline (see workflow/scripts/prs_pipeline/VENDORED.md);
-# the Snakefile rule always passes --prs-pipeline-dir explicitly.
-PRS_PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/prs_pipeline"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -38,8 +38,9 @@ while [[ $# -gt 0 ]]; do
     --phenotype-index) PHENO_INDEX="$2"; shift 2 ;;
     --gwas-fraction) GWAS_FRACTION="$2"; shift 2 ;;
     --seed) SEED="$2"; shift 2 ;;
+    --test-fraction) TEST_FRACTION="$2"; shift 2 ;;
+    --test-prefix) TEST_PREFIX="$2"; shift 2 ;;
     --plink2-bin) PLINK2_BIN="$2"; shift 2 ;;
-    --prs-pipeline-dir) PRS_PIPELINE_DIR="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -48,6 +49,20 @@ done
 if [[ -z "$SIM_DIR" || -z "$OUT_DIR" ]]; then
   usage >&2
   exit 2
+fi
+
+if ! awk -v f="$TEST_FRACTION" 'BEGIN { exit !(f >= 0 && f < 1) }'; then
+  echo "--test-fraction must be 0 or between 0 and 1; got $TEST_FRACTION" >&2
+  exit 2
+fi
+if awk -v f="$TEST_FRACTION" 'BEGIN { exit !(f > 0) }' && [[ -z "$TEST_PREFIX" ]]; then
+  echo "--test-prefix is required when --test-fraction is non-zero" >&2
+  exit 2
+fi
+
+CARVE_TEST=0
+if awk -v f="$TEST_FRACTION" 'BEGIN { exit !(f > 0) }'; then
+  CARVE_TEST=1
 fi
 
 resolve_plink2_bin() {
@@ -99,6 +114,32 @@ make_split_files() {
     | sort -k1,1g \
     | awk -v n_gwas="$n_gwas" -v gwas="$OUT_DIR/metadata/${prefix}_gwas.keep" -v study="$OUT_DIR/metadata/${prefix}_study.keep" \
         'NR <= n_gwas {print $2, $3 > gwas; next} {print $2, $3 > study}'
+}
+
+make_test_sample() {
+  local anc="$1"
+  local sim_prefix="$SIM_DIR/${anc}_simulation"
+  local test_prefix="$TEST_PREFIX"
+  local test_keep="$OUT_DIR/metadata/${anc}_test.keep"
+  local n
+  local n_test
+
+  n=$(awk 'NF >= 2 {n++} END {print n+0}' "${sim_prefix}.fam")
+  if [[ "$n" -lt 4 ]]; then
+    echo "Need at least 4 samples in ${sim_prefix}.fam to carve a test set; found $n" >&2
+    exit 1
+  fi
+
+  n_test=$(awk -v n="$n" -v f="$TEST_FRACTION" 'BEGIN {x=int(n*f+0.5); if (x < 1) x=1; if (x > n-2) x=n-2; print x}')
+
+  awk -v seed="$((SEED + 1))" 'BEGIN {srand(seed)} NF >= 2 {print rand() "\t" $1 "\t" $2}' "${sim_prefix}.fam" \
+    | sort -k1,1g \
+    | awk -v n_test="$n_test" -v test="$test_keep" 'NR <= n_test {print $2, $3 > test}'
+
+  mkdir -p "$(dirname "$test_prefix")"
+  "$PLINK2_BIN_RESOLVED" --bfile "$sim_prefix" --keep "$test_keep" --make-bed --out "$test_prefix"
+
+  echo "Held out $n_test/$n ${anc} samples for test evaluation: $test_prefix"
 }
 
 make_pheno_file() {
@@ -181,9 +222,13 @@ process_ancestry() {
     [[ -f "${sim_prefix}.${ext}" ]] || { echo "Missing ${sim_prefix}.${ext}" >&2; exit 1; }
   done
 
-  cp "${sim_prefix}.bed" "${out_prefix}.bed"
-  cp "${sim_prefix}.bim" "${out_prefix}.bim"
-  cp "${sim_prefix}.fam" "${out_prefix}.fam"
+  if [[ "$anc" == "$ANC1" && "$CARVE_TEST" == 1 ]]; then
+    "$PLINK2_BIN_RESOLVED" --bfile "$sim_prefix" --remove "$OUT_DIR/metadata/${anc}_test.keep" --make-bed --out "$out_prefix"
+  else
+    cp "${sim_prefix}.bed" "${out_prefix}.bed"
+    cp "${sim_prefix}.bim" "${out_prefix}.bim"
+    cp "${sim_prefix}.fam" "${out_prefix}.fam"
+  fi
 
   make_split_files "${out_prefix}.fam" "$anc"
 
@@ -194,6 +239,10 @@ process_ancestry() {
   make_pheno_file "${study_prefix}.fam" "$study_pheno"
   run_glm "$gwas_prefix" "$gwas_pheno" "$glm_prefix"
 }
+
+if [[ "$CARVE_TEST" == 1 ]]; then
+  make_test_sample "$ANC1"
+fi
 
 process_ancestry "$ANC1" "anc1_plink_files"
 format_sumstats "$OUT_DIR/gwas/${ANC1}_glm" "$OUT_DIR/gwas/target_sumstats.txt"
@@ -216,34 +265,32 @@ training_study_pheno_file="$OUT_DIR/metadata/${ANC2}_study.pheno"
 reference_SNPS_bim="$OUT_DIR/anc1_plink_files/${ANC1}_simulation_study_sample"
 study_sample_plink="$OUT_DIR/anc1_plink_files/${ANC1}_simulation_study_sample"
 study_sample_plink_anc2="$OUT_DIR/anc2_plink_files/${ANC2}_simulation_study_sample"
+test_sample_plink="$TEST_PREFIX"
 EOF
 
 N_GWAS_ANC1=$(awk 'END {print NR}' "$OUT_DIR/metadata/${ANC1}_gwas.keep")
 
 cat > "$OUT_DIR/prs_prscsx_generated.conf" <<EOF
-path_code="/projects/standard/gdc/public/prs_methods/scripts/PRScsx"
+path_code="/opt/gdcgenomicsqc/software/PRScsx"
 path_data_root="$OUT_DIR"
 path_ref_dir="/projects/standard/gdc/public/prs_methods/ref/ref_PRScsx/1kg_ref"
-path_plink2="/projects/standard/gdc/public/plink2"
+path_plink2="plink2"
 
 anc1="$ANC1"
 anc2="$ANC2"
 
 target_sumstats_file="\${path_data_root}/gwas/target_sumstats.txt"
 training_sumstats_file="\${path_data_root}/gwas/training_sumstats.txt"
-output_dir="/scratch.global/saonli/prs_pipeline/generated_${ANC1}_${ANC2}"
+output_dir="$OUT_DIR"
 
 reference_SNPS_bim="\${path_data_root}/anc1_plink_files/${ANC1}_simulation_study_sample"
 study_sample_plink="\${path_data_root}/anc1_plink_files/${ANC1}_simulation_study_sample"
 study_sample_plink_anc2="\${path_data_root}/anc2_plink_files/${ANC2}_simulation_study_sample"
-
-prs_pipeline="${PRS_PIPELINE_DIR}"
 EOF
 
 cat > "$OUT_DIR/prs_single_ancestry_${ANC1}_generated.conf" <<EOF
 path_data="$OUT_DIR"
-path_repo="${PRS_PIPELINE_DIR}"
-path_plink2="/projects/standard/gdc/public/plink2"
+path_plink2="plink2"
 
 summary_stats_file="\${path_data}/gwas/target_sumstats_singlePRS.txt"
 bim_file_path="\${path_data}/anc1_plink_files/${ANC1}_simulation_study_sample.bim"

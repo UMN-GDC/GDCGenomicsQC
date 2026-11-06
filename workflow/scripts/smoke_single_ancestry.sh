@@ -106,7 +106,7 @@ log "toy SNPs/samples : $NSNPS / $NSAMPLES x2 (seed $SEED)"
 log "cores            : $CPUS"
 log "started          : $(date)"
 
-for f in "$WORKFLOW/Snakefile" "$GENERATOR" "$WORKFLOW/scripts/prs_pipeline/run_single_ancestry_PRS_pipeline.sh"; do
+for f in "$WORKFLOW/Snakefile" "$GENERATOR" "$WORKFLOW/scripts/run_CT.sh" "$WORKFLOW/scripts/score_test.sh" "$WORKFLOW/scripts/prepare_sumstats.R"; do
     [[ -e $f ]] || die "missing expected file: $f"
 done
 
@@ -253,9 +253,6 @@ prsPipeline:
 
 prsMethods:
   resource_dir: $(printf %q "$RESOURCES_DIR")
-  containers:
-    prsv2: null
-    singleprshelper: null
   single_prscs:
     path_code: $(printf %q "$PRSCSX_CODE")
     ld_ref_dir: $(printf %q "$PRSCSX_REF")

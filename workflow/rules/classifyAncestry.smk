@@ -52,12 +52,25 @@ rule validateAncestryReference:
         set -euo pipefail
         mkdir -p $(dirname {output.done})
 
-        awk 'NR>1 {{print $2}}' {input.labels} > {output.done}.labels.ids
-        awk '{{print $2}}' {input.fam} > {output.done}.fam.ids
+        # Labels may or may not have a header (the bundled 1000G.popu files do
+        # not).  Drop a recognizable header row, then compare sample IDs only.
+        awk 'NR == 1 && (toupper($1) ~ /^(#?FID|#?IID|FAMILYID|SAMPLEID)$/ || toupper($2) ~ /^(IID|SAMPLEID)$/) {{next}} NF >= 2 {{print $2}}' \
+            {input.labels} | LC_ALL=C sort -u > {output.done}.labels.ids
+        awk 'NF >= 2 {{print $2}}' {input.fam} | LC_ALL=C sort -u > {output.done}.fam.ids
 
-        diff -q {output.done}.fam.ids {output.done}.labels.ids
+        n_ref=$(wc -l < {output.done}.fam.ids)
+        if [[ "$n_ref" -eq 0 ]]; then
+            echo "Reference validation failed: no sample IDs found in {input.fam}" >&2
+            exit 1
+        fi
 
-        test "$(wc -l < {output.done}.fam.ids)" -eq 2491
+        if ! diff -q {output.done}.fam.ids {output.done}.labels.ids >/dev/null; then
+            echo "Reference validation failed: sample IDs in {input.fam} and {input.labels} differ" >&2
+            diff {output.done}.fam.ids {output.done}.labels.ids >&2 || true
+            exit 1
+        fi
+
+        echo "Validated reference labels for $n_ref samples"
         touch {output.done}
         """
 

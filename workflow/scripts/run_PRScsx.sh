@@ -59,7 +59,7 @@ output_dir="${path_data_root}"
 reference_SNPS_bim="${path_data_root}/anc1_plink_files/${anc1}_simulation_study_sample"
 study_sample_plink="${path_data_root}/anc1_plink_files/${anc1}_simulation_study_sample"
 study_sample_plink_anc2="${path_data_root}/anc2_plink_files/${anc2}_simulation_study_sample"
-prs_pipeline="/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 seed="42"
 path_python=""
 rscript="Rscript"
@@ -69,7 +69,6 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --c) config_file="$2"; shift 2; break ;;
     --path_code) path_code="$2"; shift 2;;
-    --prs_pipeline) prs_pipeline="$2"; shift 2;;
     --path_data_root) path_data_root="$2"; shift 2;;
     --path_ref_dir) path_ref_dir="$2"; shift 2;;
     --path_plink2) path_plink2="$2"; shift 2;;
@@ -124,7 +123,7 @@ else
         if [[ -f /projects/standard/gdc/public/envs/load_miniconda3.sh ]]; then
             source /projects/standard/gdc/public/envs/load_miniconda3.sh
         else
-            echo "ERROR: 'python' not found in PATH. Run this inside the prsv2_latest.sif container or source a conda env." >&2
+            echo "ERROR: 'python' not found in PATH. Run this inside the prs container or source a conda env." >&2
             exit 1
         fi
     fi
@@ -189,13 +188,13 @@ pushd "${final_output_dir}"
 
   "${path_plink2}" --bfile "${study_sample_plink}" --score "$combined_file_anc1" 2 4 6 header --out PRScsx_joint_${anc1}_score
 
-  "${rscript}" ${prs_pipeline}/src/PRS_sscore_to_R2.R PRScsx_joint_${anc1}_score.sscore
+  "${rscript}" "${SCRIPT_DIR}/PRS_sscore_to_R2.R" PRScsx_joint_${anc1}_score.sscore
   mv PRS_sscore_R_sqr.txt ${anc1}_PRS_sscore_Rsqr.txt
   mv adj_PRS_sscore_Rsqr.txt ${anc1}_adj_PRS_sscore_Rsqr.txt
 
   "${path_plink2}" --bfile "${study_sample_plink_anc2}" --score "$combined_file_anc2" 2 4 6 header --out PRScsx_joint_${anc2}_score
 
-  "${rscript}" ${prs_pipeline}/src/PRS_sscore_to_R2.R PRScsx_joint_${anc2}_score.sscore
+  "${rscript}" "${SCRIPT_DIR}/PRS_sscore_to_R2.R" PRScsx_joint_${anc2}_score.sscore
   mv PRS_sscore_R_sqr.txt ${anc2}_PRS_sscore_Rsqr.txt
   mv adj_PRS_sscore_Rsqr.txt ${anc2}_adj_PRS_sscore_Rsqr.txt
 popd

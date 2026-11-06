@@ -1,26 +1,12 @@
 import shlex
-import shutil
 
 PRS_METHODS_CONFIG = config.get("prsMethods", {})
 
-# Absorbed prs_pipeline engine = vendored copy under workflow/scripts/prs_pipeline
-# (see VENDORED.md). Resolved/presence-checked in preparePRSInputs.smk.
-
-# SIF container paths used by upstream prs_pipeline method rules. Resolve from
-# config under prsMethods.containers (keys: prsv2, singleprshelper); default to a
-# Phase-7 landing spot under OUT_DIR/containers (the SIFs are not vendored). The
-# primary image is the GDCGenomicsQC-owned `prs` build (envs/prs.def), which bakes
-# the vendored engine + pinned method repos into /opt/gdcgenomicsqc. Pull:
-#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest
-#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/singleprshelper:latest
-PRS_CONTAINERS = {
-    "prsv2": PRS_METHODS_CONFIG.get("containers", {}).get(
-        "prsv2", str(OUT_DIR / "containers" / "prs_latest.sif")
-    ),
-    "singleprshelper": PRS_METHODS_CONFIG.get("containers", {}).get(
-        "singleprshelper", str(OUT_DIR / "containers" / "singleprshelper_latest.sif")
-    ),
-}
+# Active PRS method scripts live flat under workflow/scripts/ (de-vendored from
+# the absorbed prs_pipeline engine; see docs/PRS_de_vendoring_plan.md). Method
+# tools (PRSice, plink/plink2, PRScsx, CT-SLEB, PROSPER) are provided by the
+# oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest image (PATH and
+# /opt/gdcgenomicsqc) and verified by checkPRSImageTools before any method runs.
 PRS_RESOURCE_DIR = Path(
     PRS_METHODS_CONFIG.get(
         "resource_dir",
@@ -28,12 +14,9 @@ PRS_RESOURCE_DIR = Path(
     )
 )
 PRS_METHOD_RUN_DIR = PRS_OUT_DIR / "method_runs"
-PRS_DOWNLOAD_SOFTWARE_FLAG = (
-    "--download-software" if PRS_METHODS_CONFIG.get("download_software", False) else ""
-)
 
-# --- Phase 2: native single-ancestry method plumbing (vendored engine) ---
-PRS_SRC = PRS_PIPELINE_PATH / "src"
+# --- Phase 2: native single-ancestry method plumbing (flat scripts) ---
+PRS_SRC = Path(workflow.basedir) / "scripts"
 PRS_STUDY_PLINK = PRS_OUT_DIR / "anc1_plink_files" / f"{PRS_ANC1}_simulation_study_sample"
 PRS_STUDY_RDS = PRS_STUDY_PLINK.with_suffix(".rds")
 PRS_STUDY_BK = PRS_STUDY_PLINK.with_suffix(".bk")
@@ -50,12 +33,12 @@ PRS_N_TOTAL_GWAS = PRS_CONFIG.get("n_total_gwas", 31968)
 PRS_AFREQ_FILE = PRS_CONFIG.get("afreq_file", "")
 PRS_PLINK_BIN = PRS_CONFIG.get("path_plink", "plink")
 PRS_PLINK2_BIN = PRS_CONFIG.get("path_plink2", "") or PRS_METHODS_CONFIG.get("plink2", "") or "plink2"
-# Single-ancestry PRS-CS (PRScsx.py single-pop). Defaults to PRS-CSx code + LD
-# reference provisioned under the resource dir (download_prs_resources.sh);
-# override via prsMethods.single_prscs.path_code / ld_ref_dir / seed.
+# Single-ancestry PRS-CS (PRScsx.py single-pop). Defaults to the PRScsx code
+# baked into the prs image; override via prsMethods.single_prscs.path_code.
+# The LD reference stays external read-only data (ld_ref_dir).
 PRS_PRSCS_PATH_CODE = (
     PRS_METHODS_CONFIG.get("single_prscs", {}).get("path_code")
-    or str(PRS_RESOURCE_DIR / "software" / "PRScsx")
+    or "/opt/gdcgenomicsqc/software/PRScsx"
 )
 PRS_PRSCS_REF_DIR = (
     PRS_METHODS_CONFIG.get("single_prscs", {}).get("ld_ref_dir")
@@ -126,9 +109,9 @@ def prs_method_extra_args(method):
     return " ".join(args)
 
 
-rule preparePRSMethodResources:
+rule checkPRSImageTools:
     log:
-        OUT_DIR / "logs" / "preparePRSMethodResources.log",
+        OUT_DIR / "logs" / "checkPRSImageTools.log",
     container:
         "oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest"
     conda:
@@ -137,35 +120,19 @@ rule preparePRSMethodResources:
     resources:
         nodes=1,
         mem_mb=4000,
-        runtime=60,
-    input:
-        prs_pipeline_ready=rules.checkPRSPipelinePath.output.checked,
+        runtime=30,
     output:
-        ready=PRS_RESOURCE_DIR / "resources.ready",
+        checked=OUT_DIR / ".prs_image_tools.checked",
     params:
-        resource_dir=PRS_RESOURCE_DIR,
-        script=Path(workflow.basedir) / "scripts" / "download_prs_resources.sh",
-        prs_pipeline_dir=PRS_PIPELINE_PATH,
-        prs_pipeline_ref=PRS_PIPELINE_PIN,
-        prs_pipeline_sif=PRS_CONTAINERS["prsv2"],
-        prs_helper_sif=PRS_CONTAINERS["singleprshelper"],
-        prscsx_ref=PRS_CONFIG.get(
-            "path_ref_dir",
-            PRS_METHODS_CONFIG.get("multi_prscsx", {}).get("ld_ref_dir", ""),
-        ),
-        plink2=PRS_CONFIG.get("path_plink2", PRS_METHODS_CONFIG.get("plink2", "")),
-        download_software=PRS_DOWNLOAD_SOFTWARE_FLAG,
+        script=Path(workflow.basedir) / "scripts" / "check_prs_image_tools.sh",
+        prscsx_code=PRS_PRSCSX_PATH_CODE,
+        ctsleb_r=str(Path(workflow.basedir) / "scripts" / "CTSLEB" / "R"),
     shell:
         """
         bash {params.script} \
-            --resource-dir {params.resource_dir} \
-            --prscsx-ref-dir {params.prscsx_ref} \
-            --plink2 {params.plink2} \
-            --prs-pipeline-dir {params.prs_pipeline_dir} \
-            --prs-pipeline-ref {params.prs_pipeline_ref} \
-            --prs-pipeline-sif {params.prs_pipeline_sif} \
-            --prs-helper-sif {params.prs_helper_sif} \
-            {params.download_software} \
+            --out {output.checked} \
+            --prscsx-code {params.prscsx_code} \
+            --ctsleb-r {params.ctsleb_r} \
             > {log} 2>&1
         """
 
@@ -255,8 +222,8 @@ rule generateLDMatrix:
     threads: 4
     resources:
         nodes=1,
-        mem_mb=32000,
-        runtime=600,
+        mem_mb=64000,
+        runtime=1440,
     input:
         bed=rules.preparePRSInputs.output.study_bed,
         rds=rules.convertStudyBedToRDS.output.rds,
@@ -286,10 +253,10 @@ rule runSingleAncestryCT:
     threads: 4
     resources:
         nodes=1,
-        mem_mb=16000,
-        runtime=240,
+        mem_mb=32000,
+        runtime=2880,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         ss=rules.alignSumstatsForPRS.output.aligned,
         pheno=rules.makeStudyPhenoFile.output.pheno,
         study_bed=rules.preparePRSInputs.output.study_bed,
@@ -315,7 +282,6 @@ rule runSingleAncestryCT:
         echo "sum_stats_file={input.ss}" >> "$CONFIG"
         echo "phenotype_info_file={input.pheno}" >> "$CONFIG"
         echo "output_path={params.out_base}" >> "$CONFIG"
-        echo "path_prs_pipeline={PRS_PIPELINE_PATH}" >> "$CONFIG"
         if [[ -n "{params.pca}" ]]; then
             echo "gwas_pca_eigenvec_file={params.pca}" >> "$CONFIG"
         fi
@@ -343,9 +309,9 @@ rule runSingleAncestryLDpred2:
     resources:
         nodes=1,
         mem_mb=64000,
-        runtime=720,
+        runtime=2160,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         ss=rules.alignSumstatsForPRS.output.aligned,
         pheno=rules.makeStudyPhenoFile.output.pheno,
         rds=rules.convertStudyBedToRDS.output.rds,
@@ -400,9 +366,9 @@ rule runSingleAncestryLassosum2:
     resources:
         nodes=1,
         mem_mb=64000,
-        runtime=720,
+        runtime=2160,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         ss=rules.alignSumstatsForPRS.output.aligned,
         pheno=rules.makeStudyPhenoFile.output.pheno,
         rds=rules.convertStudyBedToRDS.output.rds,
@@ -460,7 +426,7 @@ rule runSingleAncestryPRSice:
         mem_mb=16000,
         runtime=240,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         ss=rules.alignSumstatsForPRS.output.aligned,
         pheno=rules.makeStudyPhenoFile.output.pheno,
         study_bed=rules.preparePRSInputs.output.study_bed,
@@ -476,8 +442,6 @@ rule runSingleAncestryPRSice:
         out_base=PRS_METHOD_RUN_DIR / "single_prsice",
         out_prefix=PRS_METHOD_RUN_DIR / "single_prsice" / "PRSice2" / "prs_method",
         binary_target=PRS_CONFIG.get("binary_target", "F"),
-        prsice_r=PRS_SRC / "PRSice.R",
-        prsice_bin=PRS_SRC / "PRSice_linux",
         plink=PRS_PLINK_BIN,
         script=PRS_SRC / "run_PRSice2.sh",
     shell:
@@ -485,13 +449,12 @@ rule runSingleAncestryPRSice:
         set -euo pipefail
 
         mkdir -p {params.out_base}
-        export PRSICE_CMD="Rscript {params.prsice_r} --prsice {params.prsice_bin}"
         PLINK_BIN="{params.plink}"
         if [[ "$PLINK_BIN" != "plink" ]]; then
             export PLINK_CMD="$PLINK_BIN"
         fi
 
-        bash {params.script} {input.ss} {params.study_prefix} {params.binary_target} {input.pheno} {params.out_base} {PRS_PIPELINE_PATH} {params.out_prefix} > {log} 2>&1
+        bash {params.script} {input.ss} {params.study_prefix} {params.binary_target} {input.pheno} {params.out_base} {params.out_prefix} > {log} 2>&1
 
         touch {output.done}
         """
@@ -510,7 +473,7 @@ rule runSingleAncestryPRSCS:
         mem_mb=32000,
         runtime=720,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         ss=rules.alignSumstatsForPRS.output.aligned,
         study_bed=rules.preparePRSInputs.output.study_bed,
         study_bim=rules.preparePRSInputs.output.study_bim,
@@ -551,7 +514,6 @@ rule runSingleAncestryPRSCS:
         echo "rscript={params.rscript}" >> "$CONFIG"
         echo "anc1={params.anc}" >> "$CONFIG"
         echo "seed={params.seed}" >> "$CONFIG"
-        echo "prs_pipeline={PRS_PIPELINE_PATH}" >> "$CONFIG"
 
         bash {params.script} --c "$CONFIG" > {log} 2>&1
 
@@ -572,7 +534,7 @@ rule scoreTestPRS:
         mem_mb=8000,
         runtime=720,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         ss=rules.alignSumstatsForPRS.output.aligned,
         ct_done=rules.runSingleAncestryCT.output.done,
         ct_results=rules.runSingleAncestryCT.output.results,
@@ -616,7 +578,6 @@ rule scoreTestPRS:
         lassosum2_src=PRS_METHOD_RUN_DIR / "single_lassosum2",
         prsice2_src=PRS_METHOD_RUN_DIR / "single_prsice" / "PRSice2",
         prscs_label=PRS_ANC1,
-        prsice_bin=PRS_SRC / "PRSice_linux",
         script=PRS_SRC / "score_test.sh",
     shell:
         """
@@ -647,10 +608,8 @@ rule scoreTestPRS:
         mkdir -p "$STAGE/PRScsx"
         ln -sfn {input.prscs_combined} "$STAGE/PRScsx/{params.prscs_label}_combined_weights.txt"
 
-        # Provide PRSice and plink on PATH (score_test.sh calls the bare names).
-        mkdir -p "$STAGE/bin"
-        ln -sfn {params.prsice_bin} "$STAGE/bin/PRSice"
-        export PATH="$STAGE/bin:$PATH"
+        # PRSice and plink come from the prs image PATH (score_test.sh calls the
+        # bare names); only a non-default plink needs a PATH prefix.
         PLINK_BIN="{params.plink}"
         if [[ "$PLINK_BIN" != "plink" ]]; then
             export PATH="$(dirname "$PLINK_BIN"):$PATH"
@@ -661,7 +620,6 @@ rule scoreTestPRS:
             --train-out-dir "$STAGE" \\
             {params.test_pca_args} \\
             --sumstats {input.ss} \\
-            --path-repo {PRS_PIPELINE_PATH} \\
             --binary-flag {params.binary_target} \\
             --ran-ct true \\
             --ran-ldpred2 true \\
@@ -772,9 +730,9 @@ rule runMultiAncestryPRSCSx:
     resources:
         nodes=1,
         mem_mb=32000,
-        runtime=720,
+        runtime=1800,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         ss_target=rules.preparePRSInputs.output.target_sumstats,
         ss_training=rules.preparePRSInputs.output.training_sumstats,
         study_bed=rules.preparePRSInputs.output.study_bed,
@@ -829,7 +787,6 @@ rule runMultiAncestryPRSCSx:
         echo "anc1={params.anc1}" >> "$CONFIG"
         echo "anc2={params.anc2}" >> "$CONFIG"
         echo "seed={params.seed}" >> "$CONFIG"
-        echo "prs_pipeline={PRS_PIPELINE_PATH}" >> "$CONFIG"
 
         bash {params.script} --c "$CONFIG" > {log} 2>&1
 
@@ -846,7 +803,7 @@ rule runMultiAncestryLDpred2:
         mem_mb=64000,
         runtime=720,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         env=rules.preparePRSInputs.output.env,
         target_sumstats=rules.preparePRSInputs.output.target_sumstats,
         training_sumstats=rules.preparePRSInputs.output.training_sumstats,
@@ -885,7 +842,7 @@ rule runMultiAncestrySDPRS:
         mem_mb=64000,
         runtime=720,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         env=rules.preparePRSInputs.output.env,
         target_sumstats=rules.preparePRSInputs.output.target_sumstats,
         training_sumstats=rules.preparePRSInputs.output.training_sumstats,

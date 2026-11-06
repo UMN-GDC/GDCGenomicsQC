@@ -122,6 +122,10 @@ prs_r2 <- vapply(prs_cols, function(i) {
 max_ind <- which.max(replace(prs_r2, !is.finite(prs_r2), -Inf))
 best_snps <- colnames(prs_tune)[max_ind + 2]
 
+if (!grepl("^clump_r2_.+_ws_.+_p_other_.+_p_tar_", best_snps)) {
+  stop("CTSLEB wrapper: unexpected best_snps name: ", best_snps)
+}
+
 # Step 2: empirical Bayes effect sizes.
 prs_mat_eb <- CalculateEBEffectSize(
   bfile = args$target_test_plink,

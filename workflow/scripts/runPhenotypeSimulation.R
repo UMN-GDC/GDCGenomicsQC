@@ -65,18 +65,30 @@ skip_thinning <- tolower(args$skip_thinning) == "true" | tolower(args$skip_thinn
 
 if (skip_thinning) {
     cat("Skipping thinning step\n")
-    system2("plink2", args = c("--pfile", anc1File, "--maf", as.character(maf), "--freq", "--out", anc1File))
-    system2("awk", args = c("{print $2}", paste0(anc1File, ".pvar")), stdout = paste0(anc1File, ".snpIDs"))
-    system2("plink2", args = c("--pfile", anc2File, "--maf", as.character(maf), "--freq", "--out", anc2File))
+    anc1_thinned <- paste0(anc1File, "_thinned")
+    anc2_thinned <- paste0(anc2File, "_thinned")
+    system2("plink2", args = c("--pfile", anc1File, "--maf", as.character(maf),
+        "--freq", "--make-pgen", "--out", anc1_thinned))
+    anc1File <- anc1_thinned
+    anc1_pvar <- read_table(paste0(anc1File, ".pvar"), show_col_types = FALSE)
+    writeLines(anc1_pvar$ID, paste0(anc1File, ".snpIDs"))
+    system2("plink2", args = c("--pfile", anc2File, "--maf", as.character(maf),
+        "--freq", "--make-pgen", "--out", anc2_thinned))
+    anc2File <- anc2_thinned
 } else {
     cat("Applying thinning\n")
+    anc1_thinned <- paste0(anc1File, "_thinned")
+    anc2_thinned <- paste0(anc2File, "_thinned")
     system2("plink2", args = c("--pfile", anc1File, "--thin-count", as.character(args$thin_count_snps),
         "--thin-indiv-count", as.character(args$thin_count_inds), "--maf", as.character(maf),
-        "--freq", "--out", anc1File))
-    system2("awk", args = c("{print $2}", paste0(anc1File, ".pvar")), stdout = paste0(anc1File, ".snpIDs"))
+        "--freq", "--make-pgen", "--out", anc1_thinned))
+    anc1File <- anc1_thinned
+    anc1_pvar <- read_table(paste0(anc1File, ".pvar"), show_col_types = FALSE)
+    writeLines(anc1_pvar$ID, paste0(anc1File, ".snpIDs"))
     system2("plink2", args = c("--pfile", anc2File, "--extract", paste0(anc1File, ".snpIDs"),
         "--thin-indiv-count", as.character(args$thin_count_inds), "--maf", as.character(maf),
-        "--freq", "--out", anc2File))
+        "--freq", "--make-pgen", "--out", anc2_thinned))
+    anc2File <- anc2_thinned
 }
 
 cat("\nSTEP 2: Creating base .fam files\n")

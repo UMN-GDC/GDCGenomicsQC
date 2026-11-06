@@ -28,13 +28,14 @@ load_config() {
     fi
 }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 ## Defaults
 study_sample=EUR_simulation_study_sample
 sum_stats_file=sumstats_CT_PRSice2.txt
 phenotype_info_file=phenotype_info.txt
 gwas_pca_eigenvec_file=""
 output_path=/projects/standard/gdc/public/data/simulated_1000G
-path_prs_pipeline=/projects/standard/gdc/public/prs_methods/prs_pipeline
 
 #### # ---- Parse args ----
 # Check if the number of arguments is 0
@@ -128,7 +129,7 @@ fi
 # R commands--helps find the p-value threshold that leads to the PRS with the best fit under the clumping and thresholding model
 ## note that this is approximate (it cannot usually be determined with certainty) but can be approximated by performing a regression 
 ## between the calculated PRS at a given range of p-values; can then select the PRS that explains the highest phenotypic variance
-Rscript ${path_prs_pipeline}/src/CT_script.R \
+Rscript "${SCRIPT_DIR}/CT_script.R" \
     ${phenotype_info_file} \
     ${pca_file} \
     temp \

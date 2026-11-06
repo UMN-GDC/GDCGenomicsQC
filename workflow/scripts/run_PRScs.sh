@@ -6,7 +6,7 @@
 set -euo pipefail
 
 config_file=""
-prs_pipeline="/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 target_sumstats_file=""
 output_dir=""
 reference_SNPS_bim=""
@@ -72,7 +72,7 @@ if [[ ! -f "${target_sumstats_file}" ]]; then
     exit 1
 fi
 if [[ ! -d "${path_code}" ]] || [[ ! -f "${path_code}/PRScsx.py" ]]; then
-    echo "ERROR: PRS-CSx code not found at ${path_code}/PRScsx.py. Set single_prscs.path_code or run with --download-software." >&2
+    echo "ERROR: PRS-CSx code not found at ${path_code}/PRScsx.py. Set single_prscs.path_code." >&2
     exit 1
 fi
 if [[ ! -d "${path_ref_dir}" ]]; then
@@ -91,7 +91,7 @@ else
         if [[ -f /projects/standard/gdc/public/envs/load_miniconda3.sh ]]; then
             source /projects/standard/gdc/public/envs/load_miniconda3.sh
         else
-            echo "ERROR: 'python' not found in PATH. Run inside the prsv2_latest.sif container or source a conda env." >&2
+            echo "ERROR: 'python' not found in PATH. Run inside the prs container or source a conda env." >&2
             exit 1
         fi
     fi
@@ -147,7 +147,7 @@ pushd "${final_output_dir}" >/dev/null
 
   "${path_plink2}" --bfile "${study_sample_plink}" --score "$combined_file" 2 4 6 header --out "PRScs_${anc1}_score"
 
-  "${rscript}" "${prs_pipeline}/src/PRS_sscore_to_R2.R" "PRScs_${anc1}_score.sscore"
+  "${rscript}" "${SCRIPT_DIR}/PRS_sscore_to_R2.R" "PRScs_${anc1}_score.sscore"
   mv PRS_sscore_R_sqr.txt "${anc1}_PRS_sscore_Rsqr.txt"
   mv adj_PRS_sscore_Rsqr.txt "${anc1}_adj_PRS_sscore_Rsqr.txt"
 popd >/dev/null

@@ -4,8 +4,7 @@ study_sample=$2
 binary_flag=$3
 phenotype_info_file=$4
 output_path=$5
-path_repo=$6
-output_prefix=$7   # optional: overrides the default output prefix
+output_prefix=$6   # optional: overrides the default output prefix
 
 if [[ -n "${output_prefix:-}" ]]; then
     final_output="${output_prefix}"

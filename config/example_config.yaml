@@ -21,15 +21,10 @@ vcf_template: null
 # Output directory for pipeline results
 OUT_DIR: "/path/to/output/directory"
 
-# Absorbed prs_pipeline method engine: the vendored in-repo copy at
-# workflow/scripts/prs_pipeline/ is used by default (see VENDORED.md there).
-# Leave prs_pipeline_path null; set it only for legacy configs pointing at an
-# external checkout:
-# prs_pipeline_path: "/some/other/path/prs_pipeline"
-prs_pipeline_path: null
-# Provenance pin: upstream sandbox_multi_pheno @ f71cf4f (2026-08-20), verified
-# against git HEAD only when prs_pipeline_path is a genuine upstream checkout.
-prs_pipeline_ref: "f71cf4f1031ff6231bc9f8abc9f96ebdc6f17bdf"
+# The absorbed prs_pipeline engine is de-vendored: active method scripts live
+# flat under workflow/scripts/ and method tools come from the
+# oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest image (see
+# docs/PRS_de_vendoring_plan.md). No prs_pipeline path/pin keys remain.
 
 # PRS pipeline parameters (native rule settings, phase 2)
 prsPipeline:
@@ -38,22 +33,21 @@ prsPipeline:
     path_plink2: "plink2"        # PLINK2 binary/path for PRS-CS (run_PRScs.sh)
     binary_target: "F"           # PRSice2 --binary-target: F quantitative / T case-control
     afreq_file: null             # optional PLINK2 .afreq for LDpred2/lassosum2
-    ld_matrix_dir: null          # shared LD matrix dir (default: <PRS_OUT_DIR>/ld_matrix/<ANC1>)
+    ld_matrix_dir: null          # shared generated LD matrix dir (default: <PRS_OUT_DIR>/ld_matrix/<ANC1>); use prsMethods.<m>.ld_matrix_dir for an external matrix
     gwas_pca_eigenvec_file: null # optional study-sample PCA file for C+T
     test_sample: null            # held-out test PLINK prefix (stem, no ext) for scoreTestPRS
     test_pca_eigenvec_file: null # optional test-sample PCA eigenvec file for scoreTestPRS
 
-# SIF container images used by the prs_pipeline method rules (used from phase 7;
-# not vendored). Defaults resolve to <OUT_DIR>/containers/<name>. Pull with:
-#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prsv2:latest
-#   apptainer pull oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/singleprshelper:latest
+# PRS method settings. Every PRS compute rule runs in the prs:latest image,
+# which provides PRSice/plink/plink2/PRScsx/CTSLEB/PROSPER. LD reference
+# panels stay external read-only data; PROSPER is the documented exception
+# (singleprshelper image, host software_dir + plink2 overrides).
 prsMethods:
-    containers:
-        prsv2: null                # e.g. "/path/to/prsv2_latest.sif"
-        singleprshelper: null      # e.g. "/path/to/singleprshelper_latest.sif"
+    # resource_dir: null          # PRS reference-data dir (default: <OUT_DIR>/../prs_resources)
+    # plink2: null               # host plink2 override, needed only by PROSPER
     # single_prscs:               # single-ancestry PRS-CS (PRScsx.py single-pop)
-    #     path_code: null         # dir containing PRScsx.py (default: <RESOURCE>/software/PRScsx)
-    #     ld_ref_dir: null        # PRS-CSx LD ref dir (default: <RESOURCE>/ld/prs_csx/ref)
+    #     path_code: null         # dir containing PRScsx.py (default: /opt/gdcgenomicsqc/software/PRScsx)
+    #     ld_ref_dir: null        # PRS-CSx LD ref dir (external read-only data)
     #     seed: 42                # MCMC seed
     #     path_python: null       # python with numpy+scipy+h5py (default: python on PATH)
     # multi_prscsx:               # joint multi-ancestry PRS-CSx (defaults to single_prscs values)
@@ -75,7 +69,7 @@ prsMethods:
     #     ncores: 1               # cores for the PROSPER R scripts
     #     ll: 5                   # lambda path points for PROSPER.R
     #     lc: 5                   # c path points for PROSPER.R
-    #     plink2: null            # plink2 for tuning_testing scoring (default: plink2)
+    #     plink2: "/projects/standard/gdc/public/plink2"  # host plink2 (singleprshelper lacks it)
     #     rscript: null           # Rscript for lassosum2.R (default: Rscript)
 
 # Reference data directory (required for various operations)

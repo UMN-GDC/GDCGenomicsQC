@@ -22,7 +22,16 @@ helper_CombinePRS <- function(scores,
       prs_file <- paste0(prs_p_other_,k1,".p_tar_",k2,".sscore")
       #print(paste0("reading :", prs_file))
       prs_temp <- as.data.frame(fread(prs_file))
-      prs_list[[temp]] <- prs_temp[,5:ncol(prs_temp)]
+      score_cols <- grep("^SCORE[0-9]+_SUM$", colnames(prs_temp))
+      if (length(score_cols) == 0L) {
+        score_cols <- 5:ncol(prs_temp)
+        warning("No SCORE*_SUM columns found; falling back to columns 5:ncol")
+      }
+      if (length(score_cols) != length(names)) {
+        stop(sprintf("Expected %d score columns, found %d",
+                     length(names), length(score_cols)))
+      }
+      prs_list[[temp]] <- prs_temp[, score_cols, drop = FALSE]
       colnames(prs_list[[temp]]) <- paste0(names,"_",
                                            "p_other_",
                                            pthres[k1],

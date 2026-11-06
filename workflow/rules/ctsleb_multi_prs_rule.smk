@@ -10,6 +10,10 @@
 # and the target test cohort; point prsMethods.multi_ctsleb.target_ref_plink
 # / aux_ref_plink at (e.g.) 1000G reference panels for real analyses.
 
+# Keep the repo CTSLEB R sources authoritative: they carry the plink2 .sscore
+# SCORE*_SUM fix (docs/PRS_de_vendoring_plan.md §6.6.3 A), while the copy baked
+# into the prs:latest image predates that fix. Point software_dir at
+# /opt/gdcgenomicsqc/CTSLEB/R only after the image is rebuilt.
 ctsleb_soft_dir = config.get("prsMethods", {}).get("multi_ctsleb", {}).get(
     "software_dir", str(Path(workflow.basedir) / "scripts" / "CTSLEB" / "R"))
 ctsleb_anc2_prefix = PRS_OUT_DIR / "anc2_plink_files" / f"{PRS_ANC2}_simulation_study_sample"
@@ -25,9 +29,9 @@ rule runMultiAncestryCTSLEB:
     resources:
         nodes=1,
         mem_mb=32000,
-        runtime=720,
+        runtime=1440,
     input:
-        resources=rules.preparePRSMethodResources.output.ready,
+        resources=rules.checkPRSImageTools.output.checked,
         ss_target=rules.prepareCTSLEBSumstats.output.target_ss,
         ss_training=rules.prepareCTSLEBSumstats.output.training_ss,
         study_bed=rules.preparePRSInputs.output.study_bed,

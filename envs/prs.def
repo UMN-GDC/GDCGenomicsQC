@@ -4,7 +4,7 @@
 # 2026-09-28), published as:
 #   oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest
 # All PRS compute rules (prsPipelines.smk, preparePRSInputs.smk,
-# ctsleb_multi_prs_rule.smk, incl. preparePRSMethodResources) declare this image
+# ctsleb_multi_prs_rule.smk, incl. checkPRSImageTools) declare this image
 # (single conda env `prs`: R 4.3.0 + bigsnpr/caret/SuperLearner/ranger/glmnet/pROC
 # for CT-SLEB, bioconda plink/plink2, conda `prsice`, and python with
 # numpy/scipy/h5py for PRS-CS(x)).
@@ -20,24 +20,28 @@
 # Notes:
 # - The conda env is built from envs/prs.yml (an upstream
 #   `multiPRS_refined.yaml`-derived recipe, augmented with
-#   r-superlearner/ranger/glmnet/pROC that the vendored run_ctsleb_wrapper.R
-#   needs). prs.yml also installs `prsice` (conda), so a GDC-built image ships a
-#   `PRSice` command for the monolithic run_single_ancestry_PRS_pipeline.sh; the
-#   per-method rules instead drive the vendored PRSice.R/PRSice_linux directly
-#   (robust across images).
-# - The vendored method engine (workflow/scripts/prs_pipeline) and the CTSLEB R
-#   sources (workflow/scripts/CTSLEB) are baked in at /opt/gdcgenomicsqc/ so the
-#   image is self-contained; the workflow still references its repo copies (bound
-#   via /projects) by default and may be pointed at the /opt/gdcgenomicsqc paths.
-#   PRSice_linux (static binary) is included inside /opt/gdcgenomicsqc/prs_pipeline/src.
+#   r-superlearner/ranger/glmnet/pROC that run_ctsleb_wrapper.R needs). prs.yml
+#   installs `prsice` (conda), so the image ships a `PRSice` command on PATH,
+#   which the per-method PRSice2 and score_test.sh rules call directly.
+# - The prs_pipeline engine has been de-vendored: the 12 active method scripts
+#   now live flat under workflow/scripts/ (see docs/PRS_de_vendoring_plan.md)
+#   and are bound into the container via /projects. They are NOT baked into this
+#   image; PRSice, plink, plink2, python and Rscript come from the conda env.
+# - The CTSLEB R sources are baked in at /opt/gdcgenomicsqc/CTSLEB. The workflow
+#   defaults to the repo copy (workflow/scripts/CTSLEB/R, bound via /projects)
+#   because it carries the plink2 .sscore fix; point software_dir at the image
+#   copy only after rebuilding with that fix.
 # - The upstream method repositories are baked in at pinned commits under
 #   /opt/gdcgenomicsqc/software/ (frozen 2026-09-28; only PRScsx @
 #   9a77968755e576d58aa43ed205b9d0f02eac6468 is consumed today — it is the exact
-#   clone HEAD the smoke-tested pipeline uses). PROSPER/SDPRX/PRScs are not yet
+#   clone HEAD the smoke-tested PRS-CS(x) runs use). PROSPER/SDPRX/PRScs are not yet
 #   wired but are archived for the multi method increments.
-# - `git`, `curl`, `ca-certificates` are installed in %post so
-#   preparePRSMethodResources runs inside the container (it now declares this
-#   image).
+# - NOTE (2026-11-06): de-vendoring removed the %files line that baked
+#   ../workflow/scripts/prs_pipeline. A future `apptainer build` must use this
+#   updated def; the currently published prs:latest still contains a harmless
+#   baked copy of the old tree.
+# - `git`, `curl`, `ca-certificates` are installed in %post (kept for
+#   reference-data provisioning; checkPRSImageTools itself only needs PATH).
 Bootstrap: docker
 From: mambaorg/micromamba:latest
 
@@ -51,7 +55,6 @@ From: mambaorg/micromamba:latest
 
 %files
     prs.yml /app/prs.yml
-    ../workflow/scripts/prs_pipeline /opt/gdcgenomicsqc/prs_pipeline
     ../workflow/scripts/CTSLEB /opt/gdcgenomicsqc/CTSLEB
 
 %post

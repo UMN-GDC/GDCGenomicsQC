@@ -27,7 +27,10 @@ if (!file.exists(rds_path)) {
 }
 obj.bigSNP <- snp_attach(rds_path)
 G <- obj.bigSNP$genotypes
-POS2 <- obj.bigSNP$map$genetic.dist
+gen <- obj.bigSNP$map$genetic.dist
+use_genetic <- !is.null(gen) && !all(is.na(gen)) && any(gen != 0, na.rm = TRUE)
+POS2 <- if (use_genetic) gen else obj.bigSNP$map$physical.pos
+window <- if (use_genetic) 3 / 1000 else 3000  # 3 cM or 3 Mb
 n_total <- nrow(G)
 
 message(sprintf("Loaded: %d samples, %d variants", n_total, ncol(G)))
@@ -43,7 +46,7 @@ for (chr in CHRS) {
 
   message(sprintf("Chr%d: %d SNPs ... computing", chr, n_chr))
 
-  corr0 <- snp_cor(G, ind.col = ind.chr, size = 3 / 1000,
+  corr0 <- snp_cor(G, ind.col = ind.chr, size = window,
                    infos.pos = POS2[ind.chr], ncores = args$ncores)
 
   # Repair any NA/NaN correlations (monomorphic or fully-missing SNPs)

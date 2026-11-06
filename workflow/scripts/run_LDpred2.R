@@ -209,19 +209,18 @@ tryCatch({
       }
     }
   } else {
-    POS2 <- if ("genetic.dist" %in% names(obj.bigSNP$map) && !all(is.na(obj.bigSNP$map$genetic.dist))) {
-      obj.bigSNP$map$genetic.dist
-    } else {
-      obj.bigSNP$map$physical.pos / 1e6
-    }
-    
+    gen <- if ("genetic.dist" %in% names(obj.bigSNP$map)) obj.bigSNP$map$genetic.dist else NULL
+    use_genetic <- !is.null(gen) && !all(is.na(gen)) && any(gen != 0, na.rm = TRUE)
+    POS2 <- if (use_genetic) gen else obj.bigSNP$map$physical.pos
+    window <- if (use_genetic) 3 / 1000 else 3000  # 3 cM or 3 Mb
+
     for (chr in CHRS) {
       ind.chr  <- which(df_beta$chr == chr)
       ind.chr2 <- df_beta$`_NUM_ID_`[ind.chr]
       if (length(ind.chr2) < 2) next
       
       keep_idx[ind.chr] <- TRUE
-      corr0 <- snp_cor(G, ind.col = ind.chr2, size = 3/1000, infos.pos = POS2[ind.chr2], ncores = NCORES)
+      corr0 <- snp_cor(G, ind.col = ind.chr2, size = window, infos.pos = POS2[ind.chr2], ncores = NCORES)
       
       if (any(is.na(corr0))) corr0[is.na(corr0)] <- 0
       corr0 <- corr0 + diag(ncol(corr0)) * 1e-5

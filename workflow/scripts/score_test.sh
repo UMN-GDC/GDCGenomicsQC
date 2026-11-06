@@ -5,6 +5,8 @@
 
 set -eu
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 usage() {
   cat <<EOF
 Usage: $0 [options]
@@ -13,7 +15,6 @@ Required:
   --test-bfile <prefix>     PLINK prefix for test data
   --train-out-dir <dir>     Pipeline methods output directory (e.g., output_path/prs_pipeline)
   --sumstats <file>         GWAS summary stats file (needed for C+T)
-  --path-repo <dir>         Path to prs_pipeline repo
 
 Optional:
   --pheno-file <file>       Phenotype file (FID IID phenotype). Default: .fam column 6
@@ -37,7 +38,6 @@ train_out_dir=""
 pheno_file=""
 test_pca_file=""
 sumstats=""
-path_repo=""
 binary_flag=F
 ran_ct=false
 ran_ldpred2=false
@@ -54,7 +54,6 @@ while [[ $# -gt 0 ]]; do
     --pheno-file)     pheno_file="$2";     shift 2 ;;
     --test-pca-file)  test_pca_file="$2";  shift 2 ;;
     --sumstats)       sumstats="$2";       shift 2 ;;
-    --path-repo)      path_repo="$2";      shift 2 ;;
     --binary-flag)    binary_flag="$2";    shift 2 ;;
     --ran-ct)         ran_ct="$2";         shift 2 ;;
     --ran-ldpred2)    ran_ldpred2="$2";    shift 2 ;;
@@ -68,8 +67,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$test_bfile" || -z "$train_out_dir" || -z "$sumstats" || -z "$path_repo" ]]; then
-  echo "ERROR: --test-bfile, --train-out-dir, --sumstats, and --path-repo are required."
+if [[ -z "$test_bfile" || -z "$train_out_dir" || -z "$sumstats" ]]; then
+  echo "ERROR: --test-bfile, --train-out-dir, and --sumstats are required."
   usage
 fi
 
@@ -148,7 +147,7 @@ evaluate() {
     return
   fi
 
-  Rscript "${path_repo}/src/evaluate_test.R" \
+  Rscript "${SCRIPT_DIR}/evaluate_test.R" \
     "$profile_file" \
     "$pheno_input" \
     "$pca_file" \

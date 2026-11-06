@@ -4,9 +4,12 @@ PROSPER_INPUT_DIR = Path(config.get("prsPipeline", {}).get("generated_input_dir"
 # inside the upstream `singleprshelper` container (oras://ghcr.io/mainsqu33ze/
 # gdcgenomicsqc/singleprshelper:latest) — PROSPER.R/lassosum2.R need
 # RcppArmadillo, doMC, etc. + a compiler (sourceCpp) that the generic `prs`
-# image does not ship. The PROSPER R package lives on the host/gdc (bound via
-# /projects in the profiles); a writable per-run copy carrying ref_bim.txt is
-# made by preparePROSPERPackage because PROSPER.R/lassosum2.R read
+# image does not ship. This image also lacks plink2 and the /opt/gdcgenomicsqc
+# software tree, so PROSPER is the documented de-vendoring exception: its
+# software_dir and plink2 are supplied as host paths by the config (see
+# docs/PRS_de_vendoring_plan.md §5.3.5). The PROSPER R package lives on the
+# host/gdc (bound via /projects); a writable per-run copy carrying ref_bim.txt
+# is made by preparePROSPERPackage because PROSPER.R/lassosum2.R read
 # <PATH_package>/ref_bim.txt and the shared checkout is non-writable.
 PROSPER_METHOD_CONFIG = config.get("prsMethods", {}).get("multi_prosper", {})
 PROSPER_SOFTWARE_DIR = PROSPER_METHOD_CONFIG.get(
@@ -209,7 +212,7 @@ rule preparePROSPERTuningTestingSets:
         testing_afreq=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC1}_testing.afreq",
         aux_tuning_afreq=PROSPER_INPUT_DIR / "prosper" / f"{PRS_ANC2}_tuning.afreq",
     params:
-        plink2=config.get("prsMethods", {}).get("plink2", "/projects/standard/gdc/public/plink2"),
+        plink2=PROSPER_PLINK2,
         study_prefix=lambda wc, input: str(input.bed)[:-4],
         tuning_prefix=lambda wc, output: str(output.tuning_bed)[:-4],
         testing_prefix=lambda wc, output: str(output.testing_bed)[:-4],
@@ -226,10 +229,10 @@ rule preparePROSPERTuningTestingSets:
         N_TUNE=$((N / 2))
         N_TEST=$((N - N_TUNE))
 
-        awk '{{print $1, $2}}' {input.fam} | head -n $N_TUNE > {output.tuning_keep}
-        awk '{{print $1, $2}}' {input.fam} | tail -n $N_TEST > {output.testing_keep}
-        awk '{{print $1, $2, $6}}' {input.fam} | head -n $N_TUNE > {output.tuning_pheno}
-        awk '{{print $1, $2, $6}}' {input.fam} | tail -n $N_TEST > {output.testing_pheno}
+        awk -v n_tune="$N_TUNE" 'NR <= n_tune {{print $1, $2}}' {input.fam} > {output.tuning_keep}
+        awk -v n_tune="$N_TUNE" 'NR > n_tune {{print $1, $2}}' {input.fam} > {output.testing_keep}
+        awk -v n_tune="$N_TUNE" 'NR <= n_tune {{print $1, $2, $6}}' {input.fam} > {output.tuning_pheno}
+        awk -v n_tune="$N_TUNE" 'NR > n_tune {{print $1, $2, $6}}' {input.fam} > {output.testing_pheno}
 
         {params.plink2} \
           --bfile {params.study_prefix} \
