@@ -82,10 +82,10 @@ def convert_gcta(path, out):
             pos = clean(vals.get("POS"))
             a1 = clean(vals.get("A1"))
             a2 = clean(vals.get("A2"))
-            beta = clean(vals.get("BETA"))
-            se = clean(vals.get("SE"))
-            p = clean(vals.get("P"))
-            n = clean(vals.get("N"))
+            beta = clean(vals.get("b") or vals.get("BETA"))
+            se = clean(vals.get("se") or vals.get("SE"))
+            p = clean(vals.get("p") or vals.get("P"))
+            n = clean(vals.get("N") or vals.get("n"))
             if None in (snp, chr_, a1, a2, beta, se, p, n) or snp in seen:
                 continue
             seen.add(snp)

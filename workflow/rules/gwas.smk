@@ -18,6 +18,7 @@ GWAS_OUTDIR = GWAS_CONFIG.get("output_dir", "04-gwas")
 GWAS_BED_PREFIX = GWAS_CONFIG.get("bed_prefix", "f1.b38")
 GWAS_GRM_PREFIX = GWAS_CONFIG.get("grm_prefix", "f1.b38.ldpruned")
 GWAS_FASTGWA_MODE = str(GWAS_CONFIG.get("fastgwa_mode", "lr")).lower()
+GWAS_GCTA_MLMA_GRM = GWAS_CONFIG.get("gcta_mlma_grm")
 GWAS_PHENO = GWAS_CONFIG.get("pheno")
 GWAS_MPHENO = GWAS_CONFIG.get("mpheno", 1)
 GWAS_QCOVAR = GWAS_CONFIG.get("qcovar")
@@ -48,12 +49,14 @@ GWAS_TRACTOR_CONTAINER = GWAS_CONFIG.get("tractor_container") or (
 )
 
 if GWAS_ACTIVE:
-    valid_methods = {"standard", "fastgwa", "tractor"}
+    valid_methods = {"standard", "fastgwa", "gcta_mlma", "tractor"}
     unknown = set(GWAS_METHODS) - valid_methods
     if unknown:
         raise ValueError(f"gwas.methods must be in {valid_methods}, got {unknown}")
     if GWAS_FASTGWA_MODE not in {"lr", "mlm"}:
         raise ValueError("gwas.fastgwa_mode must be 'lr' or 'mlm'")
+    if "gcta_mlma" in GWAS_METHODS and not GWAS_GCTA_MLMA_GRM:
+        raise ValueError("gwas.methods includes 'gcta_mlma' but gwas.gcta_mlma_grm is not specified")
     if "tractor" in GWAS_METHODS and not uses_local_ancestry():
         raise ValueError(
             "gwas.methods includes 'tractor' but no local ancestry output is available"
@@ -115,6 +118,8 @@ def _gwas_method_sumstats(subset, method, ancestry=None):
         return base / "standard.sumstats.tsv"
     if method == "fastgwa":
         return base / "fastgwa.sumstats.tsv"
+    if method == "gcta_mlma":
+        return base / "gcta_mlma.sumstats.tsv"
     if method == "tractor":
         return base / f"tractor.anc{ancestry}.sumstats.tsv"
     raise ValueError(method)
@@ -396,7 +401,59 @@ if GWAS_ACTIVE:
                     --output {output.sumstats}
                 """
 
-    if "tractor" in GWAS_METHODS:
+    if "gcta_mlma" in GWAS_METHODS:
+
+        rule runGctaMlma:
+            log:
+                OUT_DIR / "logs" / "runGctaMlma_{subset}.log",
+            conda:
+                "../../envs/predlmmAce.yml",
+            container:
+                PREDLMM_ACE_CONTAINER,
+            threads: 16,
+            resources:
+                nodes=1,
+                mem_mb=64000,
+                runtime=1440,
+            input:
+                bed=OUT_DIR / "{subset}" / (GWAS_BED_PREFIX + ".bed"),
+                bim=OUT_DIR / "{subset}" / (GWAS_BED_PREFIX + ".bim"),
+                fam=OUT_DIR / "{subset}" / (GWAS_BED_PREFIX + ".fam"),
+                keep=_gwas_outdir("{subset}") / "samples.gwas.keep",
+                pheno=_gwas_outdir("{subset}") / "gwas_pheno.tsv",
+                covar=_gwas_outdir("{subset}") / "gwas_covar.tsv",
+                grm_bin=lambda w: Path(f"{GWAS_GCTA_MLMA_GRM}.grm.bin"),
+                grm_id=lambda w: Path(f"{GWAS_GCTA_MLMA_GRM}.grm.id"),
+                grm_Nbin=lambda w: Path(f"{GWAS_GCTA_MLMA_GRM}.grm.N.bin"),
+            output:
+                raw=_gwas_outdir("{subset}") / "gcta_mlma.hsq",
+                assoc=_gwas_outdir("{subset}") / "gcta_mlma.mlma",
+                sumstats=_gwas_outdir("{subset}") / "gcta_mlma.sumstats.tsv",
+            params:
+                bed_prefix=lambda w: str(_gwas_base(w.subset)),
+                out_prefix=lambda w: str(_gwas_outdir(w.subset) / "gcta_mlma"),
+                grm_prefix=GWAS_GCTA_MLMA_GRM,
+                qcovar_flag=(
+                    lambda w, input: f"--qcovar {input.covar}"
+                    if GWAS_HAS_COVAR
+                    else ""
+                ),
+            shell:
+                """
+                gcta --bfile {params.bed_prefix} \
+                    --keep {input.keep} \
+                    --pheno {input.pheno} \
+                    --mpheno 1 \
+                    {params.qcovar_flag} \
+                    --grm {params.grm_prefix} \
+                    --mlma \
+                    --out {params.out_prefix} \
+                    --thread-num {threads}
+                python {SCRIPTS_DIR}/format_gwas_sumstats.py \
+                    --method gcta \
+                    --input {output.assoc} \
+                    --output {output.sumstats}
+                """
 
         rule extractGwasTracts:
             log:
