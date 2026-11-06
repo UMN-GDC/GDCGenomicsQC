@@ -41,8 +41,11 @@ TRACTOR_MSP_PATTERN = TRACTOR_CONFIG.get("msp_pattern", "chr{CHR}.lai.msp.tsv")
 TRACTOR_DIR = TRACTOR_CONFIG.get("dir", "02-localAncestry")
 
 GWAS_PLINK2_CONTAINER = "docker://gfanz/plink2:latest"
-# Use local SIF during development/testing; push to GHCR once verified.
-GWAS_TRACTOR_CONTAINER = "file://" + str((Path(workflow.basedir) / ".." / "envs" / "tractor.sif").resolve())
+ANC_NREPORT_CONTAINER = "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+# Override with gwas.tractor_container to use a local SIF while developing.
+GWAS_TRACTOR_CONTAINER = GWAS_CONFIG.get("tractor_container") or (
+    "oras://ghcr.io/coffm049/gdcgenomicsqc/tractor:latest"
+)
 
 if GWAS_ACTIVE:
     valid_methods = {"standard", "fastgwa", "tractor"}
@@ -165,6 +168,8 @@ if GWAS_ACTIVE:
     rule gwasSampleSplit:
         log:
             OUT_DIR / "logs" / "gwasSampleSplit_{subset}.log",
+        container:
+            ANC_NREPORT_CONTAINER,
         conda:
             "../../envs/ancNreport.yml",
         threads: 1,
@@ -195,6 +200,8 @@ if GWAS_ACTIVE:
     rule prepareGwasInputs:
         log:
             OUT_DIR / "logs" / "prepareGwasInputs_{subset}.log",
+        container:
+            ANC_NREPORT_CONTAINER,
         conda:
             "../../envs/ancNreport.yml",
         threads: 1,
@@ -441,6 +448,8 @@ if GWAS_ACTIVE:
         rule mergeGwasTracts:
             log:
                 OUT_DIR / "logs" / "mergeGwasTracts_{subset}.log",
+            container:
+                GWAS_TRACTOR_CONTAINER,
             conda:
                 "../../envs/tractor.yml",
             threads: 1,

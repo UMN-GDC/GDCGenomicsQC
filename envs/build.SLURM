@@ -35,6 +35,7 @@ declare -a DEFINITIONS=(
     "phenotypeSim"
     "crossmap"
     "popvae"
+    "tractor"
     "predlmmAce"
 )
 

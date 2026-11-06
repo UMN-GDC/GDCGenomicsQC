@@ -298,6 +298,9 @@ snpHerit:
 #         dir: "02-localAncestry"
 #         vcf_pattern: "chr{CHR}.phased.vcf.gz"
 #         msp_pattern: "chr{CHR}.lai.msp.tsv"
+#     # Default: oras://ghcr.io/coffm049/gdcgenomicsqc/tractor:latest
+#     # Override with file:///path/to/tractor.sif for local development.
+#     tractor_container: "oras://ghcr.io/coffm049/gdcgenomicsqc/tractor:latest"
 #     prs:
 #         enabled: true                   # split + feed discovery sumstats to prsPipeline
 #         source_subset: "full"

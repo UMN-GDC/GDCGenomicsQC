@@ -18,22 +18,28 @@ export SINGULARITY_CACHEDIR=/scratch.global/coffm049/apptainer_build_tmp
 apptainer build --fakeroot ancNreport.sif ancNreport.def
 apptainer push ancNreport.sif oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest
 
+apptainer build --fakeroot crossmap.sif crossmap.def
+apptainer push crossmap.sif oras://ghcr.io/coffm049/gdcgenomicsqc/crossmap:latest
+
 
 apptainer build --fakeroot genomeUtils.sif genomeUtils.def
 apptainer push genomeUtils.sif oras://ghcr.io/coffm049/gdcgenomicsqc/genomeutils:latest
 
 apptainer build --fakeroot rfmix.sif rfmix.def
-apptainer push rfmix.sif oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:latest
+apptainer push rfmix.sif oras://ghcr.io/coffm049/gdcgenomicsqc/rfmix:v1
 
 apptainer build --fakeroot mash.sif mash.def
-apptainer push mash.sif oras://ghcr.io/coffm049/gdcgenomicsqc/mash:latest
+apptainer push mash.sif oras://ghcr.io/coffm049/gdcgenomicsqc/mash:v1.1
 
 
 apptainer build --fakeroot phenotypeSim.sif phenotypeSim.def
-apptainer push phenotypeSim.sif oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:latest
+apptainer push phenotypeSim.sif oras://ghcr.io/coffm049/gdcgenomicsqc/phenotypesim:v1
 
 apptainer build --fakeroot popvae.sif popvae.def
 apptainer push popvae.sif oras://ghcr.io/coffm049/gdcgenomicsqc/popvae:latest
+
+apptainer build --fakeroot tractor.sif tractor.def
+apptainer push tractor.sif oras://ghcr.io/coffm049/gdcgenomicsqc/tractor:latest
 
 apptainer build --fakeroot --build-arg TOKEN_FILE=~/.config/gdcgenomicsqc/predlmmace.token predlmmAce.sif predlmmAce.def
 apptainer push predlmmAce.sif oras://ghcr.io/coffm049/gdcgenomicsqc/predlmmace:latest

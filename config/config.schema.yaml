@@ -695,6 +695,14 @@ gwas:
           type: str
           default: "chr{CHR}.lai.msp.tsv"
           description: MSP filename pattern (may include {CHR}).
+    tractor_container:
+      type: str
+      nullable: true
+      default: null
+      description: |
+        Container image used by the TRACTOR rules. Defaults to
+        oras://ghcr.io/coffm049/gdcgenomicsqc/tractor:latest. Set to a
+        file:// URI to use a local SIF while developing.
     prs:
       type: dict
       default: {}

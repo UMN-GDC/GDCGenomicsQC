@@ -3,6 +3,7 @@
 
 RELEASE_FILTER_CONFIG = config.get("releaseFilter", {})
 RELEASE_FILTER_ACTIVE = bool(RELEASE_FILTER_CONFIG.get("enabled", False))
+RELEASE_FILTER_CONTAINER = "oras://ghcr.io/coffm049/gdcgenomicsqc/predlmmace:latest"
 
 if RELEASE_FILTER_ACTIVE:
     required = ["source_fam", "identifiers", "keep_list", "temp_fam"]
@@ -48,9 +49,10 @@ if RELEASE_FILTER_ACTIVE:
     _PSAM_FILT = _deriv_path("psam") if deriv.get("psam") else ""
 
     # GRM binary
-    _GRM_BIN_FILT = deriv.get("grm_bin", "") + ".filtered.grm.bin" if deriv.get("grm_bin") else ""
-    _GRM_ID_FILT = deriv.get("grm_bin", "") + ".filtered.grm.id" if deriv.get("grm_bin") else ""
-    _GRM_NBIN_FILT = deriv.get("grm_bin", "") + ".filtered.grm.N.bin" if deriv.get("grm_bin") else ""
+    _GRM_BIN_PREFIX = deriv.get("grm_bin", "") + ".filtered" if deriv.get("grm_bin") else ""
+    _GRM_BIN_FILT = _GRM_BIN_PREFIX + ".grm.bin" if _GRM_BIN_PREFIX else ""
+    _GRM_ID_FILT = _GRM_BIN_PREFIX + ".grm.id" if _GRM_BIN_PREFIX else ""
+    _GRM_NBIN_FILT = _GRM_BIN_PREFIX + ".grm.N.bin" if _GRM_BIN_PREFIX else ""
 
     # GRM text gz
     _GRM_GZ_FILT = deriv.get("grm_gz", "").replace(".grm.gz", "_filtered.grm.gz") if deriv.get("grm_gz") else ""
@@ -84,12 +86,20 @@ if RELEASE_FILTER_ACTIVE:
         if p:
             _ALL_FILT.append(p)
 
+    # Outputs produced by filterDerivatives (only the configured derivatives).
+    _DERIV_FILT = list(dict.fromkeys(
+        [p for p in [_GRM_BIN_FILT, _GRM_ID_FILT, _GRM_NBIN_FILT, _GRM_GZ_FILT]
+         + _EIGEN_FILT + _CNV_FILT + _GEN_FILT if p]
+    ))
+
 
 if RELEASE_FILTER_ACTIVE:
 
     rule buildReleaseKeep:
         log:
             OUT_DIR / "logs" / "buildReleaseKeep.log",
+        container:
+            RELEASE_FILTER_CONTAINER,
         conda:
             "../../envs/predlmmAce.yml",
         threads: 4,
@@ -103,14 +113,31 @@ if RELEASE_FILTER_ACTIVE:
         output:
             keep_list=RELEASE_FILTER_CONFIG["keep_list"],
             temp_fam=RELEASE_FILTER_CONFIG["temp_fam"],
-            batch_info=RELEASE_FILTER_CONFIG.get("batch_info", ""),
-            removed_individuals=RELEASE_FILTER_CONFIG.get("removed_individuals", ""),
+            batch_info=RELEASE_FILTER_BATCH_INFO or [],
+            removed_individuals=RELEASE_FILTER_REMOVED or [],
         params:
-            exclusion_sources=RELEASE_FILTER_EXCLUSIONS,
-            par_visit=RELEASE_FILTER_PAR_VISIT,
+            exclusion_sources_flag=(
+                "--exclusion-sources " + " ".join(RELEASE_FILTER_EXCLUSIONS)
+                if RELEASE_FILTER_EXCLUSIONS else ""
+            ),
+            par_visit_flag=(
+                "--par-visit " + RELEASE_FILTER_PAR_VISIT
+                if RELEASE_FILTER_PAR_VISIT else ""
+            ),
             id_col=RELEASE_FILTER_ID_COL,
             release_id_col=RELEASE_FILTER_RELEASE_ID_COL,
-            suffix_col=RELEASE_FILTER_SUFFIX_COL,
+            suffix_flag=(
+                "--suffix-col " + RELEASE_FILTER_SUFFIX_COL
+                if RELEASE_FILTER_SUFFIX_COL else ""
+            ),
+            batch_info_flag=(
+                "--batch-info " + RELEASE_FILTER_BATCH_INFO
+                if RELEASE_FILTER_BATCH_INFO else ""
+            ),
+            removed_flag=(
+                "--removed-individuals " + RELEASE_FILTER_REMOVED
+                if RELEASE_FILTER_REMOVED else ""
+            ),
             scripts_dir=SCRIPTS_DIR,
         shell:
             """
@@ -120,13 +147,13 @@ if RELEASE_FILTER_ACTIVE:
                 --identifiers {input.identifiers} \
                 --keep-list {output.keep_list} \
                 --temp-fam {output.temp_fam} \
-                {params.exclusion_sources and '--exclusion-sources ' + ' '.join(params.exclusion_sources) or ''} \
-                {params.par_visit and '--par-visit ' + params.par_visit or ''} \
+                {params.exclusion_sources_flag} \
+                {params.par_visit_flag} \
                 --id-col {params.id_col} \
                 --release-id-col {params.release_id_col} \
-                {params.suffix_col and '--suffix-col ' + params.suffix_col or ''} \
-                {output.batch_info and '--batch-info ' + output.batch_info or ''} \
-                {output.removed_individuals and '--removed-individuals ' + output.removed_individuals or ''}
+                {params.suffix_flag} \
+                {params.batch_info_flag} \
+                {params.removed_flag}
             """
 
     # Filter PLINK bed/bim/fam
@@ -206,6 +233,8 @@ if RELEASE_FILTER_ACTIVE:
         rule deidentifyFiles:
             log:
                 OUT_DIR / "logs" / "deidentifyFiles.log",
+            container:
+                RELEASE_FILTER_CONTAINER,
             conda:
                 "../../envs/predlmmAce.yml",
             threads: 4,
@@ -222,11 +251,15 @@ if RELEASE_FILTER_ACTIVE:
                 crosswalk=RELEASE_FILTER_CROSSWALK,
                 pscid_col=RELEASE_FILTER_CONFIG.get("pscid_col", "pscid"),
                 release_col=RELEASE_FILTER_CONFIG.get("release_id_col", "release_candid"),
-                suffix_col=RELEASE_FILTER_SUFFIX_COL,
+                files=" ".join(deriv["deidentify_files"]),
+                suffix_flag=(
+                    "--suffix-col " + RELEASE_FILTER_SUFFIX_COL
+                    if RELEASE_FILTER_SUFFIX_COL else ""
+                ),
                 scripts_dir=SCRIPTS_DIR,
             shell:
                 """
-                for f in {input.files}; do
+                for f in {params.files}; do
                     out=$(echo $f | sed 's/$/_deid/')
                     python {params.scripts_dir}/deidentify_ids.py \
                         --input "$f" \
@@ -234,7 +267,7 @@ if RELEASE_FILTER_ACTIVE:
                         --crosswalk {params.crosswalk} \
                         --pscid-col {params.pscid_col} \
                         --release-col {params.release_col} \
-                        {params.suffix_col and '--suffix-col ' + params.suffix_col or ''} \
+                        {params.suffix_flag} \
                         --file-type auto
                 done
                 """
@@ -244,6 +277,8 @@ if RELEASE_FILTER_ACTIVE:
         rule filterDerivatives:
             log:
                 OUT_DIR / "logs" / "filterDerivatives.log",
+            container:
+                RELEASE_FILTER_CONTAINER,
             conda:
                 "../../envs/predlmmAce.yml",
             threads: 4,
@@ -254,69 +289,51 @@ if RELEASE_FILTER_ACTIVE:
             input:
                 keep_list=RELEASE_FILTER_CONFIG["keep_list"],
             output:
-                grm_bin_filtered=_GRM_BIN_FILT,
-                grm_id_filtered=_GRM_ID_FILT,
-                grm_nbin_filtered=_GRM_NBIN_FILT,
-                grm_gz_filtered=_GRM_GZ_FILT,
-                eigenvecs_filtered=_EIGEN_FILT,
-                cnv_files_filtered=_CNV_FILT,
-                generic_files_filtered=_GEN_FILT,
+                _DERIV_FILT
             params:
-                keep_list=RELEASE_FILTER_CONFIG["keep_list"],
-                deriv=deriv,
-                scripts_dir=SCRIPTS_DIR,
+                grm_bin_cmd=(
+                    f'python {SCRIPTS_DIR}/filter_derivatives.py '
+                    f'--keep-list {RELEASE_FILTER_CONFIG["keep_list"]} '
+                    f'--input "{deriv["grm_bin"]}.grm.bin,{deriv["grm_bin"]}.grm.id,{deriv["grm_bin"]}.grm.N.bin" '
+                    f'--output "{_GRM_BIN_PREFIX}" '
+                    f'--type grm_binary'
+                    if deriv.get("grm_bin") else 'echo "No GRM binary to filter"'
+                ),
+                grm_gz_cmd=(
+                    f'python {SCRIPTS_DIR}/filter_derivatives.py '
+                    f'--keep-list {RELEASE_FILTER_CONFIG["keep_list"]} '
+                    f'--input "{deriv["grm_gz"]}" '
+                    f'--output "{_GRM_GZ_FILT}" '
+                    f'--type grm_text_gz'
+                    if deriv.get("grm_gz") else 'echo "No GRM text gz to filter"'
+                ),
+                eigen_cmd="\n".join(
+                    f'python {SCRIPTS_DIR}/filter_derivatives.py '
+                    f'--keep-list {RELEASE_FILTER_CONFIG["keep_list"]} '
+                    f'--input "{f}" --output "{f}_filtered" --type eigenvec'
+                    for f in deriv.get("eigenvectors", [])
+                ) or 'echo "No eigenvectors to filter"',
+                cnv_cmd="\n".join(
+                    f'python {SCRIPTS_DIR}/filter_derivatives.py '
+                    f'--keep-list {RELEASE_FILTER_CONFIG["keep_list"]} '
+                    f'--input "{f}" --output "{f}_filtered" --type cnv'
+                    for f in deriv.get("cnv_files", [])
+                ) or 'echo "No CNV files to filter"',
+                generic_cmd="\n".join(
+                    f'python {SCRIPTS_DIR}/filter_derivatives.py '
+                    f'--keep-list {RELEASE_FILTER_CONFIG["keep_list"]} '
+                    f'--input "{g["path"]}" '
+                    f'--output "{g.get("out_path") or (g["path"] + "_filtered")}" '
+                    f'--type generic --id-col "{g["id_col"]}"'
+                    for g in deriv.get("generic_files", [])
+                ) or 'echo "No generic files to filter"',
             shell:
                 """
-                mkdir -p {output.grm_bin_filtered:-/dev/null}/../
-                # GRM binary
-                {params.deriv.get("grm_bin") and '
-                    python {params.scripts_dir}/filter_derivatives.py \
-                        --keep-list {params.keep_list} \
-                        --input "{params.deriv[\"grm_bin\"]}.grm.bin,{params.deriv[\"grm_bin\"]}.grm.id,{params.deriv[\"grm_bin\"]}.grm.N.bin" \
-                        --output {params.deriv[\"grm_bin\"]}_filtered \
-                        --type grm_binary
-                ' or 'echo "No GRM binary to filter"'}
-                # GRM text gz
-                {params.deriv.get("grm_gz") and '
-                    python {params.scripts_dir}/filter_derivatives.py \
-                        --keep-list {params.keep_list} \
-                        --input {params.deriv["grm_gz"]} \
-                        --output {params.deriv["grm_gz"]}_filtered \
-                        --type grm_text_gz
-                ' or 'echo "No GRM text gz to filter"'}
-                # Eigenvectors
-                {params.deriv.get("eigenvectors") and '
-                    for f in {" ".join(params.deriv["eigenvectors"])}; do
-                        python {params.scripts_dir}/filter_derivatives.py \
-                            --keep-list {params.keep_list} \
-                            --input "$f" \
-                            --output "${f}_filtered" \
-                            --type eigenvec
-                    done
-                ' or 'echo "No eigenvectors to filter"'}
-                # CNV files
-                {params.deriv.get("cnv_files") and '
-                    for f in {" ".join(params.deriv["cnv_files"])}; do
-                        python {params.scripts_dir}/filter_derivatives.py \
-                            --keep-list {params.keep_list} \
-                            --input "$f" \
-                            --output "${f}_filtered" \
-                            --type cnv
-                    done
-                ' or 'echo "No CNV files to filter"'}
-                # Generic files
-                {params.deriv.get("generic_files") and '
-                    for g in {" ".join([f\''{g["path"]} {g["id_col"]}' for g in params.deriv["generic_files"]])}; do
-                        f=$(echo $g | cut -d' ' -f1)
-                        c=$(echo $g | cut -d' ' -f2)
-                        python {params.scripts_dir}/filter_derivatives.py \
-                            --keep-list {params.keep_list} \
-                            --input "$f" \
-                            --output "${f}_filtered" \
-                            --type generic \
-                            --id-col "$c"
-                    done
-                ' or 'echo "No generic files to filter"'}
+                {params.grm_bin_cmd}
+                {params.grm_gz_cmd}
+                {params.eigen_cmd}
+                {params.cnv_cmd}
+                {params.generic_cmd}
                 """
 
     # Validation
@@ -324,6 +341,8 @@ if RELEASE_FILTER_ACTIVE:
         rule validateRelease:
             log:
                 OUT_DIR / "logs" / "validateRelease.log",
+            container:
+                RELEASE_FILTER_CONTAINER,
             conda:
                 "../../envs/predlmmAce.yml",
             threads: 4,
@@ -331,34 +350,73 @@ if RELEASE_FILTER_ACTIVE:
                 nodes=1,
                 mem_mb=16000,
                 runtime=120,
+            output:
+                done=touch(OUT_DIR / "logs" / "validateRelease.done"),
             input:
                 keep_list=RELEASE_FILTER_CONFIG["keep_list"],
                 exclusion_lists=RELEASE_FILTER_EXCLUSIONS,
-                fam=deriv.get("fam", ""),
+                fam=deriv.get("fam") or [],
                 eigenvectors=deriv.get("eigenvectors", []),
                 cnv_files=deriv.get("cnv_files", []),
-                grm_bin=deriv.get("grm_bin", "") + ".grm.bin" if deriv.get("grm_bin") else "",
-                grm_id=deriv.get("grm_bin", "") + ".grm.id" if deriv.get("grm_bin") else "",
-                grm_gz=deriv.get("grm_gz", ""),
-                generic_files=deriv.get("generic_files", []),
+                grm_bin=(deriv["grm_bin"] + ".grm.bin") if deriv.get("grm_bin") else [],
+                grm_id=(deriv["grm_bin"] + ".grm.id") if deriv.get("grm_bin") else [],
+                grm_gz=deriv.get("grm_gz") or [],
+                generic_files=[g["path"] for g in deriv.get("generic_files", [])],
             params:
                 keep_list=RELEASE_FILTER_CONFIG["keep_list"],
-                exclusion_lists=RELEASE_FILTER_EXCLUSIONS,
-                cnv_col=deriv.get("cnv_col", "sample_id"),
+                exclusion_lists_flag=(
+                    "--exclusion-lists " + " ".join(RELEASE_FILTER_EXCLUSIONS)
+                    if RELEASE_FILTER_EXCLUSIONS else ""
+                ),
+                fam_flag=(
+                    "--fam " + deriv["fam"] if deriv.get("fam") else ""
+                ),
+                eigenvec_flag=(
+                    "--eigenvec " + " ".join(deriv["eigenvectors"])
+                    if deriv.get("eigenvectors") else ""
+                ),
+                cnv_flag=(
+                    "--cnv " + " ".join(deriv["cnv_files"])
+                    if deriv.get("cnv_files") else ""
+                ),
+                cnv_col_flag=(
+                    "--cnv-col " + deriv.get("cnv_col", "sample_id")
+                    if deriv.get("cnv_files") else ""
+                ),
+                grm_bin_flag=(
+                    "--grm-bin " + deriv["grm_bin"] + ".grm.bin"
+                    if deriv.get("grm_bin") else ""
+                ),
+                grm_id_flag=(
+                    "--grm-id " + deriv["grm_bin"] + ".grm.id"
+                    if deriv.get("grm_bin") else ""
+                ),
+                grm_gz_flag=(
+                    "--grm-gz " + deriv["grm_gz"]
+                    if deriv.get("grm_gz") else ""
+                ),
+                generic_flag=(
+                    "--generic " + " ".join(
+                        f'{g["path"]} {g["id_col"]}'
+                        for g in deriv["generic_files"]
+                    )
+                    if deriv.get("generic_files") else ""
+                ),
                 scripts_dir=SCRIPTS_DIR,
             shell:
                 """
-                {params.scripts_dir}/validate_release.py \
+                python {params.scripts_dir}/validate_release.py \
                     --keep-list {params.keep_list} \
-                    {params.exclusion_lists and '--exclusion-lists ' + ' '.join(params.exclusion_lists) or ''} \
-                    {params.fam and '--fam ' + params.fam or ''} \
-                    {params.eigenvectors and '--eigenvec ' + ' '.join(params.eigenvectors) or ''} \
-                    {params.cnv_files and '--cnv ' + ' '.join(params.cnv_files) or ''} \
-                    {params.cnv_col and '--cnv-col ' + params.cnv_col or ''} \
-                    {params.grm_bin and '--grm-bin ' + params.grm_bin or ''} \
-                    {params.grm_id and '--grm-id ' + params.grm_id or ''} \
-                    {params.grm_gz and '--grm-gz ' + params.grm_gz or ''} \
-                    {params.generic_files and '--generic ' + ' '.join([f'{g["path"]} {g["id_col"]}' for g in params.generic_files]) or ''}
+                    {params.exclusion_lists_flag} \
+                    {params.fam_flag} \
+                    {params.eigenvec_flag} \
+                    {params.cnv_flag} \
+                    {params.cnv_col_flag} \
+                    {params.grm_bin_flag} \
+                    {params.grm_id_flag} \
+                    {params.grm_gz_flag} \
+                    {params.generic_flag}
+                touch {output.done}
                 """
 
     # Top-level target is defined in Snakefile as run_releaseFilter

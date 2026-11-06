@@ -483,6 +483,8 @@ if config.get("releaseFilter", {}).get("enabled", False):
         _rf_targets.extend([g["out_path"] if "out_path" in g else g["path"] + "_filtered" for g in deriv["generic_files"]])
     if deriv.get("deidentify_files"):
         _rf_targets.extend([f + "_deid" for f in deriv["deidentify_files"]])
+    if config.get("releaseFilter", {}).get("validate", True):
+        _rf_targets.append(OUT_DIR / "logs" / "validateRelease.done")
 
     rule run_releaseFilter:
         threads: 1
