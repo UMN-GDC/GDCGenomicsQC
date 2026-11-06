@@ -11,10 +11,11 @@ the workflow does not depend on a hardcoded scratch path.
   (as mirrored on SARS-HPC). Files are byte-identical to that checkout.
 - Date vendored: 2026-09-28.
 
-An alternative delivery path exists via `download_prs_resources.sh`
-(`CTSLEB_URL` tarball -> `<resource_dir>/software/ctsleb.tar.gz`); point
-`prsMethods.multi_ctsleb.software_dir` at the unpacked `*/R` directory to use
-it instead of this vendored copy.
+The `prs` image also carries a copy at `/opt/gdcgenomicsqc/CTSLEB/R`; the
+workflow defaults to this repo copy because it includes the plink2 `.sscore`
+`SCORE*_SUM` fix (docs/PRS_de_vendoring_plan.md §6.6.3 A). Point
+`prsMethods.multi_ctsleb.software_dir` at the image copy only after rebuilding
+the image with that fix.
 
 Main entry points used by `run_ctsleb_wrapper.R`: `SetParamsFarm()`,
 `dimCT()`, `CalculateEBEffectSize()`, `PRS_Clean()`, `ExtractFinalBetas()`.

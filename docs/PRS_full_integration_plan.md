@@ -1,6 +1,17 @@
 # Plan: Full integration of `prs_pipeline` into GDCGenomicsQC
 
 Status: actively implemented on branch `prs_integration` — Phase 2 (single-ancestry slice + joint `multi_prscsx` + `multi_ctsleb` + `multi_prosper`), Phase 3 (held-out test evaluation), and Phase 7 (every PRS compute rule runs inside a container: the `prs` apptainer built from `envs/prs.def`, pushed as `oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest`, plus the upstream `singleprshelper:latest` for PROSPER) are code-complete. **2026-10-12: the entire incorporated PRS graph was exhaustively runtime-verified** — a full `run_allPRSPipelines` SLURM run (job 3490089) produced all 10 `method_runs/*.done` markers (single ×5, multi_ctsleb/prscsx/prosper, and both multi-ancestry stubs' `manifest.tsv`+`READY_NO_COMMAND`) and every `scoreTestPRS` results/scores file, after fixing a scoreTestPRS re-run bug (see §8 session (2026-10-12-2)).
+> **2026-11-06 — absorption finished (de-vendoring).** The vendored
+> `workflow/scripts/prs_pipeline/` tree has been removed: the 12 active method
+> scripts now live flat under `workflow/scripts/`, all `prs_pipeline_path`/
+> `prs_pipeline_ref`/`path_repo`/`PRSice.R`/`PRSice_linux` plumbing and the
+> monolithic `runSingleAncestryPRS` compute rule are gone, method tools come from
+> the `prs:latest` image (verified by `checkPRSImageTools`), and the reduced
+> end-to-end validation runs on `config/ctsleb_sim_prs_small.yaml`. See
+> `docs/PRS_de_vendoring_plan.md` for the implementation and the remaining
+> deferred items (image rebuild/push, PROSPER host overrides). The phase/session
+> notes below are retained as historical record.
+
 Repos involved:
 - `prs_pipeline` (upstream): `/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline` (git remote origin, branch `sandbox_multi_pheno` checked out)
 - GDCGenomicsQC (this repo): branch `prs_integration`; active Snakefile is `workflow/Snakefile`
