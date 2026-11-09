@@ -25,7 +25,7 @@ Initial QC (sample and variant missingness filtering) followed by Standard QC
 Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
 For detailed installation instructions, see:
 
-- [](installation.md) - Software setup (module, conda, or other methods)
+- [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - Software setup (module, conda, or other methods)
 - [](usage.md) - Running the pipeline
 
 ::::{tab-set}
@@ -199,7 +199,7 @@ final_subject_missingness: 0.02      # Final --mind (initialFilter.sh)
 # hwe_k: 0.001
 ```
 
-**See also:** [](usage.md) for configuration options, [](installation.md) for software setup.
+**See also:** [](usage.md) for configuration options, [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) for software setup.
 
 ---
 
@@ -762,6 +762,6 @@ After completing this tutorial, proceed to:
 
 **See also:**
 
-- [](installation.md) - Software setup (if not already done)
+- [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - Software setup (if not already done)
 - [](usage.md) - Running the full pipeline
 - [](genomics.md) - Technical details on QC methods

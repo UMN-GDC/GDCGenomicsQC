@@ -33,7 +33,7 @@ reference_plink2_commands
 
 **Recommended Learning Pathway:**
 
-1. [](installation.md) - Set up software environment
+1. [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - Set up software environment
 2. [](usage.md) - Learn how to run the pipeline
 3. [](tutorial_1kg_assembly.md) - Download reference data
 4. [](tutorial_qc_pipeline.md) - Run quality control

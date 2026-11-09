@@ -25,7 +25,7 @@ classification and genetic quality control pipelines.
 Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
 For detailed installation instructions, see:
 
-- [](installation.md) - Software setup (module, conda, or other methods)
+- [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - Software setup (module, conda, or other methods)
 - [](usage.md) - Running the pipeline
 
 ::::{tab-set}
@@ -524,6 +524,6 @@ After completing this tutorial, proceed to:
 
 **See also:**
 
-- [](installation.md) - Software setup (if not already done)
+- [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - Software setup (if not already done)
 - [](usage.md) - Running the full pipeline
 - [](genomics.md) - Technical details on reference-based methods
