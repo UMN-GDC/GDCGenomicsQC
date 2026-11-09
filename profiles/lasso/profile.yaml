@@ -11,3 +11,5 @@ latency-wait: 60
 default-resources:
   mem_mb: 4000
   runtime: 60
+  slurm_partition: compute-plus
+
