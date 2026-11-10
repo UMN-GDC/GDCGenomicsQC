@@ -1,0 +1,82 @@
+# Definition file for the PRS method runtime image.
+#
+# The prebuilt image is the GDCGenomicsQC-owned `prs` build (rebuilt+pushed
+# 2026-09-28), published as:
+#   oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest
+# All PRS compute rules (prsPipelines.smk, preparePRSInputs.smk,
+# ctsleb_multi_prs_rule.smk, incl. preparePRSMethodResources) declare this image
+# (single conda env `prs`: R 4.3.0 + bigsnpr/caret/SuperLearner/ranger/glmnet/pROC
+# for CT-SLEB, bioconda plink/plink2, conda `prsice`, and python with
+# numpy/scipy/h5py for PRS-CS(x)).
+#
+# Build + push (mirrors envs/README.md; ~1.5 GB image). Run from envs/ — the
+# %files paths and prs.yml are relative to the build/def directory:
+#   cd envs
+#   export APPTAINER_TMPDIR=/scratch.global/$USER/apptainer_tmp
+#   export APPTAINER_CACHEDIR=/scratch.global/$USER/apptainer_tmp
+#   apptainer build --fakeroot prs.sif prs.def
+#   apptainer push prs.sif oras://ghcr.io/mainsqu33ze/gdcgenomicsqc/prs:latest
+#
+# Notes:
+# - The conda env is built from envs/prs.yml (an upstream
+#   `multiPRS_refined.yaml`-derived recipe, augmented with
+#   r-superlearner/ranger/glmnet/pROC that the vendored run_ctsleb_wrapper.R
+#   needs). prs.yml also installs `prsice` (conda), so a GDC-built image ships a
+#   `PRSice` command for the monolithic run_single_ancestry_PRS_pipeline.sh; the
+#   per-method rules instead drive the vendored PRSice.R/PRSice_linux directly
+#   (robust across images).
+# - The vendored method engine (workflow/scripts/prs_pipeline) and the CTSLEB R
+#   sources (workflow/scripts/CTSLEB) are baked in at /opt/gdcgenomicsqc/ so the
+#   image is self-contained; the workflow still references its repo copies (bound
+#   via /projects) by default and may be pointed at the /opt/gdcgenomicsqc paths.
+#   PRSice_linux (static binary) is included inside /opt/gdcgenomicsqc/prs_pipeline/src.
+# - The upstream method repositories are baked in at pinned commits under
+#   /opt/gdcgenomicsqc/software/ (frozen 2026-09-28; only PRScsx @
+#   9a77968755e576d58aa43ed205b9d0f02eac6468 is consumed today — it is the exact
+#   clone HEAD the smoke-tested pipeline uses). PROSPER/SDPRX/PRScs are not yet
+#   wired but are archived for the multi method increments.
+# - `git`, `curl`, `ca-certificates` are installed in %post so
+#   preparePRSMethodResources runs inside the container (it now declares this
+#   image).
+Bootstrap: docker
+From: mambaorg/micromamba:latest
+
+%arguments
+    ENV_NAME=prs
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export PATH="/opt/conda/envs/{{ ENV_NAME }}/bin:$PATH"
+    export LC_ALL=C.UTF-8
+
+%files
+    prs.yml /app/prs.yml
+    ../workflow/scripts/prs_pipeline /opt/gdcgenomicsqc/prs_pipeline
+    ../workflow/scripts/CTSLEB /opt/gdcgenomicsqc/CTSLEB
+
+%post
+    /usr/bin/micromamba create -y -n {{ ENV_NAME }} -f /app/prs.yml
+    /usr/bin/micromamba clean --all -y
+
+    apt-get update -y && apt-get install -y --no-install-recommends \
+        git ca-certificates curl
+    rm -rf /var/lib/apt/lists/*
+
+    # Bake the method repos at pinned commits (git, minus history, for size).
+    mkdir -p /opt/gdcgenomicsqc/software
+    pin_clone() {
+        local url="$1" sha="$2" dir="$3"
+        git init -q "$dir"
+        git -C "$dir" remote add origin "$url"
+        git -C "$dir" fetch -q --depth 1 origin "$sha"
+        git -C "$dir" checkout -q FETCH_HEAD
+        rm -rf "$dir/.git"
+    }
+
+    pin_clone https://github.com/getian107/PRScs.git   53303906784c3360b9a1a7fa000b32c73eda9d5a /opt/gdcgenomicsqc/software/PRScs
+    pin_clone https://github.com/getian107/PRScsx.git  9a77968755e576d58aa43ed205b9d0f02eac6468 /opt/gdcgenomicsqc/software/PRScsx
+    pin_clone https://github.com/andrewhaoyu/CTSLEB.git  4e3784607b7f0eab4d52d00387bc1d95292cce93 /opt/gdcgenomicsqc/software/CTSLEB
+    pin_clone https://github.com/Jingning-Zhang/PROSPER.git b4b4a1b5e053ed80ff9db29225c8cb9285b5ce65 /opt/gdcgenomicsqc/software/PROSPER
+    pin_clone https://github.com/eldronzhou/SDPRX.git 1fd89bcb9178c2ccbb4acaafb62616dcf21a4d3d /opt/gdcgenomicsqc/software/SDPRX
+
+    chmod -R a+rX /opt/gdcgenomicsqc

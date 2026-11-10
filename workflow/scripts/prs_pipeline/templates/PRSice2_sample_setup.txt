@@ -1,0 +1,10 @@
+# run PRSice-2 on simulated data--note that this is the temporary data and is unlikely to produce correct results (use this more for formatting purposes)
+Rscript ../src/PRSice.R \
+    --prsice ../src/PRSice_linux \
+    --base sumstats_CT_PRSice2.txt \
+    --target EUR_simulation \
+    --binary-target F \
+    --pheno phenotype_info.txt \
+    --stat beta \
+    --beta \
+    --out EUR

@@ -1,0 +1,47 @@
+# --- Paths ---
+summary_stats_file="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/gwas/target_sumstats_CTSLEB.txt"
+bim_file_path="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/anc1_plink_files/archived/AFR_simulation_gwas.bim"
+study_sample="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/anc1_plink_files/AFR_simulation_study_sample_train_validate"
+output_path="/scratch.global/baron063/testing/singlePRS"
+path_repo="/projects/standard/gdc/public/prs_methods/scripts/prs_pipeline"
+skip_ss_generation=0
+n_total_gwas=300
+test_sample="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/anc1_plink_files/AFR_simulation_study_sample_test"
+
+# --- Parameters ---
+gwas_pca_eigenvec_file="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/gwas/adjusted_1kgPCs.tsv"
+phenotype_info_file="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/prs_pipeline/viprs/study_sample_pheno.txt"
+ld_matrix_dir="/projects/standard/gdc/public/prs_methods/ref/ldpred2"
+
+RUN_CT=true
+#RUN_LDPRED2=true
+#RUN_LASSOSUM2=true
+RUN_PRSice2=true
+
+# --- PRS-CSx (joint-ancestry; run once after phenotype loop) ---
+RUN_PRSCSX=true
+anc1="AFR"                                            # target ancestry (your study_sample)
+anc2="EUR"                                            # 2nd ancestry for joint modeling
+target_sumstats_file="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/gwas/target_sumstats.txt"
+training_sumstats_file="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/gwas/training_sumstats.txt"       # anc2 GWAS, raw format (SNP CHR A1 A2 BETA SE <N>)
+study_sample_anc2="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/anc2_plink_files/EUR_simulation_study_sample_train"        # anc2 PLINK prefix (no ext)
+test_sample_anc2="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/anc2_plink_files/EUR_simulation_study_sample_test"
+path_code="/projects/standard/gdc/public/prs_methods/scripts/PRScsx"   # must contain PRScsx.py
+path_ref_dir="/projects/standard/gdc/public/prs_methods/ref/ref_PRScsx/1kg_ref"
+
+# --- VIPRS (provided-sumstats mode) ---
+RUN_VIPRS=true
+provided_sumstats="${output_path}/gwas/CT_PRSice2_summary_stat_file.txt"
+covariate_file_study_sample="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/prs_pipeline/viprs/study_sample_covar.txt"
+viprs_ref_glob="/projects/standard/gdc/public/prs_methods/ref/ref_viprs/AFR/chr_*"
+# optional: viprs_gwas_sample_size=300
+
+# --- PROSPER (joint-ancestry; runs ONCE, after the phenotype loop) ---
+# RUN_PROSPER=false
+# prosper_training_sumstats="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/gwas/training_sumstats.txt"
+# prosper_training_anc="EUR"
+# prosper_target_anc="AFR"
+# study_sample_anc2="/projects/standard/gdc/public/prs_methods/data/simulated_1000G/anc2_plink_files/EUR_simulation_study_sample_train"
+# prosper_tuning_fraction=0.7
+# prosper_split_seed=42
+# prosper_ncores=5
