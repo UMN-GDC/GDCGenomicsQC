@@ -221,7 +221,7 @@ gdcgenomicsqc --configfile config.yaml rule_name
 ## See Also
 
 - [](new_hpc_setup.md) - Setting up on a new HPC
-- [](installation.md) - Software installation
+- [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - Software installation
 - [Snakemake Documentation](https://snakemake.readthedocs.io)
 - [Snakemake Executor Plugins (Slurm)](https://snakemake.readthedocs.io/en/stable/executor_tutorial/standard.html)
 - [Snakemake Profiles](https://snakemake.readthedocs.io/en/stable/snakefiles/deployment.html#profiles)

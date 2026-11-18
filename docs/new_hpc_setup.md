@@ -2,7 +2,7 @@
 
 This guide covers setting up the GDCGenomicsQC pipeline on a new HPC system where
 the module is not pre-installed. If you're on MSI HPC or Sandbox, see the
-[](installation.md) guide for the quick start.
+[](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) guide for the quick start.
 
 ```{note}
 If your HPC restricts container usage (Singularity/Apptainer), consider using
@@ -303,6 +303,6 @@ module avail gdcgenomicsqc
 
 ## See Also
 
-- [](installation.md) - For MSI HPC or Sandbox (pre-installed)
+- [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - For MSI HPC or Sandbox (pre-installed)
 - [](usage.md) - Running the pipeline
 - [](genomics.md) - Technical details

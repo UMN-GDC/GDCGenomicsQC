@@ -525,8 +525,8 @@ snakemake --dry-run --snakefile workflow/Snakefile --configfile config/sandboxTo
 4. Create Zenodo record from GitHub release (for DOI)
 
 ### Contributing
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](04-projects/pipeline/GDCGenomicsQC/CONTRIBUTING.md) for guidelines.
 
 # License
 
-[MIT licensed](LICENSE).
+[MIT licensed](license.md).

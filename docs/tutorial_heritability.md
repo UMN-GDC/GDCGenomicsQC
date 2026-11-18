@@ -21,7 +21,7 @@ This tutorial covers estimating SNP heritability using the GDCGenomicsQC pipelin
 Before starting, ensure you have access to Snakemake and the GDCGenomicsQC workflow.
 For detailed installation instructions, see:
 
-- [](installation.md) - Software setup (module, conda, or other methods)
+- [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - Software setup (module, conda, or other methods)
 - [](usage.md) - Running the pipeline
 
 ::::{tab-set}
@@ -559,7 +559,7 @@ After completing this tutorial, you have explored:
 
 **See also:**
 
-- [](installation.md) - Software setup (if not already done)
+- [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) - Software setup (if not already done)
 - [](tutorial_qc_pipeline.md) - QC pipeline
 - [](tutorial_ancestry_classification.md) - Ancestry classification
 - [](tutorial_phenotype_simulation.md) - Phenotype simulation for testing methods

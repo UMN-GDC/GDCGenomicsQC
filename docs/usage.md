@@ -191,7 +191,7 @@ snakemake --configfile ../config/config.yaml
 
 If you're setting up on a new HPC without the module, see the [](new_hpc_setup.md) guide.
 
-**See also:** [](installation.md) for MSI HPC or Sandbox, [](new_hpc_setup.md) for new HPC setup.
+**See also:** [](04-projects/pipeline/GDCGenomicsQC/docs/installation.md) for MSI HPC or Sandbox, [](new_hpc_setup.md) for new HPC setup.
 
 ## Workflow Overview
 
