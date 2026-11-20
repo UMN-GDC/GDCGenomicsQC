@@ -6,7 +6,7 @@
 
 # Project-wide paths
 INPUT: "/spaces/regulated/abcd-ref-data/dairc/concat/genetics/genotype_microarray/imputed/chr{CHR}_dose.vcf.gz"
-OUT_DIR: "/scratch.global/coffm049/r25outputs/abcd_dairc"
+OUT_DIR: "/projects/regulated/saonli_abcd/shared/coffm049/abcd_imputed"
 REF: "/projects/standard/gdc/public/Ref"
 build: "GRCh38"
 local-storage-prefix: "/scratch.global/coffm049/tmp"

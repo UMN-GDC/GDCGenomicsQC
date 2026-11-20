@@ -118,3 +118,9 @@ data/toyData/toy_GSA*
 qc.sif
 *.err
 *.out
+
+# Publication workflow figures and tables
+!pipeline_*.tex
+!pipeline_*.dot
+!pipeline_*.pdf
+!pipeline_*.png
