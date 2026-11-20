@@ -1,0 +1,35 @@
+name: prs
+channels:
+  - bioconda
+  - conda-forge
+  - r
+  - dnachun
+  - nodefaults
+dependencies:
+  - r-base=4.3.0
+  - r-data.table
+  - r-tidyverse
+  - r-optparse
+  - r-rcolorbrewer
+  - r-argparse
+  - r-bigreadr
+  - r-bigsnpr
+  - r-readr
+  - r-devtools
+  - r-caret
+  - r-superlearner
+  - r-ranger
+  - r-glmnet
+  - r-proc
+  - r-matrix
+  - r-mass
+  - prsice
+  - plink
+  - plink2
+  - python
+  - numpy
+  - pandas
+  - scipy
+  - h5py
+  - cython
+  - pkg-config

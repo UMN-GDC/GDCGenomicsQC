@@ -1,5 +1,11 @@
 def get_chrom(wildcards):
-    return wildcards.CHR
+    # Canonical contig label used everywhere in the local-ancestry chain:
+    # bare ("20"), never "chr20". The study PLINK/PGEN data and the genetic
+    # maps use bare contigs, the 1KG panel ships "chr"-prefixed ones, so the
+    # panel is renamed to bare (preparePhasingReference) and any "chr"-prefixed
+    # study contig is normalized (convertPgenToVcf) before they are compared.
+    chrom = str(wildcards.CHR)
+    return chrom[3:] if chrom.lower().startswith("chr") else chrom
 
 
 def get_input_pgen(wildcards):
@@ -23,6 +29,37 @@ def get_input_psam(wildcards):
         return OUT_DIR / "full" / "f1.b38.f2.psam"
 
 
+rule preparePhasingReference:
+    # One shared copy of the 1KG panel with bare contig names ("20"). Used by
+    # convertPgenToVcf (site intersection), phaseWithShapeit (shapeit4
+    # reference) and the local-ancestry estimators (RFMIX / gnomix reference).
+    # Renaming here instead of inline in every consumer guarantees that the
+    # study VCF, the panel and the shapeit4 --region share one namespace.
+    log:
+        OUT_DIR / "logs" / "preparePhasingReference_{CHR}.log",
+    container: "oras://ghcr.io/coffm049/gdcgenomicsqc/ancnreport:latest"
+    conda: "../../envs/rfmix.yml"
+    envmodules: *([m for m in (config.get("bcftools_module"),) if m])
+    threads: 4
+    resources:
+        nodes=1,
+        mem_mb=16000,
+        runtime=180,
+    input:
+        ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
+    output:
+        vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.ref.bare.vcf.gz",
+        csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.ref.bare.vcf.gz.csi",
+        tbi=OUT_DIR / "02-localAncestry" / "chr{CHR}.ref.bare.vcf.gz.tbi",
+    params:
+        script=workflow.source_path("../scripts/prepare_phasing_reference.sh"),
+    shell:
+        """
+        set -euo pipefail
+        bash {params.script} {input.ref} {output.vcf} --index
+        """
+
+
 rule convertPgenToVcf:
     log:
         OUT_DIR / "logs" / "Convert_{CHR}.log",
@@ -38,7 +75,8 @@ rule convertPgenToVcf:
         pgen=get_input_pgen,
         pvar=get_input_pvar,
         psam=get_input_psam,
-        ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
+        ref=rules.preparePhasingReference.output.vcf,
+        ref_csi=rules.preparePhasingReference.output.csi,
     output:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
         csi=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz.csi",
@@ -46,21 +84,44 @@ rule convertPgenToVcf:
         out_dir=OUT_DIR / "02-localAncestry",
         input_prefix=lambda wildcards, input: input.pgen[:-5],
         chrom=get_chrom,
+        script=workflow.source_path("../scripts/prepare_phasing_reference.sh"),
     shell:
         """
+        set -euo pipefail
+
         plink2 --pfile {params.input_prefix} --chr {params.chrom} --allow-extra-chr --make-pgen --out {params.out_dir}/chr{wildcards.CHR}.temp --set-all-var-ids @:#:\\$r:\\$a --snps-only just-acgt
         awk '!/^#/ && (($4=="A" && $5=="T") || ($4=="T" && $5=="A") || ($4=="C" && $5=="G") || ($4=="G" && $5=="C")) {{print $3}}' {params.out_dir}/chr{wildcards.CHR}.temp.pvar > {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
-        plink2 --pfile {params.out_dir}/chr{wildcards.CHR}.temp \
-                       --exclude {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt \
-                       --output-chr chrM \
-                       --export vcf bgz \
+        plink2 --pfile {params.out_dir}/chr{wildcards.CHR}.temp \\
+                       --exclude {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt \\
+                       --output-chr chrM \\
+                       --export vcf bgz \\
                        --out {params.out_dir}/chr{wildcards.CHR}
         rm {params.out_dir}/chr{wildcards.CHR}.temp.* {params.out_dir}/chr{wildcards.CHR}.palindromic_snps.txt
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+
+        # Normalize the study contig names to the canonical bare form ("20") so
+        # they match the 1KG panel (renamed by preparePhasingReference) and the
+        # shapeit4 --region used downstream. No-op for already-bare data.
+        bash {params.script} {params.out_dir}/chr{wildcards.CHR}.vcf.gz {params.out_dir}/chr{wildcards.CHR}.norm.vcf.gz
+        mv {params.out_dir}/chr{wildcards.CHR}.norm.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+        bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
+
+        # Keep only the sites that are also in the 1KG panel.
         bcftools isec -n =2 -w1 {params.out_dir}/chr{wildcards.CHR}.vcf.gz {input.ref} > {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt
         bcftools view -T {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt {params.out_dir}/chr{wildcards.CHR}.vcf.gz -Oz -o {params.out_dir}/chr{wildcards.CHR}.tmp.vcf.gz
+        rm -f {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt
+
+        # Fail here with the real cause instead of letting shapeit4 report
+        # "no variants" on an empty study VCF.
+        N_SITES=$(bcftools view -H {params.out_dir}/chr{wildcards.CHR}.tmp.vcf.gz | wc -l)
+        if [ "$N_SITES" -eq 0 ]; then
+            echo "ERROR: no variants left for chr{wildcards.CHR} after intersecting the study VCF with the 1KG panel." >&2
+            echo "       study contigs : $(bcftools query -f '%CHROM\\n' {params.out_dir}/chr{wildcards.CHR}.vcf.gz | sort -u | tr '\\n' ' ')" >&2
+            echo "       panel contigs : $(bcftools query -f '%CHROM\\n' {input.ref} | sort -u | tr '\\n' ' ')" >&2
+            exit 1
+        fi
+
         mv {params.out_dir}/chr{wildcards.CHR}.tmp.vcf.gz {params.out_dir}/chr{wildcards.CHR}.vcf.gz
-        rm {params.out_dir}/chr{wildcards.CHR}.shared_sites.txt
         bcftools index -f {params.out_dir}/chr{wildcards.CHR}.vcf.gz
         """
 
@@ -121,14 +182,13 @@ rule phaseWithShapeit:
         runtime=1320,
     input:
         unpack(get_phase_input),
-        ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
+        ref=rules.preparePhasingReference.output.vcf,
+        ref_csi=rules.preparePhasingReference.output.csi,
+        # The shared genetic maps are (position, rate, cM); shapeit4 takes them
+        # as-is and the chromosome is implied by --region.
         gmap=ancient(REF / "gmaps" / "hg38map.chr{CHR}.txt"),
     output:
         vcf=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf"),
-        ref_vcf=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.ref.vcf.gz"),
-        ref_csi=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.ref.vcf.gz.csi"),
-        fixed_map=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.fixed_map.txt"),
-        rename_txt=temp(OUT_DIR / "02-localAncestry" / "chr{CHR}.rename.txt"),
     params:
         out_dir=OUT_DIR / "02-localAncestry",
         test=config.get("localAncestry", {}).get("test", False),
@@ -139,37 +199,33 @@ rule phaseWithShapeit:
         """
         echo "Shapeit Phasing"
 
-        # Study VCF uses bare contigs ("21") while the 1KG reference uses
-        # "chr"-prefixed contigs ("chr21"). Rename a copy of the reference to
-        # bare contigs so study, reference, region, and map all agree.
-        echo "chr{params.chrom} {params.chrom}" > {output.rename_txt}
-        bcftools annotate --rename-chrs {output.rename_txt} {input.ref} -Oz -o {output.ref_vcf}
-        bcftools index -f {output.ref_vcf}
-        cp {input.gmap} {output.fixed_map}
-
+        # Study VCF, 1KG reference and genetic map all use bare contigs ("20"):
+        # the panel is renamed by preparePhasingReference, the study VCF by
+        # convertPgenToVcf, and the map is passed through as-is. shapeit4
+        # --region therefore has to use the same bare contig name.
         if [ "{params.test}" = "True" ] ; then
           echo "Running shapeit4 in test mode"
-          shapeit4 \
-              --input {input.vcf} \
-              --map {output.fixed_map} \
-              --region {params.chrom} \
-              --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
-              --thread {threads} \
-              --mcmc-iterations 1b,1p,1m \
-              --output {output.vcf} \
-              --reference {output.ref_vcf} \
-              --pbwt-modulo {params.pbwt_modulo} \
+          shapeit4 \\
+              --input {input.vcf} \\
+              --map {input.gmap} \\
+              --region {params.chrom} \\
+              --log {params.out_dir}/chr{wildcards.CHR}.phased.log \\
+              --thread {threads} \\
+              --mcmc-iterations 1b,1p,1m \\
+              --output {output.vcf} \\
+              --reference {input.ref} \\
+              --pbwt-modulo {params.pbwt_modulo} \\
               --pbwt-depth {params.pbwt_depth}
         else
-          shapeit4 \
-              --input {input.vcf} \
-              --map {output.fixed_map} \
-              --region {params.chrom} \
-              --log {params.out_dir}/chr{wildcards.CHR}.phased.log \
-              --thread {threads} \
-              --output {output.vcf} \
-              --reference {output.ref_vcf} \
-              --pbwt-modulo {params.pbwt_modulo} \
+          shapeit4 \\
+              --input {input.vcf} \\
+              --map {input.gmap} \\
+              --region {params.chrom} \\
+              --log {params.out_dir}/chr{wildcards.CHR}.phased.log \\
+              --thread {threads} \\
+              --output {output.vcf} \\
+              --reference {input.ref} \\
+              --pbwt-modulo {params.pbwt_modulo} \\
               --pbwt-depth {params.pbwt_depth}
         fi
         """

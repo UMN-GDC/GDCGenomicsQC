@@ -13,8 +13,11 @@ rule estimateLocalAncestryPerChromosome:
         runtime=1320,
     input:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.phased.vcf.gz",
-        ref=ancient(REF / "1000G_highcoverage" / "1kGP_high_coverage_Illumina.chr{CHR}.filtered.SNV_INDEL_SV_phased_panel.vcf.gz"),
+        ref=rules.preparePhasingReference.output.vcf,
+        ref_csi=rules.preparePhasingReference.output.csi,
         map=ancient(REF / "1000G_highcoverage" / "population.txt"),
+        # Shared gmaps are in SHAPEIT format (pos, rate, cM); RFMIX expects
+        # (chromosome, position, cM), so reshape a temp copy here.
         gmap=ancient(REF / "gmaps" / "hg38map.chr{CHR}.txt"),
     output:
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv",
@@ -31,20 +34,19 @@ rule estimateLocalAncestryPerChromosome:
     sed -i '1d' {output.tempDir}/population.txt
     sed -i 's/ /\t/g' {output.tempDir}/population.txt
 
-    # Shared gmaps are in SHAPEIT format (pos, rate, cM); RFMIX expects
-    # (chromosome, position, cM), so reshape a temp copy here.
-    awk -v c={wildcards.CHR} 'BEGIN{{OFS="\t"}} {{print c, $1, $3}}' {input.gmap} > {output.tempDir}/genetic_map.txt
-    
-    # make 1kg ucsc for RFMIX
-    echo "chr{wildcards.CHR} {wildcards.CHR}" > {output.tempDir}/rename_map{wildcards.CHR}.txt
-    bcftools annotate --rename-chrs {output.tempDir}/rename_map{wildcards.CHR}.txt {input.ref} -Oz -o {output.tempDir}/chr{wildcards.CHR}.vcf.gz
-    bcftools index -t {output.tempDir}/chr{wildcards.CHR}.vcf.gz
+        # Shared gmaps are in SHAPEIT format (pos, rate, cM); RFMIX expects
+        # (chromosome, position, cM), so reshape a temp copy here.
+        awk -v c={wildcards.CHR} 'BEGIN{{OFS="\t"}} {{print c, $1, $3}}' {input.gmap} > {output.tempDir}/genetic_map.txt
+
+        # The 1KG reference is already renamed to bare contigs by
+        # preparePhasingReference, so it matches the study VCF as-is.
+
 
     echo "RFMIX Ancestry Estimation"
     if [ "{params.test}" = "True" ] ;  then
       rfmix  \
           -f {input.vcf} \
-          -r {output.tempDir}/chr{wildcards.CHR}.vcf.gz \
+          -r {input.ref} \
           -m {output.tempDir}/population.txt \
           -g {output.tempDir}/genetic_map.txt \
           --crf-weight=3.0 \
@@ -57,7 +59,7 @@ rule estimateLocalAncestryPerChromosome:
     else
       rfmix \
           -f {input.vcf} \
-          -r {output.tempDir}/chr{wildcards.CHR}.vcf.gz \
+          -r {input.ref} \
           -m {output.tempDir}/population.txt \
           -g {output.tempDir}/genetic_map.txt \
           --n-threads={threads} \
