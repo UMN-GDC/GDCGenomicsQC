@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: >-
+  If you use GDCGenomicsQC, please cite the versioned software release.
+type: software
+title: 'GDCGenomicsQC: Reproducible Ancestry-Aware Genomic Quality Control in Controlled-Access Computing Environments'
+abstract: >-
+  GDCGenomicsQC is a configuration-driven Snakemake workflow for genomic
+  quality control and ancestry-aware preprocessing in controlled-access
+  computing environments. It supports genotype conversion, genome-build
+  harmonization, sample and variant quality control, relatedness assessment,
+  reference-projected principal component analysis, and global ancestry
+  classification. Public synthetic test materials support independent
+  inspection and validation of the documented workflow paths.
+authors:
+  - family-names: Coffman
+    given-names: Christian
+    affiliation: University of Minnesota
+  - family-names: DeGolier
+    given-names: Kody
+    affiliation: University of Minnesota
+  - family-names: Anderson
+    given-names: Michael
+    affiliation: University of Minnesota
+  - family-names: Duffy
+    given-names: Kelly
+    affiliation: University of Minnesota
+  - family-names: Feczko
+    given-names: Eric
+    affiliation: University of Minnesota
+  - family-names: Basu
+    given-names: Saonli
+    affiliation: University of Minnesota
+version: 1.0.0
+repository-code: https://github.com/UMN-GDC/GDCGenomicsQC
+url: https://gdcgenomicsqc.readthedocs.io
+license: MIT
+keywords:
+  - genomic quality control
+  - reproducibility
+  - controlled-access genomic data
+  - genetic ancestry
+  - population structure
+  - Snakemake
+  - high-performance computing
