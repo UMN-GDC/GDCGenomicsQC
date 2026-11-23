@@ -62,9 +62,9 @@ rule makeGnomixGeneticMap:
     shell:
         """
         mkdir -p {GNOMIX_WORKDIR}
-        # Shared gmaps are in SHAPEIT format (pos, rate, cM); gnomix expects
-        # (chromosome, position, cM).
-        awk -v c={params.chrom} 'BEGIN{{OFS="\t"}} {{print c, $1, $3}}' {input.gmap} > {output.gmap}
+        # Shared gmaps are in SHAPEIT4 format (header + pos, chr, cM); gnomix
+        # expects (chromosome, position, cM), so skip the header.
+        awk -v c={params.chrom} 'BEGIN{{OFS="\t"}} NR==1{{next}} {{print c, $1, $3}}' {input.gmap} > {output.gmap}
         """
 
 

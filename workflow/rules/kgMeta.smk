@@ -54,7 +54,11 @@ checkpoint splitMapChr:
         map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt")
     shell:
         """
+        # Emit the shared gmap in SHAPEIT4-native format: a header line plus
+        # (pos, chr, cM) rows (matches gmap_reader.cpp, which skips line 1
+        # and reads tokens[0]=bp, tokens[2]=cM). RFMIX/gnomix reshape this same
+        # file to (chrom, pos, cM) and must skip the header as well.
         tar -xzOf {input.shapemap} chr{wildcards.chr}.b38.gmap.gz \
             | zcat \
-            | awk -v chr={wildcards.chr} 'NR==1 {{next}} {{OFS="\t"}} NR==2 {{print $1, 0, $3; pp=$1; pc=$3; next}} {{d=$1-pp; r=(d>0)?($3-pc)/d*1e6:0; print $1, r, $3; pp=$1; pc=$3}}' > {output.map_chr}
+            | awk -v chr={wildcards.chr} 'BEGIN{{OFS="\t"}} NR==1{{print "pos","chr","cM"; next}} {{print $1, chr, $3}}' > {output.map_chr}
         """

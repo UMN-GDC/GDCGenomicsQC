@@ -16,8 +16,9 @@ rule estimateLocalAncestryPerChromosome:
         ref=rules.preparePhasingReference.output.vcf,
         ref_csi=rules.preparePhasingReference.output.csi,
         map=ancient(REF / "1000G_highcoverage" / "population.txt"),
-        # Shared gmaps are in SHAPEIT format (pos, rate, cM); RFMIX expects
-        # (chromosome, position, cM), so reshape a temp copy here.
+        # Shared gmaps are in SHAPEIT4 format (header + pos, chr, cM); RFMIX
+        # expects (chromosome, position, cM), so reshape (and skip the
+        # header) a temp copy here.
         gmap=ancient(REF / "gmaps" / "hg38map.chr{CHR}.txt"),
     output:
         OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.fb.tsv",
@@ -34,9 +35,7 @@ rule estimateLocalAncestryPerChromosome:
     sed -i '1d' {output.tempDir}/population.txt
     sed -i 's/ /\t/g' {output.tempDir}/population.txt
 
-        # Shared gmaps are in SHAPEIT format (pos, rate, cM); RFMIX expects
-        # (chromosome, position, cM), so reshape a temp copy here.
-        awk -v c={wildcards.CHR} 'BEGIN{{OFS="\t"}} {{print c, $1, $3}}' {input.gmap} > {output.tempDir}/genetic_map.txt
+        awk -v c={wildcards.CHR} 'BEGIN{{OFS="\t"}} NR==1{{next}} {{print c, $1, $3}}' {input.gmap} > {output.tempDir}/genetic_map.txt
 
         # The 1KG reference is already renamed to bare contigs by
         # preparePhasingReference, so it matches the study VCF as-is.
