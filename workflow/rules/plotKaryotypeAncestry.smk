@@ -1,24 +1,24 @@
-def get_local_ancestry_samples():
-    sis_file = OUT_DIR / "02-localAncestry" / "chr20.lai.sis.tsv"
-    if not sis_file.exists():
-        return []
-    return pd.read_csv(sis_file, header=None)[0].tolist()
+checkpoint discover_local_ancestry_samples:
+    output:
+        OUT_DIR / "02-localAncestry" / "samples.txt"
+    shell:
+        """
+        for f in {params.msp_dir}/chr*.lai.sis.tsv; do
+            [ -f "$f" ] || continue
+            basename "$f" .lai.sis.tsv
+        done | sort -u > {output}
+        """
 
 
-SAMPLES = get_local_ancestry_samples()
-SAMPLES_STR = " ".join(SAMPLES)
-
-
-checkpoint generateKaryotypeAncestryPlots:
+rule generateKaryotypeAncestryPlots:
     input:
         expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES),
+        checkpoints.discover_local_ancestry_samples,
     output:
-        expand(
+        directory(
             OUT_DIR
             / "02-localAncestry"
             / config.get("localAncestry", {}).get("figures", "figures")
-            / "{sample}_karyotype.pdf",
-            sample=SAMPLES,
         ),
     log:
         OUT_DIR / "logs" / "generateKaryotypeAncestryPlots.log",
@@ -38,16 +38,28 @@ checkpoint generateKaryotypeAncestryPlots:
         / "02-localAncestry"
         / config.get("localAncestry", {}).get("figures", "figures"),
         chromosomes="1-22",
-        samples_str=SAMPLES_STR,
         scripts_dir=SCRIPTS_DIR,
     shell:
         """
-        mkdir -p {params.figures_dir}
-        for SAMPLE in {params.samples_str}; do
+        mkdir -p {output}
+        SAMPLES_PATH="{output}/../samples.txt"
+        # Discover samples from existing .lai.sis.tsv files
+        SAMPLES=""
+        for sis_file in {params.msp_dir}/chr*.lai.sis.tsv; do
+            [ -f "$sis_file" ] || continue
+            SAMPLE=$(basename "$sis_file" .lai.sis.tsv)
+            SAMPLES="$SAMPLES $SAMPLE"
+        done
+        # If no sis files found yet, use the checkpoint-produced samples.txt
+        if [ -z "$SAMPLES" ] && [ -f "$SAMPLES_PATH" ]; then
+            SAMPLES=$(cat "$SAMPLES_PATH" | tr '\\n' ' ' | sed 's/ $//')
+        fi
+        for SAMPLE in $SAMPLES; do
+            [ -z "$SAMPLE" ] && continue
             Rscript {params.scripts_dir}/plotKaryotypeAncestry.R \
                 --msp-dir {params.msp_dir} \
                 --sample $SAMPLE \
                 --chromosomes {params.chromosomes} \
-                --output {params.figures_dir}/$SAMPLE'_karyotype.pdf'
+                --output {output}/$SAMPLE'_karyotype.pdf'
         done
         """

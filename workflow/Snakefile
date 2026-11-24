@@ -641,6 +641,27 @@ rule runSingleAncestryPrecise:
 ##### GOOD UP TO HERE
 
 
+# Snakemake calls for unfinished chromosomes (chr3 failed during phasing/LAI,
+# chr11/chr12 had partial issues). Run these after ensuring input VCFs exist.
+# Example invocations (uncomment one or run individually):
+#
+#   snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
+#       "estimateLocalAncestryPerChromosome.CHR=3"
+#   snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
+#       "phaseWithShapeit.CHR=3"
+#
+# To run for a range of chromosomes:
+#   for CHR in 3 11 12; do
+#     snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
+#         "estimateLocalAncestryPerChromosome.CHR=$CHR"
+#     snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
+#         "phaseWithShapeit.CHR=$CHR"
+#   done
+#
+# Former general pipeline entry (commented out — use the chromosome-specific
+# calls above instead of a top-level `snakemake` invocation):
+# snakemake --cores 4 --use-conda --configfile config/msiABCD_dairc.yaml
+
 rule run_train_gnomix:
     threads: 1
     resources:

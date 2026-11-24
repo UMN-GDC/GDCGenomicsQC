@@ -197,8 +197,4 @@ def get_classification_probs(wildcards):
     return checkpoint_output
 
 
-def get_karyotype_samples():
-    sis_file = OUT_DIR / "02-localAncestry" / "chr20.lai.sis.tsv"
-    if not sis_file.exists():
-        return []
-    return pd.read_csv(sis_file, header=None)[0].tolist()
+
