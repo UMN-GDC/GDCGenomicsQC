@@ -641,22 +641,25 @@ rule runSingleAncestryPrecise:
 ##### GOOD UP TO HERE
 
 
-# Snakemake calls for unfinished chromosomes (chr3 failed during phasing/LAI,
-# chr11/chr12 had partial issues). Run these after ensuring input VCFs exist.
-# Example invocations (uncomment one or run individually):
+# Snakemake calls for chromosomes whose local ancestry estimation (RFMix) or
+# phasing (SHAPEIT4) did not complete successfully.  Based on the current output
+# directory, the following chromosomes are still pending or failed (missing
+# chr*.lai.rfmix.Q): 1 2 3 4 5 6 8 10
+# (Chronologically completed: 7 9 11 12 13 14 15 16 17 18 19 20 21 22).
 #
-#   snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
-#       "estimateLocalAncestryPerChromosome.CHR=3"
-#   snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
-#       "phaseWithShapeit.CHR=3"
-#
-# To run for a range of chromosomes:
-#   for CHR in 3 11 12; do
+# Run phase + rfmix for each unfinished chromosome:
+#   for CHR in 1 2 3 4 5 6 8 10; do
 #     snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
 #         "estimateLocalAncestryPerChromosome.CHR=$CHR"
 #     snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
 #         "phaseWithShapeit.CHR=$CHR"
 #   done
+#
+# Or invoke individually, e.g.:
+#   snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
+#       "estimateLocalAncestryPerChromosome.CHR=1"
+#   snakemake -c 1 --use-conda --configfile config/msiABCD_dairc.yaml \
+#       "phaseWithShapeit.CHR=1"
 #
 # Former general pipeline entry (commented out — use the chromosome-specific
 # calls above instead of a top-level `snakemake` invocation):
