@@ -207,7 +207,7 @@ jobs:
 
             ## Citation
             If you use this pipeline, please cite:
-            > Coffman & Anderson (2024). GDCGenomicsQC: A modular pipeline for genomic quality control in diverse populations.
+            > Coffman C, DeGolier K, Anderson M, Duffy K, Feczko E, Basu S. GDCGenomicsQC: Reproducible Ancestry-Aware Genomic Quality Control in Controlled-Access Computing Environments. Version 1.0.0. University of Minnesota, 2026.
 
           draft: false
           prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
