@@ -148,7 +148,7 @@ rule thinVcfForTest:
     threads: 4
     resources:
         nodes=1,
-        mem_mb=8000,
+        mem_mb=32000,
         runtime=60,
     input:
         vcf=OUT_DIR / "02-localAncestry" / "chr{CHR}.vcf.gz",
