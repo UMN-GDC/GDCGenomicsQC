@@ -1,6 +1,8 @@
 checkpoint discover_local_ancestry_samples:
     output:
         OUT_DIR / "02-localAncestry" / "samples.txt"
+    params:
+        msp_dir=OUT_DIR / "02-localAncestry"
     shell:
         """
         for f in {params.msp_dir}/chr*.lai.sis.tsv; do
@@ -13,7 +15,7 @@ checkpoint discover_local_ancestry_samples:
 rule generateKaryotypeAncestryPlots:
     input:
         expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES),
-        checkpoints.discover_local_ancestry_samples,
+        checkpoints.discover_local_ancestry_samples.output,
     output:
         directory(
             OUT_DIR
