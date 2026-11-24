@@ -43,13 +43,9 @@ checkpoint kgMeta:
         """
 
 
-def get_shapemap(wildcards):
-    return ancient(checkpoints.kgMeta.get().output.shapemap)
-
-
 checkpoint splitMapChr:
     input:
-        shapemap=get_shapemap
+        shapemap=REF / "1000G_highcoverage" / "genetic_maps.b38.tar.gz",
     output:
         map_chr=protected(REF / "gmaps" / "hg38map.chr{chr}.txt")
     shell:
