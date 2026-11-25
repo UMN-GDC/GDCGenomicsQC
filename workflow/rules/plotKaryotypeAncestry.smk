@@ -27,6 +27,7 @@ rule generateKaryotypeAncestryPlots:
         chromosomes="1-22",
         scripts_dir=SCRIPTS_DIR,
     shell:
+        """
         mkdir -p "{output}"
         # Discover samples from existing .lai.sis.tsv files
         SAMPLES=""
@@ -43,3 +44,4 @@ rule generateKaryotypeAncestryPlots:
                 --chromosomes {params.chromosomes} \
                 --output {output}/$SAMPLE'_karyotype.pdf'
         done
+        """
