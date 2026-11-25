@@ -602,9 +602,22 @@ gwas:
       default: null
       description: Path to phenotype file with FID/IID phenotype column(s). Required to activate.
     mpheno:
-      type: int
+      type: any
       default: 1
-      description: Phenotype column index (1 = first column after FID/IID).
+      description: Phenotype column name or 1-based index after FID/IID.
+    pheno_filter:
+      type: any
+      nullable: true
+      default: null
+      description: Phenotype row filter(s), e.g. "session_id==ses-00A".
+    iid_col:
+      type: str
+      default: "IID"
+      description: IID column name in phenotype/covariate files.
+    fid_col:
+      type: str
+      default: "FID"
+      description: FID column name in phenotype/covariate files.
     qcovar:
       type: str
       nullable: true

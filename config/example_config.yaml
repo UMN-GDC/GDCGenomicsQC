@@ -278,7 +278,10 @@ snpHerit:
 # sets so the PRS evaluation never reuses discovery samples.
 # gwas:
 #     pheno: "/path/to/pheno.txt"        # FID IID pheno_col
-#     mpheno: 1
+#     mpheno: 1                          # column name or 1-based index
+#     pheno_filter: null                 # e.g. "session_id==ses-00A"
+#     iid_col: "IID"
+#     fid_col: "FID"
 #     qcovar: null                       # optional quantitative covariates (FID IID ...)
 #     eigenvec: null                      # default OUT_DIR/{subset}/internal_pca_plink2.eigenvec
 #     npc: 10

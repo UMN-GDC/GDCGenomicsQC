@@ -8,8 +8,9 @@
 module use "/users/4/coffm049/software/GDCGenomicsQC/envs"
 module load gdcgenomicsMSI
 
-# Full pipeline through local ancestry (phasing + RFMIX, test mode):
-gdcgenomicsqc --until run_lai --configfile "/users/4/coffm049/software/GDCGenomicsQC/config/msiABCD_dairc.yaml" --rerun-incomplete # --unlock
+# Full pipeline through local ancestry (phasing + RFMIX), GCTA SNP heritability,
+# and TRACTOR GWAS on mr_y_smri__vol__aseg__whb_sum (session_id==ses-00A):
+gdcgenomicsqc run_snpHerit run_gwas --configfile "/users/4/coffm049/software/GDCGenomicsQC/config/msiABCD_dairc.yaml" --rerun-incomplete # --unlock
 
 # TRACTOR run (local-ancestry-aware GWAS; requires LAI from above):
 #   1. set gwas.pheno and add "tractor" to gwas.methods in the config

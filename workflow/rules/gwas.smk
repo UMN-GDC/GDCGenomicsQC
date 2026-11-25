@@ -21,6 +21,9 @@ GWAS_FASTGWA_MODE = str(GWAS_CONFIG.get("fastgwa_mode", "lr")).lower()
 GWAS_GCTA_MLMA_GRM = GWAS_CONFIG.get("gcta_mlma_grm")
 GWAS_PHENO = GWAS_CONFIG.get("pheno")
 GWAS_MPHENO = GWAS_CONFIG.get("mpheno", 1)
+GWAS_PHENO_FILTER = GWAS_CONFIG.get("pheno_filter")
+GWAS_IID_COL = GWAS_CONFIG.get("iid_col", "IID")
+GWAS_FID_COL = GWAS_CONFIG.get("fid_col", "FID")
 GWAS_QCOVAR = GWAS_CONFIG.get("qcovar")
 GWAS_NPC = int(GWAS_CONFIG.get("npc", 10))
 GWAS_HAS_COVAR = GWAS_NPC > 0 or bool(GWAS_QCOVAR)
@@ -233,6 +236,11 @@ if GWAS_ACTIVE:
         params:
             mpheno=GWAS_MPHENO,
             npc=GWAS_NPC,
+            pheno_filter_flag=(
+                f'--pheno-filter "{GWAS_PHENO_FILTER}"' if GWAS_PHENO_FILTER else ""
+            ),
+            iid_col=GWAS_IID_COL,
+            fid_col=GWAS_FID_COL,
             eigenvec_flag=lambda w, input: (
                 f"--eigenvec {input.eigenvec[0]}" if input.eigenvec else ""
             ),
@@ -243,8 +251,11 @@ if GWAS_ACTIVE:
             """
             python {SCRIPTS_DIR}/prepare_gwas_inputs.py \
                 --pheno {input.pheno} \
-                --mpheno {params.mpheno} \
+                --mpheno "{params.mpheno}" \
                 --npc {params.npc} \
+                {params.pheno_filter_flag} \
+                --iid-col "{params.iid_col}" \
+                --fid-col "{params.fid_col}" \
                 {params.eigenvec_flag} \
                 {params.qcovar_flag} \
                 --gwas-keep {input.gwas_keep} \

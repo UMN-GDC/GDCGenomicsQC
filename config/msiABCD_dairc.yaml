@@ -76,16 +76,16 @@ snpHerit:
     # Supports: .parquet, .csv, .tsv/.tab, or whitespace-delimited (PLINK format)
     # First two columns must be FID, IID
     pheno: 
-      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/mr_y_smri__vol__aseg.tsv"
-      #- "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/nc_y_nihtb.tsv"
+      - "/projects/regulated/cdni-nih-bdc/shared/data/ABCD/7.0_ABCD_tabulated_data/Imaging/mr_y_smri__vol__aseg.tsv"
+      #- "/projects/regulated/cdni-nih-bdc/shared/data/ABCD/7.0_ABCD_tabulated_data/Physical-Health/nc_y_nihtb.tsv"
     
     # Path to covariate file(s) (required when pheno is specified)
     # Can be a single file path or list for multiple files
     # Format: CSV/TSV with columns: FID, IID, <covariates>
     covar: 
-      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_g_stc.tsv"
-      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_p_demo.tsv"
-      - "/spaces/regulated/abcd-ref-data/dairc/rawdata/phenotype/ab_g_dyn.tsv"
+      - "/projects/regulated/cdni-nih-bdc/shared/data/ABCD/7.0_ABCD_tabulated_data/ABCD_general/ab_g_stc.tsv"
+      - "/projects/regulated/cdni-nih-bdc/shared/data/ABCD/7.0_ABCD_tabulated_data/ABCD_general/ab_p_demo.tsv"
+      - "/projects/regulated/cdni-nih-bdc/shared/data/ABCD/7.0_ABCD_tabulated_data/ABCD_general/ab_g_dyn.tsv"
     
     # Column name to use as random effect (for AdjHE with site effects)
     RV: null
@@ -107,25 +107,7 @@ snpHerit:
     # Phenotype column(s) to analyze
     # Integer or array: 1 = third column (after FID, IID); or "ALL" to run across every column
     mpheno:
-      - "mr_y_smri__vol__aseg__cd__lh_sum"
-      - "mr_y_smri__vol__aseg__pt__lh_sum"
-      - "mr_y_smri__vol__aseg__pl__lh_sum"
-      - "mr_y_smri__vol__aseg__ag__lh_sum"
-      - "mr_y_smri__vol__aseg__hc__lh_sum"
-      - "mr_y_smri__vol__aseg__ab__lh_sum"
-      - "mr_y_smri__vol__aseg__cd__rh_sum"
-      - "mr_y_smri__vol__aseg__pt__rh_sum"
-      - "mr_y_smri__vol__aseg__pl__rh_sum"
-      - "mr_y_smri__vol__aseg__ag__rh_sum"
-      - "mr_y_smri__vol__aseg__hc__rh_sum"
-      - "mr_y_smri__vol__aseg__ab__rh_sum"
       - "mr_y_smri__vol__aseg__whb_sum"
-      - "mr_y_smri__vol__aseg__icv_sum"
-      - "mr_y_smri__vol__aseg__th__lh_sum"
-      - "mr_y_smri__vol__aseg__th__rh_sum"
-      - "mr_y_smri__vol__aseg__bs_sum"
-      - "mr_y_smri__vol__aseg__vdc__lh_sum"
-      - "mr_y_smri__vol__aseg__vdc__rh_sum"
 
     # Quantitative covariate column names (passed via --qcovar to GCTA)
     # null = use ALL covariate columns (auto-detect); [] = use NO covariates
@@ -228,7 +210,18 @@ phenotypeSimulation:
     # Number of individuals to thin to (if not skipping)
     thin_count_inds: 10000
 
-# PRS Pipeline Inputs
+# Genome-wide association testing
+gwas:
+    pheno: "/projects/regulated/cdni-nih-bdc/shared/data/ABCD/7.0_ABCD_tabulated_data/Imaging/mr_y_smri__vol__aseg.tsv"
+    mpheno: "mr_y_smri__vol__aseg__whb_sum"
+    methods:
+      - "tractor"
+    pheno_filter: "session_id==ses-00A"
+    iid_col: "participant_id"
+    fid_col: "ab_g_stc__design_id__fam"
+    tractor:
+      num_ancestries: 2
+      method: "linear"
 prsPipeline:
     iid_col: "IID"
     fid_col: "FID"
