@@ -27,7 +27,7 @@ rule generateKaryotypeAncestryPlots:
         chromosomes="1-22",
         scripts_dir=SCRIPTS_DIR,
     shell:
-        mkdir -p {output}
+        mkdir -p "{output}"
         # Discover samples from existing .lai.sis.tsv files
         SAMPLES=""
         for sis_file in {params.msp_dir}/chr*.lai.sis.tsv; do
