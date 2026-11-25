@@ -1,21 +1,6 @@
-checkpoint discover_local_ancestry_samples:
-    output:
-        OUT_DIR / "02-localAncestry" / "samples.txt"
-    params:
-        msp_dir=OUT_DIR / "02-localAncestry"
-    shell:
-        """
-        for f in {params.msp_dir}/chr*.lai.sis.tsv; do
-            [ -f "$f" ] || continue
-            basename "$f" .lai.sis.tsv
-        done | sort -u > {output}
-        """
-
-
 rule generateKaryotypeAncestryPlots:
     input:
         expand(OUT_DIR / "02-localAncestry" / "chr{CHR}.lai.msp.tsv", CHR=CHROMOSOMES),
-        checkpoints.discover_local_ancestry_samples.output,
     output:
         directory(
             OUT_DIR
@@ -42,9 +27,7 @@ rule generateKaryotypeAncestryPlots:
         chromosomes="1-22",
         scripts_dir=SCRIPTS_DIR,
     shell:
-        """
         mkdir -p {output}
-        SAMPLES_PATH="{output}/../samples.txt"
         # Discover samples from existing .lai.sis.tsv files
         SAMPLES=""
         for sis_file in {params.msp_dir}/chr*.lai.sis.tsv; do
@@ -52,10 +35,6 @@ rule generateKaryotypeAncestryPlots:
             SAMPLE=$(basename "$sis_file" .lai.sis.tsv)
             SAMPLES="$SAMPLES $SAMPLE"
         done
-        # If no sis files found yet, use the checkpoint-produced samples.txt
-        if [ -z "$SAMPLES" ] && [ -f "$SAMPLES_PATH" ]; then
-            SAMPLES=$(cat "$SAMPLES_PATH" | tr '\\n' ' ' | sed 's/ $//')
-        fi
         for SAMPLE in $SAMPLES; do
             [ -z "$SAMPLE" ] && continue
             Rscript {params.scripts_dir}/plotKaryotypeAncestry.R \
@@ -64,4 +43,3 @@ rule generateKaryotypeAncestryPlots:
                 --chromosomes {params.chromosomes} \
                 --output {output}/$SAMPLE'_karyotype.pdf'
         done
-        """
